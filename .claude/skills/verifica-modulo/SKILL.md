@@ -30,6 +30,17 @@ node scripts/verify-module.mjs "$MODULE" --json
 **Score ≥ 70** → Generazione APPROVATA  
 **Score < 70** → Elenca priorità fix
 
+## Coverage Threshold (Atomic Workflow)
+
+Dopo generazione Jest, coverage DEVE raggiungere:
+- **Statements ≥ 90%**
+- **Branches ≥ 90%**
+
+Se coverage insufficiente:
+- ❌ RAM workspace rimosso (atomic rollback)
+- Nessun file su disco cambia
+- Devi migliorare i test e ritentare
+
 ## Usando /genera-test
 
 ```
