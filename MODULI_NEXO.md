@@ -1,6 +1,6 @@
 # Moduli Nexo Gestionale - Tracciamento QA
 
-> Aggiornato: 2026-04-24 15:35 | Branch attivo: `qa/booking-coverage` | Completato: invoice (95.04% stmt / 78.48% branch), payment-link (100% stmt / 84% branch) | In progress: subscription, gdpr, notifications
+> Aggiornato: 2026-04-24 15:50 | Branch attivo: `qa/booking-coverage` | Completato: invoice (95.04% stmt / 78.48% branch), payment-link (100% stmt / 84% branch), subscription (99.67% stmt / 95.12% branch) | In progress: gdpr, notifications
 > Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches
 > Sistema test: PATH B Atomic RAM + Cascade Models + Quality Gates (90% coverage threshold)
 
