@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
@@ -691,6 +692,235 @@ describe('InvoiceController', () => {
         'Content-Disposition': expect.stringContaining('fattura-inv-001.html'),
       });
       expect(res.send).toHaveBeenCalledWith(buffer);
+    });
+  });
+
+  describe('Suite 3: Branch Coverage — Missing Paths (5 new tests)', () => {
+    it('should handle null limit parameter in findAll', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      } as never);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await controller.findAll(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        '1',
+        null as any,
+      );
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, expect.any(Object), 1, undefined);
+    });
+
+    it('should handle FatturaPA generation error', async () => {
+      const error = new Error('Invalid customer data');
+      fatturapaService.generateXml.mockRejectedValue(error);
+
+      await expect(controller.generateFatturaPa('inv-001', TENANT_ID)).rejects.toThrow(
+        'Invalid customer data',
+      );
+    });
+
+    it('should pass undefined amount to refundInvoice for full refund', async () => {
+      const refundResult = { refundedAmount: 122, creditNoteId: 'cn-001' };
+      service.refundInvoice.mockResolvedValue(refundResult as never);
+
+      const result = await controller.refundInvoice(TENANT_ID, 'inv-001', undefined);
+
+      expect(service.refundInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-001', undefined);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle BNPL order creation error', async () => {
+      const error = new Error('BNPL service unavailable');
+      bnplService.createBnplOrder.mockRejectedValue(error);
+
+      await expect(controller.createBnplOrder(TENANT_ID, 'inv-001')).rejects.toThrow(
+        'BNPL service unavailable',
+      );
+    });
+
+    it('should handle payment SMS error', async () => {
+      const error = new Error('SMS failed');
+      paymentLinkService.sendPaymentSms.mockRejectedValue(error);
+
+      await expect(controller.sendPaymentSms(TENANT_ID, 'inv-001')).rejects.toThrow('SMS failed');
+    });
+  });
+
+  describe('Suite 4: PDF Generation Edge Cases (4 new tests)', () => {
+    it('should handle PDF generation with correct MIME type', async () => {
+      const buffer = Buffer.from('PDF_CONTENT');
+      pdfService.generateInvoicePdf.mockResolvedValue(buffer);
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.generatePdf('inv-001', TENANT_ID, res);
+
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'Content-Type': 'text/html; charset=utf-8',
+        }),
+      );
+      expect(res.send).toHaveBeenCalledWith(buffer);
+    });
+
+    it('should generate PDF filename with invoice ID', async () => {
+      const buffer = Buffer.from('<html></html>');
+      pdfService.generateInvoicePdf.mockResolvedValue(buffer);
+      const res = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      } as unknown as import('express').Response;
+
+      await controller.generatePdf('inv-abc123', TENANT_ID, res);
+
+      expect(res.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          'Content-Disposition': expect.stringContaining('inv-abc123'),
+        }),
+      );
+    });
+
+    it('should handle NotFoundException in PDF generation', async () => {
+      const notFoundError = new NotFoundException('Invoice not found');
+      pdfService.generateInvoicePdf.mockRejectedValue(notFoundError);
+      const res = { set: jest.fn(), send: jest.fn() } as any;
+
+      await expect(controller.generatePdf('inv-001', TENANT_ID, res)).rejects.toThrow(
+        'Invoice not found',
+      );
+    });
+
+    it('should propagate PDF service errors', async () => {
+      const error = new Error('PDF rendering failed');
+      pdfService.generateInvoicePdf.mockRejectedValue(error);
+      const res = { set: jest.fn(), send: jest.fn() } as any;
+
+      await expect(controller.generatePdf('inv-001', TENANT_ID, res)).rejects.toThrow(
+        'PDF rendering failed',
+      );
+    });
+  });
+
+  describe('Suite 5: All Service Integrations (6 new tests)', () => {
+    it('should integrate with all five services correctly', async () => {
+      service.findOne.mockResolvedValue(mockInvoice as never);
+      fatturapaService.generateXml.mockResolvedValue('<xml/>');
+      pdfService.generateInvoicePdf.mockResolvedValue(Buffer.from('pdf'));
+      paymentLinkService.createPaymentLink.mockResolvedValue({
+        url: 'https://pay.test',
+        linkId: 'link-001',
+      } as never);
+      bnplService.createBnplOrder.mockResolvedValue({
+        redirectUrl: 'https://bnpl.test',
+        orderId: 'bnpl-001',
+      } as never);
+
+      const findOne = await controller.findOne(TENANT_ID, 'inv-001');
+      expect(findOne.success).toBe(true);
+
+      const xml = await controller.generateFatturaPa('inv-001', TENANT_ID);
+      expect(xml.success).toBe(true);
+
+      const res = { set: jest.fn(), send: jest.fn() } as any;
+      await controller.generatePdf('inv-001', TENANT_ID, res);
+      expect(res.send).toHaveBeenCalled();
+
+      const link = await controller.generatePaymentLink(TENANT_ID, 'inv-001');
+      expect(link.success).toBe(true);
+
+      const bnpl = await controller.createBnplOrder(TENANT_ID, 'inv-001');
+      expect(bnpl.success).toBe(true);
+    });
+
+    it('should handle concurrent service calls', async () => {
+      service.findAll.mockResolvedValue({
+        data: [mockInvoice],
+        meta: { total: 1, page: 1, limit: 20, pages: 1 },
+      } as never);
+      service.getStats.mockResolvedValue({
+        byStatus: { DRAFT: 1 },
+        monthlyRevenue: { total: new Decimal(122), count: 1 },
+      } as never);
+
+      const [invoices, stats] = await Promise.all([
+        controller.findAll(TENANT_ID),
+        controller.getStats(TENANT_ID),
+      ]);
+
+      expect(invoices.success).toBe(true);
+      expect(stats.success).toBe(true);
+    });
+
+    it('should service all HTTP verbs (GET, POST, PATCH, DELETE)', async () => {
+      service.findOne.mockResolvedValue(mockInvoice as never);
+      service.create.mockResolvedValue(mockInvoice as never);
+      service.update.mockResolvedValue(mockInvoice as never);
+      service.remove.mockResolvedValue(undefined);
+
+      const get = await controller.findOne(TENANT_ID, 'inv-001');
+      const post = await controller.create(TENANT_ID, {} as any);
+      const patch = await controller.update(TENANT_ID, 'inv-001', {} as any);
+      const del = await controller.remove(TENANT_ID, 'inv-001');
+
+      expect(get.success).toBe(true);
+      expect(post.success).toBe(true);
+      expect(patch.success).toBe(true);
+      expect(del.success).toBe(true);
+    });
+
+    it('should maintain tenantId isolation across all operations', async () => {
+      const TENANT_2 = 'tenant-002';
+      service.findOne.mockResolvedValue(mockInvoice as never);
+
+      await controller.findOne(TENANT_ID, 'inv-001');
+      await controller.findOne(TENANT_2, 'inv-001');
+
+      expect(service.findOne).toHaveBeenNthCalledWith(1, TENANT_ID, 'inv-001');
+      expect(service.findOne).toHaveBeenNthCalledWith(2, TENANT_2, 'inv-001');
+    });
+
+    it('should handle payment link and SMS together', async () => {
+      const linkResult = { url: 'https://pay.test', linkId: 'link-001' } as any;
+      const smsResult = { sent: true, paymentUrl: 'https://pay.test' } as any;
+
+      paymentLinkService.createPaymentLink.mockResolvedValue(linkResult);
+      paymentLinkService.sendPaymentSms.mockResolvedValue(smsResult);
+
+      const link = await controller.generatePaymentLink(TENANT_ID, 'inv-001');
+      const sms = await controller.sendPaymentSms(TENANT_ID, 'inv-001');
+
+      expect(link.data.url).toBe('https://pay.test');
+      expect(sms.data.sent).toBe(true);
+      expect(paymentLinkService.createPaymentLink).toHaveBeenCalledWith('inv-001', TENANT_ID);
+      expect(paymentLinkService.sendPaymentSms).toHaveBeenCalledWith('inv-001', TENANT_ID);
+    });
+
+    it('should return proper success structure for all endpoints', async () => {
+      const successStructure = (result: any) => {
+        expect(result).toHaveProperty('success');
+        expect(result.success).toBe(true);
+        // Most endpoints have 'data', some have 'message' (like remove)
+        const hasValidStructure = result.hasOwnProperty('data') || result.hasOwnProperty('message');
+        expect(hasValidStructure).toBe(true);
+      };
+
+      service.findOne.mockResolvedValue(mockInvoice as never);
+      service.create.mockResolvedValue(mockInvoice as never);
+      service.getStats.mockResolvedValue({} as never);
+      service.remove.mockResolvedValue(undefined);
+
+      successStructure(await controller.findOne(TENANT_ID, 'inv-001'));
+      successStructure(await controller.create(TENANT_ID, {} as any));
+      successStructure(await controller.getStats(TENANT_ID));
+      successStructure(await controller.remove(TENANT_ID, 'inv-001'));
     });
   });
 });

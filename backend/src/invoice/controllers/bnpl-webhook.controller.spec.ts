@@ -150,5 +150,44 @@ describe('BnplWebhookController', () => {
       expect(result).toEqual({ received: true });
       expect(bnplService.handleBnplWebhook).toHaveBeenCalledWith('order-003', 'COMPLETED');
     });
+
+    it('should handle JSON parsing of webhook event', async () => {
+      const { rawBody, signature } = createValidPayload('order-004', 'APPROVED');
+      const req = { rawBody } as never;
+
+      const result = await controller.handleWebhook(req, signature);
+
+      expect(result).toEqual({ received: true });
+      expect(bnplService.handleBnplWebhook).toHaveBeenCalledWith('order-004', 'APPROVED');
+    });
+
+    it('should log webhook processing success', async () => {
+      const { rawBody, signature } = createValidPayload('order-005', 'APPROVED');
+      const req = { rawBody } as never;
+      const logSpy = jest.spyOn(controller['logger'], 'log');
+
+      await controller.handleWebhook(req, signature);
+
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('order-005'));
+      logSpy.mockRestore();
+    });
+  });
+
+  // =========================================================================
+  // Signature verification fails on timingSafeEqual (branch: isValid is false)
+  // =========================================================================
+  describe('signature verification edge case - isValid false branch', () => {
+    it('should throw when timingSafeEqual returns false (invalid signature content)', async () => {
+      // Create a payload that will be computed as one HMAC but send a different HMAC
+      const rawBody = Buffer.from('{"orderId":"order-999","status":"APPROVED"}');
+      const req = { rawBody } as never;
+
+      // Create a valid base64 signature but with different content
+      const wrongSignature = Buffer.from('wrongsignaturecontent').toString('base64');
+
+      await expect(controller.handleWebhook(req, wrongSignature)).rejects.toThrow(
+        'Firma Scalapay non valida',
+      );
+    });
   });
 });

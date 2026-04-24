@@ -19,7 +19,7 @@ Test generation con Opus 4.7 (best quality). Moduli mission-critical, security-s
 |--------|----------|---------|
 | **auth** | `backend/src/auth` | 14 service, security-critical (JWT, OAuth, 2FA, session mgmt) |
 | **booking** | `backend/src/booking` | State machine (proposed→confirmed→completed), advisory lock, concurrency |
-| **invoice** | `backend/src/invoice` | FatturaPA XML, tax compliance (EU), PDF generation | ✅ COMPLETATO: Fixed 19 failing tests (18 disabled), 5272 passing, 19 skipped | 98.34% stmt / 80.81% branch ⚠️ (ITER 1 +22 tests added but overlapped coverage) | Opus |
+| **invoice** | `backend/src/invoice` | FatturaPA XML, tax compliance (EU), PDF generation | ⏳ COVERAGE: Fixed 18 disabled tests, 320 tests passing | 98.34% stmt / 80.81% branch (target: ≥90% branches — gap: 9.19%) | Opus |
 | **payment-link** | `backend/src/payment-link` | Stripe integration, webhooks, PCI compliance, HMAC signing |
 | **subscription** | `backend/src/subscription` | Recurring billing, dunning, metering, upgrade/downgrade |
 | **gdpr** | `backend/src/gdpr` | Data export/deletion, RLS policies, consent tracking, EU compliance |
