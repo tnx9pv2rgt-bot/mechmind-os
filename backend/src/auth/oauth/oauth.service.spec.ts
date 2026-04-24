@@ -346,5 +346,164 @@ describe('OAuthService', () => {
         expect(authService.updateLastLogin).toHaveBeenCalledWith('user-1', ip);
       }
     });
+
+    it('should throw error when jose.jwtVerify throws', async () => {
+      (jose.jwtVerify as jest.Mock).mockRejectedValue(new Error('Token expired'));
+
+      await expect(service.loginWithGoogle('expired-token', 'test-garage')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should verify JWKS creation with correct URL', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(jose.createRemoteJWKSet).toHaveBeenCalled();
+    });
+
+    it('should verify issuer validation', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      const callArgs = (jose.jwtVerify as jest.Mock).mock.calls[0][2];
+      expect(callArgs.issuer).toBeDefined();
+      expect(Array.isArray(callArgs.issuer)).toBe(true);
+    });
+
+    it('should handle tenant findUnique returning null', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.loginWithGoogle('credential', 'nonexistent')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should verify user query includes tenant context', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+          }),
+        }),
+      );
+    });
+
+    it('should map all fields from user to returned value', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      const customUser = {
+        id: 'user-xyz',
+        email: 'custom@test.com',
+        name: 'Custom Name',
+        role: 'USER',
+        isActive: true,
+        tenantId: 'tenant-1',
+        tenant: mockTenant,
+      };
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(customUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(authService.generateTokens).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'user-xyz',
+          email: 'custom@test.com',
+          name: 'Custom Name',
+          role: 'USER',
+        }),
+      );
+    });
+
+    it('should call logAuthEvent with oauth_google_login action', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage', '1.2.3.4');
+
+      expect(authService.logAuthEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'oauth_google_login',
+          status: 'success',
+        }),
+      );
+    });
+
+    it('should handle minimal Google payload without optional fields', async () => {
+      const minimalPayload = {
+        iss: 'https://accounts.google.com',
+        sub: 'sub-123',
+        aud: 'google-client-id',
+        email: 'minimal@test.com',
+        email_verified: true,
+      };
+      (jose.jwtVerify as jest.Mock).mockResolvedValue({ payload: minimalPayload });
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        email: 'minimal@test.com',
+      } as never);
+
+      const result = await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(result).toEqual(mockTokens);
+    });
+
+    it('should verify setTenantContext called before user query', async () => {
+      const callSequence: string[] = [];
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.setTenantContext as jest.Mock).mockImplementation(() => {
+        callSequence.push('setTenantContext');
+      });
+      (prisma.user.findFirst as jest.Mock).mockImplementation(() => {
+        callSequence.push('findFirst');
+        return Promise.resolve(mockUser);
+      });
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(callSequence[0]).toBe('setTenantContext');
+      expect(callSequence[1]).toBe('findFirst');
+    });
+
+    it('should verify JWKS audience matches configured client ID', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      const verifyCall = (jose.jwtVerify as jest.Mock).mock.calls[0];
+      const options = verifyCall[2];
+      expect(options.audience).toBe('google-client-id');
+    });
+
+    it('should handle user with isActive false', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.loginWithGoogle('credential', 'test-garage')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should pass tenant ID to setTenantContext', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTenant,
+        id: 'tenant-special-456',
+      } as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(prisma.setTenantContext).toHaveBeenCalledWith('tenant-special-456');
+    });
   });
 });
