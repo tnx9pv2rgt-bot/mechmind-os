@@ -2842,4 +2842,153 @@ describe('InspectionService', () => {
       );
     });
   });
+
+  describe('State Machine — Invalid Transitions', () => {
+    it('should reject ARCHIVED -> IN_PROGRESS transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.ARCHIVED,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(
+        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+      ).rejects.toThrow('Invalid inspection status transition');
+    });
+
+    it('should reject CUSTOMER_REVIEWING -> IN_PROGRESS transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.CUSTOMER_REVIEWING,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(
+        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+      ).rejects.toThrow('Invalid inspection status transition');
+    });
+
+    it('should reject APPROVED -> DECLINED transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.APPROVED,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(
+        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.DECLINED }, MECHANIC_ID)
+      ).rejects.toThrow('Invalid inspection status transition');
+    });
+
+    it('should allow valid READY_FOR_CUSTOMER -> APPROVED transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.READY_FOR_CUSTOMER,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      const updated = buildMockInspection({
+        status: InspectionStatus.APPROVED,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
+
+      // Act
+      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.APPROVED }, MECHANIC_ID);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(prisma.inspection.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: INSPECTION_ID, tenantId: TENANT_ID },
+          data: expect.objectContaining({
+            status: InspectionStatus.APPROVED,
+          }),
+        })
+      );
+    });
+
+    it('should allow valid IN_PROGRESS -> PENDING_REVIEW transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.IN_PROGRESS,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      const updated = buildMockInspection({
+        status: InspectionStatus.PENDING_REVIEW,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
+
+      // Act
+      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.PENDING_REVIEW }, MECHANIC_ID);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(prisma.inspection.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: INSPECTION_ID, tenantId: TENANT_ID },
+          data: expect.objectContaining({
+            status: InspectionStatus.PENDING_REVIEW,
+          }),
+        })
+      );
+    });
+
+    it('should reject READY_FOR_CUSTOMER -> IN_PROGRESS transition', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.READY_FOR_CUSTOMER,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+
+      // Act & Assert
+      await expect(
+        service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID)
+      ).rejects.toThrow();
+    });
+
+    it('should allow DECLINED -> IN_PROGRESS transition for retry', async () => {
+      // Arrange
+      const inspection = buildMockInspection({
+        status: InspectionStatus.DECLINED,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      const updated = buildMockInspection({
+        status: InspectionStatus.IN_PROGRESS,
+        tenantId: TENANT_ID,
+        mechanicId: MECHANIC_ID,
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      (prisma.inspection.update as jest.Mock).mockResolvedValue(updated);
+
+      // Act
+      const result = await service.update(TENANT_ID, INSPECTION_ID, { status: InspectionStatus.IN_PROGRESS }, MECHANIC_ID);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(prisma.inspection.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: INSPECTION_ID, tenantId: TENANT_ID },
+        })
+      );
+    });
+  });
 });

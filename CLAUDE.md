@@ -37,6 +37,8 @@
 - **Gestione contesto**: Usa `/compact focus on [modulo]` prima di task pesanti. Dopo modulo completato, esegui `/clear`.
 - **Target coverage moduli P0**: statements ≥80%, branches ≥75%.
 - **Output accettabile**: `{"modulo":"Work Orders","statements":"95%","branches":"80%","esito":"SUCCESSO"}`
+- **Log automatico OBBLIGATORIO**: Quando esegui `/genera-test <modulo>`, DEVI SEMPRE aggiornare `MODULI_NEXO.md` con log metriche (statements%, branches%, test count) nella sezione "Log completamenti automatici". Non è facoltativo — è parte del workflow. Formato: `| YYYY-MM-DD HH:MM | backend | <modulo> | <service/SUMMARY> | X% / Y% | ✅/⏳/❌ <descrizione> |`. Questo PRIMA di dire "completato".
+- **WORKFLOW VERIFICATION STRICT**: (1) Genera test; (2) Verifica results CON COMANDI REALI DA TERMINALE (`npx jest src/<modulo> --coverage`); (3) Usa SOLO i numeri reali misurati, non le promesse dell'agent. MAI fidati dei coverage % riportati dall'agent — devono essere validati indipendentemente da terminale SEMPRE.
 
 ## PUNTI FRAGILI (SPOF)
 1. CommonModule (PrismaService/EncryptionService) — SPOF, tutto dipende da qui.

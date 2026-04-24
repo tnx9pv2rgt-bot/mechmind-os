@@ -60,5 +60,39 @@ describe('OAuthController', () => {
       expect(result).toHaveProperty('refreshToken');
       expect(result).toHaveProperty('expiresIn');
     });
+
+    it('should handle loginWithGoogle with undefined tenantSlug', async () => {
+      const tokens = { accessToken: 'at', refreshToken: 'rt', expiresIn: 3600 };
+      service.loginWithGoogle.mockResolvedValue(tokens);
+
+      const dto = { credential: 'cred', tenantSlug: undefined };
+      const result = await controller.loginWithGoogle(dto as never, '192.168.1.1');
+
+      expect(service.loginWithGoogle).toHaveBeenCalledWith('cred', undefined, '192.168.1.1');
+      expect(result).toEqual(tokens);
+    });
+
+    it('should handle errors from oauthService', async () => {
+      service.loginWithGoogle.mockRejectedValue(new Error('Invalid token'));
+
+      const dto = { credential: 'invalid-token', tenantSlug: 'acme' };
+
+      await expect(controller.loginWithGoogle(dto as never, '192.168.1.1')).rejects.toThrow(
+        'Invalid token',
+      );
+    });
+
+    it('should pass ip from request context', async () => {
+      const tokens = { accessToken: 'at', refreshToken: 'rt', expiresIn: 3600 };
+      service.loginWithGoogle.mockResolvedValue(tokens);
+
+      const dto = { credential: 'token', tenantSlug: 'test' };
+      const ipAddresses = ['127.0.0.1', '192.168.0.1', '::1', '2001:db8::1'];
+
+      for (const ip of ipAddresses) {
+        await controller.loginWithGoogle(dto as never, ip);
+        expect(service.loginWithGoogle).toHaveBeenCalledWith('token', 'test', ip);
+      }
+    });
   });
 });

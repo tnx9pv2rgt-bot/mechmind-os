@@ -245,6 +245,19 @@ describe('ObdStreamingGateway', () => {
 
       expect(redisSubscriber.unsubscribe).not.toHaveBeenCalled();
     });
+
+    it('should emit error on unsubscribe failure', async () => {
+      const client = createMockSocket('c-unsub-err');
+      await gateway.handleConnection(client);
+
+      // Reset mock to track new calls
+      (redisSubscriber.unsubscribe as jest.Mock).mockReset();
+      (redisSubscriber.unsubscribe as jest.Mock).mockRejectedValue(new Error('Redis disconnected'));
+
+      await gateway.handleUnsubscribeDevice(client, { deviceId: 'dev-err' });
+
+      expect(client.emit).toHaveBeenCalledWith('error', { message: 'Redis disconnected' });
+    });
   });
 
   describe('handleSensorData', () => {
@@ -287,6 +300,16 @@ describe('ObdStreamingGateway', () => {
 
       expect(streamingService.captureFreezeFrame).not.toHaveBeenCalled();
     });
+
+    it('should emit error on freeze frame capture failure', async () => {
+      const client = createMockSocket('c-ff-err');
+      await gateway.handleConnection(client);
+      streamingService.captureFreezeFrame.mockRejectedValueOnce(new Error('Device timeout'));
+
+      await gateway.handleCaptureFreezeFrame(client, { deviceId: 'dev-timeout', dtcCode: 'P0401' });
+
+      expect(client.emit).toHaveBeenCalledWith('error', { message: 'Device timeout' });
+    });
   });
 
   describe('handleGetMode06Tests', () => {
@@ -311,6 +334,16 @@ describe('ObdStreamingGateway', () => {
 
       expect(streamingService.getMode06Tests).not.toHaveBeenCalled();
     });
+
+    it('should emit error on mode06 test failure', async () => {
+      const client = createMockSocket('c-m06-err');
+      await gateway.handleConnection(client);
+      streamingService.getMode06Tests.mockRejectedValueOnce(new Error('Test not supported'));
+
+      await gateway.handleGetMode06Tests(client, { deviceId: 'dev-old' });
+
+      expect(client.emit).toHaveBeenCalledWith('error', { message: 'Test not supported' });
+    });
   });
 
   describe('handleExecuteEvapTest', () => {
@@ -332,6 +365,16 @@ describe('ObdStreamingGateway', () => {
       await gateway.handleExecuteEvapTest(client, { deviceId: 'd', testType: 'LEAK' });
 
       expect(streamingService.executeEvapTest).not.toHaveBeenCalled();
+    });
+
+    it('should emit error on evap test execution failure', async () => {
+      const client = createMockSocket('c-evap-err');
+      await gateway.handleConnection(client);
+      streamingService.executeEvapTest.mockRejectedValueOnce(new Error('Test in progress'));
+
+      await gateway.handleExecuteEvapTest(client, { deviceId: 'dev-busy', testType: 'PRESSURE' });
+
+      expect(client.emit).toHaveBeenCalledWith('error', { message: 'Test in progress' });
     });
   });
 

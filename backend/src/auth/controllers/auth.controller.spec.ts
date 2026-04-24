@@ -16,6 +16,7 @@ describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthService>;
   let mfaService: jest.Mocked<MfaService>;
+  let module: TestingModule;
 
   const mockTokens = {
     accessToken: 'access-jwt',
@@ -31,7 +32,7 @@ describe('AuthController', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const testModule: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         {
@@ -48,6 +49,8 @@ describe('AuthController', () => {
             updateLastLogin: jest.fn(),
             recordFailedLogin: jest.fn(),
             logout: jest.fn().mockResolvedValue(undefined),
+            verifyPassword: jest.fn(),
+            hashPassword: jest.fn(),
           },
         },
         {
@@ -113,7 +116,7 @@ describe('AuthController', () => {
         {
           provide: SecurityActivityService,
           useValue: {
-            logEvent: jest.fn().mockResolvedValue(undefined),
+            logEvent: jest.fn().mockReturnValue(Promise.resolve(undefined)),
           },
         },
         {
@@ -134,9 +137,10 @@ describe('AuthController', () => {
       ],
     }).compile();
 
-    controller = module.get<AuthController>(AuthController);
-    authService = module.get(AuthService) as jest.Mocked<AuthService>;
-    mfaService = module.get(MfaService) as jest.Mocked<MfaService>;
+    module = testModule;
+    controller = testModule.get<AuthController>(AuthController);
+    authService = testModule.get(AuthService) as jest.Mocked<AuthService>;
+    mfaService = testModule.get(MfaService) as jest.Mocked<MfaService>;
   });
 
   it('should be defined', () => {
@@ -1286,4 +1290,123 @@ describe('AuthController', () => {
       expect(result).toEqual(mockTokens);
     });
   });
+
+  // =========================================================================
+  // changePassword()
+  // =========================================================================
+  describe('changePassword', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should successfully change password', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      authService.verifyPassword.mockResolvedValue(true);
+      authService.hashPassword.mockResolvedValue('newhash');
+
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: 'hash',
+        tenantId: 'tenant-001',
+      });
+      prismaService.user.update.mockResolvedValue({ id: 'user-001' });
+
+      const dto = { currentPassword: 'old123!', newPassword: 'NewPass123' };
+      const result = await controller.changePassword(user as never, dto as never);
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Password aggiornata con successo',
+      });
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-001' },
+        select: { id: true, passwordHash: true, tenantId: true },
+      });
+      expect(authService.verifyPassword).toHaveBeenCalledWith('old123!', 'hash');
+      expect(authService.hashPassword).toHaveBeenCalledWith('NewPass123');
+      expect(prismaService.user.update).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      prismaService.user.findUnique.mockResolvedValue(null);
+
+      const dto = { currentPassword: 'old123!', newPassword: 'NewPass123' };
+
+      await expect(controller.changePassword(user as never, dto as never)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw NotFoundException when tenant mismatch', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: 'hash',
+        tenantId: 'different-tenant',
+      });
+
+      const dto = { currentPassword: 'old123!', newPassword: 'NewPass123' };
+
+      await expect(controller.changePassword(user as never, dto as never)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw UnauthorizedException when current password invalid', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      authService.verifyPassword.mockResolvedValue(false);
+
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: 'hash',
+        tenantId: 'tenant-001',
+      });
+
+      const dto = { currentPassword: 'wrongpassword', newPassword: 'NewPass123' };
+
+      await expect(controller.changePassword(user as never, dto as never)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw BadRequestException when new password same as current', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      authService.verifyPassword.mockResolvedValue(true);
+
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: 'hash',
+        tenantId: 'tenant-001',
+      });
+
+      const dto = { currentPassword: 'SamePass123', newPassword: 'SamePass123' };
+
+      await expect(controller.changePassword(user as never, dto as never)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should handle null passwordHash gracefully', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      authService.verifyPassword.mockResolvedValue(false); // null coalesced to ''
+
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: null,
+        tenantId: 'tenant-001',
+      });
+
+      const dto = { currentPassword: 'old123!', newPassword: 'NewPass123' };
+
+      await expect(controller.changePassword(user as never, dto as never)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(authService.verifyPassword).toHaveBeenCalledWith('old123!', '');
+    });
+  });
 });
+

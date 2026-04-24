@@ -61,6 +61,33 @@ describe('LicensePlateController', () => {
       });
       expect(result).toEqual(detection);
     });
+
+    it('should handle missing optional fields in DTO', async () => {
+      const file = { buffer: Buffer.from('image-data') } as Express.Multer.File;
+      const dto = { cameraId: 'cam-002' } as never;
+      const detection = { plate: 'XY789AB', confidence: 0.87 };
+      service.detectLicensePlate.mockResolvedValue(detection as never);
+
+      const result = await controller.detectLicensePlate(TENANT_ID, file, dto);
+
+      expect(service.detectLicensePlate).toHaveBeenCalledWith(file.buffer, {
+        cameraId: 'cam-002',
+        provider: undefined,
+        minConfidence: undefined,
+        tenantId: TENANT_ID,
+      });
+      expect(result).toEqual(detection);
+    });
+
+    it('should propagate service errors', async () => {
+      const file = { buffer: Buffer.from('invalid') } as Express.Multer.File;
+      const dto = { cameraId: 'cam-bad' } as never;
+      service.detectLicensePlate.mockRejectedValue(new Error('Detection failed'));
+
+      await expect(controller.detectLicensePlate(TENANT_ID, file, dto)).rejects.toThrow(
+        'Detection failed',
+      );
+    });
   });
 
   describe('recordEntryExit', () => {
@@ -158,6 +185,33 @@ describe('LicensePlateController', () => {
 
       expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID, { page: 1, limit: 20 });
       expect(result).toEqual(sessions);
+    });
+
+    it('should respect custom pagination parameters', async () => {
+      const sessions: any[] = [];
+      service.getActiveSessions.mockResolvedValue(sessions as never);
+
+      await controller.getActiveSessions(TENANT_ID, 2, 50);
+
+      expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID, { page: 2, limit: 50 });
+    });
+
+    it('should cap limit at 100', async () => {
+      const sessions: any[] = [];
+      service.getActiveSessions.mockResolvedValue(sessions as never);
+
+      await controller.getActiveSessions(TENANT_ID, 1, 200);
+
+      expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID, { page: 1, limit: 100 });
+    });
+
+    it('should handle string pagination parameters', async () => {
+      const sessions: any[] = [];
+      service.getActiveSessions.mockResolvedValue(sessions as never);
+
+      await controller.getActiveSessions(TENANT_ID, '3' as never, '30' as never);
+
+      expect(service.getActiveSessions).toHaveBeenCalledWith(TENANT_ID, { page: 3, limit: 30 });
     });
   });
 

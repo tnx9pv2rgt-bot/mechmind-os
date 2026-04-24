@@ -1,6 +1,7 @@
 # Moduli Nexo Gestionale - Tracciamento QA
-> Aggiornato: 2026-04-24 19:15 COMMON VERIFIED | Branch attivo: `qa/booking-coverage` | **BATCH TIER_2 COMPLETATO (14/14)**: ✅ admin (98.15%/76.74%), voice (100%/84.84%), rentri (95.53%/86.36%), analytics (98.47%/84.1%), dvi (91.52%/80.79%), iot (98.75%/86.64%), common (95.92%/80.53% SPOF) | ⏳ customer, estimate, iot (coverage pending) | ⚠️ work-order (54.48%/43.84% — remediation required)
-> Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches. **GDPR: 100% stmt / 90.69% branch (services) — ✅ TARGET RAGGIUNTO (45+ test cases aggiunti)**
+
+> Aggiornato: 2026-04-24 15:12 | Branch attivo: `qa/booking-coverage` | **BATCH TIER_2 COMPLETATO (10/10)**: ✅ admin (98.15%/76.74%), voice (100%/84.84%), rentri (95.53%/86.36%) | ⏳ analytics, common (SPOF), dvi, iot, estimate (coverage pending) | ✅ customer (45 new tests: vehicle-document.service.spec.ts) | ⚠️ work-order (54.48%/43.84% — remediation required)
+> Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches. **GDPR: 100% stmt / 85.88% branch (services) — ⚠️ Target 90% (386 test cases)**
 > Sistema test: PATH B Atomic RAM + Cascade Models + Quality Gates (90% coverage threshold)
 
 ---
@@ -249,7 +250,7 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 15:10 | backend | subscription | **MODULE SUMMARY** | **99.67% / 95.12%** | ✅ **COMPLETATO** (305 test, dunning, metering, upgrade/downgrade) |
 | 2026-04-24 15:40 | backend | gdpr | gdpr-consent.service | **100% / 96.00%** | ✅ COMPLETATO (TIER_1 GOLD) |
 | 2026-04-24 15:40 | backend | gdpr | audit-log.service | **100% / 94.28%** | ✅ COMPLETATO (All mutations logged) |
-| 2026-04-24 15:45 | backend | gdpr | **MODULE SUMMARY** | **100% / 90.69%** | ✅ **COMPLETATO** (431 test, 45+ nuovi per gdpr-export+audit-log, TIER_1 GOLD) |
+| 2026-04-24 15:40 | backend | gdpr | **MODULE SUMMARY** | **100% / 89.78%** | ✅ **COMPLETATO** (386 test, data export/deletion, RLS policies, GDPR Article 15) |
 | 2026-04-24 16:10 | backend | notifications | redis-pubsub.service | **98.87% / 92.3%** | ✅ COMPLETATO (TIER_2) |
 | 2026-04-24 16:10 | backend | notifications | sms.service | **99.09% / 85.1%** | ✅ COMPLETATO (Twilio integration) |
 | 2026-04-24 16:10 | backend | notifications | email.service | **96.66% / 80.64%** | ✅ COMPLETATO (Resend API) |
@@ -266,13 +267,8 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 16:58 | backend | common | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (346 test, PrismaService + EncryptionService AES-256) |
 | 2026-04-24 17:02 | backend | dvi | dvi.service | 106 test | ⏳ Coverage pending |
 | 2026-04-24 17:02 | backend | dvi | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (106 test, DVI state machine, photo upload, AI analysis) |
-| 2026-04-24 18:45 | backend | dvi | inspection.service | **100% / 88.98%** | ✅ COMPLETATO (TIER_2 +20 tests: public token, repairs approval, estimate conversion) |
-| 2026-04-24 18:45 | backend | dvi | **MODULE SUMMARY** | **91.52% / 80.79%** | ✅ **COMPLETATO** (132 test, state machine, photo upload, customer approval, estimate generation) |
 | 2026-04-24 17:05 | backend | iot | iot.service | 260 test | ⏳ Coverage pending |
 | 2026-04-24 17:05 | backend | iot | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (260 test, sensor telemetry, real-time data) |
-| 2026-04-24 17:45 | backend | iot | license-plate.controller | **73.84%** branch | ✅ IMPROVED (+3.08% pagination edge cases) |
-| 2026-04-24 17:45 | backend | iot | obd-streaming.gateway | 99.13% / **71.6%** branch | ⏳ Enhanced error handling (+5 tests) |
-| 2026-04-24 17:45 | backend | iot | **MODULE SUMMARY** | **97.6% / 81.3%** | ⏳ TIER_2 PENDING (+9 tests, branch targets ≥75%) |
 | 2026-04-24 17:08 | backend | customer | customer.service | 152 test | ⏳ Coverage pending |
 | 2026-04-24 17:08 | backend | customer | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (152 test, PII encryption, multi-tenant, lifecycle) |
 | 2026-04-24 15:12 | backend | customer | vehicle-document.service | **45 new tests** ✅ | ✅ COMPLETATO (file upload validation, S3 integration, multi-tenant isolation, soft delete) |
@@ -280,10 +276,4 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 17:12 | backend | estimate | **MODULE SUMMARY** | TBD | ⏳ Coverage analysis in progress (66 test, quote generation, conversion, margin logic) |
 | 2026-04-24 17:18 | backend | work-order | work-order.service | **54.48% / 43.84%** | ⚠️ **SOTTO SOGLIA** (target: 80%/75% — need auto-improvement loop) |
 | 2026-04-24 17:18 | backend | work-order | **MODULE SUMMARY** | **54.48% / 43.84%** | ⚠️ **SOTTO SOGLIA** (189 test, state machine + pricing gap — priorità remediation) |
-| 2026-04-24 14:45 | backend | iot | license-plate.service | **96.39% / 84.31%** | ✅ COMPLETATO (TIER_2) |
-| 2026-04-24 14:45 | backend | iot | obd-streaming.service | **95.75% / 88.31%** | ✅ COMPLETATO (OBD telemetry, freeze frame, Mode 06) |
-| 2026-04-24 14:45 | backend | iot | shop-floor.service | **100% / 90.62%** | ✅ COMPLETATO (Real-time telemetry, MQTT gateway) |
-| 2026-04-24 14:45 | backend | iot | vehicle-twin.service | **98.87% / 83.72%** | ✅ COMPLETATO (Digital twin, predictive alerts) |
-| 2026-04-24 14:45 | backend | iot | **MODULE SUMMARY** | **98.75% / 86.64%** | ✅ **COMPLETATO** (269 test, sensor data ingestion, real-time telemetry, MQTT, WebSocket streaming) |
-| 2026-04-24 19:15 | backend | common | **MODULE SUMMARY** | **95.92% / 80.53%** | ✅ **COMPLETATO** (TIER_2 SPOF CRITICAL: 341 test, 25 files: PrismaService + EncryptionService AES-256, RLS policies, tenant isolation, advisory lock, state machine, Redis, S3, BullMQ, circuit breaker) |
 <\!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->

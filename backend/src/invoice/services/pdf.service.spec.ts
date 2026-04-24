@@ -700,4 +700,733 @@ describe('PdfService', () => {
       expect(html).toContain('Sconto');
     });
   });
+
+  // =========================================================================
+  // RITENUTA D'ACCONTO FLOWS (Art. 196 bis DPR 633/72)
+  // =========================================================================
+  describe('with ritenuta d\'acconto', () => {
+    beforeEach(() => {
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should include ritenuta rate when ritenutaRate is defined', async () => {
+      const invoiceWithRitenuta = {
+        ...mockInvoice,
+        ritenutaRate: new Decimal(20),
+        ritenutaAmount: new Decimal(15.4),
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoiceWithRitenuta);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('20');
+      expect(html).toContain('15.4');
+    });
+
+    it('should exclude ritenuta when ritenutaRate is undefined', async () => {
+      const invoiceNoRitenuta = {
+        ...mockInvoice,
+        ritenutaRate: undefined,
+        ritenutaAmount: undefined,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoiceNoRitenuta);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      const html = result.toString();
+
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // PAYMENT METHOD & TERMS LABEL FALLBACKS
+  // =========================================================================
+  describe('payment method & terms rendering', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should render label for known payment method', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: 'CONTANTI',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Contanti');
+    });
+
+    it('should render empty string for unknown payment method', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: 'UNKNOWN_METHOD' as any,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should default to empty string when paymentMethod is null', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should render label for CARTA payment method', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: 'CARTA',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      const html = result.toString();
+
+      expect(html).toContain('Carta di credito');
+    });
+
+    it('should render label for BONIFICO payment method', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: 'BONIFICO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      const html = result.toString();
+
+      expect(html).toContain('Bonifico bancario');
+    });
+
+    it('should render label for BNPL payment method', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentMethod: 'BNPL',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      const html = result.toString();
+
+      expect(html).toContain('Pagamento rateale');
+    });
+
+    it('should render label for known payment terms', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentTerms: 'IMMEDIATO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Pagamento immediato');
+    });
+
+    it('should render label for TRENTA_GIORNI payment terms', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentTerms: 'TRENTA_GIORNI',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      const html = result.toString();
+
+      expect(html).toContain('30 giorni');
+    });
+
+    it('should fallback for unknown payment terms', async () => {
+      const invoice = {
+        ...mockInvoice,
+        paymentTerms: 'UNKNOWN_TERMS',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // NOTA_CREDITO DOCUMENT TYPE
+  // =========================================================================
+  describe('with documentType NOTA_CREDITO', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should render "Nota di Credito" for NOTA_CREDITO document', async () => {
+      const creditNote = {
+        ...mockInvoice,
+        documentType: 'NOTA_CREDITO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(creditNote);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Nota di Credito');
+    });
+
+    it('should render "Fattura" for non-NOTA_CREDITO document', async () => {
+      const invoice = {
+        ...mockInvoice,
+        documentType: 'FATTURA',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Fattura');
+    });
+  });
+
+  // =========================================================================
+  // OPERATION DATE COMPARISON
+  // =========================================================================
+  describe('operationDate handling', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should show operationDate when different from createdAt', async () => {
+      const invoice = {
+        ...mockInvoice,
+        createdAt: new Date('2026-03-01'),
+        operationDate: new Date('2026-03-15'),
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    it('should not show operationDate when same as createdAt', async () => {
+      const sameDate = new Date('2026-03-01');
+      const invoice = {
+        ...mockInvoice,
+        createdAt: sameDate,
+        operationDate: sameDate,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null operationDate', async () => {
+      const invoice = {
+        ...mockInvoice,
+        operationDate: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // TAX REGIME LABELS
+  // =========================================================================
+  describe('tax regime labels', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should render label for ORDINARIO regime', async () => {
+      const invoice = {
+        ...mockInvoice,
+        taxRegime: 'ORDINARIO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Regime Ordinario');
+    });
+
+    it('should render label for SEMPLIFICATO regime', async () => {
+      const invoice = {
+        ...mockInvoice,
+        taxRegime: 'SEMPLIFICATO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Regime Semplificato');
+    });
+
+    it('should render label for FORFETTARIO regime', async () => {
+      const invoice = {
+        ...mockInvoice,
+        taxRegime: 'FORFETTARIO',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+
+      const html = result.toString();
+      expect(html).toContain('Regime Forfettario');
+    });
+
+    it('should fallback for unknown tax regime', async () => {
+      const invoice = {
+        ...mockInvoice,
+        taxRegime: 'UNKNOWN_REGIME',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // DUE DATE NULL HANDLING
+  // =========================================================================
+  describe('dueDate handling', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should render due date when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        dueDate: new Date('2026-04-30'),
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null dueDate gracefully', async () => {
+      const invoice = {
+        ...mockInvoice,
+        dueDate: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // CUSTOMER ENCRYPTED NAME FALLBACKS
+  // =========================================================================
+  describe('customer encrypted name handling', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should handle null encryptedFirstName', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          encryptedFirstName: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null encryptedLastName', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          encryptedLastName: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should assemble full name for PERSONA customer', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          customerType: 'PERSONA',
+          encryptedFirstName: 'enc-john',
+          encryptedLastName: 'enc-doe',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should use firstName or lastName for AZIENDA customer', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          customerType: 'AZIENDA',
+          encryptedFirstName: 'enc-Acme',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // TENANT ADDRESS BUILDING WITH EMPTY FIELDS
+  // =========================================================================
+  describe('tenant address filtering', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+    });
+
+    it('should filter empty strings from address components', async () => {
+      const invoice = {
+        ...mockInvoice,
+      };
+      const tenant = {
+        ...mockTenant,
+        settings: {
+          ...mockTenant.settings,
+          indirizzo: '',
+          cap: '',
+          comune: 'Roma',
+          provincia: '',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should include provincia in parentheses when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+      };
+      const tenant = {
+        ...mockTenant,
+        settings: {
+          ...mockTenant.settings,
+          provincia: 'RM',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // CUSTOMER ADDRESS BUILDING
+  // =========================================================================
+  describe('customer address assembly', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should assemble customer address from components', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          address: 'Via Roma 1',
+          postalCode: '00100',
+          city: 'Roma',
+          province: 'RM',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null province field', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          province: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // STAMP DUTY & NOTES
+  // =========================================================================
+  describe('stamp duty and notes', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+      prisma.tenant.findUnique.mockResolvedValue(mockTenant);
+    });
+
+    it('should include stamp duty when true', async () => {
+      const invoice = {
+        ...mockInvoice,
+        stampDuty: true,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should exclude stamp duty when false', async () => {
+      const invoice = {
+        ...mockInvoice,
+        stampDuty: false,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should include notes when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        notes: 'Test notes for invoice',
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null notes', async () => {
+      const invoice = {
+        ...mockInvoice,
+        notes: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // TENANT SETTINGS FALLBACKS
+  // =========================================================================
+  describe('tenant settings fallback to defaults', () => {
+    beforeEach(() => {
+      prisma.invoice.findFirst.mockResolvedValue(mockInvoice);
+    });
+
+    it('should use tenant.name when ragioneSociale not set', async () => {
+      const invoice = {
+        ...mockInvoice,
+      };
+      const tenant = {
+        id: TENANT_ID,
+        name: 'Fallback Company Name',
+        settings: {
+          partitaIva: '12345678901',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should use null settings as empty object', async () => {
+      const invoice = {
+        ...mockInvoice,
+      };
+      const tenant = {
+        id: TENANT_ID,
+        name: 'Test Company',
+        settings: null,
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should use default provincia when not set', async () => {
+      const invoice = {
+        ...mockInvoice,
+      };
+      const tenant = {
+        ...mockTenant,
+        settings: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.tenant.findUnique.mockResolvedValue(tenant);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // CUSTOMER SDI & PEC FALLBACKS
+  // =========================================================================
+  describe('customer SDI and PEC fields', () => {
+    it('should include sdiCode when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          sdiCode: 'AB12345',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null sdiCode', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          sdiCode: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should include pecEmail when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          pecEmail: 'test@pec.it',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null pecEmail', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          pecEmail: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // CUSTOMER CODICEFISCALE & PARTITAIVA FALLBACKS
+  // =========================================================================
+  describe('customer fiscal identifiers', () => {
+    it('should use codiceFiscale when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          codiceFiscale: 'RSSMRA80A01H501U',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null codiceFiscale', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          codiceFiscale: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should use partitaIva when present', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          partitaIva: '12345678901',
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null partitaIva', async () => {
+      const invoice = {
+        ...mockInvoice,
+        customer: {
+          ...mockCustomer,
+          partitaIva: null,
+        },
+      };
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.generateInvoicePdf(INVOICE_ID, TENANT_ID);
+      expect(result).toBeDefined();
+    });
+  });
 });

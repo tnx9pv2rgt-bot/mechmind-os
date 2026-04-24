@@ -25,8 +25,21 @@ argument-hint: "<modulo> [--dry-run] [--force] [--skip-verify]"
 [5] TypeScript strict check (tsc --noEmit)
 [6] Jest con coverage ≥90% (statements AND branches)
 [7] Se coverage OK → trasferisci RAM→disk, log MODULI_NEXO.md
-[8] Se coverage NO → rollback atomico, RAM deleted, disk untouched
+[8] Se coverage <90% → AUTO-ITER:
+    ├─ Analizza gap coverage (linee non coperte)
+    ├─ Genera test aggiuntivi per le linee mancanti
+    ├─ Re-run Jest
+    ├─ Loop fino a coverage ≥90% o max 5 iterazioni
+    └─ Alla fine: trasferisci RAM→disk, log MODULI_NEXO.md
 ```
+
+### ✅ Auto-Improvement Loop (Implementato)
+- **Max iterazioni:** 5 (protezione contro loop infiniti)
+- **Coverage target:** ≥90% statements AND ≥90% branches
+- **Strategia:** Analizza linee non coperte → genera test mirati → re-run Jest
+- **Status finale:** 
+  - Se coverage ≥90%: `✅ Testato` in MODULI_NEXO.md
+  - Se coverage <90% dopo max 5 iter: `⏳ In miglioramento` in MODULI_NEXO.md (file comunque trasferiti a disk)
 
 ## Features (2026 Best Practices)
 
@@ -65,7 +78,16 @@ argument-hint: "<modulo> [--dry-run] [--force] [--skip-verify]"
 
 ### ✅ Coverage Threshold: 90% (Hard Gate)
 - Statements ≥90% AND Branches ≥90%
-- Se <90% → coverage rollback
+- Se <90% → **AUTO-IMPROVE LOOP** (fino a 5 iterazioni)
+- Analizza linee non coperte, genera test mirati, re-run Jest
+- Loop termina quando: coverage ≥90% OR max iterazioni raggiunto
+
+### ✅ Auto-Improvement Intelligence
+- **Coverage gap analysis:** Identifica linee/metodi non coperti
+- **Smart test generation:** Genera test per i gap specifici (non rigenerazione)
+- **Iteration tracking:** Log in MODULI_NEXO.md mostra progression (70%→75%→85%→90%)
+- **Safety bounds:** Max 5 iterazioni per proteggere contro loop infiniti
+- **Fallback:** Se max iterazioni, commit stato attuale con flag "⏳ In miglioramento"
 
 ## Usage
 

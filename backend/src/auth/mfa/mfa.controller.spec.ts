@@ -230,5 +230,109 @@ describe('MfaController', () => {
       });
       expect(result).toEqual({ users });
     });
+
+    it('should return empty list when no users without MFA found', async () => {
+      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await controller.getUsersWithoutMFA(TENANT_ID);
+
+      expect(result).toEqual({ users: [] });
+    });
+  });
+
+  // =========================================================================
+  // Additional error path coverage
+  // =========================================================================
+  describe('getStatus — error handling', () => {
+    it('should propagate mfaService errors', async () => {
+      const error = new Error('Database error');
+      mfaService.getStatus.mockRejectedValue(error);
+
+      await expect(controller.getStatus('user-123')).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('enroll — error handling', () => {
+    it('should propagate mfaService enroll errors', async () => {
+      const error = new Error('MFA already enabled');
+      mfaService.enroll.mockRejectedValue(error);
+
+      await expect(controller.enroll('user-123', 'test@example.com')).rejects.toThrow(
+        'MFA already enabled',
+      );
+    });
+  });
+
+  describe('verify — error handling', () => {
+    it('should propagate mfaService verifyAndEnable errors', async () => {
+      const error = new UnauthorizedException('Invalid verification code');
+      mfaService.verifyAndEnable.mockRejectedValue(error);
+
+      const dto = { token: 'invalid-token' };
+      await expect(controller.verify('user-123', dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should return success message on valid verification', async () => {
+      mfaService.verifyAndEnable.mockResolvedValue(undefined);
+
+      const dto = { token: '123456' };
+      const result = await controller.verify('user-123', dto);
+
+      expect(result).toEqual({
+        message: 'Two-factor authentication enabled successfully',
+      });
+      expect(mfaService.verifyAndEnable).toHaveBeenCalledWith('user-123', '123456');
+    });
+  });
+
+  describe('disable — error handling', () => {
+    it('should propagate mfaService disable errors', async () => {
+      const error = new UnauthorizedException('Current password is incorrect');
+      mfaService.disable.mockRejectedValue(error);
+
+      const dto = { password: 'wrong-password' };
+      await expect(controller.disable('user-123', dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('createBackupCodes — error handling', () => {
+    it('should propagate mfaService regenerateBackupCodes errors', async () => {
+      const error = new Error('MFA not enabled');
+      mfaService.regenerateBackupCodes.mockRejectedValue(error);
+
+      const dto = { token: 'mfa-token' };
+      await expect(controller.createBackupCodes(USER_ID, dto as any)).rejects.toThrow(
+        'MFA not enabled',
+      );
+    });
+  });
+
+  describe('adminReset — error handling', () => {
+    it('should propagate mfaService adminReset errors', async () => {
+      const error = new Error('User not found');
+      mfaService.adminReset.mockRejectedValue(error);
+
+      const mockReq = {
+        user: { userId: 'admin-user', role: 'ADMIN', tenantId: TENANT_ID },
+      } as unknown as Request;
+
+      await expect(controller.adminReset('user-123', mockReq as any)).rejects.toThrow(
+        'User not found',
+      );
+    });
+
+    it('should successfully reset MFA for user', async () => {
+      mfaService.adminReset.mockResolvedValue(undefined);
+      authService.logAdminAction.mockResolvedValue(undefined);
+
+      const result = await controller.adminReset('user-123', 'admin-user');
+
+      expect(result).toEqual({ message: 'Two-factor authentication has been reset. User must set up MFA again.' });
+      expect(mfaService.adminReset).toHaveBeenCalledWith('user-123');
+    });
   });
 });

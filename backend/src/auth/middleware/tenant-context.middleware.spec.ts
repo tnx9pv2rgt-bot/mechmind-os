@@ -100,4 +100,65 @@ describe('TenantContextMiddleware', () => {
     expect(prisma.setTenantContext).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalled();
   });
+
+  it('should handle error message correctly in catch block', async () => {
+    const req = { tenantId: 'tenant-err' } as RequestWithTenant;
+    const errorMessage = 'Custom DB error message';
+    prisma.setTenantContext.mockRejectedValue(new Error(errorMessage));
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Failed to set tenant context: ${errorMessage}`,
+    );
+  });
+
+  it('should properly log debug message when no tenantId exists', async () => {
+    const req = {} as RequestWithTenant;
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    expect(logger.debug).toHaveBeenCalledWith('No tenant ID in request - RLS not applied');
+  });
+
+  it('should call next even when setTenantContext fails', async () => {
+    const req = { tenantId: 'tenant-err' } as RequestWithTenant;
+    prisma.setTenantContext.mockRejectedValue(new Error('Error'));
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should register finish listener when tenantId is present', async () => {
+    const req = { tenantId: 'tenant-123' } as RequestWithTenant;
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    expect(mockRes.on).toHaveBeenCalledWith('finish', expect.any(Function));
+  });
+
+  it('should not register finish listener when tenantId is absent', async () => {
+    const req = {} as RequestWithTenant;
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    expect(mockRes.on).not.toHaveBeenCalled();
+  });
+
+  it('should clear context on response finish with correct tenant ID', async () => {
+    const tenantId = 'clear-test-tenant';
+    const req = { tenantId } as RequestWithTenant;
+
+    await middleware.use(req, mockRes as unknown as Response, next);
+
+    const finishCallback = mockRes.on.mock.calls[0][1];
+    await finishCallback();
+
+    expect(prisma.clearTenantContext).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `Tenant context cleared: ${tenantId}`,
+      'TenantContextMiddleware',
+    );
+  });
 });

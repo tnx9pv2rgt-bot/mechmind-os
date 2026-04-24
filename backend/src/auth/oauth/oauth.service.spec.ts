@@ -284,5 +284,67 @@ describe('OAuthService', () => {
         expect.objectContaining({ ipAddress: undefined }),
       );
     });
+
+    it('should log auth event with correct status', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage', '192.168.1.1');
+
+      expect(authService.logAuthEvent).toHaveBeenCalledWith({
+        userId: 'user-1',
+        tenantId: 'tenant-1',
+        action: 'oauth_google_login',
+        status: 'success',
+        ipAddress: '192.168.1.1',
+      });
+    });
+
+    it('should handle user with inactive tenant', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue({
+        ...mockTenant,
+        isActive: false,
+      } as never);
+
+      await expect(service.loginWithGoogle('credential', 'test-garage')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should properly format mapUserWithTenant output', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      await service.loginWithGoogle('credential', 'test-garage');
+
+      expect(authService.generateTokens).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'user-1',
+          email: 'mario@test.com',
+          name: 'Mario Rossi',
+          role: 'ADMIN',
+          isActive: true,
+          tenantId: 'tenant-1',
+          tenant: expect.objectContaining({
+            id: 'tenant-1',
+            name: 'Test Garage',
+            slug: 'test-garage',
+            isActive: true,
+          }),
+        }),
+      );
+    });
+
+    it('should pass different IP formats to updateLastLogin', async () => {
+      (prisma.tenant.findUnique as jest.Mock).mockResolvedValue(mockTenant as never);
+      (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser as never);
+
+      const ips = ['127.0.0.1', '::1', '192.168.0.1', '2001:db8::1', 'user-proxy-ip'];
+
+      for (const ip of ips) {
+        await service.loginWithGoogle('credential', 'test-garage', ip);
+        expect(authService.updateLastLogin).toHaveBeenCalledWith('user-1', ip);
+      }
+    });
   });
 });
