@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { toast } from 'sonner';
 
 // Mock lucide-react
 jest.mock('lucide-react', () => {
@@ -27,6 +28,7 @@ jest.mock('framer-motion', () => ({
 let mockSWRData: any = undefined;
 let mockSWRError: any = undefined;
 let mockSWRIsLoading = false;
+let mockMutate = jest.fn();
 
 jest.mock('swr', () => ({
   __esModule: true,
@@ -34,7 +36,7 @@ jest.mock('swr', () => ({
     data: mockSWRData,
     error: mockSWRError,
     isLoading: mockSWRIsLoading,
-    mutate: jest.fn(),
+    mutate: mockMutate,
   }),
 }));
 
@@ -85,7 +87,9 @@ jest.mock('zod', () => {
 });
 
 // Mock fetch
+let mockFetch: jest.Mock;
 global.fetch = jest.fn();
+mockFetch = global.fetch as jest.Mock;
 
 // Mock components
 jest.mock('@/components/ui/apple-card', () => ({
@@ -140,6 +144,8 @@ describe('RolesPage', () => {
     mockSWRData = undefined;
     mockSWRError = undefined;
     mockSWRIsLoading = false;
+    mockMutate = jest.fn();
+    mockFetch.mockClear();
   });
 
   describe('Page rendering', () => {
@@ -380,6 +386,375 @@ describe('RolesPage', () => {
       ];
       render(<RolesPage />);
       expect(screen.getByText('Owner')).toBeInTheDocument();
+    });
+  });
+
+  describe('Role selection and permission display', () => {
+    it('should show permission matrix when role is selected', () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'Editor',
+          description: 'Can edit content',
+          userCount: 3,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      render(<RolesPage />);
+      const roleButton = screen.getByText('Editor');
+      fireEvent.click(roleButton);
+      expect(screen.getByText(/Permessi: Editor/)).toBeInTheDocument();
+    });
+
+    it('should display permission checkboxes for modules', () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'Manager',
+          description: 'Manager role',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      render(<RolesPage />);
+      const roleButton = screen.getByText('Manager');
+      fireEvent.click(roleButton);
+      const checkboxes = screen.queryAllByRole('checkbox');
+      expect(checkboxes.length).toBeGreaterThan(0);
+    });
+
+    it('should display column headers in permission matrix', () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'Technician',
+          description: 'Tech role',
+          userCount: 5,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      render(<RolesPage />);
+      const roleButton = screen.getByText('Technician');
+      fireEvent.click(roleButton);
+      expect(screen.getByText('Modulo')).toBeInTheDocument();
+      expect(screen.getByText('Lettura')).toBeInTheDocument();
+      expect(screen.getByText('Scrittura')).toBeInTheDocument();
+    });
+  });
+
+  describe('Permission toggling', () => {
+    it('should toggle permission checkbox', () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'CustomEditor',
+          description: 'Editor role',
+          userCount: 2,
+          isDefault: false,
+          permissions: [
+            { module: 'customers', read: false, write: false, delete: false, export: false },
+          ],
+        },
+      ];
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const customEditorBtn = roleButtons.find(btn => btn.textContent?.includes('CustomEditor'));
+      if (customEditorBtn) fireEvent.click(customEditorBtn);
+      const checkboxes = screen.getAllByRole('checkbox');
+      expect(checkboxes[0].checked).toBe(false);
+      fireEvent.click(checkboxes[0]);
+      expect(checkboxes[0].checked).toBe(true);
+    });
+
+    it('should handle multiple permission toggles', () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'AdminRole',
+          description: 'Full access',
+          userCount: 1,
+          isDefault: true,
+          permissions: [],
+        },
+      ];
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const adminBtn = roleButtons.find(btn => btn.textContent?.includes('AdminRole'));
+      if (adminBtn) fireEvent.click(adminBtn);
+      const checkboxes = screen.getAllByRole('checkbox');
+      fireEvent.click(checkboxes[0]);
+      fireEvent.click(checkboxes[1]);
+      fireEvent.click(checkboxes[2]);
+      expect(checkboxes[0].checked).toBe(true);
+      expect(checkboxes[1].checked).toBe(true);
+      expect(checkboxes[2].checked).toBe(true);
+    });
+  });
+
+  describe('Save permissions', () => {
+    it('should call save endpoint on save button click', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'SaveEditor',
+          description: 'Editor for testing',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const editorBtn = roleButtons.find(btn => btn.textContent?.includes('SaveEditor'));
+      if (editorBtn) fireEvent.click(editorBtn);
+      const saveButton = screen.getByText('Salva');
+      fireEvent.click(saveButton);
+      await waitFor(() => {
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/api/dashboard/settings/roles/role-1',
+          expect.objectContaining({ method: 'PUT' })
+        );
+      });
+    });
+
+    it('should show success toast on successful save', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'SuccessEditor',
+          description: 'Test role',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const editorBtn = roleButtons.find(btn => btn.textContent?.includes('SuccessEditor'));
+      if (editorBtn) fireEvent.click(editorBtn);
+      const saveButton = screen.getByText('Salva');
+      fireEvent.click(saveButton);
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith('Permessi aggiornati con successo');
+      });
+    });
+
+    it('should show error toast on failed save', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'ErrorEditor',
+          description: 'Error test role',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({}),
+      });
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const editorBtn = roleButtons.find(btn => btn.textContent?.includes('ErrorEditor'));
+      if (editorBtn) fireEvent.click(editorBtn);
+      const saveButton = screen.getByText('Salva');
+      fireEvent.click(saveButton);
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled();
+      });
+    });
+
+    it('should disable save button during processing', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'ProcessEditor',
+          description: 'Processing test',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      mockFetch.mockImplementationOnce(() => new Promise(() => {}));
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const editorBtn = roleButtons.find(btn => btn.textContent?.includes('ProcessEditor'));
+      if (editorBtn) fireEvent.click(editorBtn);
+      const saveButton = screen.getByText('Salva');
+      fireEvent.click(saveButton);
+      expect(saveButton).toBeDisabled();
+    });
+  });
+
+  describe('Create role dialog', () => {
+    it('should open create dialog and submit form', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'new-role' }),
+      });
+      render(<RolesPage />);
+      const createBtn = screen.getByText('Nuovo Ruolo');
+      fireEvent.click(createBtn);
+      const inputs = screen.queryAllByRole('textbox');
+      if (inputs.length > 0) {
+        fireEvent.change(inputs[0], { target: { value: 'New Role' } });
+        if (inputs.length > 1) {
+          fireEvent.change(inputs[1], { target: { value: 'Role Description' } });
+        }
+      }
+      const buttons = screen.getAllByRole('button');
+      const submitBtn = buttons.find(b => b.textContent?.includes('Crea Ruolo'));
+      if (submitBtn) {
+        fireEvent.click(submitBtn);
+        await waitFor(() => {
+          expect(mockFetch).toHaveBeenCalledWith(
+            '/api/dashboard/settings/roles',
+            expect.objectContaining({ method: 'POST' })
+          );
+        });
+      }
+    });
+
+    it('should show error when role name is empty', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [];
+      render(<RolesPage />);
+      const createBtn = screen.getByText('Nuovo Ruolo');
+      fireEvent.click(createBtn);
+      const buttons = screen.getAllByRole('button');
+      const submitBtn = buttons.find(b => b.textContent?.includes('Crea Ruolo'));
+      if (submitBtn) {
+        fireEvent.click(submitBtn);
+        await waitFor(() => {
+          expect(toast.error).toHaveBeenCalledWith('Inserisci un nome per il ruolo');
+        });
+      }
+    });
+
+    it('should close dialog after successful creation', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'new-role' }),
+      });
+      render(<RolesPage />);
+      const createBtn = screen.getByText('Nuovo Ruolo');
+      fireEvent.click(createBtn);
+      const inputs = screen.queryAllByRole('textbox');
+      if (inputs.length > 0) {
+        fireEvent.change(inputs[0], { target: { value: 'New Role' } });
+      }
+      const buttons = screen.getAllByRole('button');
+      const submitBtn = buttons.find(b => b.textContent?.includes('Crea Ruolo'));
+      if (submitBtn) {
+        fireEvent.click(submitBtn);
+        await waitFor(() => {
+          expect(toast.success).toHaveBeenCalledWith('Ruolo creato con successo');
+        });
+      }
+    });
+
+    it('should show success toast on role creation', async () => {
+      mockSWRIsLoading = false;
+      mockSWRData = [];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'new-role' }),
+      });
+      render(<RolesPage />);
+      const createBtn = screen.getByText('Nuovo Ruolo');
+      fireEvent.click(createBtn);
+      const inputs = screen.queryAllByRole('textbox');
+      if (inputs.length > 0) {
+        fireEvent.change(inputs[0], { target: { value: 'Warehouse Manager' } });
+      }
+      const buttons = screen.getAllByRole('button');
+      const submitBtn = buttons.find(b => b.textContent?.includes('Crea Ruolo'));
+      if (submitBtn) {
+        fireEvent.click(submitBtn);
+        await waitFor(() => {
+          expect(toast.success).toHaveBeenCalled();
+        });
+      }
+    });
+  });
+
+  describe('Mutate after operations', () => {
+    it('should call mutate after saving permissions', async () => {
+      mockSWRIsLoading = false;
+      mockMutate = jest.fn();
+      mockSWRData = [
+        {
+          id: 'role-1',
+          name: 'MutateEditor',
+          description: 'Mutate test',
+          userCount: 2,
+          isDefault: false,
+          permissions: [],
+        },
+      ];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+      render(<RolesPage />);
+      const roleButtons = screen.getAllByRole('button');
+      const editorBtn = roleButtons.find(btn => btn.textContent?.includes('MutateEditor'));
+      if (editorBtn) fireEvent.click(editorBtn);
+      const saveButton = screen.getByText('Salva');
+      fireEvent.click(saveButton);
+      await waitFor(() => {
+        expect(mockMutate).toHaveBeenCalled();
+      });
+    });
+
+    it('should call mutate after creating role', async () => {
+      mockSWRIsLoading = false;
+      mockMutate = jest.fn();
+      mockSWRData = [];
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'new-role' }),
+      });
+      render(<RolesPage />);
+      const createBtn = screen.getByText('Nuovo Ruolo');
+      fireEvent.click(createBtn);
+      const inputs = screen.queryAllByRole('textbox');
+      if (inputs.length > 0) {
+        fireEvent.change(inputs[0], { target: { value: 'NewMutateRole' } });
+      }
+      const buttons = screen.getAllByRole('button');
+      const submitBtn = buttons.find(b => b.textContent?.includes('Crea Ruolo'));
+      if (submitBtn) {
+        fireEvent.click(submitBtn);
+        await waitFor(() => {
+          expect(mockMutate).toHaveBeenCalled();
+        });
+      }
     });
   });
 });

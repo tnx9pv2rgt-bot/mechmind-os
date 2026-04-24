@@ -2,6 +2,8 @@
 name: apex-revisione-backend
 description: Revisione completa backend NestJS. Controlla RLS tenantId, PII, auth, CORS, SQL injection, console.log, TypeScript any, HttpException nei service. Cascade Static→Haiku→Sonnet→Opus. Risparmio token ~97%.
 allowed-tools: [Bash, Read, Grep, Glob]
+effort: low
+argument-hint: "[modulo|resume]"
 ---
 
 # Apex — Revisione Backend

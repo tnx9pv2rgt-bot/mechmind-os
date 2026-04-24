@@ -2,6 +2,8 @@
 name: apex-qualita-codice
 description: Rileva e corregge problemi di qualità nel backend NestJS: N+1 Prisma, HttpException nei service, TypeScript any, tenantId mancante, pagination assente, console.log, process.env diretto. Cascade Static→Haiku→Sonnet→Opus.
 allowed-tools: [Bash, Read, Grep, Glob]
+effort: low
+argument-hint: "[modulo|resume]"
 ---
 
 # Apex — Qualità Codice

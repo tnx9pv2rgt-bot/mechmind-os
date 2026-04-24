@@ -2,6 +2,8 @@
 name: apex-generatore-endpoint
 description: Trova endpoint backend mancanti confrontando API route frontend vs controller NestJS. Crea controller method + DTO + service method per ogni gap trovato. Cascade Static→Haiku→Sonnet→Opus.
 allowed-tools: [Bash, Read, Grep, Glob]
+effort: low
+argument-hint: "[modulo|resume]"
 ---
 
 # Apex — Generatore Endpoint

@@ -2,6 +2,8 @@
 name: apex-revisione-frontend
 description: Revisione completa frontend Next.js. Controlla loading/error/empty states, UI in italiano, dark mode, SWR, react-hook-form+Zod, mock data nelle API route, auth mancante. Cascade Static→Haiku→Sonnet→Opus.
 allowed-tools: [Bash, Read, Grep, Glob]
+effort: low
+argument-hint: "[sezione|resume]"
 ---
 
 # Apex — Revisione Frontend

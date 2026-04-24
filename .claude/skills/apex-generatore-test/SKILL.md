@@ -2,6 +2,8 @@
 name: apex-generatore-test
 description: Trova service/controller NestJS senza .spec.ts o con copertura insufficiente. Genera test Jest con mock PrismaService, TenantId, happy path + edge cases + casi di errore. Cascade Static→Haiku→Sonnet→Opus.
 allowed-tools: [Bash, Read, Grep, Glob]
+effort: low
+argument-hint: "[modulo|resume]"
 ---
 
 # Apex — Generatore Test

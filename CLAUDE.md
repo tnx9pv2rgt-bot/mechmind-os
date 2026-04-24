@@ -45,6 +45,9 @@
 4. Redis — SPOF per BullMQ/cache/pub-sub.
 5. Booking concurrency — advisory lock.
 
+## COMPACT INSTRUCTIONS
+When using /compact, preserve: regole ANTI-MOCK, PUNTI FRAGILI, tenantId, TDD, state machine. Scarta: output di test passati, log di ricerca file, spiegazioni già risolte.
+
 ## RIFERIMENTI
 - Indice documentazione: docs/README.md
 - Catalogo errori: docs/09-ERROR-CATALOG.md
