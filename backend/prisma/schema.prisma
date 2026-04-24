@@ -33,6 +33,7 @@ model Tenant {
   // DVI
   inspections         Inspection[]
   inspectionTemplates InspectionTemplate[]
+  aiDecisionOverrideAuditLogs AIDecisionOverrideAuditLog[]
 
   // OBD
   obdDevices  ObdDevice[]
@@ -962,6 +963,42 @@ model InspectionFinding {
   @@index([severity])
   @@index([status])
   @@map("inspection_findings")
+}
+
+// ==========================================
+// AI Decision Override Audit Log (EU AI Act)
+// Immutable audit trail for all AI decision overrides
+// ==========================================
+
+model AIDecisionOverrideAuditLog {
+  id String @id @default(uuid())
+
+  // Assessment details
+  assessmentId String @map("assessment_id")
+  tenantId     String @map("tenant_id")
+
+  // Reviewer information
+  reviewerUserId String @map("reviewer_user_id")
+  reviewerEmail  String @map("reviewer_email")
+
+  // Decision tracking (immutable GDPR audit trail)
+  originalDecision    String @map("original_decision")   // AI decision (severity)
+  originalConfidence  Int    @map("original_confidence") // AI model confidence (0-100)
+  overrideDecision    String @map("override_decision")   // Human override decision
+  assessorConfidence  Int    @map("assessor_confidence") // Assessor confidence (0-100)
+  notes               String?
+
+  // Immutable timestamp
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([assessmentId])
+  @@index([reviewerUserId])
+  @@index([tenantId, createdAt])
+  @@map("ai_decision_override_audit_logs")
 }
 
 // ==========================================
@@ -4128,4 +4165,40 @@ model WebhookSubscription {
   @@index([tenantId])
   @@index([tenantId, isActive])
   @@map("webhook_subscriptions")
+}
+
+// ==========================================
+// AI VOICE INTERACTION LOG (EU AI Act)
+// ==========================================
+// Compliance with EU AI Act Article 13 & 14
+// - Transparency: AI disclosure at call start
+// - Audit trail: GDPR Art.22 automated decision-making
+// - Opt-out: Customer "talk to human" request tracking
+
+model AIVoiceInteractionLog {
+  id String @id @default(uuid())
+
+  callId        String @map("call_id")
+  tenantId      String @map("tenant_id")
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerPhone String? @map("customer_phone")
+
+  // Decision type: 'ai_generated', 'human_escalated', 'ai_offer_escalation'
+  decisionType     String @map("decision_type")
+  confidence       Float? // AI confidence score (0-1)
+  humanOverride    Boolean @map("human_override") // True if customer requested human
+  escalationReason String? @map("escalation_reason") // Why escalation happened
+
+  // Transcript markers for attribution (e.g., "[AI] response" vs "[Human] escalated")
+  transcriptMarkers Json? @map("transcript_markers")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@index([callId])
+  @@index([tenantId, createdAt])
+  @@index([customerPhone])
+  @@index([decisionType])
+  @@index([humanOverride])
+  @@map("ai_voice_interaction_logs")
 }
