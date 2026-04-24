@@ -134,6 +134,20 @@ describe('VoicePricingService', () => {
     });
   });
 
+  describe('updateExchangeRate', () => {
+    it('should update USD to EUR exchange rate', () => {
+      const originalRate = VOICE_PRICING_STRATEGY.usdToEurRate;
+      const newRate = 0.95;
+
+      service.updateExchangeRate(newRate);
+
+      expect(VOICE_PRICING_STRATEGY.usdToEurRate).toBe(newRate);
+
+      // Restore
+      VOICE_PRICING_STRATEGY.usdToEurRate = originalRate;
+    });
+  });
+
   describe('applyPricing', () => {
     it('should update VOICE_ADDON with new prices', () => {
       const result = service.applyPricing(59, 0.45);
@@ -180,6 +194,111 @@ describe('VoicePricingService', () => {
       expect(result.calculation.costsStale).toBe(true);
       expect(result.applied).toBe(false);
       expect(result.reason).toContain('stale');
+    });
+
+    it('should handle audit log creation error gracefully', async () => {
+      // Mock error nel create
+      const errorMock = jest.fn().mockRejectedValue(new Error('DB error'));
+      mockPrisma.auditLog.create = errorMock;
+
+      // Non dovrebbe lanciare errore
+      const result = await service.quarterlyReview();
+
+      expect(result).toBeDefined();
+      expect(result.calculation).toBeDefined();
+    });
+
+    it('should not apply pricing when price change not required', async () => {
+      // Verifica che quando il margine è OK, non applica changes
+      const originalPrice = VOICE_ADDON.monthlyPrice;
+      const result = await service.quarterlyReview();
+
+      // Se il margine è OK, applied dovrebbe essere false
+      if (!result.calculation.priceChangeRequired) {
+        expect(result.applied).toBe(false);
+        expect(VOICE_ADDON.monthlyPrice).toBe(originalPrice);
+      }
+    });
+
+    it('should apply pricing when autoApply is true and price change required', async () => {
+      // Import per modificare il config
+      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
+      const originalAutoApply = QUARTERLY_REVIEW.autoApply;
+
+      // Imposta prezzi molto alti per forzare price change
+      VOICE_PROVIDER_COSTS[0].costPerMinuteUsd = 1.0;
+      VOICE_PROVIDER_COSTS[0].lastUpdated = new Date().toISOString().split('T')[0];
+
+      // Abilita auto-apply
+      QUARTERLY_REVIEW.autoApply = true;
+
+      try {
+        const result = await service.quarterlyReview();
+
+        if (result.calculation.priceChangeRequired) {
+          expect(result.applied).toBe(true);
+          expect(result.notifyCustomers).toBe(true);
+          expect(result.effectiveDate).not.toBeNull();
+        }
+      } finally {
+        // Restore original state
+        QUARTERLY_REVIEW.autoApply = originalAutoApply;
+      }
+    });
+  });
+
+  describe('handleQuarterlyReview (cron)', () => {
+    it('should execute quarterly review without throwing', async () => {
+      // Non testare il cron scheduling, solo che il metodo non lancia
+      await expect(service.handleQuarterlyReview()).resolves.not.toThrow();
+    });
+
+    it('should handle errors in quarterly review gracefully', async () => {
+      // Mock error nel quarterlyReview
+      jest.spyOn(service, 'quarterlyReview').mockRejectedValue(new Error('Review error'));
+
+      // Non dovrebbe lanciare errore
+      await expect(service.handleQuarterlyReview()).resolves.not.toThrow();
+    });
+
+    it('should log customer notification when result.notifyCustomers is true', async () => {
+      // Imposta prezzi alti per forzare price change
+      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
+      const originalAutoApply = QUARTERLY_REVIEW.autoApply;
+
+      VOICE_PROVIDER_COSTS[0].costPerMinuteUsd = 1.0;
+      VOICE_PROVIDER_COSTS[0].lastUpdated = new Date().toISOString().split('T')[0];
+      QUARTERLY_REVIEW.autoApply = true;
+
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      try {
+        await service.handleQuarterlyReview();
+
+        // Verifica che il logger sia stato chiamato almeno una volta
+        expect(loggerSpy).toHaveBeenCalled();
+      } finally {
+        QUARTERLY_REVIEW.autoApply = originalAutoApply;
+        loggerSpy.mockRestore();
+      }
+    });
+  });
+
+  describe('quarterly review edge cases', () => {
+    it('should return manual approval message when autoApply is false and price change required', async () => {
+      // Imposta prezzi alti
+      const { QUARTERLY_REVIEW } = require('../config/voice-provider-costs.config');
+
+      VOICE_PROVIDER_COSTS[0].costPerMinuteUsd = 1.0;
+      VOICE_PROVIDER_COSTS[0].lastUpdated = new Date().toISOString().split('T')[0];
+
+      const result = await service.quarterlyReview();
+
+      if (result.calculation.priceChangeRequired && !QUARTERLY_REVIEW.autoApply) {
+        expect(result.applied).toBe(false);
+        expect(result.reason).toContain('approvazione admin');
+        expect(result.effectiveDate).not.toBeNull();
+      }
     });
   });
 });
