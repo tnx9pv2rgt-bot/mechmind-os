@@ -286,4 +286,5 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 14:45 | backend | iot | vehicle-twin.service | **98.87% / 83.72%** | ✅ COMPLETATO (Digital twin, predictive alerts) |
 | 2026-04-24 14:45 | backend | iot | **MODULE SUMMARY** | **98.75% / 86.64%** | ✅ **COMPLETATO** (269 test, sensor data ingestion, real-time telemetry, MQTT, WebSocket streaming) |
 | 2026-04-24 19:15 | backend | common | **MODULE SUMMARY** | **95.92% / 80.53%** | ✅ **COMPLETATO** (TIER_2 SPOF CRITICAL: 341 test, 25 files: PrismaService + EncryptionService AES-256, RLS policies, tenant isolation, advisory lock, state machine, Redis, S3, BullMQ, circuit breaker) |
+| 2026-04-24 18:50 | backend | auth | **MODULE SUMMARY** | **94.23% / 82.77%** | ⏳ **ITER 1 IN PROGRESS** (+14 tests: 673 total. Fixed auth.controller.spec mocks, added sessions/devices error paths. Target ≥90% branches — +7.23 pts required) |
 <\!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->

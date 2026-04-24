@@ -1408,5 +1408,255 @@ describe('AuthController', () => {
       expect(authService.verifyPassword).toHaveBeenCalledWith('old123!', '');
     });
   });
+
+  // getMe() tests
+  describe('getMe', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should return user profile when found and tenantId matches', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      const mockDbUser = {
+        id: 'user-001',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'ADMIN',
+        isActive: true,
+        tenantId: 'tenant-001',
+        createdAt: new Date(),
+        avatar: 'https://avatar.url',
+        tenant: { id: 'tenant-001', name: 'Test Tenant', slug: 'test' },
+      };
+      prismaService.user.findUnique.mockResolvedValue(mockDbUser);
+
+      const result = await controller.getMe(user as never);
+
+      expect(result).toEqual(mockDbUser);
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-001' },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+          tenantId: true,
+          createdAt: true,
+          avatar: true,
+          tenant: { select: { id: true, name: true, slug: true } },
+        },
+      });
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      prismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(controller.getMe(user as never)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when tenantId does not match', async () => {
+      const prismaService = module.get(PrismaService) as any;
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        tenantId: 'different-tenant',
+      });
+
+      await expect(controller.getMe(user as never)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // logout() tests
+  describe('logout', () => {
+    it('should call authService.logout and return success', async () => {
+      authService.logout.mockResolvedValue(undefined);
+
+      const result = await controller.logout('Bearer token-123', { refreshToken: 'refresh-123' });
+
+      expect(result).toEqual({ success: true });
+      expect(authService.logout).toHaveBeenCalledWith('token-123', 'refresh-123');
+    });
+
+    it('should handle missing authorization header', async () => {
+      authService.logout.mockResolvedValue(undefined);
+
+      const result = await controller.logout('', {});
+
+      expect(result).toEqual({ success: true });
+      expect(authService.logout).toHaveBeenCalledWith('', undefined);
+    });
+
+    it('should handle missing refreshToken in body', async () => {
+      authService.logout.mockResolvedValue(undefined);
+
+      const result = await controller.logout('Bearer token-123', {});
+
+      expect(result).toEqual({ success: true });
+      expect(authService.logout).toHaveBeenCalledWith('token-123', undefined);
+    });
+  });
+
+  // listSessions() tests
+  describe('listSessions', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should return list of user sessions', async () => {
+      const mockSessions = [{ id: 'session-1', createdAt: new Date() }];
+      const sessionService = module.get(SessionService) as any;
+      sessionService.listSessions.mockResolvedValue(mockSessions);
+
+      const result = await controller.listSessions(user as never, 'Bearer token-123');
+
+      expect(result).toEqual(mockSessions);
+      expect(sessionService.listSessions).toHaveBeenCalledWith('user-001', 'token-123');
+    });
+  });
+
+  // revokeSession() tests
+  describe('revokeSession', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should revoke a session', async () => {
+      const sessionService = module.get(SessionService) as any;
+      sessionService.revokeSession.mockResolvedValue(undefined);
+
+      const result = await controller.revokeSession(user as never, { sessionId: 'session-123' } as never);
+
+      expect(result).toEqual({ success: true });
+      expect(sessionService.revokeSession).toHaveBeenCalledWith('user-001', 'session-123');
+    });
+  });
+
+  // revokeOtherSessions() tests
+  describe('revokeOtherSessions', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should revoke all other sessions', async () => {
+      const sessionService = module.get(SessionService) as any;
+      sessionService.revokeAllOtherSessions.mockResolvedValue(3);
+
+      const result = await controller.revokeOtherSessions(user as never, { currentSessionId: 'current-session' } as never);
+
+      expect(result).toEqual({ success: true, count: 3 });
+      expect(sessionService.revokeAllOtherSessions).toHaveBeenCalledWith('user-001', 'current-session');
+    });
+
+    it('should handle no other sessions', async () => {
+      const sessionService = module.get(SessionService) as any;
+      sessionService.revokeAllOtherSessions.mockResolvedValue(0);
+
+      const result = await controller.revokeOtherSessions(user as never, { currentSessionId: 'current-session' } as never);
+
+      expect(result).toEqual({ success: true, count: 0 });
+    });
+  });
+
+  // listDevices() tests
+  describe('listDevices', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should return list of trusted devices', async () => {
+      const mockDevices = [{ id: 'device-1', name: 'Chrome on Mac', createdAt: new Date() }];
+      const trustedDeviceService = module.get(TrustedDeviceService) as any;
+      trustedDeviceService.listDevices.mockResolvedValue(mockDevices);
+
+      const result = await controller.listDevices(user as never);
+
+      expect(result).toEqual(mockDevices);
+      expect(trustedDeviceService.listDevices).toHaveBeenCalledWith('user-001');
+    });
+  });
+
+  // trustDevice() tests
+  describe('trustDevice', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should trust a device', async () => {
+      const trustedDeviceService = module.get(TrustedDeviceService) as any;
+      const securityActivityService = module.get(SecurityActivityService) as any;
+      const mockResult = { id: 'device-123', trustedUntil: new Date() };
+      trustedDeviceService.trustDevice.mockResolvedValue(mockResult);
+      securityActivityService.logEvent.mockReturnValue(Promise.resolve(undefined));
+
+      const dto = { days: 30 };
+      const result = await controller.trustDevice('device-123', user as never, dto as never);
+
+      expect(result).toEqual(mockResult);
+      expect(trustedDeviceService.trustDevice).toHaveBeenCalledWith('device-123', 'user-001', 30);
+    });
+  });
+
+  // untrustDevice() tests
+  describe('untrustDevice', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should untrust a device', async () => {
+      const trustedDeviceService = module.get(TrustedDeviceService) as any;
+      const securityActivityService = module.get(SecurityActivityService) as any;
+      trustedDeviceService.untrustDevice.mockResolvedValue(undefined);
+      securityActivityService.logEvent.mockReturnValue(Promise.resolve(undefined));
+
+      const result = await controller.untrustDevice('device-123', user as never);
+
+      expect(result).toEqual({ success: true });
+      expect(trustedDeviceService.untrustDevice).toHaveBeenCalledWith('device-123', 'user-001');
+    });
+  });
+
+  // untrustAllDevices() tests
+  describe('untrustAllDevices', () => {
+    const user = {
+      userId: 'user-001',
+      email: 'test@example.com',
+      tenantId: 'tenant-001',
+      role: 'ADMIN',
+    };
+
+    it('should untrust all devices', async () => {
+      const trustedDeviceService = module.get(TrustedDeviceService) as any;
+      const securityActivityService = module.get(SecurityActivityService) as any;
+      trustedDeviceService.untrustAllDevices.mockResolvedValue(5);
+      securityActivityService.logEvent.mockReturnValue(Promise.resolve(undefined));
+
+      const result = await controller.untrustAllDevices(user as never);
+
+      expect(result).toEqual({ success: true, count: 5 });
+      expect(trustedDeviceService.untrustAllDevices).toHaveBeenCalledWith('user-001');
+    });
+  });
 });
 
