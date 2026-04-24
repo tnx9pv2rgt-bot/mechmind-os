@@ -226,4 +226,52 @@ describe('PaymentLinkService', () => {
       expect(prisma.invoice.update).not.toHaveBeenCalled();
     });
   });
+
+  describe('Stripe configuration edge cases', () => {
+    it('should log payment link creation', async () => {
+      const invoice = makeMockInvoice({ status: 'SENT' });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.update.mockResolvedValue(invoice);
+      const loggerSpy = jest.spyOn(service['logger'], 'log');
+
+      await service.createPaymentLink(INVOICE_ID, TENANT_ID);
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Payment link created')
+      );
+    });
+  });
+
+  describe('sendPaymentSms decryption', () => {
+    it('should use default name when encryptedFirstName is null', async () => {
+      const invoice = makeMockInvoice({
+        status: 'SENT',
+        customer: { id: 'customer-001', encryptedFirstName: null },
+        paymentLinkUrl: 'https://checkout.stripe.com/pay/test',
+        paymentLinkId: 'cs_test',
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const result = await service.sendPaymentSms('invoice-001', TENANT_ID);
+
+      expect(result.sent).toBe(true);
+      expect(result.paymentUrl).toBe('https://checkout.stripe.com/pay/test');
+    });
+
+    it('should decrypt customer name when encryptedFirstName exists', async () => {
+      const invoice = makeMockInvoice({
+        status: 'SENT',
+        customer: { id: 'customer-001', encryptedFirstName: 'enc-Mario' },
+        paymentLinkUrl: 'https://checkout.stripe.com/pay/test',
+        paymentLinkId: 'cs_test',
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      encryption.decrypt.mockReturnValue('Mario');
+
+      await service.sendPaymentSms('invoice-001', TENANT_ID);
+
+      expect(encryption.decrypt).toHaveBeenCalledWith('enc-Mario');
+    });
+  });
+
 });
