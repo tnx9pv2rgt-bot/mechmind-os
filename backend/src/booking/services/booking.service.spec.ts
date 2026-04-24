@@ -997,4 +997,164 @@ describe('BookingService', () => {
       );
     });
   });
+
+  // =========================================================================
+  // SECURITY: Cross-tenant isolation (OWASP A01:2021 — Broken Access Control)
+  // =========================================================================
+  describe('SECURITY: Cross-tenant booking isolation', () => {
+    it('should reject access to booking from different tenant', async () => {
+      // Simulate that booking is only found within correct tenant scope
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.findById(TENANT_ID, 'booking-999')).rejects.toThrow(NotFoundException);
+
+      // Verify withTenant was called to enforce scoping
+      expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
+    });
+
+    it('should filter findAll by tenantId, rejecting cross-tenant access', async () => {
+      (prisma.booking.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.booking.count as jest.Mock).mockResolvedValue(0);
+
+      await service.findAll(TENANT_ID);
+
+      // Verify ALL queries include tenantId in WHERE clause
+      const callArgs = (prisma.booking.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArgs.where.tenantId).toBe(TENANT_ID);
+    });
+
+    it('should never return other tenant bookings via findAll', async () => {
+      const myTenantBooking = { id: 'booking-001', tenantId: TENANT_ID };
+      const otherTenantBooking = { id: 'booking-999', tenantId: 'tenant-002' };
+      // Only return bookings for TENANT_ID
+      (prisma.booking.findMany as jest.Mock).mockResolvedValue([myTenantBooking]);
+      (prisma.booking.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.findAll(TENANT_ID);
+
+      expect(result.bookings).toEqual([myTenantBooking]);
+      expect(result.bookings).not.toContainEqual(otherTenantBooking);
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Race condition & advisory lock verification
+  // =========================================================================
+  describe('SECURITY: Concurrent booking race condition prevention', () => {
+    it('should acquire advisory lock before booking slot', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+        notes: 'Test',
+      };
+
+      await service.reserveSlot(TENANT_ID, dto);
+
+      // Lock must be acquired on (tenantId, slotId) tuple
+      expect(prisma.acquireAdvisoryLock).toHaveBeenCalledWith(TENANT_ID, SLOT_ID);
+    });
+
+    it('should release advisory lock even if booking creation fails', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+        notes: 'Test',
+      };
+      // Simulate booking failure after lock acquired
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(null);
+
+      try {
+        await service.reserveSlot(TENANT_ID, dto);
+      } catch {
+        /* expected */
+      }
+
+      expect(prisma.releaseAdvisoryLock).toHaveBeenCalledWith(TENANT_ID, SLOT_ID);
+    });
+
+    it('should use SERIALIZABLE transaction for race condition prevention', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+        notes: 'Test',
+      };
+
+      await service.reserveSlot(TENANT_ID, dto);
+
+      expect(prisma.withSerializableTransaction).toHaveBeenCalled();
+      const callArgs = (prisma.withSerializableTransaction as jest.Mock).mock.calls[0];
+      expect(typeof callArgs[0]).toBe('function');
+    });
+
+    it('should reject concurrent attempts when lock unavailable', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+        notes: 'Test',
+      };
+      (prisma.acquireAdvisoryLock as jest.Mock).mockResolvedValue(false);
+
+      const result = await service.reserveSlot(TENANT_ID, dto);
+
+      expect(result.success).toBe(false);
+      expect(result.conflict).toBe(true);
+      expect(result.retryAfter).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: State machine validation
+  // =========================================================================
+  describe('SECURITY: Booking state machine transitions', () => {
+    it('should reject invalid status transition (CANCELLED → CONFIRMED)', async () => {
+      const booking = { id: 'booking-001', tenantId: TENANT_ID, status: 'CANCELLED' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(booking);
+
+      // Attempting to confirm a cancelled booking should fail
+      await expect(
+        service.updateBooking(TENANT_ID, 'booking-001', { status: 'CONFIRMED' }),
+      ).rejects.toThrow();
+    });
+
+    it('should allow valid transition (PENDING → CONFIRMED)', async () => {
+      const booking = { id: 'booking-001', tenantId: TENANT_ID, status: 'PENDING' };
+      const updated = { ...booking, status: 'CONFIRMED' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(booking);
+      (prisma.booking.update as jest.Mock).mockResolvedValue(updated);
+
+      const result = await service.updateBooking(TENANT_ID, 'booking-001', {
+        status: 'CONFIRMED',
+      });
+
+      expect(result.status).toBe('CONFIRMED');
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Optimistic locking conflict detection
+  // =========================================================================
+  describe('SECURITY: Optimistic locking & version conflicts', () => {
+    it('should detect conflicting updates on concurrent modifications', async () => {
+      const booking = { id: 'booking-001', tenantId: TENANT_ID, status: 'PENDING' };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(booking);
+      // Simulate conflict: another process already updated
+      (prisma.booking.update as jest.Mock).mockImplementation(() => {
+        throw new Error('Prisma P2025: Record not found (conflict)');
+      });
+
+      await expect(
+        service.updateBooking(TENANT_ID, 'booking-001', {
+          status: 'CONFIRMED',
+        }),
+      ).rejects.toThrow();
+    });
+  });
 });

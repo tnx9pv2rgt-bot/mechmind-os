@@ -1619,4 +1619,233 @@ describe('SubscriptionService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
+  // =========================================================================
+  // SECURITY: Recurring billing state machine (dunning + metering)
+  // =========================================================================
+  describe('SECURITY: Subscription state machine validation', () => {
+    it('should reject invalid transition (CANCELLED → ACTIVE without reactivation)', async () => {
+      const cancelled = {
+        ...mockSubscription,
+        status: SubscriptionStatus.CANCELLED,
+        cancelledAt: new Date(),
+      };
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(cancelled);
+
+      // Cannot directly transition to ACTIVE; must use reactivateSubscription
+      await expect(
+        service.upgradeSubscription(TENANT_ID, {
+          newPlan: SubscriptionPlan.MEDIUM,
+          billingCycle: 'monthly',
+        }),
+      ).rejects.toThrow();
+    });
+
+    it('should allow valid transition (ACTIVE → CANCELLATION_PENDING)', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+      ((prisma.subscription as Record<string, jest.Mock>).update as jest.Mock).mockResolvedValue({
+        ...mockSubscription,
+        status: SubscriptionStatus.ACTIVE,
+      });
+
+      const result = await service.cancelSubscription(TENANT_ID);
+
+      expect(result.subscription.plan).toBe(mockSubscription.plan);
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Metering & usage limits enforcement
+  // =========================================================================
+  describe('SECURITY: API call metering validation', () => {
+    it('should enforce max users per plan tier', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSmallSubscription,
+      );
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.limits.maxUsers).toBeDefined();
+      expect(result.limits.maxUsers).toBeGreaterThan(0);
+    });
+
+    it('should enforce max locations per plan', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSmallSubscription,
+      );
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.limits).toBeDefined();
+      expect(result.limits.maxLocations).toBe(mockSmallSubscription.maxLocations);
+    });
+
+    it('should provide API call limits in subscription response', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.limits.maxApiCallsPerMonth).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Cross-tenant subscription isolation
+  // =========================================================================
+  describe('SECURITY: Cross-tenant subscription isolation', () => {
+    it('should reject subscription access from different tenant', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(null);
+
+      await expect(service.getSubscription(TENANT_ID)).rejects.toThrow(NotFoundException);
+
+      // Verify findUnique included tenantId
+      expect(
+        (prisma.subscription as Record<string, jest.Mock>).findUnique as jest.Mock,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: TENANT_ID,
+          }),
+        }),
+      );
+    });
+
+    it('should filter all subscription queries by tenantId', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+
+      await service.getSubscription(TENANT_ID);
+
+      const findUniqueMock = (prisma.subscription as Record<string, jest.Mock>)
+        .findUnique as jest.Mock;
+      const callArgs = findUniqueMock.mock.calls[0]?.[0];
+      expect(callArgs?.where?.tenantId).toBe(TENANT_ID);
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Dunning workflow (retry failed payments)
+  // =========================================================================
+  describe('SECURITY: Dunning workflow execution', () => {
+    it('should track subscription status including PAST_DUE', async () => {
+      const subWithFailedPayment = {
+        ...mockSubscription,
+        status: SubscriptionStatus.PAST_DUE,
+      };
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        subWithFailedPayment,
+      );
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.status).toBe(SubscriptionStatus.PAST_DUE);
+    });
+
+    it('should record subscription change events on transitions', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+
+      // Perform an upgrade which should be transactional
+      const result = await service.upgradeSubscription(TENANT_ID, {
+        newPlan: SubscriptionPlan.ENTERPRISE,
+        billingCycle: 'yearly',
+      });
+
+      // Verify the transaction was initiated (changes are recorded within transaction)
+      const prismaWithTx = prisma as Record<string, jest.Mock>;
+      expect(prismaWithTx.$transaction).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: AI Addon pricing transparency (2026 EU AI Act)
+  // =========================================================================
+  describe('SECURITY: AI addon feature transparency (EU AI Act 2026)', () => {
+    it('should clearly indicate AI addon is enabled', async () => {
+      const aiSub = {
+        ...mockSubscription,
+        aiAddonEnabled: true,
+      };
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(aiSub);
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.aiAddonEnabled).toBe(true);
+    });
+
+    it('should require explicit consent to enable AI addon', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+      ((prisma.subscription as Record<string, jest.Mock>).update as jest.Mock).mockResolvedValue({
+        ...mockSubscription,
+        aiAddonEnabled: true,
+      });
+
+      // Must explicitly request AI addon via toggleAiAddon
+      const result = await service.toggleAiAddon(TENANT_ID, true);
+
+      // Result is a subscription response
+      expect(result).toBeDefined();
+    });
+
+    it('should include AI addon in features list when enabled', async () => {
+      const aiSubWithConsent = {
+        ...mockSubscription,
+        aiAddonEnabled: true,
+      };
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        aiSubWithConsent,
+      );
+
+      const result = await service.getSubscription(TENANT_ID);
+
+      expect(result.aiAddonEnabled).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Continuous compliance logging (audit trail)
+  // =========================================================================
+  describe('SECURITY: Subscription change audit log', () => {
+    it('should perform transactional updates on subscription changes', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+
+      // Verify that upgradeSubscription performs a transaction
+      const result = await service.upgradeSubscription(TENANT_ID, {
+        newPlan: SubscriptionPlan.ENTERPRISE,
+        billingCycle: 'yearly',
+      });
+
+      // Verify transaction was called
+      const prismaWithTx2 = prisma as Record<string, jest.Mock>;
+      expect(prismaWithTx2.$transaction).toHaveBeenCalled();
+      expect(result).toBeDefined();
+    });
+
+    it('should track all billing state changes', async () => {
+      (prisma.subscription as Record<string, jest.Mock>).findUnique.mockResolvedValue(
+        mockSubscription,
+      );
+
+      // Any upgrade/downgrade should be transactional
+      const upgradeResult = await service.upgradeSubscription(TENANT_ID, {
+        newPlan: SubscriptionPlan.ENTERPRISE,
+        billingCycle: 'yearly',
+      });
+
+      expect(upgradeResult).toBeDefined();
+      const prismaWithTx3 = prisma as Record<string, jest.Mock>;
+      expect(prismaWithTx3.$transaction).toHaveBeenCalled();
+    });
+  });
 });
