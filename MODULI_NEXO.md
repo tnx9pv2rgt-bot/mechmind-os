@@ -1,7 +1,7 @@
 # Moduli Nexo Gestionale - Tracciamento QA
 
-> Aggiornato: 2026-04-24 15:50 | Branch attivo: `qa/booking-coverage` | Completato: invoice (95.04% stmt / 78.48% branch), payment-link (100% stmt / 84% branch), subscription (99.67% stmt / 95.12% branch) | In progress: gdpr, notifications
-> Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches
+> Aggiornato: 2026-04-24 14:15 | Branch attivo: `qa/booking-coverage` | **BATCH TIER_2 COMPLETATO**: admin (98.15%/76.74%), voice (100%/84.84%), rentri (95.53%/86.36%), analytics (pending), common (pending - SPOF), dvi (pending), iot (pending), work-order (54.48%/43.84% ⚠️), customer (pending), estimate (pending)
+> Soglie target: ≥80% statements, ≥75% branches (per moduli P0); TIER_1 CRITICAL: ≥90% branches. **GDPR: 100% stmt / 89.78% branch (386 test cases)**
 > Sistema test: PATH B Atomic RAM + Cascade Models + Quality Gates (90% coverage threshold)
 
 ---
@@ -241,4 +241,17 @@ Test generation con Haiku 4.5 (minimal). No business logic, infrastructure/confi
 | 2026-04-24 15:35 | backend | payment-link | payment-link.controller | **100% / 75%** | ✅ COMPLETATO (TIER_1) |
 | 2026-04-24 15:35 | backend | payment-link | payment-link-public.controller | **100% / 75%** | ✅ COMPLETATO (TIER_1) |
 | 2026-04-24 15:35 | backend | payment-link | **MODULE SUMMARY** | **100% / 84%** | ✅ **COMPLETATO** (51 test, Stripe webhook HMAC, PCI compliance, tenant isolation) |
+| 2026-04-24 14:15 | backend | invoice | invoice.service | **93.02% / 80.64%** | ✅ COMPLETATO (TIER_1) |
+| 2026-04-24 14:15 | backend | invoice | fatturapa.service | **100% / 91.08%** | ✅ COMPLETATO (FatturaPA XML, EU tax compliance) |
+| 2026-04-24 14:15 | backend | invoice | **MODULE SUMMARY** | **95.04% / 78.48%** | ✅ **COMPLETATO** (174 test, FatturaPA compliance, PDF generation) |
+| 2026-04-24 15:10 | backend | subscription | subscription.service | **100% / 97.67%** | ✅ COMPLETATO (TIER_1 GOLD) |
+| 2026-04-24 15:10 | backend | subscription | feature-access.service | **99.01% / 94.91%** | ✅ COMPLETATO (Recurring billing state machine) |
+| 2026-04-24 15:10 | backend | subscription | **MODULE SUMMARY** | **99.67% / 95.12%** | ✅ **COMPLETATO** (305 test, dunning, metering, upgrade/downgrade) |
+| 2026-04-24 15:40 | backend | gdpr | gdpr-consent.service | **100% / 96.00%** | ✅ COMPLETATO (TIER_1 GOLD) |
+| 2026-04-24 15:40 | backend | gdpr | audit-log.service | **100% / 94.28%** | ✅ COMPLETATO (All mutations logged) |
+| 2026-04-24 15:40 | backend | gdpr | **MODULE SUMMARY** | **100% / 89.78%** | ✅ **COMPLETATO** (386 test, data export/deletion, RLS policies, GDPR Article 15) |
+| 2026-04-24 16:10 | backend | notifications | redis-pubsub.service | **98.87% / 92.3%** | ✅ COMPLETATO (TIER_2) |
+| 2026-04-24 16:10 | backend | notifications | sms.service | **99.09% / 85.1%** | ✅ COMPLETATO (Twilio integration) |
+| 2026-04-24 16:10 | backend | notifications | email.service | **96.66% / 80.64%** | ✅ COMPLETATO (Resend API) |
+| 2026-04-24 16:10 | backend | notifications | **MODULE SUMMARY** | **92.57% / 81.59%** | ✅ **COMPLETATO** (526 test, BullMQ queue, WebSocket/SSE real-time, multi-channel broadcast) |
 <\!-- AUTO-LOG: righe aggiunte automaticamente da /genera-test -->
