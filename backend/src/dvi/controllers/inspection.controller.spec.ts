@@ -34,6 +34,7 @@ describe('InspectionController', () => {
             uploadPhoto: jest.fn(),
             submitCustomerApproval: jest.fn(),
             generateReport: jest.fn(),
+            createEstimateFromFindings: jest.fn(),
           },
         },
       ],
@@ -182,6 +183,34 @@ describe('InspectionController', () => {
 
       expect(service.generateReport).toHaveBeenCalledWith(TENANT_ID, 'insp-001');
       expect(result).toEqual(pdfBuffer);
+    });
+  });
+
+  describe('createEstimateFromFindings (lines 217-223)', () => {
+    it('should create estimate from findings and return success wrapper', async () => {
+      const mockEstimate = { id: 'est-001', total: 35000 };
+      service.createEstimateFromFindings.mockResolvedValue(mockEstimate as never);
+
+      const result = await controller.createEstimateFromFindings(TENANT_ID, USER_ID, 'insp-001', [
+        'find-001',
+        'find-002',
+      ]);
+
+      expect(service.createEstimateFromFindings).toHaveBeenCalledWith(
+        TENANT_ID,
+        'insp-001',
+        ['find-001', 'find-002'],
+        USER_ID,
+      );
+      expect(result).toEqual({ success: true, data: mockEstimate });
+    });
+
+    it('should propagate service errors', async () => {
+      service.createEstimateFromFindings.mockRejectedValue(new Error('Service error'));
+
+      await expect(
+        controller.createEstimateFromFindings(TENANT_ID, USER_ID, 'insp-001', ['find-001']),
+      ).rejects.toThrow('Service error');
     });
   });
 });

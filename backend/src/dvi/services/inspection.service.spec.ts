@@ -3040,4 +3040,177 @@ describe('InspectionService', () => {
       );
     });
   });
+
+  describe('Optional field branch coverage', () => {
+    it('should map findings with null recommendation', async () => {
+      const inspection = buildMockInspection({
+        tenantId: TENANT_ID,
+        findings: [
+          {
+            id: 'f1',
+            inspectionId: INSPECTION_ID,
+            category: 'E',
+            title: 'Oil',
+            description: 'Minor',
+            severity: 'MEDIUM',
+            recommendation: null,
+            estimatedCost: 0,
+            status: FindingStatus.REPORTED,
+            approvedByCustomer: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.findings[0].recommendation).toBeUndefined();
+      expect(result.findings[0].estimatedCost).toBeUndefined();
+    });
+
+    it('should map findings with estimatedCost', async () => {
+      const inspection = buildMockInspection({
+        tenantId: TENANT_ID,
+        findings: [
+          {
+            id: 'f2',
+            inspectionId: INSPECTION_ID,
+            category: 'B',
+            title: 'Pad',
+            description: 'Replace',
+            severity: 'HIGH',
+            recommendation: 'Do it',
+            estimatedCost: 350.5,
+            status: FindingStatus.REPORTED,
+            approvedByCustomer: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.findings[0].estimatedCost).toBe(350.5);
+    });
+
+    it('should map photos with null optional fields', async () => {
+      const inspection = buildMockInspection({
+        tenantId: TENANT_ID,
+        items: [
+          {
+            id: 'i1',
+            inspectionId: INSPECTION_ID,
+            templateItemId: 't1',
+            status: InspectionItemStatus.CHECKED,
+            notes: null,
+            severity: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            templateItem: {
+              id: 't1',
+              templateId: 'tid',
+              category: 'E',
+              name: 'Paint',
+              position: 1,
+            },
+            photos: [
+              {
+                id: 'p1',
+                inspectionId: INSPECTION_ID,
+                itemId: 'i1',
+                url: 'http://ex.com/p1.jpg',
+                thumbnailUrl: null,
+                category: null,
+                description: null,
+                takenAt: new Date(),
+              },
+            ],
+          },
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.items[0].photos[0].thumbnailUrl).toBeUndefined();
+      expect(result.items[0].notes).toBeUndefined();
+    });
+
+    it('should map photos with populated optional fields', async () => {
+      const inspection = buildMockInspection({
+        tenantId: TENANT_ID,
+        items: [
+          {
+            id: 'i2',
+            inspectionId: INSPECTION_ID,
+            templateItemId: 't2',
+            status: InspectionItemStatus.ISSUE_FOUND,
+            notes: 'Dmg',
+            severity: 'CRITICAL',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            templateItem: { id: 't2', templateId: 'tid', category: 'U', name: 'Rust', position: 2 },
+            photos: [
+              {
+                id: 'p2',
+                inspectionId: INSPECTION_ID,
+                itemId: 'i2',
+                url: 'http://ex.com/p2.jpg',
+                thumbnailUrl: 'http://ex.com/p2-t.jpg',
+                category: 'Dmg',
+                description: 'Rust',
+                takenAt: new Date(),
+              },
+            ],
+          },
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.items[0].photos[0].category).toBe('Dmg');
+    });
+
+    it('should handle null top-level photo fields', async () => {
+      const inspection = buildMockInspection({
+        tenantId: TENANT_ID,
+        photos: [
+          {
+            id: 'pt',
+            inspectionId: INSPECTION_ID,
+            itemId: null,
+            url: 'http://ex.com/o.jpg',
+            thumbnailUrl: null,
+            category: null,
+            description: null,
+            takenAt: new Date(),
+          },
+        ],
+      });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      const result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.photos[0].category).toBeUndefined();
+    });
+
+    it('should handle numeric fields', async () => {
+      let inspection = buildMockInspection({ tenantId: TENANT_ID, mileage: null, fuelLevel: null });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      let result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.mileage).toBeUndefined();
+
+      inspection = buildMockInspection({ tenantId: TENANT_ID, mileage: 45000, fuelLevel: 75 });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.mileage).toBe(45000);
+    });
+
+    it('should handle approvedAt', async () => {
+      let inspection = buildMockInspection({ tenantId: TENANT_ID, approvedAt: null });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      let result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.approvedAt).toBeUndefined();
+
+      inspection = buildMockInspection({ tenantId: TENANT_ID, approvedAt: new Date() });
+      (prisma.inspection.findFirst as jest.Mock).mockResolvedValue(inspection);
+      result = await service.findById(TENANT_ID, INSPECTION_ID);
+      expect(result.approvedAt).toBeDefined();
+    });
+  });
 });

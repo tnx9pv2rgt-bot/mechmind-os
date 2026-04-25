@@ -95,6 +95,56 @@ describe('VehicleTwinController', () => {
       );
       expect(result).toEqual(expected);
     });
+
+    it('should use provided date when supplied', async () => {
+      const specificDate = '2026-02-01T10:00:00Z';
+      const dto = {
+        componentId: COMPONENT_ID,
+        type: 'inspection',
+        description: 'Routine inspection',
+        date: specificDate,
+      } as never;
+      const expected = { id: 'hist-002', date: new Date(specificDate) };
+      service.recordComponentHistory.mockResolvedValue(expected as never);
+
+      await controller.recordHistory('tenant-test', VEHICLE_ID, dto);
+
+      expect(service.recordComponentHistory).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        expect.objectContaining({ date: new Date(specificDate) }),
+      );
+    });
+
+    it('should use current date when not provided', async () => {
+      const dto = {
+        componentId: COMPONENT_ID,
+        type: 'repair',
+        description: 'Repair work',
+      } as never;
+      service.recordComponentHistory.mockResolvedValue({ id: 'hist-003' } as never);
+
+      await controller.recordHistory('tenant-test', VEHICLE_ID, dto);
+
+      expect(service.recordComponentHistory).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        expect.objectContaining({ partsUsed: [], photos: [], documents: [] }),
+      );
+    });
+
+    it('should propagate service errors', async () => {
+      const dto = {
+        componentId: COMPONENT_ID,
+        type: 'replacement',
+        description: 'Bad data',
+      } as never;
+      service.recordComponentHistory.mockRejectedValue(new Error('History recording failed'));
+
+      await expect(controller.recordHistory('tenant-test', VEHICLE_ID, dto)).rejects.toThrow(
+        'History recording failed',
+      );
+    });
   });
 
   describe('recordDamage', () => {
@@ -115,6 +165,66 @@ describe('VehicleTwinController', () => {
         expect.objectContaining({ type: 'scratch', severity: 'minor' }),
       );
       expect(result).toEqual(expected);
+    });
+
+    it('should use provided location', async () => {
+      const dto = {
+        type: 'dent',
+        severity: 'major',
+        location: { x: 10, y: 20, z: 5 },
+      } as never;
+      service.recordDamage.mockResolvedValue({ id: 'dmg-002' } as never);
+
+      await controller.recordDamage('tenant-test', VEHICLE_ID, dto);
+
+      expect(service.recordDamage).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        expect.objectContaining({ location: { x: 10, y: 20, z: 5 } }),
+      );
+    });
+
+    it('should use default location when not provided', async () => {
+      const dto = {
+        type: 'crack',
+        severity: 'critical',
+      } as never;
+      service.recordDamage.mockResolvedValue({ id: 'dmg-003' } as never);
+
+      await controller.recordDamage('tenant-test', VEHICLE_ID, dto);
+
+      expect(service.recordDamage).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        expect.objectContaining({ location: { x: 0, y: 0, z: 0 } }),
+      );
+    });
+
+    it('should handle provided reportedAt date', async () => {
+      const reportDate = '2026-02-15T14:30:00Z';
+      const dto = {
+        type: 'collision',
+        severity: 'major',
+        reportedAt: reportDate,
+      } as never;
+      service.recordDamage.mockResolvedValue({ id: 'dmg-004' } as never);
+
+      await controller.recordDamage('tenant-test', VEHICLE_ID, dto);
+
+      expect(service.recordDamage).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        expect.objectContaining({ reportedAt: new Date(reportDate) }),
+      );
+    });
+
+    it('should propagate service errors', async () => {
+      const dto = { type: 'unknown', severity: 'minor' } as never;
+      service.recordDamage.mockRejectedValue(new Error('Damage recording failed'));
+
+      await expect(controller.recordDamage('tenant-test', VEHICLE_ID, dto)).rejects.toThrow(
+        'Damage recording failed',
+      );
     });
   });
 
@@ -194,6 +304,31 @@ describe('VehicleTwinController', () => {
         new Date('2026-03-16'),
       );
       expect(result).toEqual(trend);
+    });
+
+    it('should handle different date ranges', async () => {
+      const trend: object[] = [];
+      service.getHealthTrend.mockResolvedValue(trend as never);
+      const query = { from: '2026-02-01', to: '2026-02-28' } as never;
+
+      const result = await controller.getHealthTrend('tenant-test', VEHICLE_ID, query);
+
+      expect(service.getHealthTrend).toHaveBeenCalledWith(
+        'tenant-test',
+        VEHICLE_ID,
+        new Date('2026-02-01'),
+        new Date('2026-02-28'),
+      );
+      expect(result).toEqual([]);
+    });
+
+    it('should propagate service errors', async () => {
+      const query = { from: '2026-01-01', to: '2026-03-16' } as never;
+      service.getHealthTrend.mockRejectedValue(new Error('Trend retrieval failed'));
+
+      await expect(controller.getHealthTrend('tenant-test', VEHICLE_ID, query)).rejects.toThrow(
+        'Trend retrieval failed',
+      );
     });
   });
 });

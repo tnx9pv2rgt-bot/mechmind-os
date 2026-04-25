@@ -1299,7 +1299,7 @@ describe('BookingService', () => {
       const result = await service.createBooking(TENANT_ID, dto);
 
       // Verify decryption happened (firstName should not be encrypted anymore)
-      const customerData = result.customer as any;
+      const customerData = result.customer as Record<string, unknown>;
       expect(customerData.firstName).toBeDefined();
       expect(customerData.email).toBeDefined();
     });
@@ -1358,7 +1358,7 @@ describe('BookingService', () => {
       const result = await serviceWithErrorEncryption.createBooking(TENANT_ID, dto);
 
       // Should return '[encrypted]' when decryption fails
-      const customerData = result.customer as any;
+      const customerData = result.customer as Record<string, unknown>;
       expect(customerData.firstName).toBe('[encrypted]');
     });
   });

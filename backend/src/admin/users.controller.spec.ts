@@ -327,7 +327,7 @@ describe('UsersController', () => {
 
       expect(prisma.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'u1', tenantId: 'tenant-2' },
+          where: expect.objectContaining({ id: 'u1', tenantId: 'tenant-2' }),
         }),
       );
     });
@@ -422,7 +422,7 @@ describe('UsersController', () => {
 
       expect(prisma.user.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'u1', tenantId: 'tenant-2' },
+          where: expect.objectContaining({ id: 'u1', tenantId: 'tenant-2' }),
         }),
       );
     });

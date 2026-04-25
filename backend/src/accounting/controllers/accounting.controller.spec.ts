@@ -64,6 +64,28 @@ describe('AccountingController', () => {
       expect(service.syncInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-001', 'FATTURA_ELETTRONICA');
       expect(result).toEqual({ success: true, data: mockSyncRecord });
     });
+
+    it('should sync with QuickBooks provider', async () => {
+      const qbRecord = { ...mockSyncRecord, provider: 'QUICKBOOKS' };
+      service.syncInvoice.mockResolvedValue(qbRecord as never);
+      const dto = { invoiceId: 'inv-002', provider: 'QUICKBOOKS' };
+
+      const result = await controller.syncInvoice(TENANT_ID, dto as never);
+
+      expect(service.syncInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-002', 'QUICKBOOKS');
+      expect(result.data.provider).toBe('QUICKBOOKS');
+    });
+
+    it('should sync with Xero provider', async () => {
+      const xeroRecord = { ...mockSyncRecord, provider: 'XERO' };
+      service.syncInvoice.mockResolvedValue(xeroRecord as never);
+      const dto = { invoiceId: 'inv-003', provider: 'XERO' };
+
+      const result = await controller.syncInvoice(TENANT_ID, dto as never);
+
+      expect(service.syncInvoice).toHaveBeenCalledWith(TENANT_ID, 'inv-003', 'XERO');
+      expect(result.data.provider).toBe('XERO');
+    });
   });
 
   describe('syncCustomer', () => {
@@ -80,6 +102,38 @@ describe('AccountingController', () => {
         'FATTURA_ELETTRONICA',
       );
       expect(result).toEqual({ success: true, data: customerSync });
+    });
+
+    it('should sync customer with XERO provider', async () => {
+      const xeroCustomer = {
+        ...mockSyncRecord,
+        entityType: 'CUSTOMER',
+        entityId: 'cust-002',
+        provider: 'XERO',
+      };
+      service.syncCustomer.mockResolvedValue(xeroCustomer as never);
+      const dto = { customerId: 'cust-002', provider: 'XERO' };
+
+      const result = await controller.syncCustomer(TENANT_ID, dto as never);
+
+      expect(service.syncCustomer).toHaveBeenCalledWith(TENANT_ID, 'cust-002', 'XERO');
+      expect(result.data.provider).toBe('XERO');
+    });
+
+    it('should sync customer with QuickBooks provider', async () => {
+      const qbCustomer = {
+        ...mockSyncRecord,
+        entityType: 'CUSTOMER',
+        entityId: 'cust-003',
+        provider: 'QUICKBOOKS',
+      };
+      service.syncCustomer.mockResolvedValue(qbCustomer as never);
+      const dto = { customerId: 'cust-003', provider: 'QUICKBOOKS' };
+
+      const result = await controller.syncCustomer(TENANT_ID, dto as never);
+
+      expect(service.syncCustomer).toHaveBeenCalledWith(TENANT_ID, 'cust-003', 'QUICKBOOKS');
+      expect(result.data.provider).toBe('QUICKBOOKS');
     });
   });
 
@@ -110,6 +164,44 @@ describe('AccountingController', () => {
         data: [],
         meta: { total: 0, limit: 50, offset: 0 },
       });
+    });
+
+    it('should filter by provider', async () => {
+      const records = [{ ...mockSyncRecord, provider: 'XERO' }];
+      service.findAll.mockResolvedValue({ records, total: 1 } as never);
+      const filters = { provider: 'XERO', limit: 50, offset: 0 };
+
+      const result = await controller.findAll(TENANT_ID, filters as never);
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, filters);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].provider).toBe('XERO');
+    });
+
+    it('should filter by status', async () => {
+      const records = [{ ...mockSyncRecord, status: 'SYNCED' }];
+      service.findAll.mockResolvedValue({ records, total: 1 } as never);
+      const filters = { status: 'SYNCED', limit: 50, offset: 0 };
+
+      const result = await controller.findAll(TENANT_ID, filters as never);
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, filters);
+      expect(result.data[0].status).toBe('SYNCED');
+    });
+
+    it('should handle multiple records with pagination', async () => {
+      const records = Array.from({ length: 3 }, (_, i) => ({
+        ...mockSyncRecord,
+        id: `sync-00${i}`,
+      }));
+      service.findAll.mockResolvedValue({ records, total: 10 } as never);
+      const filters = { limit: 3, offset: 0 };
+
+      const result = await controller.findAll(TENANT_ID, filters as never);
+
+      expect(result.data).toHaveLength(3);
+      expect(result.meta.total).toBe(10);
+      expect(result.meta.limit).toBe(3);
     });
   });
 

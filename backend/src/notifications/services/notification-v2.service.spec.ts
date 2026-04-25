@@ -43,6 +43,7 @@ jest.mock('@prisma/client', () => {
       SMS: 'SMS',
       WHATSAPP: 'WHATSAPP',
       EMAIL: 'EMAIL',
+      IN_APP: 'IN_APP',
     },
     NotificationStatus: {
       PENDING: 'PENDING',
@@ -130,6 +131,7 @@ describe('NotificationV2Service', () => {
               findMany: jest.fn(),
               update: jest.fn(),
               updateMany: jest.fn(),
+              delete: jest.fn(),
               count: jest.fn(),
               fields: {
                 maxRetries: 'maxRetries',
@@ -423,7 +425,7 @@ describe('NotificationV2Service', () => {
         customerId: mockCustomerId,
         tenantId: mockTenantId,
         type: 'BOOKING_CONFIRMATION' as never,
-        channel: 'IN_APP' as never,
+        channel: 'PUSH' as never,
         message: 'Test',
       });
 
@@ -602,6 +604,100 @@ describe('NotificationV2Service', () => {
       expect(templates[0]).toHaveProperty('type');
       expect(templates[0]).toHaveProperty('name');
       expect(templates[0]).toHaveProperty('description');
+    });
+
+    it('should render BOOKING_REMINDER with location and link (truthy ternaries)', () => {
+      const template = service.getTemplate('BOOKING_REMINDER' as never, 'it');
+      const msg = template({
+        customerName: 'Anna',
+        date: '01/05',
+        time: '10:00',
+        location: 'Via Roma 1',
+        link: 'https://example.com',
+      });
+      expect(msg).toContain('presso Via Roma 1');
+      expect(msg).toContain('https://example.com');
+    });
+
+    it('should render BOOKING_REMINDER without location (falsy ternary)', () => {
+      const template = service.getTemplate('BOOKING_REMINDER' as never, 'it');
+      const msg = template({ customerName: 'Anna', date: '01/05', time: '10:00' });
+      expect(msg).not.toContain('presso');
+      expect(msg).toContain('mechmind.io');
+    });
+
+    it('should render STATUS_UPDATE with link (truthy ternary)', () => {
+      const template = service.getTemplate('STATUS_UPDATE' as never, 'it');
+      const msg = template({
+        customerName: 'Luca',
+        status: 'in riparazione',
+        link: 'https://example.com/status',
+      });
+      expect(msg).toContain('Dettagli: https://example.com/status');
+      expect(msg).toContain('in riparazione');
+    });
+
+    it('should render INSPECTION_COMPLETE with score and link (truthy ternaries)', () => {
+      const template = service.getTemplate('INSPECTION_COMPLETE' as never, 'it');
+      const msg = template({ customerName: 'Marco', score: '9', link: 'https://report.com' });
+      expect(msg).toContain('Score: 9/10');
+      expect(msg).toContain('Report: https://report.com');
+    });
+
+    it('should render BOOKING_CONFIRMATION with workshopName and bookingCode (truthy ternaries)', () => {
+      const template = service.getTemplate('BOOKING_CONFIRMATION' as never, 'it');
+      const msg = template({
+        customerName: 'Giulia',
+        date: '15/05',
+        time: '09:00',
+        workshopName: 'Officina MechMind',
+        bookingCode: 'BK-999',
+      });
+      expect(msg).toContain('da Officina MechMind');
+      expect(msg).toContain('Codice: BK-999');
+    });
+
+    it('should render English BOOKING_REMINDER with location and link', () => {
+      const template = service.getTemplate('BOOKING_REMINDER' as never, 'en');
+      const msg = template({
+        customerName: 'John',
+        date: '2026-05-01',
+        time: '10:00',
+        location: 'Main St',
+        link: 'https://example.com',
+      });
+      expect(msg).toContain('presso Main St');
+      expect(msg).toContain('https://example.com');
+    });
+
+    it('should render English STATUS_UPDATE with link', () => {
+      const template = service.getTemplate('STATUS_UPDATE' as never, 'en');
+      const msg = template({
+        customerName: 'John',
+        status: 'in progress',
+        link: 'https://example.com',
+      });
+      expect(msg).toContain('Dettagli: https://example.com');
+    });
+
+    it('should render English INSPECTION_COMPLETE with score and link', () => {
+      const template = service.getTemplate('INSPECTION_COMPLETE' as never, 'en');
+      const msg = template({ customerName: 'John', score: '8', link: 'https://report.com' });
+      expect(msg).toContain('8/10');
+      expect(msg).toContain('Report: https://report.com');
+    });
+
+    it('should render English BOOKING_CONFIRMATION with workshopName and bookingCode', () => {
+      const template = service.getTemplate('BOOKING_CONFIRMATION' as never, 'en');
+      const msg = template({
+        customerName: 'John',
+        date: '2026-05-15',
+        time: '09:00',
+        workshopName: 'MechMind',
+        bookingCode: 'BK-888',
+      });
+      expect(msg).toContain('da MechMind');
+      expect(msg).toContain('Codice: BK-888');
     });
   });
 
@@ -1272,6 +1368,547 @@ describe('NotificationV2Service', () => {
       expect(result.success).toBe(true);
       const createCall = (prisma.notification.create as jest.Mock).mock.calls[0][0];
       expect(createCall.data.message).toContain('Mario');
+    });
+  });
+
+  // =========================================================================
+  // TIER 1: Missing branches for customer data fallbacks and error handling
+  // =========================================================================
+  describe('sendImmediate — error handling with notification creation', () => {
+    it('should create failed notification when phone validation fails', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedPhone: '+', // Invalid phone format (will fail validation)
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'FAILED',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        message: 'Test message',
+      });
+
+      // Should fail and create failed notification
+      expect(result.success).toBe(false);
+      expect(prisma.notification.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'FAILED',
+            customerId: mockCustomerId,
+          }),
+        }),
+      );
+    });
+
+    it('should handle missing email in EMAIL channel', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: null, // null email
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        message: 'Test email',
+      });
+
+      // EMAIL channel should fail without email
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Customer email not available');
+    });
+  });
+
+  // =========================================================================
+  // TIER 2: Ternary branch coverage for auto channel resolution
+  // =========================================================================
+  describe('sendImmediate — channel preference ternary branches', () => {
+    it('should use customer preference when AUTO channel with SMS preference', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue({
+        channel: 'SMS',
+        enabled: true,
+      });
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-PREF-1' });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        message: 'Test',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('SM-PREF-1');
+    });
+
+    it('should handle WhatsApp channel in sendImmediate', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        channel: 'WHATSAPP',
+        status: 'SENT',
+      });
+      mockTwilioCreate.mockResolvedValue({ sid: 'WA-IMM-2' });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'WHATSAPP' as never,
+        message: 'WhatsApp test',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('WA-IMM-2');
+    });
+  });
+
+  // =========================================================================
+  // TIER 3: Exception handling branches in cron methods
+  // =========================================================================
+  describe('processPending — exception handling completeness', () => {
+    it('should handle SMS send failure in processPending loop', async () => {
+      const pendingNotif = { ...mockNotification, status: 'PENDING', customer: mockCustomer };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([pendingNotif]);
+      mockTwilioCreate.mockRejectedValue(new Error('Twilio API error'));
+      (prisma.notification.update as jest.Mock).mockResolvedValue(pendingNotif);
+
+      const result = await service.processPending();
+
+      // One failed due to Twilio error
+      expect(result.failed).toBe(1);
+      expect(result.processed).toBe(0);
+    });
+
+    it('should process multiple notifications with mixed success', async () => {
+      const notif1 = { ...mockNotification, id: 'n1', status: 'PENDING', customer: mockCustomer };
+      const notif2 = { ...mockNotification, id: 'n2', status: 'PENDING', customer: mockCustomer };
+      (prisma.notification.findMany as jest.Mock).mockResolvedValue([notif1, notif2]);
+      mockTwilioCreate
+        .mockResolvedValueOnce({ sid: 'SM-SUCCESS' })
+        .mockRejectedValueOnce(new Error('SMS failed'));
+      (prisma.notification.update as jest.Mock).mockResolvedValue(notif1);
+
+      const result = await service.processPending();
+
+      // One success, one failure
+      expect(result.processed + result.failed).toBeGreaterThan(0);
+    });
+  });
+
+  // =========================================================================
+  // TIER 4: Branch coverage for retryNotification edge cases
+  // =========================================================================
+  describe('retryNotification — all branches', () => {
+    it('should handle notification with null message (generate from template)', async () => {
+      const notifNullMsg = {
+        ...mockNotification,
+        message: null,
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(notifNullMsg);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(notifNullMsg);
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-NULL-1' });
+
+      const result = await service.retryNotification(mockTenantId, mockNotificationId);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle empty string message (generate from template)', async () => {
+      const notifEmptyMsg = {
+        ...mockNotification,
+        message: '',
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(notifEmptyMsg);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(notifEmptyMsg);
+      mockTwilioCreate.mockResolvedValue({ sid: 'SM-EMPTY-1' });
+
+      const result = await service.retryNotification(mockTenantId, mockNotificationId);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should throw error for unsupported channel EMAIL in processNotification', async () => {
+      const emailNotif = {
+        ...mockNotification,
+        channel: 'EMAIL',
+        retries: 0,
+        maxRetries: 3,
+        customer: mockCustomer,
+      };
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(emailNotif);
+      (prisma.notification.update as jest.Mock).mockResolvedValue(emailNotif);
+
+      await expect(service.retryNotification(mockTenantId, mockNotificationId)).rejects.toThrow(
+        'Unsupported channel',
+      );
+    });
+  });
+
+  // =========================================================================
+  // TIER 5: IN_APP and EMAIL channel full branch coverage
+  // =========================================================================
+  // =========================================================================
+  // TIER 5B: deleteNotification branch coverage
+  // =========================================================================
+  describe('deleteNotification', () => {
+    it('should throw NotFoundException when notification not found', async () => {
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.deleteNotification(mockTenantId, 'nonexistent-id')).rejects.toThrow(
+        'Notification nonexistent-id not found',
+      );
+    });
+
+    it('should delete notification when found', async () => {
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(mockNotification);
+      (prisma.notification.delete as jest.Mock).mockResolvedValue(mockNotification);
+
+      await service.deleteNotification(mockTenantId, mockNotificationId);
+
+      expect(prisma.notification.delete).toHaveBeenCalledWith({
+        where: { id: mockNotificationId },
+      });
+    });
+  });
+
+  describe('sendImmediate — EMAIL channel with full error handling', () => {
+    it('should send EMAIL notification successfully', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: 'enc-test@example.com',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      const emailService = service['emailService'] as unknown as {
+        sendEstimateApproval: jest.Mock;
+      };
+      (emailService.sendEstimateApproval as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-msg-1',
+      });
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        channel: 'EMAIL',
+        status: 'SENT',
+        messageId: 'email-msg-1',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        message: 'Email test',
+        metadata: { estimateId: 'est-123', approvalUrl: 'https://example.com/approve' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('email-msg-1');
+      expect(emailService.sendEstimateApproval).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customerEmail: 'test@example.com',
+          estimateId: 'est-123',
+          approvalUrl: 'https://example.com/approve',
+        }),
+      );
+    });
+
+    it('should handle EMAIL send failure and return error', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: 'enc-test@example.com',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      const emailService = service['emailService'] as unknown as {
+        sendEstimateApproval: jest.Mock;
+      };
+      (emailService.sendEstimateApproval as jest.Mock).mockResolvedValue({
+        success: false,
+        error: 'Email service unavailable',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        message: 'Email test',
+        metadata: { estimateId: 'est-456' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Email service unavailable');
+    });
+
+    it('should handle missing approvalUrl in EMAIL metadata', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: 'enc-test@example.com',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      const emailService = service['emailService'] as unknown as {
+        sendEstimateApproval: jest.Mock;
+      };
+      (emailService.sendEstimateApproval as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: 'email-msg-2',
+      });
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        channel: 'EMAIL',
+        messageId: 'email-msg-2',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        // No approvalUrl in metadata
+      });
+
+      expect(result.success).toBe(true);
+      expect(emailService.sendEstimateApproval).toHaveBeenCalledWith(
+        expect.objectContaining({
+          approvalUrl: '', // Should default to empty string
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // TIER 5C: IN_APP channel + decryptEmail catch + getNotificationById null
+  // =========================================================================
+  describe('sendImmediate — IN_APP channel (lines 244-265)', () => {
+    it('should create IN_APP notification and broadcast via gateway', async () => {
+      const mockGateway = service['notificationsGateway'] as unknown as {
+        broadcastToTenant: jest.Mock;
+      };
+      const broadcastSpy = jest
+        .spyOn(mockGateway, 'broadcastToTenant')
+        .mockImplementation(() => {});
+      const eventSpy = jest.spyOn(service['eventEmitter'], 'emit');
+
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        id: 'in-app-notif-1',
+        channel: 'IN_APP',
+        status: 'DELIVERED',
+        createdAt: new Date('2026-04-25T10:00:00Z'),
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'IN_APP' as never,
+        message: 'In-app test message',
+        metadata: { bookingId: 'bk-1' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.notificationId).toBe('in-app-notif-1');
+      expect(broadcastSpy).toHaveBeenCalledWith(
+        mockTenantId,
+        'notification:new',
+        expect.objectContaining({ id: 'in-app-notif-1' }),
+      );
+      expect(eventSpy).toHaveBeenCalledWith(
+        'notification.sent',
+        expect.objectContaining({ id: 'in-app-notif-1' }),
+      );
+    });
+  });
+
+  describe('decryptEmail — catch block (lines 744-745)', () => {
+    it('should return null when encryption.decrypt throws for email', async () => {
+      const encService = service['encryption'] as unknown as { decrypt: jest.Mock };
+      jest.spyOn(encService, 'decrypt').mockImplementation((val: string) => {
+        if (val === 'bad-enc-email') throw new Error('decryption failed');
+        return val;
+      });
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: 'bad-enc-email',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        message: 'Test',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Customer email not available');
+    });
+  });
+
+  describe('getNotificationById — returns null when not found (line 549)', () => {
+    it('should return null when notification not found', async () => {
+      (prisma.notification.findFirst as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.getNotificationById(mockTenantId, 'non-existent-id');
+
+      expect(result).toBeNull();
+      expect(prisma.notification.findFirst).toHaveBeenCalledWith({
+        where: { id: 'non-existent-id', tenantId: mockTenantId },
+      });
+    });
+  });
+
+  describe('sendImmediate — IN_APP with no metadata (line 254 || {} branch)', () => {
+    it('should use empty object when no metadata provided for IN_APP', async () => {
+      const mockGateway = service['notificationsGateway'] as unknown as {
+        broadcastToTenant: jest.Mock;
+      };
+      jest.spyOn(mockGateway, 'broadcastToTenant').mockImplementation(() => {});
+
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        id: 'in-app-no-meta',
+        channel: 'IN_APP',
+        status: 'DELIVERED',
+        createdAt: new Date(),
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'IN_APP' as never,
+        message: 'No metadata test',
+        // no metadata
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.notificationId).toBe('in-app-no-meta');
+    });
+  });
+
+  describe('sendImmediate — EMAIL with null messageId (line 283 || "email-" branch)', () => {
+    it('should use fallback email-<timestamp> when emailService returns no messageId', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue({
+        ...mockCustomer,
+        encryptedEmail: 'enc-test@example.com',
+      });
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      const emailService = service['emailService'] as unknown as {
+        sendEstimateApproval: jest.Mock;
+      };
+      (emailService.sendEstimateApproval as jest.Mock).mockResolvedValue({
+        success: true,
+        messageId: undefined, // no messageId returned
+      });
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        channel: 'EMAIL',
+        status: 'SENT',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'EMAIL' as never,
+        message: 'Email fallback messageId test',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toMatch(/^email-\d+$/);
+    });
+  });
+
+  describe('sendImmediate — catch block with non-Error throw (line 314 false branch)', () => {
+    it('should use "Unknown error" when thrown value is not an Error instance', async () => {
+      (prisma.customer.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      mockTwilioCreate.mockRejectedValue('string error' as never); // non-Error thrown
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'FAILED',
+        error: 'Unknown error',
+      });
+
+      const result = await service.sendImmediate({
+        customerId: mockCustomerId,
+        tenantId: mockTenantId,
+        type: 'BOOKING_CONFIRMATION' as never,
+        channel: 'SMS' as never,
+        message: 'Test',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown error');
+    });
+  });
+
+  // =========================================================================
+  // TIER 6: Special boundary cases
+  // =========================================================================
+  describe('sendBatch — failure handling', () => {
+    it('should continue batch sending when one fails', async () => {
+      (prisma.customer.findFirst as jest.Mock)
+        .mockResolvedValueOnce(mockCustomer)
+        .mockResolvedValueOnce(mockCustomer);
+      (prisma.customerNotificationPreference.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.notification.create as jest.Mock).mockResolvedValue({
+        ...mockNotification,
+        status: 'SENT',
+      });
+      mockTwilioCreate
+        .mockResolvedValueOnce({ sid: 'SM-BATCH-OK-1' })
+        .mockRejectedValueOnce(new Error('Twilio error'));
+
+      const notifications: CreateNotificationDTO[] = [
+        {
+          customerId: mockCustomerId,
+          tenantId: mockTenantId,
+          type: 'BOOKING_CONFIRMATION' as never,
+          channel: 'SMS' as never,
+          message: 'Batch 1',
+        },
+        {
+          customerId: mockCustomerId,
+          tenantId: mockTenantId,
+          type: 'BOOKING_REMINDER' as never,
+          channel: 'SMS' as never,
+          message: 'Batch 2',
+        },
+      ];
+
+      const results = await service.sendBatch(notifications);
+
+      expect(results).toHaveLength(2);
+      expect(results[0].success).toBe(true);
+      expect(results[1].success).toBe(false);
     });
   });
 });

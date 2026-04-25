@@ -550,8 +550,8 @@ describe('AIVoiceTransparencyService (EU AI Act Compliance)', () => {
     it('should handle opt-out rate calculation when no calls exist', async () => {
       // ARRANGE: No calls
       prisma.aIVoiceInteractionLog.findMany
-        .mockResolvedValueOnce([])  // for logs
-        .mockResolvedValueOnce([])  // for unique customers
+        .mockResolvedValueOnce([]) // for logs
+        .mockResolvedValueOnce([]) // for unique customers
         .mockResolvedValueOnce([]); // for escalations
       prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
 
@@ -704,6 +704,351 @@ describe('AIVoiceTransparencyService (EU AI Act Compliance)', () => {
 
       // ASSERT: Error should be thrown to caller
       // (Logger is used internally, loggerService is for domain events)
+    });
+
+    it('should cover error instanceof check with Error object in markVoiceCallAIGenerated', async () => {
+      // ARRANGE: Create an actual Error instance to trigger instanceof check
+      const dbError = new Error('Connection timeout during audit log');
+      prisma.tenant.findUnique.mockResolvedValueOnce({ id: TENANT_ID, name: 'Test' });
+      prisma.aIVoiceInteractionLog.create.mockRejectedValueOnce(dbError);
+
+      // ACT & ASSERT: Error instanceof check should pass in catch block
+      await expect(service.markVoiceCallAIGenerated(CALL_ID, TENANT_ID)).rejects.toThrow(
+        'Connection timeout during audit log',
+      );
+    });
+
+    it('should cover error instanceof check with Error object in handleOptOutRequest', async () => {
+      // ARRANGE: Real Error with message
+      const dbError = new Error('Unique constraint violation');
+      prisma.aIVoiceInteractionLog.create.mockRejectedValueOnce(dbError);
+
+      // ACT & ASSERT: Should propagate error with message extracted
+      await expect(
+        service.handleOptOutRequest(CALL_ID, TENANT_ID, 'Escalation needed'),
+      ).rejects.toThrow('Unique constraint violation');
+    });
+
+    it('should test all branches in logAIDecision error handling', async () => {
+      // ARRANGE: Test with an Error that has a message property
+      const err = new Error('Test error message');
+      prisma.aIVoiceInteractionLog.create.mockRejectedValueOnce(err);
+
+      // ACT & ASSERT: Should propagate the error
+      await expect(service.logVoiceDecision(buildAIDecision())).rejects.toThrow(
+        'Test error message',
+      );
+    });
+
+    it('should handle decision with undefined confidence in logAIDecision', async () => {
+      // ARRANGE: Decision without confidence score
+      const decision = buildAIDecision({ confidence: undefined });
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce({
+        callId: CALL_ID,
+        customerPhone: CUSTOMER_PHONE,
+      });
+
+      // ACT: Log decision without confidence
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: Confidence null in create call
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          confidence: null,
+        }),
+      });
+    });
+
+    it('should handle decision with undefined escalationReason in logAIDecision', async () => {
+      // ARRANGE: Decision without escalation reason
+      const decision = buildAIDecision({ escalationReason: undefined });
+
+      // ACT: Log decision
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: Reason is null
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          escalationReason: null,
+        }),
+      });
+    });
+
+    it('should cover logAIDecision webhook lookup path with customerPhone', async () => {
+      // ARRANGE: Webhook found with customer phone
+      const mockWebhook = { customerPhone: '+39123456789' };
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce(mockWebhook);
+      prisma.aIVoiceInteractionLog.create.mockResolvedValueOnce({
+        id: 'log-new',
+        callId: CALL_ID,
+        tenantId: TENANT_ID,
+        customerPhone: mockWebhook.customerPhone,
+        decisionType: 'ai_generated',
+        confidence: 0.95,
+        humanOverride: false,
+        createdAt: new Date(),
+      });
+
+      // ACT: Log decision (triggers webhook lookup at line 287)
+      await service.logVoiceDecision(buildAIDecision());
+
+      // ASSERT: voiceWebhookEvent.findFirst was called
+      expect(prisma.voiceWebhookEvent.findFirst).toHaveBeenCalledWith({
+        where: {
+          callId: CALL_ID,
+          tenantId: TENANT_ID,
+        },
+        select: { customerPhone: true },
+      });
+
+      // ASSERT: Create was called with the found customerPhone
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          customerPhone: '+39123456789',
+        }),
+      });
+    });
+
+    it('should cover transcriptMarkers undefined branch in logAIDecision', async () => {
+      // ARRANGE: Decision without transcript markers (undefined)
+      const decision = buildAIDecision({ transcriptMarkers: undefined });
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce({
+        callId: CALL_ID,
+        customerPhone: CUSTOMER_PHONE,
+      });
+
+      // ACT: Log decision without markers
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: Create was called with transcriptMarkers undefined (line 311 false branch)
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          transcriptMarkers: undefined,
+        }),
+      });
+    });
+
+    it('should cover transcriptMarkers truthy branch in logAIDecision', async () => {
+      // ARRANGE: Decision with transcript markers array
+      const markers: TranscriptMarker[] = [
+        { timestamp: 0, speaker: 'ai', text: 'Hello', confidence: 0.99 },
+      ];
+      const decision = buildAIDecision({ transcriptMarkers: markers });
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce({
+        callId: CALL_ID,
+        customerPhone: CUSTOMER_PHONE,
+      });
+
+      // ACT: Log decision with markers
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: Create was called with transcriptMarkers as JSON (line 311 true branch)
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          transcriptMarkers: markers,
+        }),
+      });
+    });
+
+    it('should cover all || null branches for optional fields', async () => {
+      // ARRANGE: Decision with NO optional fields (all undefined)
+      const decision: AIVoiceDecision = {
+        callId: CALL_ID,
+        tenantId: TENANT_ID,
+        decisionType: 'ai_generated',
+        humanOverride: false,
+        // confidence, escalationReason, transcriptMarkers all undefined
+      };
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce(null);
+
+      // ACT: Log decision with minimal required fields
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: All || null branches are executed
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: {
+          callId: CALL_ID,
+          tenantId: TENANT_ID,
+          customerPhone: null, // webhook.customerPhone || null → null branch
+          decisionType: 'ai_generated',
+          confidence: null, // confidence || null → null branch
+          humanOverride: false,
+          escalationReason: null, // escalationReason || null → null branch
+          transcriptMarkers: undefined, // ternary false branch
+        },
+      });
+    });
+
+    it('should cover all optional field truthy branches', async () => {
+      // ARRANGE: Decision with ALL optional fields set to values
+      const markers: TranscriptMarker[] = [
+        { timestamp: 1, speaker: 'human', text: 'Yes', confidence: 0.98 },
+      ];
+      const decision: AIVoiceDecision = {
+        callId: CALL_ID,
+        tenantId: TENANT_ID,
+        decisionType: 'ai_offer_escalation',
+        confidence: 0.87, // truthy (not using || null)
+        humanOverride: true,
+        escalationReason: 'Customer escalation', // truthy (not using || null)
+        transcriptMarkers: markers, // truthy (using ternary true branch)
+      };
+      prisma.voiceWebhookEvent.findFirst.mockResolvedValueOnce({
+        callId: CALL_ID,
+        customerPhone: CUSTOMER_PHONE,
+      });
+
+      // ACT: Log decision with all fields
+      await service.logVoiceDecision(decision);
+
+      // ASSERT: All truthy branches are executed
+      expect(prisma.aIVoiceInteractionLog.create).toHaveBeenCalledWith({
+        data: {
+          callId: CALL_ID,
+          tenantId: TENANT_ID,
+          customerPhone: CUSTOMER_PHONE, // webhook.customerPhone || null → webhook branch
+          decisionType: 'ai_offer_escalation',
+          confidence: 0.87, // confidence || null → confidence branch (truthy)
+          humanOverride: true,
+          escalationReason: 'Customer escalation', // escalationReason || null → escalationReason branch
+          transcriptMarkers: markers, // ternary true branch
+        },
+      });
+    });
+  });
+
+  describe('Date filter edge cases (missing branches)', () => {
+    it('should NOT apply date filter when fromDate is provided but toDate is not', async () => {
+      // ARRANGE: fromDate provided, but toDate is undefined
+      const fromDate = new Date('2026-01-01');
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValueOnce([]);
+
+      // ACT: Get interactions with fromDate only
+      await service.getCustomerAIInteractions(TENANT_ID, CUSTOMER_PHONE, fromDate);
+
+      // ASSERT: createdAt filter should NOT be applied (both dates required)
+      expect(prisma.aIVoiceInteractionLog.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: TENANT_ID,
+          customerPhone: CUSTOMER_PHONE,
+          // createdAt should NOT be present
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // ASSERT: Query object should NOT have createdAt field at all
+      const lastCall = prisma.aIVoiceInteractionLog.findMany.mock.calls[0][0];
+      expect(lastCall.where).not.toHaveProperty('createdAt');
+    });
+
+    it('should NOT apply date filter when toDate is provided but fromDate is not', async () => {
+      // ARRANGE: toDate provided, but fromDate is undefined
+      const toDate = new Date('2026-12-31');
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValueOnce([]);
+
+      // ACT: Get interactions with toDate only
+      await service.getCustomerAIInteractions(TENANT_ID, CUSTOMER_PHONE, undefined, toDate);
+
+      // ASSERT: createdAt filter should NOT be applied
+      expect(prisma.aIVoiceInteractionLog.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: TENANT_ID,
+          customerPhone: CUSTOMER_PHONE,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // ASSERT: No createdAt property
+      const lastCall = prisma.aIVoiceInteractionLog.findMany.mock.calls[0][0];
+      expect(lastCall.where).not.toHaveProperty('createdAt');
+    });
+
+    it('should NOT apply date filter in getComplianceReport when fromDate is provided but toDate is not', async () => {
+      // ARRANGE: fromDate for compliance report, but toDate undefined
+      const fromDate = new Date('2026-02-01');
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValue([]);
+      prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
+
+      // ACT: Get compliance report with fromDate only
+      await service.getComplianceReport(TENANT_ID, fromDate);
+
+      // ASSERT: All queries should NOT have createdAt filter
+      expect(prisma.aIVoiceInteractionLog.findMany).toHaveBeenCalled();
+      expect(prisma.aIVoiceInteractionLog.count).toHaveBeenCalled();
+
+      // Check that no createdAt filter was applied in any call
+      prisma.aIVoiceInteractionLog.findMany.mock.calls.forEach(call => {
+        expect(call[0].where).not.toHaveProperty('createdAt');
+      });
+    });
+
+    it('should NOT apply date filter in getComplianceReport when toDate is provided but fromDate is not', async () => {
+      // ARRANGE: toDate for compliance report, but fromDate undefined
+      const toDate = new Date('2026-12-31');
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValue([]);
+      prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
+
+      // ACT: Get compliance report with toDate only
+      await service.getComplianceReport(TENANT_ID, undefined, toDate);
+
+      // ASSERT: No createdAt filter
+      prisma.aIVoiceInteractionLog.findMany.mock.calls.forEach(call => {
+        expect(call[0].where).not.toHaveProperty('createdAt');
+      });
+    });
+
+    it('should handle optOutRate calculation when totalCalls is 0', async () => {
+      // ARRANGE: No calls at all (edge case for line 270 ternary)
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValue([]);
+      prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
+
+      // ACT: Generate compliance report with zero calls
+      const report = await service.getComplianceReport(TENANT_ID);
+
+      // ASSERT: optOutRate should be 0 (not escalations/0 = Infinity)
+      expect(report.optOutRate).toBe(0);
+      expect(report.totalCalls).toBe(0);
+      expect(Number.isFinite(report.optOutRate)).toBe(true);
+    });
+
+    it('should use Date(0) fallback when fromDate is undefined in period', async () => {
+      // ARRANGE: No fromDate provided
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValue([]);
+      prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
+
+      // ACT: Get compliance report without fromDate
+      const report = await service.getComplianceReport(TENANT_ID);
+
+      // ASSERT: period.from should be Date(0) (line 279 fallback)
+      expect(report.period.from.getTime()).toBe(0);
+    });
+
+    it('should use today() fallback when toDate is undefined in period', async () => {
+      // ARRANGE: No toDate provided
+      prisma.aIVoiceInteractionLog.findMany.mockResolvedValue([]);
+      prisma.aIVoiceInteractionLog.count.mockResolvedValue(0);
+
+      // ACT: Get compliance report without toDate
+      const report = await service.getComplianceReport(TENANT_ID);
+
+      // ASSERT: period.to should be today (approximately, within 1 second)
+      const now = new Date();
+      expect(Math.abs(report.period.to.getTime() - now.getTime())).toBeLessThan(1000);
+    });
+
+    it('should throw BadRequestException in logAIDecision when tenantId is missing (line 287)', async () => {
+      // ARRANGE: Directly call the private logAIDecision method with empty tenantId
+      // This tests the defensive validation at line 287 which is otherwise unreachable
+      // because public methods validate tenantId first.
+      const decision = buildAIDecision({ tenantId: '' });
+
+      // ACT & ASSERT: Call private method directly via any casting to test line 287
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await expect((service as any).logAIDecision(decision)).rejects.toThrow(BadRequestException);
+
+      // Verify the exception is thrown before any Prisma call
+      expect(prisma.voiceWebhookEvent.findFirst).not.toHaveBeenCalled();
+      expect(prisma.aIVoiceInteractionLog.create).not.toHaveBeenCalled();
     });
   });
 });

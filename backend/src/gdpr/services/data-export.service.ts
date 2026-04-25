@@ -1,10 +1,5 @@
 import * as crypto from 'crypto';
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
@@ -182,7 +177,7 @@ export class DataExportService {
   ): Promise<{ url: string; expiresAt: Date; exportId: string }> {
     try {
       // Validate tenant exists
-      const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      await this.prisma.tenant.findUniqueOrThrow({
         where: { id: tenantId },
         select: { id: true },
       });

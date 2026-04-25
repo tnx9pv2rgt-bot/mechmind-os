@@ -272,4 +272,50 @@ describe('RolesGuard', () => {
       expect(result).toBe(true);
     });
   });
+
+  describe('checkRoleHierarchy (private — lines 50-62)', () => {
+    type GuardWithPrivate = {
+      checkRoleHierarchy: (userRole: string, requiredRole: UserRole) => boolean;
+    };
+
+    it('should return true when userLevel >= requiredLevel (ADMIN >= MECHANIC)', () => {
+      const result = (guard as unknown as GuardWithPrivate).checkRoleHierarchy(
+        UserRole.ADMIN,
+        UserRole.MECHANIC,
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should return false when userLevel < requiredLevel (MECHANIC < ADMIN)', () => {
+      const result = (guard as unknown as GuardWithPrivate).checkRoleHierarchy(
+        UserRole.MECHANIC,
+        UserRole.ADMIN,
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should return true when same level (MANAGER === MANAGER)', () => {
+      const result = (guard as unknown as GuardWithPrivate).checkRoleHierarchy(
+        UserRole.MANAGER,
+        UserRole.MANAGER,
+      );
+      expect(result).toBe(true);
+    });
+
+    it('should use 0 fallback when userRole not in hierarchy (line 58 || 0 branch)', () => {
+      const result = (guard as unknown as GuardWithPrivate).checkRoleHierarchy(
+        'UNKNOWN_ROLE',
+        UserRole.RECEPTIONIST,
+      );
+      expect(result).toBe(false);
+    });
+
+    it('should use 0 fallback when requiredRole not in hierarchy (line 59 || 0 branch)', () => {
+      const result = (guard as unknown as GuardWithPrivate).checkRoleHierarchy(
+        UserRole.ADMIN,
+        'INVALID_ROLE' as UserRole,
+      );
+      expect(result).toBe(true);
+    });
+  });
 });

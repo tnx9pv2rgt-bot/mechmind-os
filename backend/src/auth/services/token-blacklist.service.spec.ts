@@ -44,6 +44,12 @@ describe('TokenBlacklistService', () => {
   });
 
   describe('isBlacklisted', () => {
+    it('should return false when jti is empty string (line 28 true branch)', async () => {
+      const result = await service.isBlacklisted('');
+      expect(result).toBe(false);
+      expect(redisService.get).not.toHaveBeenCalled();
+    });
+
     it('should return true if token is blacklisted', async () => {
       redisService.get.mockResolvedValue('1');
       const result = await service.isBlacklisted('test-jti-123');
@@ -64,6 +70,11 @@ describe('TokenBlacklistService', () => {
   });
 
   describe('invalidateAllUserSessions', () => {
+    it('should skip when userId is empty string (line 39 true branch)', async () => {
+      await service.invalidateAllUserSessions('');
+      expect(redisService.set).not.toHaveBeenCalled();
+    });
+
     it('should store invalidation timestamp in Redis', async () => {
       const before = Date.now();
       await service.invalidateAllUserSessions('user-123');
@@ -116,6 +127,12 @@ describe('TokenBlacklistService', () => {
   });
 
   describe('isRefreshFamilyRevoked', () => {
+    it('should return false when familyId is empty string (line 93 true branch)', async () => {
+      const result = await service.isRefreshFamilyRevoked('');
+      expect(result).toBe(false);
+      expect(redisService.get).not.toHaveBeenCalled();
+    });
+
     it('should return true if family is revoked', async () => {
       redisService.get.mockResolvedValue('1');
       const result = await service.isRefreshFamilyRevoked('family-1');
@@ -136,6 +153,12 @@ describe('TokenBlacklistService', () => {
   });
 
   describe('isSessionValid', () => {
+    it('should return true when userId is empty string (line 48 true branch)', async () => {
+      const result = await service.isSessionValid('', 1000);
+      expect(result).toBe(true);
+      expect(redisService.get).not.toHaveBeenCalled();
+    });
+
     it('should return true if no invalidation timestamp exists', async () => {
       redisService.get.mockResolvedValue(null);
       const result = await service.isSessionValid('user-123', 1000);

@@ -133,6 +133,9 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.91.0",
     "@nestjs/testing": "^10.3.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jest-runner": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
     "@testcontainers/postgresql": "^11.13.0",
     "@types/jest": "^29.5.11",
     "@types/opossum": "^8.1.9",

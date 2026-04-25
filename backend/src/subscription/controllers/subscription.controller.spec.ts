@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import Stripe from 'stripe';
 import {
   SubscriptionController,
   AdminSubscriptionController,
   StripeWebhookController,
 } from './subscription.controller';
-import { SubscriptionService } from '../services/subscription.service';
+import { SubscriptionService, SubscriptionResponse } from '../services/subscription.service';
 import { FeatureAccessService } from '../services/feature-access.service';
 
 jest.mock('stripe', () => {
@@ -517,14 +518,16 @@ describe('StripeWebhookController', () => {
     });
 
     it('should throw BadRequestException when constructEvent fails', async () => {
-      const Stripe = require('stripe');
-      (Stripe as jest.Mock).mockImplementation(() => ({
-        webhooks: {
-          constructEvent: jest.fn().mockImplementation(() => {
-            throw new Error('Invalid signature');
-          }),
-        },
-      }));
+      jest.mocked(Stripe).mockImplementation(
+        () =>
+          ({
+            webhooks: {
+              constructEvent: jest.fn().mockImplementation(() => {
+                throw new Error('Invalid signature');
+              }),
+            },
+          }) as unknown as Stripe,
+      );
 
       configService.get.mockImplementation((key: string) => {
         if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -540,16 +543,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle charge.refunded event', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'charge.refunded',
       id: 'evt_test',
       data: { object: { id: 'ch_test', amount: 2000 } },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -565,7 +570,6 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle customer.subscription.deleted and cancel subscription', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'customer.subscription.deleted',
       id: 'evt_test',
@@ -575,14 +579,17 @@ describe('StripeWebhookController', () => {
           metadata: { tenantId: 'tenant-123' },
         },
       },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     _subscriptionService.cancelSubscription.mockResolvedValue({
-      subscription: {} as any,
+      subscription: {} as unknown as SubscriptionResponse,
       dataRetentionDate: new Date(),
     });
 
@@ -600,16 +607,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle checkout.session.completed event', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'checkout.session.completed',
       id: 'evt_test',
       data: { object: { id: 'cs_test', metadata: { invoiceId: 'inv-123' } } },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -624,16 +633,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle charge.dispute.created event', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'charge.dispute.created',
       id: 'evt_test',
       data: { object: { id: 'dp_test' } },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -648,16 +659,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle unhandled event types gracefully', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'unknown.event',
       id: 'evt_test',
       data: { object: {} },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -672,7 +685,6 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle error when canceling subscription fails', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'customer.subscription.deleted',
       id: 'evt_test',
@@ -682,11 +694,14 @@ describe('StripeWebhookController', () => {
           metadata: { tenantId: 'tenant-123' },
         },
       },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     _subscriptionService.cancelSubscription.mockRejectedValue(new Error('Cancel failed'));
 
@@ -704,7 +719,6 @@ describe('StripeWebhookController', () => {
   });
 
   it('should skip cancelSubscription when tenantId missing from metadata', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'customer.subscription.deleted',
       id: 'evt_test',
@@ -714,11 +728,14 @@ describe('StripeWebhookController', () => {
           metadata: {}, // no tenantId
         },
       },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -734,16 +751,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should skip checkout logging when invoiceId missing from metadata', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'checkout.session.completed',
       id: 'evt_test',
       data: { object: { id: 'cs_test', metadata: {} } }, // no invoiceId
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -758,7 +777,6 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle missing metadata object in subscription.deleted', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'customer.subscription.deleted',
       id: 'evt_test',
@@ -768,11 +786,14 @@ describe('StripeWebhookController', () => {
           // no metadata field at all
         },
       },
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';
@@ -787,16 +808,18 @@ describe('StripeWebhookController', () => {
   });
 
   it('should handle checkout.session without metadata', async () => {
-    const Stripe = require('stripe');
     const mockConstructEvent = jest.fn().mockReturnValue({
       type: 'checkout.session.completed',
       id: 'evt_test',
       data: { object: { id: 'cs_test' } }, // no metadata
-    } as any);
+    } as unknown as Stripe.Event);
 
-    (Stripe as jest.Mock).mockImplementation(() => ({
-      webhooks: { constructEvent: mockConstructEvent },
-    }));
+    jest.mocked(Stripe).mockImplementation(
+      () =>
+        ({
+          webhooks: { constructEvent: mockConstructEvent },
+        }) as unknown as Stripe,
+    );
 
     configService.get.mockImplementation((key: string) => {
       if (key === 'STRIPE_WEBHOOK_SECRET') return 'whsec_test';

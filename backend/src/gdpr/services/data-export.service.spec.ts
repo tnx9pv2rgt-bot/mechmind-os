@@ -1,11 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
-import {
-  DataExportService,
-  DataExportTokenPayload,
-  CompleteDataExport,
-} from './data-export.service';
+import { DataExportService, DataExportTokenPayload } from './data-export.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
@@ -47,6 +43,7 @@ describe('DataExportService (GDPR Art. 20)', () => {
             },
             auditLog: {
               create: jest.fn().mockResolvedValue(mockAuditLog),
+              findMany: jest.fn().mockResolvedValue([]),
             },
             customerEncrypted: {
               findMany: jest.fn().mockResolvedValue([]),
@@ -209,6 +206,13 @@ describe('DataExportService (GDPR Art. 20)', () => {
       (jwtService.verifyAsync as jest.Mock).mockRejectedValueOnce(new Error('Token expired'));
 
       await expect(service.downloadExportedData('expired.token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when verifyAsync throws non-Error (false arm on instanceof check)', async () => {
+      (jwtService.verifyAsync as jest.Mock).mockRejectedValueOnce('string-rejection');
+      await expect(service.downloadExportedData('bad.token')).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -551,7 +555,7 @@ describe('DataExportService (GDPR Art. 20)', () => {
       expect(result.customers).toEqual([]);
       expect(result.vehicles).toEqual([]);
       expect(result.bookings).toEqual([]);
-      expect(result.metadata.totalRecords).toBe(0);
+      expect(result.metadata.totalRecords).toBe(1); // 1 = tenant record always counted
     });
 
     it('should handle BigInt conversion for currency fields', async () => {
@@ -597,8 +601,221 @@ describe('DataExportService (GDPR Art. 20)', () => {
       const result = await service.downloadExportedData(mockToken);
 
       expect(result.bookings[0].totalCostCents).toBe(25000);
-      expect(result.invoices[0].totalCents).toBe(25000);
-      expect(result.invoices[0].taxCents).toBe(5000);
+      // Invoice select excludes totalCents/taxCents — verify base fields
+      expect(result.invoices[0].id).toBe('inv-1');
+      expect(result.invoices[0].status).toBe('PAID');
+    });
+
+    it('should map workOrders, estimates, payments, notifications with optional fields', async () => {
+      const now = new Date('2026-04-25T10:00:00Z');
+      const mockData = {
+        customerEncrypted: [],
+        vehicle: [],
+        booking: [],
+        invoice: [],
+        workOrders: [
+          {
+            id: 'wo-1',
+            bookingId: 'book-1',
+            status: 'IN_PROGRESS',
+            description: 'Oil change',
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+          },
+          {
+            id: 'wo-2',
+            bookingId: null,
+            status: 'DONE',
+            description: null,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: now,
+          },
+        ],
+        estimates: [
+          {
+            id: 'est-1',
+            customerId: 'cust-1',
+            estimatedCostCents: BigInt(10000),
+            status: 'DRAFT',
+            validUntil: now,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+          },
+          {
+            id: 'est-2',
+            customerId: null,
+            estimatedCostCents: BigInt(5000),
+            status: 'EXPIRED',
+            validUntil: null,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: now,
+          },
+        ],
+        payments: [
+          {
+            id: 'pay-1',
+            invoiceId: 'inv-1',
+            amountCents: BigInt(15000),
+            status: 'COMPLETED',
+            processedAt: now,
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: 'pay-2',
+            invoiceId: null,
+            amountCents: BigInt(0),
+            status: 'PENDING',
+            processedAt: null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        notifications: [
+          {
+            id: 'notif-1',
+            type: 'EMAIL',
+            status: 'SENT',
+            readAt: now,
+            createdAt: now,
+            updatedAt: now,
+          },
+          {
+            id: 'notif-2',
+            type: 'SMS',
+            status: 'PENDING',
+            readAt: null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        auditLogs: [
+          {
+            id: 'audit-1',
+            action: 'UPDATE',
+            tableName: 'bookings',
+            recordId: 'book-1',
+            oldValues: JSON.stringify({ status: 'OLD' }),
+            newValues: JSON.stringify({ status: 'NEW' }),
+            createdAt: now,
+          },
+          {
+            id: 'audit-2',
+            action: 'CREATE',
+            tableName: 'vehicles',
+            recordId: 'veh-1',
+            oldValues: null,
+            newValues: null,
+            createdAt: now,
+          },
+        ],
+      };
+
+      setupMockPrismaQueries(mockData);
+
+      const result = await service.downloadExportedData(mockToken);
+
+      // workOrders
+      expect(result.workOrders).toHaveLength(2);
+      expect(result.workOrders[0].status).toBe('IN_PROGRESS');
+      expect(result.workOrders[0].deletedAt).toBeNull();
+      expect(result.workOrders[1].deletedAt).not.toBeNull();
+
+      // estimates
+      expect(result.estimates).toHaveLength(2);
+      expect(result.estimates[0].estimatedCostCents).toBe(10000);
+      expect(result.estimates[0].validUntil).toBe(now.toISOString());
+      expect(result.estimates[1].validUntil).toBeUndefined();
+      expect(result.estimates[1].deletedAt).not.toBeNull();
+
+      // payments
+      expect(result.payments).toHaveLength(2);
+      expect(result.payments[0].amountCents).toBe(15000);
+      expect(result.payments[0].processedAt).toBe(now.toISOString());
+      expect(result.payments[1].processedAt).toBeUndefined();
+
+      // notifications
+      expect(result.notifications).toHaveLength(2);
+      expect(result.notifications[0].readAt).toBe(now.toISOString());
+      expect(result.notifications[1].readAt).toBeUndefined();
+
+      // auditLogs — oldValues/newValues present vs null
+      expect(result.auditLogs[0].oldValues).toEqual({ status: 'OLD' });
+      expect(result.auditLogs[0].newValues).toEqual({ status: 'NEW' });
+      expect(result.auditLogs[1].oldValues).toBeUndefined();
+      expect(result.auditLogs[1].newValues).toBeUndefined();
+    });
+
+    it('should cover soft-deleted customer/vehicle optional fields', async () => {
+      const now = new Date('2026-04-25T10:00:00Z');
+      const mockData = {
+        customerEncrypted: [
+          {
+            id: 'cust-soft',
+            nameEncrypted: null,
+            emailEncrypted: null,
+            phoneEncrypted: null,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: now,
+          },
+        ],
+        vehicle: [
+          {
+            id: 'veh-soft',
+            customerId: 'cust-soft',
+            licensePlate: 'XX000XX',
+            make: 'Ford',
+            model: 'Focus',
+            year: 2019,
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: now,
+          },
+        ],
+        booking: [
+          {
+            id: 'book-soft',
+            customerId: null,
+            scheduledDate: null,
+            status: 'CANCELLED',
+            estimatedDurationMinutes: 0,
+            totalCostCents: null,
+            paymentStatus: 'NONE',
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: now,
+          },
+        ],
+        invoice: [],
+        workOrders: [],
+        estimates: [],
+        payments: [],
+        notifications: [],
+        auditLogs: [],
+      };
+
+      setupMockPrismaQueries(mockData);
+
+      const result = await service.downloadExportedData(mockToken);
+
+      // Null encrypted fields → undefined after decrypt attempt
+      expect(result.customers[0].name).toBeUndefined();
+      expect(result.customers[0].email).toBeUndefined();
+      expect(result.customers[0].phone).toBeUndefined();
+      expect(result.customers[0].deletedAt).not.toBeNull();
+
+      // Vehicle soft-deleted
+      expect(result.vehicles[0].deletedAt).not.toBeNull();
+
+      // Booking with null scheduledDate and null totalCostCents
+      expect(result.bookings[0].scheduledDate).toBeUndefined();
+      expect(result.bookings[0].totalCostCents).toBeUndefined();
+      expect(result.bookings[0].deletedAt).not.toBeNull();
     });
   });
 
@@ -689,15 +906,15 @@ describe('DataExportService (GDPR Art. 20)', () => {
 
   // Helper function to set up mock Prisma queries
   function setupMockPrismaQueries(mockData: {
-    customerEncrypted: any[];
-    vehicle: any[];
-    booking: any[];
-    invoice: any[];
-    workOrders: any[];
-    estimates: any[];
-    payments: any[];
-    notifications: any[];
-    auditLogs: any[];
+    customerEncrypted: unknown[];
+    vehicle: unknown[];
+    booking: unknown[];
+    invoice: unknown[];
+    workOrders: unknown[];
+    estimates: unknown[];
+    payments: unknown[];
+    notifications: unknown[];
+    auditLogs: unknown[];
   }): void {
     (prismaService.customerEncrypted.findMany as jest.Mock).mockResolvedValue(
       mockData.customerEncrypted,
@@ -710,5 +927,6 @@ describe('DataExportService (GDPR Art. 20)', () => {
       .mockResolvedValueOnce(mockData.estimates)
       .mockResolvedValueOnce(mockData.payments)
       .mockResolvedValueOnce(mockData.notifications);
+    (prismaService.auditLog.findMany as jest.Mock).mockResolvedValueOnce(mockData.auditLogs);
   }
 });

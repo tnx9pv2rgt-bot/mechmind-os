@@ -253,6 +253,28 @@ describe('JwksService', () => {
       const signingKey = service.getSigningKey();
       expect(signingKey).not.toBeNull();
     });
+
+    it('should throw when useAsymmetric=true but keys array is empty (line 181)', async () => {
+      configService = {
+        get: jest.fn((key: string, defaultValue?: string) => {
+          if (key === 'JWT_AUTO_GENERATE_KEYS') return 'true';
+          if (key === 'JWT_SECRET') return 'test-secret';
+          return defaultValue;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [JwksService, { provide: ConfigService, useValue: configService }],
+      }).compile();
+
+      service = module.get<JwksService>(JwksService);
+      service.onModuleInit();
+
+      // Clear keys array to force getSigningKey() → null
+      (service as unknown as { keys: unknown[] }).keys = [];
+
+      expect(() => service.getSigningOptions()).toThrow('No active signing key available');
+    });
   });
 
   describe('getPassportJwtOptions — ES256 secretOrKeyProvider', () => {
@@ -328,6 +350,22 @@ describe('JwksService', () => {
 
       opts.secretOrKeyProvider!({}, mockToken, (err, _key) => {
         expect(err).toBeInstanceOf(Error);
+        done();
+      });
+    });
+
+    it('should call done with null key when keys array is empty and kid is missing (line 147 || null branch)', done => {
+      // Clear keys so this.keys[0]?.publicKey is undefined → || null fires
+      (es256Service as unknown as { keys: unknown[] }).keys = [];
+      const opts = es256Service.getPassportJwtOptions();
+
+      const headerObj = { alg: 'ES256' }; // No kid
+      const headerB64 = Buffer.from(JSON.stringify(headerObj)).toString('base64url');
+      const mockToken = `${headerB64}.payload.signature`;
+
+      opts.secretOrKeyProvider!({}, mockToken, (err, key) => {
+        expect(err).toBeNull();
+        expect(key).toBeNull();
         done();
       });
     });

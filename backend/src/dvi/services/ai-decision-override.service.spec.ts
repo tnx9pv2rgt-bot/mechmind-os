@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
 import { AIDecisionOverrideService } from './ai-decision-override.service';
 import { PrismaService } from '@common/services/prisma.service';
 

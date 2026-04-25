@@ -47,6 +47,7 @@ describe('NotificationTriggersService', () => {
     vehicle: { findMany: jest.Mock };
     invoice: { updateMany: jest.Mock };
     workOrder: { findMany: jest.Mock; update: jest.Mock };
+    estimate: { findMany: jest.Mock; updateMany: jest.Mock };
   };
 
   const mockTenantId = 'tenant-uuid-1';
@@ -60,6 +61,10 @@ describe('NotificationTriggersService', () => {
       workOrder: {
         findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn().mockResolvedValue({}),
+      },
+      estimate: {
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
     };
 
@@ -1533,6 +1538,494 @@ describe('NotificationTriggersService', () => {
           expect(sentDto.tenantId).toBe((event as unknown as Record<string, string>).tenantId);
         }
       }
+    });
+  });
+
+  // =========================================================================
+  // TIER 1: Event handler null checks and error handling
+  // =========================================================================
+  describe('event handlers — missing branch coverage', () => {
+    it('should handle booking reminders error path with continue', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const bookings = [
+        { id: 'bk-1', tenantId: mockTenantId, customerId: 'cust-1', scheduledDate: tomorrow },
+        { id: 'bk-2', tenantId: mockTenantId, customerId: null, scheduledDate: tomorrow }, // null, should skip
+      ];
+      prisma.booking.findMany.mockResolvedValue(bookings);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockResolvedValueOnce({ success: true })
+        .mockRejectedValueOnce(new Error('Send failed'));
+
+      const count = await service.sendBookingReminders();
+
+      // Should process bk-1, skip bk-2 (null customerId), fail on bk-1 send attempt
+      expect(count).toBeLessThanOrEqual(bookings.length);
+    });
+
+    it('should handle vehicle maintenance reminders with empty workOrders', async () => {
+      const vehicles = [
+        {
+          id: 'veh-1',
+          customerId: 'cust-1',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [], // Empty array, should skip
+        },
+      ];
+      prisma.vehicle.findMany.mockResolvedValue(vehicles);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should handle warranty reminder cron failure gracefully', async () => {
+      prisma.workOrder.findMany.mockRejectedValue(new Error('Database unavailable'));
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // TIER 2: Event handler ternary/conditional branches
+  // =========================================================================
+  describe('event handlers — channel routing conditionals', () => {
+    it('should route estimate notification via EMAIL channel', async () => {
+      await service.onEstimateSent({
+        estimateId: 'est-002',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        estimateNumber: 'EST-2026-0002',
+        totalCents: 25000,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'EMAIL',
+          metadata: expect.objectContaining({
+            template: 'estimate-sent',
+          }),
+        }),
+      );
+    });
+
+    it('should route work order status change via IN_APP channel', async () => {
+      await service.onWorkOrderStatusChanged({
+        workOrderId: 'wo-002',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        status: 'COMPLETED',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            template: 'wo-status-changed',
+          }),
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // TIER 3: Cron exception handling for all methods
+  // =========================================================================
+  describe('cron methods — complete exception handling', () => {
+    it('should handle error in sendBookingReminders cron at query level', async () => {
+      prisma.booking = { findMany: jest.fn().mockRejectedValue(new Error('Connection timeout')) };
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendMaintenanceReminders cron at query level', async () => {
+      prisma.vehicle = { findMany: jest.fn().mockRejectedValue(new Error('DB error')) };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in markOverdueInvoices cron', async () => {
+      prisma.invoice = {
+        updateMany: jest.fn().mockRejectedValue(new Error('Update failed')),
+      };
+
+      const count = await service.markOverdueInvoices();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendWarrantyExpiringReminders cron', async () => {
+      prisma.workOrder = {
+        findMany: jest.fn().mockRejectedValue(new Error('Query failed')),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendReviewRequests cron', async () => {
+      prisma.workOrder = {
+        findMany: jest.fn().mockRejectedValue(new Error('Database error')),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // TIER 4: Loop continue branches — null checks in iterative crons
+  // =========================================================================
+  describe('cron loops — null/undefined checks', () => {
+    it('should skip sendWarrantyExpiringReminders for WO with null customerId', async () => {
+      prisma.workOrder = {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'wo-100', tenantId: mockTenantId, customerId: null, woNumber: 'WO-1' },
+          ]),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendReviewRequests for WO with null customerId', async () => {
+      prisma.workOrder = {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'wo-200', tenantId: mockTenantId, customerId: null }]),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendMaintenanceReminders for vehicle without workOrders', async () => {
+      prisma.vehicle = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'veh-no-wo',
+            customerId: 'cust-1',
+            make: 'Fiat',
+            model: '500',
+            workOrders: [], // Empty work orders array
+          },
+        ]),
+      };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendMaintenanceReminders for vehicle with null customerId', async () => {
+      prisma.vehicle = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'veh-no-cust-id',
+            customerId: null,
+            make: 'BMW',
+            model: '320',
+            workOrders: [{ tenantId: mockTenantId }],
+          },
+        ]),
+      };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendBookingReminders for booking with null customerId', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      prisma.booking = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'bk-null-cust',
+            tenantId: mockTenantId,
+            customerId: null,
+            scheduledDate: tomorrow,
+          },
+        ]),
+      };
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // onEstimateSentForApproval — ternary channel branches + error branch
+  // =========================================================================
+  describe('onEstimateSentForApproval — channel routing ternary', () => {
+    const baseApprovalEvent = {
+      estimateId: 'est-approval-1',
+      tenantId: mockTenantId,
+      customerId: mockCustomerId,
+      approvalUrl: 'https://example.com/approve/est-approval-1',
+    };
+
+    it('should route via WHATSAPP when channel is WHATSAPP', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'WHATSAPP' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'WHATSAPP' }),
+      );
+    });
+
+    it('should route via EMAIL when channel is EMAIL', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'EMAIL' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'EMAIL' }),
+      );
+    });
+
+    it('should fallback to SMS when channel is unknown', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'UNKNOWN' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'SMS' }),
+      );
+    });
+
+    it('should log error and not throw when sendImmediate rejects', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(
+        new Error('Notification failed'),
+      );
+
+      await expect(
+        service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'SMS' }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // onEstimatePartiallyApproved — happy path + error branch
+  // =========================================================================
+  describe('onEstimatePartiallyApproved', () => {
+    it('should send IN_APP notification with approved/rejected counts', async () => {
+      await service.onEstimatePartiallyApproved({
+        estimateId: 'est-partial-1',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        approvedLineIds: ['line-1', 'line-2'],
+        rejectedLineIds: ['line-3'],
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            approvedCount: 2,
+            rejectedCount: 1,
+          }),
+        }),
+      );
+    });
+
+    it('should log error and not throw when sendImmediate rejects', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(
+        new Error('Partial approval notify failed'),
+      );
+
+      await expect(
+        service.onEstimatePartiallyApproved({
+          estimateId: 'est-partial-err',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          approvedLineIds: [],
+          rejectedLineIds: ['line-x'],
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // markExpiredEstimates — all uncovered branches (lines 643-699)
+  // =========================================================================
+  describe('markExpiredEstimates', () => {
+    it('should return 0 immediately when no estimates are expired', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(prisma.estimate.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should skip estimates with null customerId (continue branch)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-no-cust',
+            tenantId: mockTenantId,
+            customerId: null,
+            estimateNumber: 'EST-001',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should log error and continue when sendImmediate throws for one estimate', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-err',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-002',
+          },
+          {
+            id: 'est-ok',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-003',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('notify failed'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(1);
+    });
+
+    it('should handle outer DB error and return 0 (outer catch branch)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockRejectedValue(new Error('DB connection error')),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(prisma.estimate.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should notify all estimates with customerId and return correct count', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-1',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-010',
+          },
+          {
+            id: 'est-2',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-011',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(2);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle non-Error inner catch (error instanceof Error false arm)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-ne',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-099',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      };
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce('non-error-string');
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle non-Error outer catch (error instanceof Error false arm)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockRejectedValue('db-non-error'),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // non-Error false arm for new handlers (onEstimateSentForApproval + onEstimatePartiallyApproved)
+  // =========================================================================
+  describe('non-Error thrown in new estimate handlers', () => {
+    it('onEstimateSentForApproval should handle non-Error thrown (false arm)', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce('approval-string-err');
+
+      await expect(
+        service.onEstimateSentForApproval({
+          estimateId: 'est-ne-approval',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          channel: 'SMS',
+          approvalUrl: 'https://example.com/approve',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onEstimatePartiallyApproved should handle non-Error thrown (false arm)', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(42);
+
+      await expect(
+        service.onEstimatePartiallyApproved({
+          estimateId: 'est-ne-partial',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          approvedLineIds: ['line-a'],
+          rejectedLineIds: [],
+        }),
+      ).resolves.toBeUndefined();
     });
   });
 });

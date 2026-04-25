@@ -779,6 +779,53 @@ describe('ObdStreamingService', () => {
         service.getSensorHistory(TENANT_ID, 'device-74', 'DROP TABLE; --', from, to),
       ).rejects.toThrow('Invalid sensor');
     });
+
+    it('should aggregate with min function', async () => {
+      const dbData = [
+        { recordedAt: new Date('2026-01-15T10:00:00Z'), rawData: { rpm: 1800 } },
+        { recordedAt: new Date('2026-01-15T10:00:30Z'), rawData: { rpm: 3200 } },
+      ];
+      (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(dbData);
+
+      const result = await service.getSensorHistory(TENANT_ID, 'device-75', 'rpm', from, to, 'min');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe(1800);
+    });
+
+    it('should aggregate with max function', async () => {
+      const dbData = [
+        { recordedAt: new Date('2026-01-15T10:00:00Z'), rawData: { rpm: 1800 } },
+        { recordedAt: new Date('2026-01-15T10:00:30Z'), rawData: { rpm: 3200 } },
+      ];
+      (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(dbData);
+
+      const result = await service.getSensorHistory(TENANT_ID, 'device-76', 'rpm', from, to, 'max');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe(3200);
+    });
+
+    it('should aggregate with count function', async () => {
+      const dbData = [
+        { recordedAt: new Date('2026-01-15T10:00:00Z'), rawData: { rpm: 1800 } },
+        { recordedAt: new Date('2026-01-15T10:00:30Z'), rawData: { rpm: 3200 } },
+        { recordedAt: new Date('2026-01-15T10:00:45Z'), rawData: { rpm: 2500 } },
+      ];
+      (prisma.obdReading.findMany as jest.Mock).mockResolvedValueOnce(dbData);
+
+      const result = await service.getSensorHistory(
+        TENANT_ID,
+        'device-77',
+        'rpm',
+        from,
+        to,
+        'count',
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].value).toBe(3);
+    });
   });
 
   // ==================== applyRetentionPolicy ====================

@@ -147,5 +147,65 @@ describe('LoggerService', () => {
       expect(parsed.requestId).toBe('req-456');
       expect(parsed.service).toBe('mechmind-backend');
     });
+
+    it('should include duration_ms in JSON when durationMs is set in structuredCtx (line 102)', () => {
+      configService.get.mockImplementation((key: string) => {
+        if (key === 'LOG_FORMAT') return 'json';
+        return 'info';
+      });
+
+      service.setStructuredContext({
+        method: 'GET',
+        url: '/api/test',
+        statusCode: 200,
+        durationMs: 42,
+      });
+
+      service.log('duration test');
+
+      const output = stdoutSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(output);
+      expect(parsed.duration_ms).toBe(42);
+      expect(parsed.method).toBe('GET');
+      expect(parsed.url).toBe('/api/test');
+      expect(parsed.statusCode).toBe(200);
+    });
+  });
+
+  describe('logWithCorrelation (line 62)', () => {
+    it('should output log message with correlationId', () => {
+      service.logWithCorrelation('correlated message', 'corr-id-123', 'TestCtx');
+
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('correlated message'));
+    });
+
+    it('should output log message without correlationId', () => {
+      service.logWithCorrelation('no-corr message');
+
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('no-corr message'));
+    });
+  });
+
+  describe('LoggerService without configService (optional parameter branches)', () => {
+    let noConfigService: LoggerService;
+
+    beforeEach(() => {
+      noConfigService = new LoggerService();
+    });
+
+    it('should output log message without configService (line 73 configService?.get fallback)', () => {
+      noConfigService.log('no-config log');
+      expect(stdoutSpy).toHaveBeenCalledWith(expect.stringContaining('no-config log'));
+    });
+
+    it('should suppress debug output without configService (line 48 fallback to info)', () => {
+      noConfigService.debug('suppressed debug');
+      expect(stdoutSpy).not.toHaveBeenCalled();
+    });
+
+    it('should suppress verbose output without configService (line 55 fallback to info)', () => {
+      noConfigService.verbose('suppressed verbose');
+      expect(stdoutSpy).not.toHaveBeenCalled();
+    });
   });
 });

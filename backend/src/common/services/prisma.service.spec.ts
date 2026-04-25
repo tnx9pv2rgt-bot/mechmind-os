@@ -304,4 +304,44 @@ describe('PrismaService', () => {
       expect(svc).toBeDefined();
     });
   });
+
+  describe('withSerializableTransaction — maxRetries:0 (line 155 || branch)', () => {
+    it('should throw new Error when maxRetries is 0 and lastError is null', async () => {
+      await expect(
+        service.withSerializableTransaction(async () => 'result', { maxRetries: 0 }),
+      ).rejects.toThrow('Transaction failed after max retries');
+    });
+  });
+
+  describe('onModuleInit — development query callback (line 59)', () => {
+    it('should invoke the query callback with event data', async () => {
+      const devConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
+          const map: Record<string, unknown> = {
+            DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+            NODE_ENV: 'development',
+          };
+          return map[key] ?? defaultVal;
+        }),
+      };
+      const devSvc = new PrismaService(
+        devConfig as unknown as ConfigService,
+        logger as unknown as LoggerService,
+      );
+      let capturedCallback: ((e: { query: string; duration: number }) => void) | undefined;
+      jest.spyOn(devSvc, '$connect').mockResolvedValue();
+      jest.spyOn(devSvc, '$on').mockImplementation((_event: string, cb: unknown) => {
+        capturedCallback = cb as (e: { query: string; duration: number }) => void;
+        return undefined as never;
+      });
+
+      await devSvc.onModuleInit();
+
+      expect(capturedCallback).toBeDefined();
+      if (capturedCallback) {
+        capturedCallback({ query: 'SELECT 1', duration: 5 });
+        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('SELECT 1'));
+      }
+    });
+  });
 });

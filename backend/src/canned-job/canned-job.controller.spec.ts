@@ -107,6 +107,52 @@ describe('CannedJobController', () => {
         limit: undefined,
       });
     });
+
+    it('should parse page and limit as integers', async () => {
+      const paginated = { data: [mockCannedJob], total: 10, page: 2, limit: 5, pages: 2 };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      const result = await controller.findAll(TENANT_ID, undefined, undefined, '2', '5');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: undefined,
+        isActive: undefined,
+        page: 2,
+        limit: 5,
+      });
+      expect(result.meta.page).toBe(2);
+      expect(result.meta.limit).toBe(5);
+    });
+
+    it('should handle isActive as non-boolean string (default to undefined)', async () => {
+      const paginated = { data: [], total: 0, page: 1, limit: 20, pages: 0 };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      await controller.findAll(TENANT_ID, undefined, 'maybe');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: undefined,
+        isActive: undefined,
+        page: undefined,
+        limit: undefined,
+      });
+    });
+
+    it('should handle category with filters and pagination', async () => {
+      const paginated = { data: [mockCannedJob], total: 5, page: 1, limit: 10, pages: 1 };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      const result = await controller.findAll(TENANT_ID, 'Riparazioni', 'false', '1', '10');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: 'Riparazioni',
+        isActive: false,
+        page: 1,
+        limit: 10,
+      });
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+    });
   });
 
   describe('findById', () => {

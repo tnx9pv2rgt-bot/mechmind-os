@@ -1,6 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '@common/services/prisma.service';
-
 /**
  * Consent Tracking Tests for Notifications Module
  *
@@ -284,7 +281,7 @@ describe('NotificationConsentTrackingService (GDPR)', () => {
     });
 
     it('should track marketing consent revocation timestamp', async () => {
-      const beforeRevoke = new Date();
+      const _beforeRevoke = new Date();
       prisma.customer.update.mockImplementation(({ data }) => {
         return Promise.resolve({
           id: CUSTOMER_ID,
@@ -421,7 +418,7 @@ describe('NotificationConsentTrackingService (GDPR)', () => {
   describe('Cross-Tenant Isolation', () => {
     it('should not reveal consent status across tenants', async () => {
       const tenant1Customer = { customerId: CUSTOMER_ID, tenantId: TENANT_ID };
-      const tenant2Customer = { customerId: CUSTOMER_ID, tenantId: 'tenant-002' };
+      const _tenant2Customer = { customerId: CUSTOMER_ID, tenantId: 'tenant-002' };
 
       prisma.customerNotificationPreference.findUnique
         .mockResolvedValueOnce({ ...tenant1Customer, channel: 'EMAIL', enabled: true })

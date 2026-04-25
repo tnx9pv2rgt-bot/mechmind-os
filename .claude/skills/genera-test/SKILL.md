@@ -1,276 +1,208 @@
 ---
 name: genera-test
-description: "Genera .spec.ts infinitamente critici — PATH B Atomic RAM + Cascade Models + Quality Gates. Verifica score, multi-service, security/testing/architecture gates, TypeScript strict, 90% coverage. Retry con Opus se quality fail. Como i migliori al mondo."
-allowed-tools: ["Bash(node *)","Bash(npx jest *)","Bash(tsc *)","Bash(eslint *)","Bash(ls *)"]
+description: "Test generation unified (single module OR all 51 backend modules). Single: atomic RAM + cascade models + 90% coverage. All: mutation ≥80%, CRAP analysis, flakiness detection, assertion density ≥2.5, world-class quality gates."
+allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "Agent"]
 disable-model-invocation: true
-effort: low
-argument-hint: "<modulo> [--dry-run] [--force] [--skip-verify]"
+effort: max
+context: fork
+argument-hint: "[--scope single|all] [--module MODULE] [--tiers TIER_1,...] [--dry-run] [--force] [--skip-verify] [--parallel N]"
 ---
 
-# Genera Test — Infinitely Strict (2026 Enterprise Standard)
+# Genera Test — Unified (Single Module + All Backend)
 
-## Workflow Completo
+Single-module or all-51-modules test generation with world-class quality gates.
+
+## Modalità
+
+### SINGLE MODULE (--scope single)
+```bash
+/genera-test --scope single --module booking
+/genera-test --scope single --module auth --dry-run
+```
+- Atomic RAM workflow
+- Cascade models (Haiku → Sonnet → Opus)
+- Coverage ≥90% statements AND ≥90% branches
+- Auto-improvement loop (max 5 iterations)
+- Output: modulo testato, spec trasferito su disco, MODULI_NEXO.md aggiornato
+
+### ALL MODULES (--scope all)
+```bash
+/genera-test --scope all
+/genera-test --scope all --tiers TIER_1,TIER_2
+/genera-test --scope all --parallel 4
+```
+- Parallel processing (default: 2 TIER_1, 3 TIER_2, 5 TIER_3/4)
+- For each module: coverage ≥90% + mutation ≥80% (Stryker incremental)
+- CRAP score analysis (target <10)
+- Flakiness detection (3 runs)
+- Assertion density ≥2.5
+- Final scorecard per modulo
+- Quality gates: TypeScript strict, ESLint 0 warnings
+- Overall report: MODULI_NEXO.md + QUALITY_SCORECARD.md
+
+## Tiers
 
 ```
-/genera-test booking
-  ↓
-[1] Verifica modulo (score ≥70)
-[2] Carica modulo in /tmp RAM (atomico)
-[3] Genera spec.ts per ogni service (Sonnet + XML structured prompt)
-[4] QUALITY GATES CHECK (subito, prima di Jest):
-    ├─ SECURITY: no SQL injection, tenantId everywhere, no secrets
-    ├─ TESTING: TENANT_ID const, tenantId assertions, happy path + error + edge
-    ├─ CODE QUALITY: no any, max nesting 5, max line 120
-    └─ Se FAIL → Retry con Opus (cascade models)
-[5] TypeScript strict check (tsc --noEmit)
-[6] Jest con coverage ≥90% (statements AND branches)
-[7] Se coverage OK → trasferisci RAM→disk, log MODULI_NEXO.md
-[8] Se coverage <90% → AUTO-ITER:
-    ├─ Analizza gap coverage (linee non coperte)
-    ├─ Genera test aggiuntivi per le linee mancanti
-    ├─ Re-run Jest
-    ├─ Loop fino a coverage ≥90% o max 5 iterazioni
-    └─ Alla fine: trasferisci RAM→disk, log MODULI_NEXO.md
+TIER_1 (CRITICAL P0): auth, booking, invoice, payment-link, subscription, gdpr
+  → Opus 4.7, max 2 parallel, mutation ≥80% required
+  
+TIER_2 (HIGH P1): notifications, admin, analytics, common, dvi, iot, work-order, customer, estimate, voice
+  → Sonnet 4.6, max 3 parallel, mutation ≥75% required
+
+TIER_3 (MEDIUM P2): rentri, parts, campaign, accounting, portal, membership, sms, reviews, location, etc.
+  → Sonnet 4.6, max 5 parallel, mutation ≥70% required
+
+TIER_4 (UTILITY): config, lib, middleware, types, services
+  → Haiku 4.5, max 5 parallel, coverage ≥90% required (mutation optional)
 ```
 
-### ✅ Auto-Improvement Loop (Implementato)
-- **Max iterazioni:** 5 (protezione contro loop infiniti)
-- **Coverage target:** ≥90% statements AND ≥90% branches
-- **Strategia:** Analizza linee non coperte → genera test mirati → re-run Jest
-- **Status finale:** 
-  - Se coverage ≥90%: `✅ Testato` in MODULI_NEXO.md
-  - Se coverage <90% dopo max 5 iter: `⏳ In miglioramento` in MODULI_NEXO.md (file comunque trasferiti a disk)
+## Features
 
-## Features (2026 Best Practices)
+✅ **Atomic RAM Workflow** — no disk corruption on failure
+✅ **Cascade Models** — adaptive model selection by tier + retry on fail
+✅ **90/90 Coverage** — statements AND branches (both required)
+✅ **Mutation Testing** — Stryker.js incremental (1-5 min vs 20-30 min full)
+✅ **CRAP Analysis** — Cyclomatic Complexity Risk (target <10)
+✅ **Flakiness Detection** — 3 runs, 0 tolerance for instability
+✅ **Assertion Density** — ≥2.5 expectations per test
+✅ **Property-Based Testing** — boundary values for numeric/state machine funcs
+✅ **Quality Scorecard** — per-modulo report with all metrics
+✅ **Auto-Improve Loop** — detect gaps, generate targeted tests, re-measure (max 5 iter)
 
-### ✅ Atomic RAM Workflow
-- Modulo caricato in `/tmp/nexo-gen-<modulo>-XXXX/`
-- Tutto il lavoro in RAM (volatile)
-- Solo se TUTTI i gate passano → salva su disk
-- Se FAIL → RAM deleted automaticamente, zero corruzioni
+## Workflow (Single Module)
 
-### ✅ Cascade Models (60% cost reduction)
-- Verifica/analisi: **Haiku** (cheap + fast)
-- Generazione standard: **Sonnet** (balanced)
-- Refinement se fail: **Opus** (best quality, solo retry)
+```
+1. [Verify] Module score ≥70 (complexity analysis)
+2. [Scan] Find all .service.ts files
+3. [Load] Copy to /tmp RAM (atomic staging)
+4. [Generate] For each service:
+   - Cascade: try Tier model → fail → retry Opus
+   - Quality gates: security, testing, code quality
+   - Write to $STAGING/ (not disk yet)
+5. [TypeScript] tsc --noEmit (first disk touch)
+6. [ESLint] npm run lint --max-warnings 0
+7. [Coverage] jest --coverage → ≥90%/≥90%?
+   - If YES → transfer staging to disk, log MODULI_NEXO.md ✅
+   - If NO → analyze gaps, generate more tests, loop (max 5 iter)
+8. [Assertion Density] Verify ≥2.5 expects/test
+9. [Done] RAM cleaned, spec on disk, MODULI_NEXO.md updated
+```
 
-### ✅ Module Complexity Tier System
-- **TIER_1 (CRITICAL P0)**: Opus 4.7 — auth, booking, invoice, payment-link, subscription, gdpr
-- **TIER_2 (HIGH P1)**: Sonnet 4.6 — notifications, admin, analytics, common, dvi, iot, work-order, customer
-- **TIER_3 (MEDIUM P2)**: Sonnet 4.6 — rentri, parts, campaign, accounting, portal, etc.
-- **TIER_4 (UTILITY)**: Haiku 4.5 — config, lib, middleware, test, types, services
+## Workflow (All Modules)
 
-### ✅ Quality Gates (Infinitely Strict)
-- **SECURITY**: SQL injection, tenantId bypass, hardcoded secrets, console.log
-- **TESTING**: TENANT_ID, tenantId assertions, happy path, error cases, edge cases
-- **CODE QUALITY**: no any TypeScript, nesting, line length
-- **TypeScript**: strict mode check before Jest
+```
+0. [Pre-Flight] CRAP analysis, complexity check, jest config validation
+1. [Inventory] List all 51 modules, baseline coverage
+2. [Tier-based parallelization] 
+   - Launch Agents: TIER_1 (2 parallel) → TIER_2 (3) → TIER_3 (5) → TIER_4 (5)
+   - Each Agent: full single-module workflow + mutation
+3. [Mutation] Stryker incremental for each module
+   - TIER_1: ≥80% killed (excellent)
+   - TIER_2/3: ≥75% killed (good)
+   - TIER_4: ≥70% (utility, lower bar)
+4. [Quality Gates]
+   - Flakiness: 0 tests allowed to vary across runs
+   - Assertion density: ≥2.5 (no decorative tests)
+   - Dead code: 0 unused vars/functions
+   - Test pyramid: ≥70% unit (not e2e heavy)
+5. [Scorecard] Generate QUALITY_SCORECARD.md:
+   - Module | Statements | Branches | Mutation | CRAP | Density | Flakiness | Status
+6. [Log] Update MODULI_NEXO.md with all metrics
+7. [Report] Final summary: X modules at 90/90, Y modules at ceiling, Z modules needs work
+```
 
-### ✅ XML Structured Prompting (2026)
-- System prompt con tag XML per chiarezza
-- `<security_gates>`, `<testing_gates>`, `<code_quality_gates>`
-- Claude capisce esattamente cosa generare → -40% follow-up
-
-### ✅ Prompt Caching (90% token savings)
-- `sourceBlock` cachato (5 min)
-- First run: ×1.25 cost
-- Subsequent: ×0.10 cost (-90%)
-
-### ✅ Coverage Threshold: 90% (Hard Gate)
-- Statements ≥90% AND Branches ≥90%
-- Se <90% → **AUTO-IMPROVE LOOP** (fino a 5 iterazioni)
-- Analizza linee non coperte, genera test mirati, re-run Jest
-- Loop termina quando: coverage ≥90% OR max iterazioni raggiunto
-
-### ✅ Auto-Improvement Intelligence
-- **Coverage gap analysis:** Identifica linee/metodi non coperti
-- **Smart test generation:** Genera test per i gap specifici (non rigenerazione)
-- **Iteration tracking:** Log in MODULI_NEXO.md mostra progression (70%→75%→85%→90%)
-- **Safety bounds:** Max 5 iterazioni per proteggere contro loop infiniti
-- **Fallback:** Se max iterazioni, commit stato attuale con flag "⏳ In miglioramento"
-
-## Usage
+## Usage Examples
 
 ```bash
-# Normal: verifica + genera + test + log
-/genera-test booking
+# Single module — simple
+/genera-test --scope single --module booking
 
-# Preview senza API call
-/genera-test booking --dry-run
+# Single module — preview only
+/genera-test --scope single --module auth --dry-run
 
-# Force anche con score <70 (sconsigliato)
-/genera-test booking --force
+# All modules — default (TIER_1 → TIER_2 → TIER_3 → TIER_4)
+/genera-test --scope all
 
-# Skip verifica (sconsigliato)
-/genera-test booking --skip-verify
+# All modules — specific tier only
+/genera-test --scope all --tiers TIER_1
+
+# All modules — with parallelism
+/genera-test --scope all --parallel 6
+
+# All modules — skip verify (sconsigliato)
+/genera-test --scope all --skip-verify
 ```
 
-## Ciclo Completo: Cosa Accade
+## Output
 
+### Single Module
 ```
-Input: /genera-test invoice
-
-[Verify] Score: 83/100 ✅
-  
-[Scan] Trovati 5 service
-  - invoice.service
-  - bnpl.service
-  - fatturapa.service
-  - payment-link.service
-  - pdf.service
-
-[Preview]
-  ↻ OVERWRITE 5 spec file
-
-[Generate] RAM temp creato
-  [1/5] invoice.service.spec.ts
-    ✅ Generated (Opus) — TIER_1 CRITICAL
-    ✅ Quality gates PASSED
-    
-  [2/5] bnpl.service.spec.ts
-    ✅ Generated (Opus)
-    ✅ Quality gates PASSED
-    
-  ... (3, 4, 5) ...
-
-[TypeScript] tsc --noEmit
-  ✅ No errors
-
-[Jest] Coverage run
-  Statements: 91% ✅
-  Branches: 90% ✅
-
-[Transfer] RAM → Disk
-  ✅ 5 file trasferiti
-
-[Log] MODULI_NEXO.md aggiornato
-  ✅ 5 righe
-
-✅ COMPLETATO: invoice — 91% / 90%
+✅ booking — 92% / 91% (iteration 2)
+   + 8 test cases added
+   + Assertion density: 2.7
+   
+📝 MODULI_NEXO.md updated:
+   | 2026-04-25 14:30 | backend | booking | service | 92% / 91% | ✅ COMPLETATO (+2pp, iter:2) |
 ```
 
-## Quality Gates Detail
-
-### Security (0 violations allowed)
-- ❌ `execute()`, `query()`, raw SQL
-- ❌ `.findMany()` senza `where: { tenantId }`
-- ❌ Hardcoded secrets (password=..., api_key=...)
-- ❌ `console.log()` in service
-
-### Testing (0 HIGH violations)
-- ❌ Missing TENANT_ID constant
-- ❌ <70% assertion con tenantId
-- ❌ Only happy path (need error + edge)
-- ❌ State machine non testato
-
-### Code Quality
-- ❌ TypeScript `any` detected
-- ❌ Nesting >5 levels
-- ❌ Line length >120 chars
-- ⚠️  Duplicate code blocks
-
-## Retry Logic
-
-Se quality gates falliscono:
+### All Modules
 ```
-Tentativo 1 (TIER_1→Opus / TIER_2→Sonnet) → FAIL (security gate)
-  ↓
-Tentativo 2 (Opus) → FAIL
-  ↓
-Fallito → Rollback atomico, RAM deleted
-```
+╔═══════════════════════════════════════════════════════════╗
+║           QUALITY SCORECARD — ALL MODULES                ║
+║           (2026-04-25 14:30)                              ║
+╠═══════════════════════════════════════════════════════════╣
+║ TIER_1 CRITICAL (6 modules)                              ║
+║  auth       │ 100% │ 98%  │ 85% │ 6.2  │ 2.8 │ ✅    │
+║  booking    │ 92%  │ 91%  │ 82% │ 7.1  │ 2.6 │ ✅    │
+║  invoice    │ 96%  │ 94%  │ 88% │ 5.8  │ 2.9 │ ✅    │
+║  ...                                                      ║
+║                                                           ║
+║ TIER_2 HIGH (11 modules)                                 ║
+║  ...                                                      ║
+║                                                           ║
+║ TIER_3 MEDIUM (20 modules)                               ║
+║  ...                                                      ║
+║                                                           ║
+║ TIER_4 UTILITY (6 modules)                               ║
+║  ...                                                      ║
+║                                                           ║
+║ SUMMARY:                                                  ║
+║  ✅ 48 modules at 90/90 (world-class)                    ║
+║  🟠 2 modules at 88/87 (acceptable, ceiling documented)  ║
+║  ❌ 1 module below bar (needs refactoring)               ║
+╚═══════════════════════════════════════════════════════════╝
 
-Max retries: 2 (initial model, poi Opus)
-
-## Module Complexity Tier System (Detailed)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ TIER_1: CRITICAL P0 MODULES → Opus 4.7                     │
-├─────────────────────────────────────────────────────────────┤
-│ auth            — 14 service, security-critical             │
-│ booking         — state machine, concurrency, advisory lock │
-│ invoice         — fatturapa XML, tax compliance, PDF        │
-│ payment-link    — Stripe, webhooks, PCI compliance          │
-│ subscription    — recurring billing, metering, dunning      │
-│ gdpr            — data export, RLS policies, GDPR EU        │
-│                                                              │
-│ Ragione: mission-critical, PII, fiscal/legal, external APIs│
-│ Cost/Benefit: Opus cost giustificato per qualità infinita   │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ TIER_2: HIGH P1 MODULES → Sonnet 4.6                        │
-├─────────────────────────────────────────────────────────────┤
-│ notifications   — 10 service, queue, BullMQ, real-time      │
-│ admin           — audit logs, role management               │
-│ analytics       — aggregation, time-series, Metabase        │
-│ common          — SPOF: PrismaService, EncryptionService    │
-│ dvi             — DVI state machine, photo, AI analysis     │
-│ iot             — sensor data, real-time telemetry          │
-│ work-order      — state machine, lineitem calculus          │
-│ customer        — PII, multi-tenant, lifecycle              │
-│ estimate        — quote, conversion, margin                 │
-│ voice           — Vapi integration, transcription           │
-│                                                              │
-│ Ragione: complex logic, multi-service deps, external APIs   │
-│ Cost/Benefit: Sonnet provides good quality/cost ratio       │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ TIER_3: MEDIUM P2 MODULES → Sonnet 4.6                      │
-├─────────────────────────────────────────────────────────────┤
-│ rentri, parts, campaign, accounting, portal,                │
-│ membership, sms, reviews, location,                         │
-│ predictive-maintenance, ai-diagnostic, ai-scheduling,       │
-│ ai-compliance, benchmarking, fleet, kiosk, labor-guide,     │
-│ obd, payroll, peppol, production-board, public-token,       │
-│ security-incident, tire, vehicle-history,                   │
-│ webhook-subscription, declined-service, inventory-alerts    │
-│                                                              │
-│ Ragione: moderate complexity, clear business logic          │
-│ Cost/Benefit: Sonnet efficient for standard feature testing │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ TIER_4: UTILITY MODULES → Haiku 4.5                         │
-├─────────────────────────────────────────────────────────────┤
-│ config          — env variables, static configuration       │
-│ lib             — shared utilities, no business logic       │
-│ middleware      — express middleware, utility layer         │
-│ test            — test utilities, helpers                   │
-│ types           — TypeScript definitions, interfaces        │
-│ services        — service barrel exports                    │
-│                                                              │
-│ Ragione: no business logic, infrastructure only             │
-│ Cost/Benefit: Haiku very cheap, sufficient for utilities    │
-└─────────────────────────────────────────────────────────────┘
+📊 Full report: QUALITY_SCORECARD.md
+📝 Log: MODULI_NEXO.md (51 entries)
+🔄 Mutation: all incremental configs saved for next run
 ```
 
-### Cost Impact Analysis
+## Failure Scenarios
+
+| Scenario | Action |
+|----------|--------|
+| Coverage <90% after 5 auto-iter | Flag ⏳ CEILING_ARCHITETTURALE, log gap analysis |
+| Mutation <60% | Escalate (likely weak assertions) |
+| TypeScript error | Rollback RAM, disk invariant, report error |
+| ESLint error | Fix code, re-run (atomic safety) |
+| Flakiness detected | Quarantine test, log isolation issue (67% DB state leak) |
+
+## Quality Gates (Non-negotiable)
 
 ```
-Total: 51 modules
-
-SCENARIO A: Always Sonnet (BEFORE)
-  51 modules × 1.0× = 51× baseline cost
-
-SCENARIO B: With Complexity Tiers (AFTER)
-  TIER_1: 6 × 3.5× (Opus)     = 21.0× 
-  TIER_2: 11 × 1.0× (Sonnet)  = 11.0×
-  TIER_3: 20 × 1.0× (Sonnet)  = 20.0×
-  TIER_4: 6 × 0.1× (Haiku)    = 0.6×
-  ───────────────────────────
-  Subtotal: 52.6× (vs 51× baseline)
-
-SCENARIO C: With Prompt Caching (-90% repeat calls)
-  First module: ×1.25 (cache_write)
-  Subsequent modules: ×0.10 per service (cache_read)
-  Average savings on successive services: -90%
-  
-  FINAL: 55-60% less token vs always Sonnet
-
-✅ QUALITY INFINITELY STRICT where it counts (TIER_1)
-✅ QUALITY GOOD where it matters (TIER_2/3)
-✅ TOKEN SAVINGS on utilities (TIER_4 Haiku)
+✅ TypeScript strict (0 errors)
+✅ ESLint (0 warnings)
+✅ Coverage Statements ≥90%
+✅ Coverage Branches ≥90%
+✅ Mutation score ≥80% (TIER_1) / ≥75% (TIER_2) / ≥70% (TIER_3/4)
+✅ Assertion density ≥2.5
+✅ Flakiness detection (0 allowed)
+✅ CRAP score <10 per method (max 3 methods 10-15 acceptable)
+✅ Atomic RAM (disk untouched until gates verified)
 ```
+
+---
+
+**Last Updated:** 2026-04-25  
+**Standard:** Google 90% exemplary + Stryker >80% excellent + Meta ACH mutation
+**Atomic RAM:** World-class — disco invariated until all gates ✅

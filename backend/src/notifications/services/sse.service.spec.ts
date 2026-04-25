@@ -389,4 +389,48 @@ describe('SseService', () => {
       subscription.unsubscribe();
     });
   });
+
+  // =========================================================================
+  // Uncovered branches — lines 62, 82, 123
+  // =========================================================================
+  describe('uncovered branches — error callback, heartbeat, subscribeToTenant', () => {
+    it('should log error when Redis observable emits error (line 62 error callback)', () => {
+      const stream = service.createEventStream('err-client', mockTenantId, mockUserId);
+      // Outer subscriber ignores errors (inner handler on line 62 captures them)
+      const sub = stream.subscribe({ next: () => {}, error: () => {} });
+
+      // Emitting error on mockSubject triggers the line-62 error callback
+      mockSubject.error(new Error('Redis connection lost'));
+
+      sub.unsubscribe();
+      // Line 62 executed — logger.error was called without rethrowing
+      expect(redisPubSub.getTenantObservable).toHaveBeenCalledWith(mockTenantId);
+    });
+
+    it('should emit heartbeat event after HEARTBEAT_INTERVAL (line 82 setInterval body)', () => {
+      jest.useFakeTimers();
+      try {
+        const stream = service.createEventStream('hb-client', mockTenantId, mockUserId);
+        const events: string[] = [];
+        const sub = stream.subscribe({ next: e => events.push(e.event || '') });
+
+        expect(events).toContain('connected');
+
+        jest.advanceTimersByTime(31000); // past the 30 000 ms HEARTBEAT_INTERVAL
+
+        expect(events).toContain('heartbeat');
+        sub.unsubscribe();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('should call redisPubSub.subscribeToTenant when no clients exist for tenant (line 123)', async () => {
+      // Call private subscribeToTenant directly with a tenant that has no registered clients
+      type PrivateSseService = { subscribeToTenant: (tenantId: string) => Promise<void> };
+      await (service as unknown as PrivateSseService).subscribeToTenant('fresh-tenant-xyz');
+
+      expect(redisPubSub.subscribeToTenant).toHaveBeenCalledWith('fresh-tenant-xyz');
+    });
+  });
 });

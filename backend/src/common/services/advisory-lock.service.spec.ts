@@ -271,6 +271,31 @@ describe('AdvisoryLockService', () => {
 
       expect(result.success).toBe(false);
     });
+
+    it('should return failed locks when acquisition fails', async () => {
+      prisma.$queryRaw
+        .mockResolvedValueOnce([{ acquired: true }]) // lock 1 succeeds
+        .mockResolvedValueOnce([{ acquired: false }]) // lock 2 fails attempt 1
+        .mockResolvedValueOnce([{ acquired: false }]) // lock 2 fails attempt 2
+        .mockResolvedValueOnce([{ acquired: false }]) // lock 2 fails attempt 3
+        .mockResolvedValue([{ released: true }]); // cleanup
+
+      const locks = [
+        { tenantId: TENANT_ID, slotId: SLOT_A },
+        { tenantId: TENANT_ID, slotId: SLOT_B },
+      ];
+
+      const result = await service.acquireMultipleLocks(locks, {
+        maxAttempts: 3,
+        baseDelayMs: 1,
+        maxDelayMs: 5,
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.acquiredLocks).toHaveLength(1);
+      expect(result.failedLocks).toHaveLength(1);
+      expect(result.results).toHaveLength(1); // Only first lock attempted successfully
+    });
   });
 
   // =========================================================================
@@ -356,6 +381,121 @@ describe('AdvisoryLockService', () => {
           maxDelayMs: 5,
         }),
       ).rejects.toThrow(LockTimeoutError);
+    });
+
+    it('should release all locks even when function throws', async () => {
+      prisma.$queryRaw
+        .mockResolvedValueOnce([{ acquired: true }])
+        .mockResolvedValueOnce([{ acquired: true }])
+        .mockResolvedValueOnce([{ released: true }])
+        .mockResolvedValueOnce([{ released: true }]);
+
+      const locks = [
+        { tenantId: TENANT_ID, slotId: SLOT_A },
+        { tenantId: TENANT_ID, slotId: SLOT_B },
+      ];
+
+      await expect(
+        service.withMultipleLocks(locks, async () => {
+          throw new Error('function error');
+        }),
+      ).rejects.toThrow('function error');
+
+      // Verify both locks were released (2 acquire + 2 release calls)
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(4);
+    });
+
+    it('should retry and eventually acquire locks with backoff', async () => {
+      prisma.$queryRaw
+        .mockResolvedValueOnce([{ acquired: false }]) // first lock, attempt 1
+        .mockResolvedValueOnce([{ acquired: true }]) // first lock, attempt 2
+        .mockResolvedValueOnce([{ acquired: true }]) // second lock
+        .mockResolvedValueOnce([{ released: true }])
+        .mockResolvedValueOnce([{ released: true }]);
+
+      const locks = [
+        { tenantId: TENANT_ID, slotId: SLOT_A },
+        { tenantId: TENANT_ID, slotId: SLOT_B },
+      ];
+
+      const result = await service.withMultipleLocks(locks, async () => 'ok', {
+        maxAttempts: 3,
+        baseDelayMs: 1,
+        maxDelayMs: 10,
+      });
+
+      expect(result).toBe('ok');
+      // Verify both locks acquired and released
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(5); // 1 fail + 1 success + 1 + 2 releases
+    });
+
+    it('should return proper error when no locks acquired', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ acquired: false }]);
+
+      const locks = [
+        { tenantId: TENANT_ID, slotId: SLOT_A },
+        { tenantId: TENANT_ID, slotId: SLOT_B },
+      ];
+
+      await expect(
+        service.withMultipleLocks(locks, async () => 'nope', {
+          maxAttempts: 1,
+          baseDelayMs: 1,
+        }),
+      ).rejects.toThrow('Failed to acquire all required locks');
+    });
+  });
+
+  describe('acquireLockWithRetry - Max attempts boundary', () => {
+    it('should fail gracefully when lock never becomes available', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ acquired: false }]);
+
+      await expect(
+        service.acquireLockWithRetry(TENANT_ID, SLOT_ID, {
+          maxAttempts: 2,
+          baseDelayMs: 1,
+          maxDelayMs: 5,
+        }),
+      ).rejects.toThrow(LockTimeoutError);
+
+      // Verify all attempts were made
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('checkLockStatus - Return structure', () => {
+    it('should properly format lock holder info from database', async () => {
+      prisma.$queryRaw.mockResolvedValue([
+        { pid: 54321, mode: 'ShareRowExclusiveLock', granted: true },
+      ]);
+
+      const result = await service.checkLockStatus(TENANT_ID, SLOT_ID);
+
+      expect(result.isHeld).toBe(true);
+      expect(result.holderPid).toBe(54321);
+      expect(result.holderSession).toBe('ShareRowExclusiveLock');
+    });
+  });
+
+  describe('releaseMultipleLocks - Cleanup on error', () => {
+    const SLOT_A = '110e8400-e29b-41d4-a716-446655440001';
+    const SLOT_B = '220e8400-e29b-41d4-a716-446655440002';
+
+    it('should continue releasing remaining locks even if one fails', async () => {
+      prisma.$queryRaw
+        .mockRejectedValueOnce(new Error('Release error on A'))
+        .mockResolvedValueOnce([{ released: true }]);
+
+      const locks = [
+        { tenantId: TENANT_ID, slotId: SLOT_A },
+        { tenantId: TENANT_ID, slotId: SLOT_B },
+      ];
+
+      await service.releaseMultipleLocks(locks);
+
+      // Verify both locks were attempted (even though first failed)
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 });

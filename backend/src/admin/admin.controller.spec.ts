@@ -64,5 +64,64 @@ describe('AdminController', () => {
         new HttpException('Server misconfiguration', HttpStatus.INTERNAL_SERVER_ERROR),
       );
     });
+
+    it('should reject empty setup key', async () => {
+      await expect(controller.setup('')).rejects.toThrow(HttpException);
+      expect(setupService.seedDemoData).not.toHaveBeenCalled();
+    });
+
+    it('should handle setupService errors', async () => {
+      setupService.seedDemoData.mockRejectedValue(new Error('Database error'));
+
+      await expect(controller.setup(SETUP_KEY)).rejects.toThrow('Database error');
+    });
+
+    it('should pass correct message in success response', async () => {
+      const seedResult = { message: 'Success' };
+      setupService.seedDemoData.mockResolvedValue(seedResult as never);
+
+      const result = await controller.setup(SETUP_KEY);
+
+      expect(result.message).toBe('Demo data seeded successfully');
+    });
+
+    it('should return exact seed result in data property', async () => {
+      const seedResult = {
+        tenantId: 'tenant-002',
+        usersCreated: 5,
+        customersCreated: 10,
+      };
+      setupService.seedDemoData.mockResolvedValue(seedResult as never);
+
+      const result = await controller.setup(SETUP_KEY);
+
+      expect(result.data).toEqual(seedResult);
+    });
+
+    it('should preserve case sensitivity for setup key', async () => {
+      process.env.SETUP_SECRET = 'MySetupKey123';
+
+      await expect(controller.setup('mysetupkey123')).rejects.toThrow(
+        new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED),
+      );
+    });
+
+    it('should handle very long setup keys', async () => {
+      const longKey = 'a'.repeat(1000);
+      process.env.SETUP_SECRET = longKey;
+
+      const result = await controller.setup(longKey);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle special characters in setup key', async () => {
+      const specialKey = 'test-key!@#$%^&*()';
+      process.env.SETUP_SECRET = specialKey;
+
+      const result = await controller.setup(specialKey);
+
+      expect(result).toBeDefined();
+    });
   });
 });

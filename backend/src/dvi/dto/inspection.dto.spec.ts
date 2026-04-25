@@ -113,7 +113,7 @@ describe('DVI DTOs', () => {
     it('deve respingere status enum invalido', async () => {
       const dto = plainToInstance(UpdateInspectionItemDto, {
         templateItemId: '550e8400-e29b-41d4-a716-446655440005',
-        status: 'INVALID_STATUS' as any,
+        status: 'INVALID_STATUS' as unknown as InspectionItemStatus,
       });
 
       const errors = await validate(dto);
@@ -195,7 +195,7 @@ describe('DVI DTOs', () => {
         category: 'Brakes',
         title: 'Worn brake pads',
         description: 'Front brake pads are 70% worn',
-        severity: 'INVALID' as any,
+        severity: 'INVALID' as unknown as FindingSeverity,
       });
 
       const errors = await validate(dto);
@@ -235,7 +235,7 @@ describe('DVI DTOs', () => {
 
     it('deve respingere status enum invalido', async () => {
       const dto = plainToInstance(UpdateFindingDto, {
-        status: 'INVALID' as any,
+        status: 'INVALID' as unknown as FindingStatus,
       });
 
       const errors = await validate(dto);
@@ -268,7 +268,7 @@ describe('DVI DTOs', () => {
 
     it('deve respingere email non stringa', async () => {
       const dto = plainToInstance(CustomerApprovalDto, {
-        email: 123 as any,
+        email: 123 as unknown as string,
         approvedFindingIds: [],
         declinedFindingIds: [],
       });

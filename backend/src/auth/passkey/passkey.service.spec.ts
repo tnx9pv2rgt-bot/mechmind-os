@@ -645,4 +645,51 @@ describe('PasskeyService', () => {
       });
     });
   });
+
+  describe('verifyAuthentication — inactive user/tenant (line 169)', () => {
+    const sessionId = 'auth-session-inactive';
+    const assertion = { id: 'cred-inactive' } as unknown as AuthenticationResponseJSON;
+
+    it('should throw BadRequestException when user is inactive', async () => {
+      redis.get.mockResolvedValue('stored-challenge');
+      prisma.passkey.findFirst.mockResolvedValue({
+        id: 'pk-inactive',
+        credentialId: 'cred-inactive',
+        publicKey: Buffer.from([1, 2, 3]).toString('base64url'),
+        counter: 0,
+        transports: [],
+        user: {
+          id: 'user-inactive',
+          isActive: false,
+          tenantId: 'tenant-1',
+          tenant: { id: 'tenant-1', isActive: true },
+        },
+      });
+
+      await expect(service.verifyAuthentication(assertion, sessionId, '127.0.0.1')).rejects.toThrow(
+        'User or tenant is inactive',
+      );
+    });
+
+    it('should throw BadRequestException when tenant is inactive (|| right branch)', async () => {
+      redis.get.mockResolvedValue('stored-challenge');
+      prisma.passkey.findFirst.mockResolvedValue({
+        id: 'pk-tenant-inactive',
+        credentialId: 'cred-inactive',
+        publicKey: Buffer.from([1, 2, 3]).toString('base64url'),
+        counter: 0,
+        transports: [],
+        user: {
+          id: 'user-1',
+          isActive: true,
+          tenantId: 'tenant-1',
+          tenant: { id: 'tenant-1', isActive: false },
+        },
+      });
+
+      await expect(service.verifyAuthentication(assertion, sessionId, '127.0.0.1')).rejects.toThrow(
+        'User or tenant is inactive',
+      );
+    });
+  });
 });

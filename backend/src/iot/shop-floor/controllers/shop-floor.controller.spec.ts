@@ -58,6 +58,27 @@ describe('ShopFloorController', () => {
       expect(service.initializeShopFloor).toHaveBeenCalledWith(TENANT_ID, dto);
       expect(result).toEqual([mockBay]);
     });
+
+    it('should handle multiple bays', async () => {
+      const dto = { bayCount: 8, layout: 'grid' } as never;
+      const bays = Array(8)
+        .fill(null)
+        .map((_, i) => ({ ...mockBay, id: `bay-${i}` }));
+      service.initializeShopFloor.mockResolvedValue(bays as never);
+
+      const result = await controller.initializeShopFloor(TENANT_ID, dto);
+
+      expect(result).toHaveLength(8);
+    });
+
+    it('should propagate service errors', async () => {
+      const dto = { bayCount: 4, layout: 'linear' } as never;
+      service.initializeShopFloor.mockRejectedValue(new Error('Initialization failed'));
+
+      await expect(controller.initializeShopFloor(TENANT_ID, dto)).rejects.toThrow(
+        'Initialization failed',
+      );
+    });
   });
 
   describe('getAllBays', () => {
@@ -104,6 +125,64 @@ describe('ShopFloorController', () => {
         config: { threshold: 40 },
       });
       expect(result).toEqual(sensor);
+    });
+
+    it('should handle isActive false string', async () => {
+      const dto = {
+        type: 'humidity',
+        name: 'Humidity Sensor',
+        isActive: 'false',
+        batteryLevel: 50,
+        config: {},
+      } as never;
+      const sensor = { id: 'sensor-002', type: 'humidity', name: 'Humidity Sensor' };
+      service.addBaySensor.mockResolvedValue(sensor as never);
+
+      const result = await controller.addBaySensor(TENANT_ID, 'bay-001', dto);
+
+      expect(service.addBaySensor).toHaveBeenCalledWith(TENANT_ID, 'bay-001', {
+        type: 'humidity',
+        name: 'Humidity Sensor',
+        isActive: false,
+        batteryLevel: 50,
+        config: {},
+      });
+      expect(result).toEqual(sensor);
+    });
+
+    it('should handle missing config', async () => {
+      const dto = {
+        type: 'pressure',
+        name: 'Pressure Sensor',
+        isActive: 'true',
+        batteryLevel: 80,
+      } as never;
+      const sensor = { id: 'sensor-003', type: 'pressure' };
+      service.addBaySensor.mockResolvedValue(sensor as never);
+
+      await controller.addBaySensor(TENANT_ID, 'bay-001', dto);
+
+      expect(service.addBaySensor).toHaveBeenCalledWith(TENANT_ID, 'bay-001', {
+        type: 'pressure',
+        name: 'Pressure Sensor',
+        isActive: true,
+        batteryLevel: 80,
+        config: {},
+      });
+    });
+
+    it('should propagate service errors', async () => {
+      const dto = {
+        type: 'temperature',
+        name: 'Bad Sensor',
+        isActive: 'true',
+        batteryLevel: 0,
+      } as never;
+      service.addBaySensor.mockRejectedValue(new Error('Sensor add failed'));
+
+      await expect(controller.addBaySensor(TENANT_ID, 'bay-001', dto)).rejects.toThrow(
+        'Sensor add failed',
+      );
     });
   });
 
@@ -241,6 +320,20 @@ describe('ShopFloorController', () => {
       await controller.getRecentEvents(TENANT_ID, 10);
 
       expect(service.getRecentEvents).toHaveBeenCalledWith(TENANT_ID, 10);
+    });
+
+    it('should use default 50 when limit is undefined', async () => {
+      service.getRecentEvents.mockResolvedValue([] as never);
+
+      await controller.getRecentEvents(TENANT_ID, undefined);
+
+      expect(service.getRecentEvents).toHaveBeenCalledWith(TENANT_ID, 50);
+    });
+
+    it('should propagate service errors', async () => {
+      service.getRecentEvents.mockRejectedValue(new Error('Event fetch failed'));
+
+      await expect(controller.getRecentEvents(TENANT_ID)).rejects.toThrow('Event fetch failed');
     });
   });
 });

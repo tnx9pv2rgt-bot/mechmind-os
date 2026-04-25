@@ -311,4 +311,129 @@ describe('QueueService', () => {
       expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('Resumed notification'));
     });
   });
+
+  // -----------------------------------------------------------------------
+  // NEW TESTS: Error paths, edge cases
+  // -----------------------------------------------------------------------
+
+  describe('addBookingJob - Error handling', () => {
+    it('should throw error when queue.add fails with ECONNREFUSED', async () => {
+      bookingQueue.add.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+
+      await expect(service.addBookingJob('job', sampleJobData)).rejects.toThrow('ECONNREFUSED');
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to add job to booking queue'),
+      );
+    });
+
+    it('should handle error during job addition from all queues', async () => {
+      voiceQueue.add.mockRejectedValueOnce(new Error('Queue unavailable'));
+
+      await expect(service.addVoiceJob('process', sampleJobData)).rejects.toThrow(
+        'Queue unavailable',
+      );
+    });
+  });
+
+  describe('getQueueMetrics - Error cases', () => {
+    it('should return zero metrics when counts fail', async () => {
+      bookingQueue.getWaitingCount.mockRejectedValueOnce(new Error('DB error'));
+      bookingQueue.getActiveCount.mockResolvedValueOnce(0);
+      bookingQueue.getCompletedCount.mockResolvedValueOnce(0);
+      bookingQueue.getFailedCount.mockResolvedValueOnce(0);
+      bookingQueue.getDelayedCount.mockResolvedValueOnce(0);
+
+      await expect(service.getQueueMetrics('booking')).rejects.toThrow('DB error');
+    });
+  });
+
+  describe('retryFailedJobs - Batch retry', () => {
+    it('should return empty array when no failed jobs exist', async () => {
+      bookingQueue.getFailed.mockResolvedValueOnce([]);
+
+      const result = await service.retryFailedJobs('booking', 10);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should retry only up to specified count from larger failure list', async () => {
+      const mockJobs = Array.from({ length: 10 }, (_, i) => ({
+        id: `f${i}`,
+        retry: jest.fn().mockResolvedValue(undefined),
+      }));
+      bookingQueue.getFailed.mockResolvedValueOnce(mockJobs);
+
+      const result = await service.retryFailedJobs('booking', 3);
+
+      expect(result).toHaveLength(3);
+      expect(mockJobs[0].retry).toHaveBeenCalled();
+      expect(mockJobs[3].retry).not.toHaveBeenCalled();
+    });
+
+    it('should partially succeed when some jobs fail to retry', async () => {
+      const mockJob1 = { id: 'f1', retry: jest.fn().mockResolvedValue(undefined) };
+      const mockJob2 = { id: 'f2', retry: jest.fn().mockRejectedValue(new Error('Locked')) };
+      const mockJob3 = { id: 'f3', retry: jest.fn().mockResolvedValue(undefined) };
+      notificationQueue.getFailed.mockResolvedValueOnce([mockJob1, mockJob2, mockJob3]);
+
+      const result = await service.retryFailedJobs('notification', 5);
+
+      expect(result).toHaveLength(2); // f1 and f3 succeeded
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to retry job f2'),
+      );
+    });
+  });
+
+  describe('cleanCompletedJobs - Timestamp calculation', () => {
+    it('should calculate correct timestamp for various olderThanHours', async () => {
+      const before = Date.now();
+      await service.cleanCompletedJobs('booking', 72);
+      const after = Date.now();
+
+      const calledTimestamp = bookingQueue.clean.mock.calls[0][0];
+      const expectedMin = before - 72 * 60 * 60 * 1000;
+      const expectedMax = after - 72 * 60 * 60 * 1000;
+
+      expect(calledTimestamp).toBeGreaterThanOrEqual(expectedMin);
+      expect(calledTimestamp).toBeLessThanOrEqual(expectedMax);
+    });
+  });
+
+  describe('pauseQueue / resumeQueue - All queues', () => {
+    it('should pause booking queue', async () => {
+      await service.pauseQueue('booking');
+
+      expect(bookingQueue.pause).toHaveBeenCalled();
+      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('Paused booking'));
+    });
+
+    it('should resume voice queue', async () => {
+      await service.resumeQueue('voice');
+
+      expect(voiceQueue.resume).toHaveBeenCalled();
+      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('Resumed voice'));
+    });
+  });
+
+  describe('addNotificationJob - Custom options', () => {
+    it('should apply custom attempts and backoff', async () => {
+      const mockJob = { id: 'notif-custom', name: 'send-sms' };
+      notificationQueue.add.mockResolvedValueOnce(mockJob);
+
+      await service.addNotificationJob('send-sms', sampleJobData, {
+        attempts: 10,
+        backoff: { type: 'fixed', delay: 5000 },
+      });
+
+      expect(notificationQueue.add).toHaveBeenCalledWith(
+        'send-sms',
+        sampleJobData,
+        expect.objectContaining({
+          attempts: 10,
+          backoff: { type: 'fixed', delay: 5000 },
+        }),
+      );
+    });
+  });
 });

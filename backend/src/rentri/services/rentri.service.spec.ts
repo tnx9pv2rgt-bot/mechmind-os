@@ -356,6 +356,23 @@ describe('RentriService', () => {
         include: { transporter: true, destination: true },
       });
     });
+
+    it('should update storageLocationCode field', async () => {
+      prisma.wasteEntry.findFirst.mockResolvedValue(mockEntry);
+      prisma.wasteEntry.update.mockResolvedValue(mockEntry);
+
+      await service.updateEntry(TENANT_ID, ENTRY_ID, {
+        storageLocationCode: 'MAG-B2',
+      });
+
+      expect(prisma.wasteEntry.update).toHaveBeenCalledWith({
+        where: { id: ENTRY_ID },
+        data: expect.objectContaining({
+          storageLocationCode: 'MAG-B2',
+        }),
+        include: { transporter: true, destination: true },
+      });
+    });
   });
 
   // ============== findAllEntries — additional filter branches ==============
@@ -693,6 +710,289 @@ describe('RentriService', () => {
       expect(dashboard.byCer).toHaveLength(1);
       expect(dashboard.byCer[0].totalKg).toBe(30);
       expect(dashboard.byCer[0].entryCount).toBe(2);
+    });
+  });
+
+  // ============== findAllTransporters ==============
+
+  describe('findAllTransporters', () => {
+    it('should return transporters sorted by name', async () => {
+      const transporters = [
+        { id: 't-002', tenantId: TENANT_ID, name: 'B Transport' },
+        { id: 't-001', tenantId: TENANT_ID, name: 'A Transport' },
+      ];
+      prisma.wasteTransporter.findMany.mockResolvedValue(transporters);
+
+      const result = await service.findAllTransporters(TENANT_ID);
+
+      expect(prisma.wasteTransporter.findMany).toHaveBeenCalledWith({
+        where: { tenantId: TENANT_ID },
+        orderBy: { name: 'asc' },
+      });
+      expect(result).toEqual(transporters);
+    });
+  });
+
+  // ============== findAllDestinations ==============
+
+  describe('findAllDestinations', () => {
+    it('should return destinations sorted by name', async () => {
+      const destinations = [
+        { id: 'd-002', tenantId: TENANT_ID, name: 'Z Destination' },
+        { id: 'd-001', tenantId: TENANT_ID, name: 'A Destination' },
+      ];
+      prisma.wasteDestination.findMany.mockResolvedValue(destinations);
+
+      const result = await service.findAllDestinations(TENANT_ID);
+
+      expect(prisma.wasteDestination.findMany).toHaveBeenCalledWith({
+        where: { tenantId: TENANT_ID },
+        orderBy: { name: 'asc' },
+      });
+      expect(result).toEqual(destinations);
+    });
+  });
+
+  // ============== generateEntryNumber edge cases ==============
+
+  describe('generateEntryNumber edge cases', () => {
+    it('should pad entry number to 4 digits', async () => {
+      prisma.wasteEntry.findFirst.mockResolvedValue(null);
+      prisma.wasteEntry.create.mockResolvedValue(mockEntry);
+
+      const dto: CreateWasteEntryDto = {
+        cerCode: '130205*',
+        cerDescription: 'test',
+        entryType: WasteEntryType.CARICO,
+        entryDate: '2026-03-24',
+        quantityKg: 10,
+        hazardClass: WasteHazardClass.PERICOLOSO,
+        physicalState: WastePhysicalState.LIQUIDO,
+      };
+
+      await service.createEntry(TENANT_ID, dto);
+
+      expect(prisma.wasteEntry.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            entryNumber: expect.stringMatching(/^RC-\d{4}-0001$/),
+          }),
+        }),
+      );
+    });
+
+    it('should query correct year prefix for entry number', async () => {
+      const currentYear = new Date().getFullYear();
+      prisma.wasteEntry.findFirst.mockResolvedValue(null);
+      prisma.wasteEntry.create.mockResolvedValue(mockEntry);
+
+      const dto: CreateWasteEntryDto = {
+        cerCode: '130205*',
+        cerDescription: 'test',
+        entryType: WasteEntryType.CARICO,
+        entryDate: '2026-03-24',
+        quantityKg: 10,
+        hazardClass: WasteHazardClass.PERICOLOSO,
+        physicalState: WastePhysicalState.LIQUIDO,
+      };
+
+      await service.createEntry(TENANT_ID, dto);
+
+      expect(prisma.wasteEntry.findFirst).toHaveBeenCalledWith({
+        where: {
+          tenantId: TENANT_ID,
+          entryNumber: { startsWith: `RC-${currentYear}-` },
+        },
+        orderBy: { entryNumber: 'desc' },
+      });
+    });
+  });
+
+  // ============== MUD DASHBOARD ALERTS ==============
+
+  describe('getAlerts MUD deadline', () => {
+    it('should calculate days to MUD deadline (April 30)', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteFir.findMany.mockResolvedValue([]);
+
+      const alerts = await service.getAlerts(TENANT_ID);
+
+      const mudAlert = alerts.find(a => a.type === 'MUD_DEADLINE');
+      if (mudAlert) {
+        expect(mudAlert.severity).toMatch(/^(warning|error)$/);
+        expect(mudAlert.message).toContain('giorni');
+      }
+    });
+
+    it('should not return MUD deadline alert after April 30', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteFir.findMany.mockResolvedValue([]);
+
+      // If current date > April 30, MUD alert should not appear (for next year)
+      const alerts = await service.getAlerts(TENANT_ID);
+
+      // Just verify that service processes date correctly
+      expect(alerts).toBeDefined();
+      expect(Array.isArray(alerts)).toBe(true);
+    });
+  });
+
+  // ============== QUERY FILTERS COMPREHENSIVE ==============
+
+  describe('findAllEntries comprehensive filters', () => {
+    it('should combine multiple filters in single query', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteEntry.count.mockResolvedValue(0);
+
+      await service.findAllEntries(TENANT_ID, {
+        cerCode: '130205*',
+        entryType: WasteEntryType.CARICO,
+        dateFrom: '2026-01-01',
+        dateTo: '2026-12-31',
+        search: 'olio',
+        page: 2,
+        limit: 50,
+      });
+
+      expect(prisma.wasteEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: TENANT_ID,
+            cerCode: '130205*',
+            entryType: WasteEntryType.CARICO,
+            entryDate: {
+              gte: new Date('2026-01-01'),
+              lte: new Date('2026-12-31'),
+            },
+            OR: expect.any(Array),
+          }),
+          skip: 50, // (2-1) * 50
+          take: 50,
+        }),
+      );
+    });
+
+    it('should apply dateTo only filter', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteEntry.count.mockResolvedValue(0);
+
+      await service.findAllEntries(TENANT_ID, { dateTo: '2026-06-30' });
+
+      expect(prisma.wasteEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            entryDate: { lte: new Date('2026-06-30') },
+          }),
+        }),
+      );
+    });
+  });
+
+  // ============== DECIMAL QUANTITIES ==============
+
+  describe('createEntry decimal handling', () => {
+    it('should convert quantityKg to Prisma.Decimal', async () => {
+      prisma.wasteEntry.findFirst.mockResolvedValue(null);
+      prisma.wasteEntry.create.mockResolvedValue(mockEntry);
+
+      const dto: CreateWasteEntryDto = {
+        cerCode: '130205*',
+        cerDescription: 'test',
+        entryType: WasteEntryType.CARICO,
+        entryDate: '2026-03-24',
+        quantityKg: 25.555,
+        hazardClass: WasteHazardClass.PERICOLOSO,
+        physicalState: WastePhysicalState.LIQUIDO,
+      };
+
+      await service.createEntry(TENANT_ID, dto);
+
+      expect(prisma.wasteEntry.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            quantityKg: expect.any(Object), // Prisma.Decimal
+          }),
+        }),
+      );
+    });
+  });
+
+  // ============== updateEntry storageLocationCode (line 162) ==============
+
+  describe('updateEntry storageLocationCode', () => {
+    it('should update storageLocationCode when provided', async () => {
+      prisma.wasteEntry.findFirst.mockResolvedValue(mockEntry);
+      prisma.wasteEntry.update.mockResolvedValue({ ...mockEntry, storageLocationCode: 'LOC-A' });
+
+      await service.updateEntry(TENANT_ID, ENTRY_ID, { storageLocationCode: 'LOC-A' });
+
+      expect(prisma.wasteEntry.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ storageLocationCode: 'LOC-A' }),
+        }),
+      );
+    });
+
+    it('should update transporterId and destinationId and workOrderId when provided', async () => {
+      prisma.wasteEntry.findFirst.mockResolvedValue(mockEntry);
+      prisma.wasteEntry.update.mockResolvedValue(mockEntry);
+
+      await service.updateEntry(TENANT_ID, ENTRY_ID, {
+        transporterId: 'tr-002',
+        destinationId: 'dest-002',
+        workOrderId: 'wo-001',
+        isOwnProduction: false,
+        quantityUnits: 2,
+        unitType: 'pezzi',
+        originDescription: 'officina',
+      });
+
+      expect(prisma.wasteEntry.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            transporterId: 'tr-002',
+            destinationId: 'dest-002',
+            workOrderId: 'wo-001',
+            isOwnProduction: false,
+          }),
+        }),
+      );
+    });
+  });
+
+  // ============== PAGINATION EDGE CASES ==============
+
+  describe('findAllEntries pagination', () => {
+    it('should calculate pages correctly', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteEntry.count.mockResolvedValue(100);
+
+      const result = await service.findAllEntries(TENANT_ID, { page: 1, limit: 20 });
+
+      expect(result.pages).toBe(5); // Math.ceil(100 / 20)
+    });
+
+    it('should handle single page result', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([mockEntry]);
+      prisma.wasteEntry.count.mockResolvedValue(1);
+
+      const result = await service.findAllEntries(TENANT_ID, { limit: 20 });
+
+      expect(result.pages).toBe(1);
+      expect(result.page).toBe(1);
+    });
+
+    it('should calculate skip offset correctly for page 3', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([]);
+      prisma.wasteEntry.count.mockResolvedValue(0);
+
+      await service.findAllEntries(TENANT_ID, { page: 3, limit: 10 });
+
+      expect(prisma.wasteEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20, // (3-1) * 10
+        }),
+      );
     });
   });
 });

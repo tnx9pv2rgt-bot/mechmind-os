@@ -84,6 +84,29 @@ describe('CannedJobService', () => {
       const result = await service.create('t1', { name: 'Test' });
       expect(result).toEqual(expected);
     });
+
+    it('should apply null defaults when laborHours, partId, and position are omitted', async () => {
+      const expected = { id: 'cj-3', tenantId: 't1', name: 'Test nulls', lines: [] };
+      mockPrisma.cannedJob.create.mockResolvedValue(expected);
+
+      const result = await service.create('t1', {
+        name: 'Test nulls',
+        lines: [{ type: 'LABOR', description: 'Diagnosi', quantity: 1, unitPrice: 5000 }],
+      });
+
+      expect(result).toEqual(expected);
+      expect(mockPrisma.cannedJob.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            lines: expect.objectContaining({
+              create: expect.arrayContaining([
+                expect.objectContaining({ laborHours: null, partId: null, position: 0 }),
+              ]),
+            }),
+          }),
+        }),
+      );
+    });
   });
 
   describe('findAll', () => {
@@ -237,12 +260,35 @@ describe('CannedJobService', () => {
       await expect(service.applyToEstimate('t1', 'x', 'est-1')).rejects.toThrow(NotFoundException);
     });
 
+    it('should throw NotFoundException when findById returns null (defensive guard)', async () => {
+      jest.spyOn(service, 'findById').mockResolvedValue(null as never);
+      await expect(service.applyToEstimate('t1', 'cj-null', 'est-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
     it('should throw NotFoundException when estimate not found', async () => {
       const cannedJob = { id: 'cj-1', lines: [] };
       mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
       mockPrisma.estimate.findFirst.mockResolvedValue(null);
 
       await expect(service.applyToEstimate('t1', 'cj-1', 'x')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should use array index as position when line.position is undefined', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          { type: 'LABOR', description: 'Diagnosi', quantity: 1, unitPrice: 3000, partId: null },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.estimate.findFirst.mockResolvedValue({ id: 'est-1', tenantId: 't1' });
+      mockPrisma.$transaction.mockResolvedValue([{ id: 'el-1' }]);
+
+      const result = await service.applyToEstimate('t1', 'cj-1', 'est-1');
+
+      expect(result).toEqual({ created: 1 });
     });
   });
 
@@ -344,12 +390,56 @@ describe('CannedJobService', () => {
       await expect(service.applyToWorkOrder('t1', 'x', 'wo-1')).rejects.toThrow(NotFoundException);
     });
 
+    it('should throw NotFoundException when findById returns null (defensive guard)', async () => {
+      jest.spyOn(service, 'findById').mockResolvedValue(null as never);
+      await expect(service.applyToWorkOrder('t1', 'cj-null', 'wo-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
     it('should throw NotFoundException when work order not found', async () => {
       const cannedJob = { id: 'cj-1', lines: [] };
       mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
       mockPrisma.workOrder.findFirst.mockResolvedValue(null);
 
       await expect(service.applyToWorkOrder('t1', 'cj-1', 'x')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should default to empty arrays when workOrder.laborItems and partsUsed are null', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          {
+            type: 'LABOR',
+            description: 'Diagnosi',
+            quantity: 1,
+            unitPrice: 4000,
+            laborHours: 1,
+            partId: null,
+          },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.workOrder.findFirst.mockResolvedValue({
+        id: 'wo-1',
+        tenantId: 't1',
+        laborItems: null,
+        partsUsed: null,
+      });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
+
+      expect(result).toEqual({ updated: true });
+      expect(mockPrisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborItems: expect.arrayContaining([
+              expect.objectContaining({ description: 'Diagnosi' }),
+            ]),
+          }),
+        }),
+      );
     });
   });
 });

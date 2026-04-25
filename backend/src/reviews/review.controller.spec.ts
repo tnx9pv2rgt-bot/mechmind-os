@@ -97,5 +97,40 @@ describe('ReviewController', () => {
         limit: 20,
       });
     });
+
+    it('should pass undefined page and limit when not provided', async () => {
+      reviewService.findAll.mockResolvedValue({ data: [], total: 0, page: 1, limit: 20 });
+
+      await controller.findAll(TENANT_ID);
+
+      expect(reviewService.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        page: undefined,
+        limit: undefined,
+      });
+    });
+
+    it('should propagate service errors', async () => {
+      reviewService.findAll.mockRejectedValue(new Error('DB error'));
+
+      await expect(controller.findAll(TENANT_ID)).rejects.toThrow('DB error');
+    });
+  });
+
+  describe('requestReview error path', () => {
+    it('should propagate service errors', async () => {
+      reviewService.requestReview.mockRejectedValue(new Error('Customer not found'));
+
+      await expect(controller.requestReview(TENANT_ID, 'cust-x')).rejects.toThrow(
+        'Customer not found',
+      );
+    });
+  });
+
+  describe('getStats error path', () => {
+    it('should propagate service errors', async () => {
+      reviewService.getStats.mockRejectedValue(new Error('Stats error'));
+
+      await expect(controller.getStats(TENANT_ID)).rejects.toThrow('Stats error');
+    });
   });
 });

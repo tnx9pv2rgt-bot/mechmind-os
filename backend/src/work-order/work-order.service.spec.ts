@@ -141,7 +141,7 @@ describe('WorkOrderService', () => {
       prisma.workOrder.findMany.mockResolvedValueOnce(workOrders);
       prisma.workOrder.count.mockResolvedValueOnce(1);
 
-      const result = await service.findAll(TENANT_ID, { vehicleId: 'vehicle-999' });
+      await service.findAll(TENANT_ID, { vehicleId: 'vehicle-999' });
 
       expect(prisma.workOrder.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -155,7 +155,7 @@ describe('WorkOrderService', () => {
       prisma.workOrder.findMany.mockResolvedValueOnce(workOrders);
       prisma.workOrder.count.mockResolvedValueOnce(1);
 
-      const result = await service.findAll(TENANT_ID, { customerId: 'customer-999' });
+      await service.findAll(TENANT_ID, { customerId: 'customer-999' });
 
       expect(prisma.workOrder.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -900,7 +900,7 @@ describe('WorkOrderService', () => {
       const existing = makeMockWorkOrder({ status: 'OPEN', version: 1 });
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
-      prisma.$transaction.mockImplementationOnce(async callback => {
+      prisma.$transaction.mockImplementationOnce(async _callback => {
         throw new ConflictException('Work order modified by another user');
       });
 
@@ -1253,16 +1253,26 @@ describe('WorkOrderService', () => {
         status: 'DRAFT',
       };
 
+      const updatedWorkOrder = { ...workOrder, status: 'INVOICED' };
+
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(null);
-      prisma.$transaction.mockResolvedValueOnce({
-        invoice,
-        workOrder: { ...workOrder, status: 'INVOICED' },
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce(invoice),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(updatedWorkOrder),
+          },
+        });
       });
 
       const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
       expect((result as any).invoice).toEqual(invoice);
+      expect((result as any).workOrder).toEqual(updatedWorkOrder);
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1282,10 +1292,21 @@ describe('WorkOrderService', () => {
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(null);
-      prisma.$transaction.mockResolvedValueOnce({ invoice: {}, workOrder });
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ id: 'inv-002' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
+      });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1305,10 +1326,21 @@ describe('WorkOrderService', () => {
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(null);
-      prisma.$transaction.mockResolvedValueOnce({ invoice: {}, workOrder });
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ id: 'inv-003' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
+      });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1316,19 +1348,29 @@ describe('WorkOrderService', () => {
       const workOrder = makeMockWorkOrder({
         status: 'COMPLETED',
         totalCost: 100,
+        services: [],
+        parts: [],
       });
 
       const lastInvoice = { invoiceNumber: 'INV-2026-0005' };
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(lastInvoice);
-      prisma.$transaction.mockResolvedValueOnce({
-        invoice: { invoiceNumber: 'INV-2026-0006' },
-        workOrder,
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ invoiceNumber: 'INV-2026-0006' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
       });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1336,19 +1378,29 @@ describe('WorkOrderService', () => {
       const workOrder = makeMockWorkOrder({
         status: 'COMPLETED',
         totalCost: 100,
+        services: [],
+        parts: [],
       });
 
       const lastInvoice = { invoiceNumber: 'INV-2026-INVALID' };
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(lastInvoice);
-      prisma.$transaction.mockResolvedValueOnce({
-        invoice: { invoiceNumber: 'INV-2026-0001' },
-        workOrder,
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ invoiceNumber: 'INV-2026-0001' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
       });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1356,17 +1408,27 @@ describe('WorkOrderService', () => {
       const workOrder = makeMockWorkOrder({
         status: 'COMPLETED',
         totalCost: 100,
+        services: [],
+        parts: [],
       });
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(null);
-      prisma.$transaction.mockResolvedValueOnce({
-        invoice: {},
-        workOrder,
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ id: 'inv-vat' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
       });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1380,13 +1442,21 @@ describe('WorkOrderService', () => {
 
       prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
       prisma.invoice.findFirst.mockResolvedValueOnce(null);
-      prisma.$transaction.mockResolvedValueOnce({
-        invoice: {},
-        workOrder,
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ id: 'inv-empty' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
       });
 
-      await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
 
+      expect(result).toBeDefined();
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
@@ -1424,6 +1494,369 @@ describe('WorkOrderService', () => {
       await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+
+    it('should wrap non-BadRequest/NotFound transaction errors as InternalServerErrorException', async () => {
+      const workOrder = makeMockWorkOrder({ status: 'COMPLETED', totalCost: 100 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
+
+      // When transaction callback throws an error that's not NotFoundException/BadRequestException,
+      // it gets caught and wrapped as InternalServerErrorException
+      prisma.$transaction.mockRejectedValueOnce(new Error('Database connection lost'));
+
+      await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+
+    it('should handle count === 0 in transaction (line 584-585 branch coverage)', async () => {
+      const workOrder = makeMockWorkOrder({
+        status: 'COMPLETED',
+        totalCost: 100,
+        services: [],
+        parts: [],
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
+
+      // This test ensures line 584 (if woUpdateResult.count === 0) evaluates to true
+      // and line 585 (throw NotFoundException) is executed
+      let callbackExecuted = false;
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        callbackExecuted = true;
+        const invoiceCreateMock = jest.fn().mockResolvedValueOnce({ id: 'inv-404' });
+        const updateManyMock = jest.fn().mockResolvedValueOnce({ count: 0 });
+        const findFirstMock = jest.fn();
+
+        const txMock = {
+          invoice: { create: invoiceCreateMock },
+          workOrder: { updateMany: updateManyMock, findFirst: findFirstMock },
+        };
+
+        try {
+          return await callback(txMock);
+        } catch (error) {
+          // Verify that the error is NotFoundException thrown from line 585
+          expect(error).toBeInstanceOf(NotFoundException);
+          expect((error as any).message).toContain('not found');
+          throw error;
+        }
+      });
+
+      // The service re-throws the NotFoundException (line 600-601 catches and re-throws)
+      await expect(service.createInvoiceFromWo(TENANT_ID, WO_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(callbackExecuted).toBe(true);
+    });
+  });
+
+  describe('checkIn - transaction callback coverage', () => {
+    it('should execute checkIn transaction callback and update vehicle + work order (lines 635-658)', async () => {
+      const existing = makeMockWorkOrder({ status: 'OPEN', version: 1 });
+
+      const checkedIn = makeMockWorkOrder({
+        status: 'CHECKED_IN',
+        version: 2,
+        mileageIn: 55000,
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({ id: 'vehicle-001', mileage: 55000 }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedIn),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        vehicleId: 'vehicle-001',
+        mileageIn: 55000,
+        fuelLevel: 0.5,
+        damageNotes: 'Minor scratch',
+        estimatedPickup: new Date().toISOString(),
+        photos: ['photo1.jpg'],
+      };
+
+      const result = await service.checkIn(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedIn);
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when checkIn updateMany count === 0 (version conflict)', async () => {
+      const existing = makeMockWorkOrder({ status: 'OPEN', version: 1 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({ id: 'vehicle-001' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 0 }),
+            findFirst: jest.fn(),
+          },
+        };
+        try {
+          return await callback(txMock);
+        } catch (error) {
+          if (error instanceof ConflictException) {
+            throw error;
+          }
+          throw error;
+        }
+      });
+
+      const dto = {
+        vehicleId: 'vehicle-001',
+        mileageIn: 55000,
+        fuelLevel: 0.5,
+      };
+
+      await expect(service.checkIn(TENANT_ID, WO_ID, dto as any)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should handle optional estimatedPickup in checkIn (undefined)', async () => {
+      const existing = makeMockWorkOrder({ status: 'OPEN', version: 1 });
+
+      const checkedIn = makeMockWorkOrder({
+        status: 'CHECKED_IN',
+        version: 2,
+        estimatedCompletion: null,
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({}),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedIn),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        vehicleId: 'vehicle-001',
+        mileageIn: 55000,
+        fuelLevel: 0.5,
+        // estimatedPickup is undefined
+      };
+
+      const result = await service.checkIn(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedIn);
+    });
+  });
+
+  describe('checkOut - transaction callback coverage', () => {
+    it('should execute checkOut transaction callback and update vehicle + work order (lines 699-720)', async () => {
+      const existing = makeMockWorkOrder({
+        status: 'COMPLETED',
+        version: 2,
+        mileageIn: 50000,
+        customerSignature: 'sig-123',
+      });
+
+      const checkedOut = makeMockWorkOrder({
+        status: 'READY',
+        version: 3,
+        mileageOut: 51000,
+        customerSignature: 'sig-123',
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({ id: 'vehicle-001', mileage: 51000 }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedOut),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        mileageOut: 51000,
+        fuelLevel: 0.3,
+        courtesyCarReturned: true,
+        notes: 'Vehicle in excellent condition',
+      };
+
+      const result = await service.checkOut(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedOut);
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when checkOut updateMany count === 0 (version conflict)', async () => {
+      const existing = makeMockWorkOrder({
+        status: 'COMPLETED',
+        version: 2,
+        mileageIn: 50000,
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({}),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 0 }),
+            findFirst: jest.fn(),
+          },
+        };
+        try {
+          return await callback(txMock);
+        } catch (error) {
+          if (error instanceof ConflictException) {
+            throw error;
+          }
+          throw error;
+        }
+      });
+
+      const dto = {
+        mileageOut: 51000,
+        fuelLevel: 0.3,
+      };
+
+      await expect(service.checkOut(TENANT_ID, WO_ID, dto as any)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should use nullish coalescing for customerSignature (undefined case)', async () => {
+      const existing = makeMockWorkOrder({
+        status: 'COMPLETED',
+        version: 2,
+        mileageIn: 50000,
+        customerSignature: 'existing-sig',
+      });
+
+      const checkedOut = makeMockWorkOrder({
+        status: 'READY',
+        version: 3,
+        customerSignature: 'existing-sig',
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({}),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedOut),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        mileageOut: 51000,
+        fuelLevel: 0.3,
+        customerSignature: undefined, // Should fallback to existing
+      };
+
+      const result = await service.checkOut(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedOut);
+    });
+
+    it('should use new customerSignature when provided in checkOut', async () => {
+      const existing = makeMockWorkOrder({
+        status: 'COMPLETED',
+        version: 2,
+        mileageIn: 50000,
+        customerSignature: 'old-sig',
+      });
+
+      const checkedOut = makeMockWorkOrder({
+        status: 'READY',
+        version: 3,
+        customerSignature: 'new-sig',
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({}),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedOut),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        mileageOut: 51000,
+        fuelLevel: 0.3,
+        customerSignature: 'new-sig', // Should use this value
+      };
+
+      const result = await service.checkOut(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedOut);
+    });
+
+    it('should check out vehicle even when mileageIn is null (no mileage validation)', async () => {
+      const existing = makeMockWorkOrder({
+        status: 'COMPLETED',
+        version: 2,
+        mileageIn: null, // No mileage check-in, so no validation
+      });
+
+      const checkedOut = makeMockWorkOrder({
+        status: 'READY',
+        version: 3,
+        mileageOut: 51000,
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        const txMock = {
+          vehicle: {
+            update: jest.fn().mockResolvedValueOnce({}),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(checkedOut),
+          },
+        };
+        return callback(txMock);
+      });
+
+      const dto = {
+        mileageOut: 51000,
+        fuelLevel: 0.3,
+      };
+
+      const result = await service.checkOut(TENANT_ID, WO_ID, dto as any);
+
+      expect(result).toEqual(checkedOut);
     });
   });
 });

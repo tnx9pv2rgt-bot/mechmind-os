@@ -69,4 +69,45 @@ describe('MetricsService', () => {
     expect(metrics).toContain('process_cpu');
     expect(metrics).toContain('nodejs_heap');
   });
+
+  describe('Circuit Breaker Metrics', () => {
+    it('should record circuit breaker state as closed (0)', async () => {
+      service.recordCircuitBreakerState('stripe', 'closed');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="stripe"} 0');
+    });
+
+    it('should record circuit breaker state as halfOpen (0.5)', async () => {
+      service.recordCircuitBreakerState('stripe', 'halfOpen');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="stripe"} 0.5');
+    });
+
+    it('should record circuit breaker state as open (1)', async () => {
+      service.recordCircuitBreakerState('stripe', 'open');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="stripe"} 1');
+    });
+
+    it('should increment circuit breaker failures', async () => {
+      service.incrementCircuitBreakerFailures('stripe');
+      service.incrementCircuitBreakerFailures('stripe');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_failures_total{service="stripe"} 2');
+    });
+
+    it('should increment circuit breaker timeouts', async () => {
+      service.incrementCircuitBreakerTimeouts('auth-service');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_timeouts_total{service="auth-service"} 1');
+    });
+
+    it('should handle multiple services independently', async () => {
+      service.recordCircuitBreakerState('stripe', 'open');
+      service.recordCircuitBreakerState('auth-service', 'closed');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="stripe"} 1');
+      expect(metrics).toContain('circuit_breaker_state{service="auth-service"} 0');
+    });
+  });
 });

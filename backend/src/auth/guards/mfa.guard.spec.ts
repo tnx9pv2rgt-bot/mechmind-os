@@ -1,7 +1,7 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MfaGuard, MfaSessionMiddleware, MFARequest } from './mfa.guard';
+import { MfaGuard, MfaSessionMiddleware, MFARequest, RequireMFA } from './mfa.guard';
 import { MfaService } from '../mfa/mfa.service';
 
 describe('MfaGuard', () => {
@@ -296,5 +296,35 @@ describe('MfaSessionMiddleware', () => {
 
     expect(req.mfaVerified).toBeUndefined();
     expect(next).toHaveBeenCalled();
+  });
+});
+
+describe('RequireMFA decorator (lines 28-35)', () => {
+  it('should define metadata on descriptor.value when descriptor is provided', () => {
+    const mockFn = jest.fn();
+    const descriptor: PropertyDescriptor = { value: mockFn };
+    const decoratorFn = RequireMFA();
+
+    decoratorFn({}, 'testMethod', descriptor);
+
+    expect(Reflect.getMetadata('requireMFA', mockFn)).toBe(true);
+  });
+
+  it('should return descriptor when provided', () => {
+    const mockFn = jest.fn();
+    const descriptor: PropertyDescriptor = { value: mockFn };
+    const decoratorFn = RequireMFA();
+
+    const result = decoratorFn({}, 'testMethod', descriptor);
+
+    expect(result).toBe(descriptor);
+  });
+
+  it('should return undefined when no descriptor is provided (line 30 false branch)', () => {
+    const decoratorFn = RequireMFA();
+
+    const result = decoratorFn({}, undefined, undefined);
+
+    expect(result).toBeUndefined();
   });
 });

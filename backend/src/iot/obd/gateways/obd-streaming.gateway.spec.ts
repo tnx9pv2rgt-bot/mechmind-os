@@ -452,4 +452,104 @@ describe('ObdStreamingGateway', () => {
       expect(sensorCalls).toHaveLength(0);
     });
   });
+
+  describe('handleStartStreaming - error handling branches', () => {
+    it('should handle Error exception with non-Error message path', async () => {
+      const client = createMockSocket('c-non-error');
+      await gateway.handleConnection(client);
+      // Throw a non-Error object to test the fallback path
+      const fakeError: { toString: () => string; [key: string | symbol]: unknown } = {
+        toString: () => 'Custom error object',
+      };
+      Object.defineProperty(fakeError, Symbol.toStringTag, { value: 'CustomError' });
+      streamingService.startStreaming.mockRejectedValue(fakeError);
+
+      await gateway.handleStartStreaming(client, {
+        deviceId: 'dev-1',
+        adapterType: AdapterType.ELM327_USB,
+      });
+
+      // Non-Error objects will hit the else branch of the ternary
+      expect(client.emit).toHaveBeenCalledWith('error', {
+        message: expect.any(String),
+      });
+    });
+  });
+
+  describe('handleDisconnect - unsubscribe with multiple devices', () => {
+    it('should unsubscribe from all subscribed devices on disconnect', async () => {
+      const client = createMockSocket('c-multi-unsub');
+      await gateway.handleConnection(client);
+
+      // Subscribe to multiple devices
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-a' });
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-b' });
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-c' });
+
+      // Disconnect
+      gateway.handleDisconnect(client);
+
+      // Should have unsubscribed from all 3
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('obd:live:dev-a');
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('obd:live:dev-b');
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('obd:live:dev-c');
+    });
+  });
+
+  describe('handleStopStreaming - device lookup edge cases', () => {
+    it('should handle case when stream not found in any device', async () => {
+      const client = createMockSocket('c-stream-notfound');
+      await gateway.handleConnection(client);
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-x' });
+
+      // getActiveStream returns nothing
+      streamingService.getActiveStream.mockReturnValue(undefined);
+
+      await gateway.handleStopStreaming(client, { streamId: 'nonexistent' });
+
+      // Should not crash, and should emit streaming-stopped
+      expect(client.emit).toHaveBeenCalledWith('streaming-stopped', { streamId: 'nonexistent' });
+    });
+
+    it('should only unsubscribe from the matching device', async () => {
+      const client = createMockSocket('c-selective-unsub');
+      await gateway.handleConnection(client);
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-1' });
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-2' });
+
+      // Setup: dev-1 has stream-1, dev-2 has stream-2
+      streamingService.getActiveStream.mockImplementation((_t, deviceId) => {
+        if (deviceId === 'dev-1') {
+          return { id: 'stream-1' } as never;
+        }
+        if (deviceId === 'dev-2') {
+          return { id: 'stream-2' } as never;
+        }
+        return undefined;
+      });
+
+      await gateway.handleStopStreaming(client, { streamId: 'stream-1' });
+
+      // Should only unsubscribe from dev-1
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('obd:live:dev-1');
+    });
+  });
+
+  describe('Message format handling - JSON error branches', () => {
+    it('should handle malformed JSON in Redis message subscription', async () => {
+      const messageHandler = redisSubscriber.on.mock.calls.find(
+        (c: string[]) => c[0] === 'message',
+      )?.[1];
+      expect(messageHandler).toBeDefined();
+
+      const client = createMockSocket('c-malformed');
+      await gateway.handleConnection(client);
+      await gateway.handleSubscribeDevice(client, { deviceId: 'dev-bad' });
+
+      // This will throw a JSON.parse error but should be caught in the message handler
+      expect(() => {
+        messageHandler('obd:live:dev-bad', 'invalid json {]');
+      }).toThrow();
+    });
+  });
 });

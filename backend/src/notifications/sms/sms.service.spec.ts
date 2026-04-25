@@ -342,6 +342,15 @@ describe('SmsService', () => {
         }),
       );
     });
+
+    it('should default segmentCount to 1 when numSegments is null', async () => {
+      mockCreate.mockResolvedValue({ sid: 'SM701', numSegments: null, price: '0.0075' });
+
+      const result = await service.sendCustom('+393331234567', 'Test null segments');
+
+      expect(result.success).toBe(true);
+      expect(result.segmentCount).toBe(1);
+    });
   });
 
   // =========================================================================
@@ -409,6 +418,23 @@ describe('SmsService', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Invalid phone number format');
     });
+
+    it('should prepend +39 for numbers not starting with +, 00, 3, or 0 (else branch)', async () => {
+      mockCreate.mockResolvedValue({ sid: 'SM904', numSegments: '1' });
+
+      await service.sendCustom('12345678901', 'Test');
+
+      expect(mockCreate.mock.calls[0][0].to).toBe('+3912345678901');
+    });
+
+    it('should return error when Twilio messages.create throws', async () => {
+      mockCreate.mockRejectedValue(new Error('Twilio API error'));
+
+      const result = await service.sendCustom('+393331234567', 'Test error');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Twilio API error');
+    });
   });
 
   // =========================================================================
@@ -439,6 +465,35 @@ describe('SmsService', () => {
       const result = await service.getMessageStatus('SM999');
 
       expect(result).toBeNull();
+    });
+
+    it('should return undefined deliveredAt when dateSent is null', async () => {
+      mockFetch.mockResolvedValue({
+        status: 'queued',
+        dateSent: null,
+        errorCode: null,
+        errorMessage: null,
+      });
+
+      const result = await service.getMessageStatus('SM124');
+
+      expect(result).toMatchObject({ status: 'queued', deliveredAt: undefined });
+    });
+
+    it('should return errorCode string when errorCode is truthy', async () => {
+      mockFetch.mockResolvedValue({
+        status: 'failed',
+        dateSent: null,
+        errorCode: 30006,
+        errorMessage: 'Landline or unreachable carrier',
+      });
+
+      const result = await service.getMessageStatus('SM125');
+
+      expect(result).toMatchObject({
+        errorCode: '30006',
+        errorMessage: 'Landline or unreachable carrier',
+      });
     });
   });
 
@@ -498,6 +553,14 @@ describe('SmsService', () => {
       const result = service.calculateCost(unicodeMessage);
 
       expect(result.segments).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should use 70-char segments for short Unicode messages (<=70 chars)', () => {
+      const shortUnicode = 'é'.repeat(50); // Unicode chars, <=70 -> segmentLength=70
+      const result = service.calculateCost(shortUnicode);
+
+      expect(result.segments).toBe(1);
+      expect(result.estimatedCost).toBeCloseTo(0.0075, 4);
     });
   });
 

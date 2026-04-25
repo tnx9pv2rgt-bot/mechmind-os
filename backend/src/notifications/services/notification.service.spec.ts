@@ -1732,4 +1732,72 @@ describe('NotificationOrchestratorService', () => {
       expect(result.successful).toBe(1);
     });
   });
+
+  describe('private method coverage — dead-code guards and determineChannel', () => {
+    type PrivateService = {
+      sendSmsNotification: (
+        customer: { id: string; name: string; email: string; phone?: string },
+        workshop: { id: string; name: string; address: string; phone: string },
+        type: string,
+        data: Record<string, unknown>,
+      ) => Promise<{ success: boolean; error?: string }>;
+      sendEmailNotification: (
+        customer: { id: string; name: string; email: string; phone?: string },
+        workshop: { id: string; name: string; address: string; phone: string },
+        type: string,
+        data: Record<string, unknown>,
+      ) => Promise<{ success: boolean; error?: string }>;
+      determineChannel: (
+        customer: { notificationPreferences?: { preferredChannel?: string } },
+        preference: string,
+      ) => string;
+    };
+
+    const mockWorkshop = {
+      id: 'ws-1',
+      name: 'Officina',
+      address: 'Via Roma 1',
+      phone: '+391234567890',
+    };
+
+    it('should return no-phone error from sendSmsNotification when phone is missing (line 304)', async () => {
+      const customerNoPhone = {
+        id: 'c1',
+        name: 'Mario',
+        email: 'mario@test.com',
+        phone: undefined,
+      };
+      const result = await (service as unknown as PrivateService).sendSmsNotification(
+        customerNoPhone,
+        mockWorkshop,
+        'BOOKING_CONFIRMATION',
+        {},
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('No phone number');
+    });
+
+    it('should return no-email error from sendEmailNotification when email is missing (line 401)', async () => {
+      const customerNoEmail = { id: 'c1', name: 'Mario', email: '', phone: '+39123' };
+      const result = await (service as unknown as PrivateService).sendEmailNotification(
+        customerNoEmail,
+        mockWorkshop,
+        'BOOKING_CONFIRMATION',
+        {},
+      );
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('No email address');
+    });
+
+    it('should return preferredChannel from determineChannel when AUTO and preferences set (line 718)', () => {
+      const customerWithPrefs = {
+        notificationPreferences: { preferredChannel: NotificationChannel.EMAIL },
+      };
+      const result = (service as unknown as PrivateService).determineChannel(
+        customerWithPrefs,
+        NotificationChannel.AUTO,
+      );
+      expect(result).toBe(NotificationChannel.EMAIL);
+    });
+  });
 });

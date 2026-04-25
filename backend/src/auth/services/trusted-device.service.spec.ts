@@ -342,6 +342,136 @@ describe('TrustedDeviceService', () => {
     });
   });
 
+  describe('parseBrowser / parseOs / parseDeviceType — uncovered branches', () => {
+    beforeEach(() => {
+      prisma.device.findFirst.mockResolvedValue(null);
+      prisma.device.create.mockResolvedValue({ id: 'new-dev', fingerprint: 'fp' });
+    });
+
+    it('should detect Opera browser (line 259 Opera branch)', async () => {
+      const operaUA =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0';
+      const result = await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: operaUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(result.isNew).toBe(true);
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ browserType: 'Opera' }),
+        }),
+      );
+    });
+
+    it('should detect Safari browser and iOS (line 261 Safari + line 267 iOS branch)', async () => {
+      const safariIosUA =
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+      const result = await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: safariIosUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(result.isNew).toBe(true);
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            browserType: 'Safari',
+            osType: 'iOS',
+            deviceType: 'phone',
+          }),
+        }),
+      );
+    });
+
+    it('should return unknown browser when UA has no known identifier (line 263 fallback)', async () => {
+      const unknownUA = 'UnknownBot/1.0';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: unknownUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ browserType: 'unknown' }),
+        }),
+      );
+    });
+
+    it('should detect Linux OS (line 271 Linux branch)', async () => {
+      const linuxUA = 'Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: linuxUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ osType: 'Linux' }),
+        }),
+      );
+    });
+
+    it('should detect ChromeOS (line 272 CrOS branch)', async () => {
+      const chromebookUA =
+        'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: chromebookUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ osType: 'ChromeOS' }),
+        }),
+      );
+    });
+
+    it('should return unknown OS when UA has no known OS (line 273 fallback)', async () => {
+      const unknownOsUA = 'UnknownDevice/1.0';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: unknownOsUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ osType: 'unknown' }),
+        }),
+      );
+    });
+
+    it('should detect Android tablet when no Mobile keyword (line 280 tablet branch)', async () => {
+      const androidTabletUA =
+        'Mozilla/5.0 (Linux; Android 13; Tablet Build/TQ3A.230901.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: androidTabletUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ deviceType: 'tablet' }),
+        }),
+      );
+    });
+
+    it('should detect iPad as tablet (line 277 iPad branch)', async () => {
+      const ipadUA =
+        'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+      await service.findOrCreateDevice({
+        userId: mockUserId,
+        userAgent: ipadUA,
+        ipAddress: '1.2.3.4',
+      });
+      expect(prisma.device.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ deviceType: 'tablet' }),
+        }),
+      );
+    });
+  });
+
   describe('recordLogin', () => {
     it('should update device login info', async () => {
       prisma.device.update.mockResolvedValue({});

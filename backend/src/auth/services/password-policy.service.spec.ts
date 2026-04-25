@@ -132,4 +132,19 @@ describe('PasswordPolicyService', () => {
       expect(result.strength).toBe('strong');
     });
   });
+
+  describe('validatePassword — breached password (line 118)', () => {
+    it('should throw BadRequestException when password is found in breach database', async () => {
+      jest
+        .spyOn(service, 'checkBreachedPassword')
+        .mockResolvedValue({ breached: true, count: 5000 });
+
+      await expect(service.validatePassword('MySecureP@ss2024!')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.validatePassword('MySecureP@ss2024!')).rejects.toThrow(
+        'violazioni di dati',
+      );
+    });
+  });
 });

@@ -269,4 +269,82 @@ describe('ShopFloorGateway', () => {
       expect(newCalls).toHaveLength(0);
     });
   });
+
+  describe('Error handling - connection errors', () => {
+    it('should handle connection error when user data is missing', async () => {
+      const client = {
+        id: 'sf-conn-err',
+        data: { user: undefined },
+        emit: jest.fn(),
+        disconnect: jest.fn(),
+      } as unknown as Socket;
+
+      await gateway.handleConnection(client);
+
+      expect(client.disconnect).toHaveBeenCalled();
+    });
+  });
+
+  describe('Disconnect - multiple subscriptions', () => {
+    it('should unsubscribe from all bays when client disconnects with multiple subscriptions', async () => {
+      const client = createMockSocket('sf-multi-disconnect');
+      await gateway.handleConnection(client);
+
+      // Subscribe to multiple bays
+      await gateway.handleSubscribeBay(client, { bayId: 'bay-1' });
+      await gateway.handleSubscribeBay(client, { bayId: 'bay-2' });
+      await gateway.handleSubscribeBay(client, { bayId: 'bay-3' });
+
+      // Reset mock to track unsubscribe calls on disconnect
+      (redisSubscriber.unsubscribe as jest.Mock).mockReset();
+
+      gateway.handleDisconnect(client);
+
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('shopfloor:sensor:bay-1');
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('shopfloor:sensor:bay-2');
+      expect(redisSubscriber.unsubscribe).toHaveBeenCalledWith('shopfloor:sensor:bay-3');
+    });
+  });
+
+  describe('handleSubscribeBay/Unsubscribe - unknown client edge case', () => {
+    it('should return early if client not found in handleSubscribeBay', async () => {
+      const client = createMockSocket('unknown-client');
+      const subscribeSpy = jest.spyOn(redisSubscriber, 'subscribe');
+
+      await gateway.handleSubscribeBay(client, { bayId: 'bay-new' });
+
+      expect(subscribeSpy).not.toHaveBeenCalled();
+      subscribeSpy.mockRestore();
+    });
+
+    it('should return early if client not found in handleUnsubscribeBay', async () => {
+      const client = createMockSocket('unknown-client2');
+      const unsubscribeSpy = jest.spyOn(redisSubscriber, 'unsubscribe');
+
+      await gateway.handleUnsubscribeBay(client, { bayId: 'bay-old' });
+
+      expect(unsubscribeSpy).not.toHaveBeenCalled();
+      unsubscribeSpy.mockRestore();
+    });
+
+    it('should return early if client not found in handleSubscribeTechnicians', async () => {
+      const client = createMockSocket('unknown-client3');
+      const subscribeSpy = jest.spyOn(redisSubscriber, 'subscribe');
+
+      await gateway.handleSubscribeTechnicians(client);
+
+      expect(subscribeSpy).not.toHaveBeenCalled();
+      subscribeSpy.mockRestore();
+    });
+
+    it('should return early if client not found in handleSubscribeEvents', async () => {
+      const client = createMockSocket('unknown-client4');
+      const subscribeSpy = jest.spyOn(redisSubscriber, 'subscribe');
+
+      await gateway.handleSubscribeEvents(client);
+
+      expect(subscribeSpy).not.toHaveBeenCalled();
+      subscribeSpy.mockRestore();
+    });
+  });
 });

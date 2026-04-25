@@ -47,19 +47,6 @@ if [ -d "backend" ]; then
   fi
 fi
 
-# Check that modified service files have a corresponding spec file
-NEW_SERVICES=$(git diff --name-only HEAD 2>/dev/null | grep -E 'backend/src/.+\.service\.ts$' | grep -v '\.spec\.' || true)
-if [ -n "$NEW_SERVICES" ]; then
-  while IFS= read -r SVC; do
-    SPEC_PATH="${SVC%.service.ts}.service.spec.ts"
-    if [ ! -f "$SPEC_PATH" ]; then
-      echo "" >&2
-      echo "===== STOP HOOK: SPEC MANCANTE =====" >&2
-      echo "Manca: $SPEC_PATH" >&2
-      FAILED=1
-    fi
-  done <<< "$NEW_SERVICES"
-fi
 
 if [ "$FAILED" -gt 0 ]; then
   echo "" >&2

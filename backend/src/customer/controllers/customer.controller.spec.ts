@@ -350,4 +350,188 @@ describe('CustomerController', () => {
       );
     });
   });
+
+  describe('createCustomer - validation edge cases', () => {
+    it('should handle customer creation with minimal data', async () => {
+      const minimalDto = { firstName: 'Mario', lastName: 'Rossi' };
+      customerService.create.mockResolvedValue(mockCustomer as never);
+
+      const result = await controller.createCustomer(TENANT_ID, minimalDto as never);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toBeDefined();
+    });
+
+    it('should pass empty tenantId to service (service validates)', async () => {
+      const dto = { firstName: 'Mario', lastName: 'Rossi' };
+      customerService.create.mockResolvedValue(mockCustomer as never);
+
+      await controller.createCustomer('', dto as never);
+
+      // Controller doesn't validate tenantId; service does
+      expect(customerService.create).toHaveBeenCalledWith('', dto);
+    });
+
+    it('should validate tenantId is passed to service', async () => {
+      const dto = { firstName: 'Mario', lastName: 'Rossi' };
+      customerService.create.mockResolvedValue(mockCustomer as never);
+
+      await controller.createCustomer('tenant-xyz', dto as never);
+
+      expect(customerService.create).toHaveBeenCalledWith('tenant-xyz', expect.any(Object));
+    });
+  });
+
+  describe('getCustomers - pagination edge cases', () => {
+    it('should handle string limit and offset conversion', async () => {
+      customerService.findAll.mockResolvedValue({ customers: [], total: 0 } as never);
+
+      await controller.getCustomers(TENANT_ID, '25', '50');
+
+      expect(customerService.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        limit: 25,
+        offset: 50,
+      });
+    });
+
+    it('should return correct pagination metadata', async () => {
+      const mockResult = { customers: [mockCustomer], total: 100 };
+      customerService.findAll.mockResolvedValue(mockResult as never);
+
+      const result = await controller.getCustomers(TENANT_ID, '10', '20');
+
+      expect(result.meta.total).toBe(100);
+      expect(result.meta.limit).toBe(10);
+      expect(result.meta.offset).toBe(20);
+    });
+  });
+
+  describe('searchCustomers - filter combinations', () => {
+    it('should search with both name and email filters', async () => {
+      const expected = { customers: [mockCustomer], total: 1 };
+      customerService.search.mockResolvedValue(expected as never);
+      const query = { name: 'Mario', email: 'mario@test.com', limit: 10, offset: 0 };
+
+      await controller.searchCustomers(TENANT_ID, query as never);
+
+      expect(customerService.search).toHaveBeenCalledWith(TENANT_ID, query);
+    });
+
+    it('should handle search with only email', async () => {
+      const expected = { customers: [], total: 0 };
+      customerService.search.mockResolvedValue(expected as never);
+      const query = { name: undefined, email: 'test@test.com', limit: 10, offset: 0 };
+
+      const result = await controller.searchCustomers(TENANT_ID, query as never);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([]);
+    });
+
+    it('should handle empty search results', async () => {
+      const expected = { customers: [], total: 0 };
+      customerService.search.mockResolvedValue(expected as never);
+
+      const result = await controller.searchCustomers(TENANT_ID, {} as never);
+
+      expect(result.meta.total).toBe(0);
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+  });
+
+  describe('Vehicle operations - tenantId isolation', () => {
+    it('should pass tenantId to vehicleService for all operations', async () => {
+      vehicleService.findByCustomer.mockResolvedValue([mockVehicle] as never);
+
+      await controller.getCustomerVehicles('tenant-xyz', 'cust-001');
+
+      expect(vehicleService.findByCustomer).toHaveBeenCalledWith('tenant-xyz', 'cust-001');
+    });
+
+    it('should validate tenantId in vehicle creation', async () => {
+      vehicleService.create.mockResolvedValue(mockVehicle as never);
+      const dto = { make: 'Fiat', model: '500', year: 2023 };
+
+      await controller.addVehicle('tenant-abc', 'cust-001', dto as never);
+
+      expect(vehicleService.create).toHaveBeenCalledWith('tenant-abc', 'cust-001', dto);
+    });
+
+    it('should return empty array when no vehicles found', async () => {
+      vehicleService.findByCustomer.mockResolvedValue([] as never);
+
+      const result = await controller.getCustomerVehicles(TENANT_ID, 'cust-001');
+
+      expect(result.data).toEqual([]);
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+  });
+
+  describe('CSV operations - error handling', () => {
+    it('should handle large CSV imports', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      csvService.importCustomers.mockResolvedValue({ imported: 10000, errors: [] } as never);
+
+      const largeCSV = 'firstName,lastName\n' + Array(10000).fill('Mario,Rossi\n').join('');
+      const result = await controller.importCustomers(TENANT_ID, largeCSV);
+
+      expect(result.data.imported).toBe(10000);
+    });
+
+    it('should report partial import success with errors', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      csvService.importCustomers.mockResolvedValue({
+        imported: 50,
+        errors: [
+          { row: 2, error: 'Invalid email' },
+          { row: 5, error: 'Missing firstName' },
+        ],
+      } as never);
+
+      const result = await controller.importCustomers(TENANT_ID, 'data');
+
+      expect(result.data.imported).toBe(50);
+      expect(result.data.errors.length).toBe(2);
+    });
+
+    it('should handle CSV with no errors', async () => {
+      const csvService = controller['csvService'] as jest.Mocked<CsvImportExportService>;
+      csvService.importCustomers.mockResolvedValue({ imported: 25, errors: [] } as never);
+
+      const result = await controller.importCustomers(TENANT_ID, 'valid-csv');
+
+      expect(result.data.errors).toEqual([]);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Response format consistency', () => {
+    it('should always return success: true for successful operations', async () => {
+      customerService.create.mockResolvedValue(mockCustomer as never);
+
+      const result = await controller.createCustomer(TENANT_ID, {} as never);
+
+      expect(result).toHaveProperty('success');
+      expect(result.success).toBe(true);
+    });
+
+    it('should include data property in all success responses', async () => {
+      vehicleService.findById.mockResolvedValue(mockVehicle as never);
+
+      const result = await controller.getVehicle(TENANT_ID, 'veh-001');
+
+      expect(result).toHaveProperty('data');
+      expect(result.data).toEqual(mockVehicle);
+    });
+
+    it('should format delete response with message', async () => {
+      vehicleService.delete.mockResolvedValue(undefined as never);
+
+      const result = await controller.deleteVehicle(TENANT_ID, 'veh-001');
+
+      expect(result.success).toBe(true);
+      expect(result).toHaveProperty('message');
+      expect(result.message).toBe('Vehicle deleted successfully');
+    });
+  });
 });

@@ -5,6 +5,7 @@ allowed-tools: ["Bash(node *)","Bash(find *)","Bash(grep *)","Bash(ls *)"]
 disable-model-invocation: true
 effort: low
 argument-hint: "<modulo>"
+arguments: modulo
 ---
 
 # Verifica Modulo — Scoring 0-100
@@ -13,8 +14,8 @@ Esegui l'analisi statica del modulo prima di generare test:
 
 ```bash
 cd "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale"
-node scripts/verify-module.mjs "$MODULE"
-node scripts/verify-module.mjs "$MODULE" --json
+node scripts/verify-module.mjs "$ARGUMENTS"
+node scripts/verify-module.mjs "$ARGUMENTS" --json
 ```
 
 ## Categorie di scoring
