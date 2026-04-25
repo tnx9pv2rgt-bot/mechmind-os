@@ -305,4 +305,166 @@ describe('TenantSettingsService', () => {
       expect(result.partMarkupMatrix).toEqual(matrix);
     });
   });
+
+  describe('getOnboardingStatus - edge cases', () => {
+    it('should handle null businessHours', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          businessHours: null,
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.steps.businessHours).toBe(false);
+    });
+
+    it('should detect businessHours as false when empty object', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          businessHours: {},
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.steps.businessHours).toBe(false);
+    });
+
+    it('should detect businessHours as true when has entries', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          businessHours: {
+            monday: { open: '08:00', close: '18:00' },
+          },
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.steps.businessHours).toBe(true);
+    });
+
+    it('should handle defaultVatRate = 0 as completed', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          ragioneSociale: 'Test',
+          partitaIva: '12345678901',
+          businessHours: { monday: { open: '08:00', close: '18:00' } },
+          numberOfBays: 4,
+          slotDurationMinutes: 60,
+          defaultVatRate: 0,
+          invoiceNumberFormat: 'FT-{YEAR}-{SEQ}',
+          currency: 'EUR',
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.steps.defaultVatRate).toBe(true);
+    });
+
+    it('should distinguish between undefined and null defaultVatRate', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: {
+          defaultVatRate: null,
+        },
+      });
+
+      const result = await service.getOnboardingStatus(TENANT_ID);
+
+      expect(result.steps.defaultVatRate).toBe(false);
+    });
+  });
+
+  describe('updateSettings - conditional field updates', () => {
+    it('should skip undefined fields during update', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: { ragioneSociale: 'Keep', numberOfBays: 4, city: 'Roma' },
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: { ragioneSociale: 'Keep', numberOfBays: 4, city: 'Roma' },
+      });
+
+      await service.updateSettings(TENANT_ID, {
+        numberOfBays: undefined,
+        city: undefined,
+      });
+
+      const callData = prisma.tenant.update.mock.calls[0][0].data;
+      expect(callData.settings).toEqual({
+        ragioneSociale: 'Keep',
+        numberOfBays: 4,
+        city: 'Roma',
+      });
+    });
+
+    it('should preserve logoUrl when not provided in update', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: { logoUrl: 'https://old.png', ragioneSociale: 'Test' },
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: { logoUrl: 'https://old.png', ragioneSociale: 'Test' },
+      });
+
+      await service.updateSettings(TENANT_ID, {
+        ragioneSociale: 'Test',
+        logoUrl: undefined,
+      });
+
+      const callData = prisma.tenant.update.mock.calls[0][0].data;
+      expect(callData.settings.logoUrl).toBe('https://old.png');
+    });
+  });
+
+  describe('completeOnboarding - edge cases', () => {
+    it('should preserve all existing settings when completing with minimal input', async () => {
+      const existingSettings = {
+        logoUrl: 'https://logo.png',
+        defaultVatRate: 22,
+        currency: 'EUR',
+        timezone: 'Europe/Rome',
+      };
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: existingSettings,
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: {
+          ...existingSettings,
+          ragioneSociale: 'New Name',
+          partitaIva: '12345678901',
+          onboardingCompleted: true,
+        },
+      });
+
+      const result = await service.completeOnboarding(TENANT_ID, {
+        ragioneSociale: 'New Name',
+        partitaIva: '12345678901',
+      });
+
+      expect(result.logoUrl).toBe('https://logo.png');
+      expect(result.defaultVatRate).toBe(22);
+      expect(result.onboardingCompleted).toBe(true);
+    });
+
+    it('should set onboardingCompleted=true even if already true', async () => {
+      prisma.tenant.findUnique.mockResolvedValue({
+        settings: { onboardingCompleted: true },
+      });
+      prisma.tenant.update.mockResolvedValue({
+        settings: { onboardingCompleted: true },
+      });
+
+      const result = await service.completeOnboarding(TENANT_ID, {
+        ragioneSociale: 'Test',
+        partitaIva: '12345678901',
+      });
+
+      expect(result.onboardingCompleted).toBe(true);
+    });
+  });
 });

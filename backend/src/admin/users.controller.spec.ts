@@ -390,7 +390,7 @@ describe('UsersController', () => {
       expect(prisma.user.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'u2', tenantId: 'tenant-1' },
-          data: expect.objectContaining({ isActive: false }),
+          data: expect.objectContaining({ isActive: false, deletedAt: expect.any(Date) }),
         }),
       );
     });
