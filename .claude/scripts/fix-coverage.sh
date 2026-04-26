@@ -8,6 +8,62 @@ trap "handle_error \$? \$LINENO" ERR
 
 source "$(dirname "$0")/_error-handler.sh"
 
+## FASE 0 — AUTO-RIPARAZIONE ERRORI TYPESCRIPT (Standard Industriale 2026)
+
+echo "🔧 [FASE 0] Validazione Pre-Volo TypeScript (standard Google Conductor)..."
+
+# 1. Check iniziale non-interattivo per errori bloccanti
+ERRORS=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
+
+if [ "$ERRORS" -gt 0 ]; then
+  echo "⚠️  Rilevati $ERRORS errori TypeScript. Avvio ciclo di riparazione industriale..."
+
+  # 2. Classificazione errori per una riparazione consapevole
+  MISSING_MODULES=$(npx tsc --noEmit --pretty false 2>&1 | grep "Cannot find module" | sed -E "s/.*Cannot find module '(.*?)'.*/\1/" | sort -u)
+  DECORATOR_ERRORS=$(npx tsc --noEmit --pretty false 2>&1 | grep "TS1240" | wc -l || echo "0")
+
+  # 3. Strategia 1: Riparazione di base per errori comuni
+  if [ "$DECORATOR_ERRORS" -gt 0 ]; then
+    echo "  📦 Tentativo riparazione errori di decorator..."
+    npm install 2>/dev/null
+    echo "  ✅ Pacchetti base reinstallati"
+  fi
+
+  # 4. Strategia 2: Riparazione profonda con Claude per errori complessi
+  REMAINING=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
+  if [ "$REMAINING" -gt 0 ]; then
+    echo "  🧠 $REMAINING errori complessi residui. Avvio riparazione contestuale con Claude..."
+
+    # 4.a Estrazione dei file problematici
+    PROBLEM_FILES=$(npx tsc --noEmit --pretty false 2>&1 | grep -oP 'src/[^:]+' | sort -u | head -10)
+
+    # 4.b Per ogni file, richiedi a Claude una riparazione consapevole dell'AST
+    for file in $PROBLEM_FILES; do
+      echo "    🔍 Analizzando: $file"
+
+      # Otteniamo l'output di riparazione in formato strutturato
+      REPAIR_JSON=$(claude -p "Analizza gli errori TS nel file \`$file\` e fornisci una soluzione JSON con: 'status', 'fixed_code', 'explanation'. Scrivi SOLO JSON valido." 2>/dev/null || echo "{}")
+
+      # Estrazione del codice riparato
+      FIXED_CODE=$(echo "$REPAIR_JSON" | jq -r '.fixed_code // empty' 2>/dev/null)
+
+      # 4.c Se il codice riparato è valido, applicalo
+      if [ -n "$FIXED_CODE" ] && [ "$FIXED_CODE" != "null" ]; then
+        echo "$FIXED_CODE" > "$file"
+        echo "    ✅ Riparazione applicata a $file"
+      fi
+    done
+  fi
+
+  # 5. Verifica finale
+  REMAINING=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
+  if [ "$REMAINING" -gt 0 ]; then
+    echo "⚠️  $REMAINING errori strutturali rimanenti (richiedono refactoring manuale)."
+  else
+    echo "✅ Progetto compilato con successo. Si procede con la generazione dei test."
+  fi
+fi
+
 extract_code() {
   sed -n '/```typescript/,/```/p' | sed '1d;$d' || \
   sed -n '/```ts/,/```/p' | sed '1d;$d' || \
