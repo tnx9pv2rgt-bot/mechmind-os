@@ -85,7 +85,7 @@ export class NotificationsGateway
         userId: client.data.userId,
         timestamp: new Date().toISOString(),
       });
-    } catch (error) {
+    } catch (_error) {
       client.disconnect(true);
     }
   }

@@ -61,5 +61,65 @@ describe('AdminTenantsController', () => {
 
       expect(result).toEqual({ success: true, data: [] });
     });
+
+    it('should return empty array when tenant is undefined', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(undefined);
+
+      const result = await controller.findAll(mockReq);
+
+      expect(result).toEqual({ success: true, data: [] });
+      expect(prisma.tenant.findUnique).toHaveBeenCalledTimes(1);
+    });
+
+    it('should pass exact select projection to Prisma', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+
+      await controller.findAll(mockReq);
+
+      expect(prisma.tenant.findUnique).toHaveBeenCalledWith({
+        where: { id: 'tenant-1' },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          isActive: true,
+          createdAt: true,
+        },
+      });
+    });
+
+    it('should propagate Prisma errors to caller', async () => {
+      const dbError = new Error('DB connection lost');
+      prisma.tenant.findUnique.mockRejectedValue(dbError);
+
+      await expect(controller.findAll(mockReq)).rejects.toThrow('DB connection lost');
+    });
+
+    it('should use tenantId from request user (tenant isolation)', async () => {
+      prisma.tenant.findUnique.mockResolvedValue(null);
+      const otherTenantReq = {
+        user: { userId: 'u2', tenantId: 'other-tenant-99', email: 'x@y.z', role: 'ADMIN' },
+      };
+
+      await controller.findAll(otherTenantReq);
+
+      expect(prisma.tenant.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'other-tenant-99' } }),
+      );
+    });
+  });
+
+  describe('decorator metadata fallback', () => {
+    it('loads controller module even when PrismaService type is undefined at metadata time', () => {
+      jest.isolateModules(() => {
+        jest.doMock('@common/services/prisma.service', () => ({}));
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const mod = require('./admin-tenants.controller') as {
+          AdminTenantsController: new (...args: unknown[]) => unknown;
+        };
+        expect(mod.AdminTenantsController).toBeDefined();
+        expect(typeof mod.AdminTenantsController).toBe('function');
+      });
+    });
   });
 });

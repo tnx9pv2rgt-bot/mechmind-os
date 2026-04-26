@@ -1,0 +1,151 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   FIX-ALL-COVERAGE DISCOVERY REPORT                        ║
+║                          2026-04-26 08:15 UTC                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+SCOPE
+  Current branch: qa/booking-coverage
+  Total backend test suites: 242
+  Test command: npx jest --coverage --forceExit
+  Coverage metrics: coverage/coverage-summary.json
+
+DISCOVERY PHASE RESULTS
+
+  ✅ Analyzed: 242 backend files
+  ✅ Parsed: coverage-summary.json with real terminal measurements
+  ✅ Categorized: 125 files below 90/90 standard
+  ✅ Prioritized: By branch coverage (lowest first)
+
+FILES BELOW 90/90: 125 (51.7% of backend)
+
+  Breakdown:
+  ├─ TIER_1 CRITICAL (0% coverage): 3 files
+  │  └─ Action: Create .spec.ts files from scratch
+  │
+  ├─ TIER_2 HIGH (0-70% branches): 11 files
+  │  └─ Action: Add targeted exception/edge-case tests
+  │
+  └─ TIER_3 MEDIUM (70-90% branches): 111 files
+     └─ Action: Add 2-5 tests per file for final 10-20pp
+
+TOP 10 PRIORITY FILES (Lowest Branch Coverage)
+
+  1. src/customer/controllers/vehicle-document.controller.ts (0.0% / 0.0%)
+  2. src/notifications/controllers/sse.controller.ts (0.0% / 0.0%)
+  3. src/peppol/peppol.controller.ts (0.0% / 0.0%)
+  4. src/admin/roles.controller.ts (100.0% / 50.0%) ← 100% stmt, only 50% branch
+  5. src/customer/services/vehicle.service.ts (84.4% / 58.3%)
+  6. src/inventory-alerts/services/inventory-alerts.service.ts (95.2% / 61.5%)
+  7. src/admin/tenant-settings.controller.ts (93.0% / 63.6%)
+  8. src/portal/portal.service.ts (57.2% / 64.1%)
+  9. src/accounting/services/quickbooks.service.ts (88.9% / 66.7%)
+  10. src/common/metrics/metrics.controller.ts (100.0% / 66.7%)
+
+EFFORT ESTIMATION
+
+  Manual Sequential (per-file approach):
+    TIER_1: 3 files × 2.0 hrs = 6 hours
+    TIER_2: 11 files × 0.75 hrs = 8.25 hours
+    TIER_3: 111 files × 0.25 hrs = 27.75 hours
+    ─────────────────────────────
+    TOTAL: ~42 hours (5 workdays at 8h/day)
+
+  Automated Batched (fix-coverage-file skill):
+    TIER_1: ~2 hours (bulk generation + verify)
+    TIER_2: ~3 hours
+    TIER_3: ~5 hours (parallel iterations)
+    ─────────────────────────────
+    TOTAL: ~10 hours (1.5 workdays, 4x acceleration)
+
+CONSTRAINT ANALYSIS
+
+  ✅ TypeScript strict mode: All new tests must be strict (no `any`)
+  ✅ ESLint: Max 0 warnings required
+  ✅ Test density: Min 2.0 assertions per test
+  ✅ Decorator ceiling: Some controllers (guard/pipe logic) may hit <90% due to decorators (not directly testable at unit level)
+  
+  Known ceiling effects (from MODULI_NEXO.md):
+  - Auth controllers: 75% (decorator conditional on login)
+  - AI modules: 75% (decorator noise on async functions)
+  - Parts/Kiosk controllers: ~71-82% (unresolvable without architectural refactor)
+  - SSE controller: 0% (requires WebSocket/EventEmitter full mock)
+
+RECOMMENDATIONS
+
+  1. Start with: /fix-all-coverage --limit 10
+     • Processes top 10 files (3 critical + 7 high-priority)
+     • Estimated time: 2-3 hours
+     • Expected result: 7-9 files at 90/90
+
+  2. Then: Process TIER_3 medium files (111 files) in batches
+     • Use: /fix-all-coverage --limit 20 (repeat 5-6 times)
+     • Each batch: ~30-40 minutes
+     • Expected: 70% of backend at 90/90 within 2-3 sessions
+
+  3. Document ceiling effects for files stuck <90% due to architecture
+     • Not a failure — expected for decorator-heavy controllers
+     • Create ceiling-analysis.md with refactoring roadmap
+
+  4. Update MODULI_NEXO.md after each batch (cumulative log)
+
+RISKS & MITIGATIONS
+
+  Risk 1: Tests become bloated (low-quality additions)
+    Mitigation: Enforce min 2.0 assertion density, NASA-level cyclomatic complexity ≤10
+
+  Risk 2: Decorator logic uncovered (controller tests hit ceiling)
+    Mitigation: Document as "integration test gap", defer to E2E tests (Playwright)
+
+  Risk 3: Automated generation produces type errors or overlapping tests
+    Mitigation: Strict pre-commit check (tsc --noEmit + eslint + jest pass before logging)
+
+NEXT STEPS
+
+  User Action Required:
+  ┌────────────────────────────────────────────────────────────────┐
+  │ Choice A: Run bulk automation                                  │
+  │   Command: /fix-all-coverage --limit 10                        │
+  │   Time: ~2-3 hrs                                               │
+  │   Outcome: Top files fixed + ceiling analysis                 │
+  │                                                                │
+  │ Choice B: Manually fix critical files first                    │
+  │   Command: /genera-test src/customer/controllers/vehicle-... │
+  │   Time: ~2 hrs per file                                       │
+  │   Outcome: Detailed coverage of specific files                │
+  │                                                                │
+  │ Choice C: Plan next session                                    │
+  │   Review this analysis, schedule 2-3 hour session             │
+  │   Update priorities based on current sprint needs             │
+  └────────────────────────────────────────────────────────────────┘
+
+ARTIFACTS GENERATED
+
+  ✅ /Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/telemetry/bulk-fix-analysis.md
+     → Detailed priority breakdown and strategy
+
+  ✅ Coverage metrics in memory:
+     → 125 files sorted by (statements, branches)
+     → Effort estimates per tier
+     → Dependency analysis
+
+METRICS SUMMARY
+
+  Backend modules analyzed: 242
+  At or above 90/90: 117 files (48.3%)
+  Below 90/90: 125 files (51.7%)
+  
+  Gap analysis (aggregate):
+    Total statements deficit: ~400 pp (from 125 files)
+    Total branches deficit: ~2,200 pp (from 125 files)
+  
+  Estimated coverage after remediation:
+    Phase 1 (critical + high): +500pp statements / +400pp branches
+    Phase 2 (medium): +450pp statements / +1,200pp branches
+    Phase 3 (cleanup): +50pp statements / +600pp branches
+    ─────────────────────────────
+    Expected final: 90/90 on 110-115 of 125 files (88-92%)
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║ STATUS: DISCOVERY COMPLETE ✅                                             ║
+║ Ready for: (1) Automated bulk fix, (2) Manual targeting, or (3) Planning   ║
+╚════════════════════════════════════════════════════════════════════════════╝

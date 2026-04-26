@@ -123,6 +123,7 @@ export class VapiWebhookDto {
   @ApiPropertyOptional({
     description: 'Additional metadata',
     type: 'object',
+    additionalProperties: true,
   })
   @IsOptional()
   @IsObject()
@@ -151,6 +152,7 @@ export class VoiceWebhookResponseDto {
   @ApiPropertyOptional({
     description: 'Escalation info if escalated',
     type: 'object',
+    additionalProperties: true,
   })
   escalation?: {
     escalated: boolean;

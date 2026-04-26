@@ -706,6 +706,330 @@ describe('PaymentLinkService', () => {
   });
 
   // =========================================================================
+  // 90/90 COVERAGE ENHANCEMENT: Missing Branch Coverage
+  // =========================================================================
+  describe('[BRANCH COVERAGE] Constructor & Service Initialization', () => {
+    it('should initialize Stripe client when STRIPE_SECRET_KEY is provided', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_live_real_key_123';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const serviceWithStripe = module.get(PaymentLinkService);
+
+      // Verify Stripe is initialized (private field, check via createStripeCheckoutSession)
+      expect(serviceWithStripe['stripe']).toBeDefined();
+      expect(serviceWithStripe['stripe']).not.toBeNull();
+    });
+
+    it('should set Stripe to null when STRIPE_SECRET_KEY is missing', async () => {
+      // Default config from beforeEach has no STRIPE_SECRET_KEY
+      expect(service['stripe']).toBeNull();
+    });
+
+    it('should set correct frontendUrl from config', async () => {
+      expect(service['frontendUrl']).toBe('https://app.mechmind.io');
+    });
+
+    it('should use fallback frontendUrl when FRONTEND_URL not configured', async () => {
+      const mockConfigNoFrontend = {
+        get: jest.fn((key: string, fallback?: string) => {
+          // Only return undefined for FRONTEND_URL, other keys may be requested
+          if (key === 'FRONTEND_URL') {
+            return fallback; // Return the fallback value
+          }
+          return undefined;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigNoFrontend },
+        ],
+      }).compile();
+
+      const serviceWithFallback = module.get(PaymentLinkService);
+      expect(serviceWithFallback['frontendUrl']).toBe('https://app.mechmind.io');
+    });
+  });
+
+  describe('[BRANCH COVERAGE] resolvePaymentToken - Null/Undefined Handling', () => {
+    it('should return null for dueDate when invoice.dueDate is null', async () => {
+      const invoiceNoDueDate = mockInvoice({
+        paymentLinkId: 'cs_test_123',
+        dueDate: null,
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoiceNoDueDate);
+      prisma.tenant.findUnique.mockResolvedValue({ id: TENANT_ID, name: 'AutoService Roma' });
+
+      const result = await service.resolvePaymentToken('cs_test_123');
+
+      expect(result.dueDate).toBeNull();
+    });
+
+    it('should return ISO string for dueDate when invoice.dueDate is set', async () => {
+      const dueDate = new Date('2026-05-15T10:30:00Z');
+      const invoiceWithDueDate = mockInvoice({
+        paymentLinkId: 'cs_test_123',
+        dueDate,
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoiceWithDueDate);
+      prisma.tenant.findUnique.mockResolvedValue({ id: TENANT_ID, name: 'AutoService Roma' });
+
+      const result = await service.resolvePaymentToken('cs_test_123');
+
+      expect(result.dueDate).toBe(dueDate.toISOString());
+    });
+  });
+
+  describe('[BRANCH COVERAGE] createStripeCheckoutSession - Session URL', () => {
+    it('should return empty string when Stripe session.url is null', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      // Mock Stripe to return null url (edge case)
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_null_url',
+        url: null,
+      } as any);
+
+      const result = await svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001');
+
+      expect(result.url).toBe('');
+      expect(result.sessionId).toBe('cs_test_null_url');
+    });
+
+    it('should return valid URL when Stripe session.url is defined', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const checkoutUrl = 'https://checkout.stripe.com/pay/cs_test_123';
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: checkoutUrl,
+      } as any);
+
+      const result = await svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001');
+
+      expect(result.url).toBe(checkoutUrl);
+    });
+  });
+
+  describe('[BRANCH COVERAGE] Channel Dispatch (SMS/WHATSAPP/EMAIL)', () => {
+    it('should create payment link with SMS channel and set sent=true', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
+
+      prisma.invoice.update.mockResolvedValue({
+        ...invoice,
+        paymentLinkUrl: 'https://checkout.stripe.com/pay/test',
+        paymentLinkId: 'cs_test_123',
+      });
+
+      const result = await svcWithStripe.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'SMS');
+
+      expect(result.channel).toBe('SMS');
+      expect(result.sent).toBe(true);
+      expect(result.linkId).toBe('cs_test_123');
+    });
+
+    it('should create payment link with WHATSAPP channel', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_456',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
+
+      prisma.invoice.update.mockResolvedValue({
+        ...invoice,
+        paymentLinkUrl: 'https://checkout.stripe.com/pay/test',
+        paymentLinkId: 'cs_test_456',
+      });
+
+      const result = await svcWithStripe.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'WHATSAPP');
+
+      expect(result.channel).toBe('WHATSAPP');
+      expect(result.sent).toBe(true);
+    });
+  });
+
+  describe('[BRANCH COVERAGE] Edge Case: Decimal Precision in Amount Conversion', () => {
+    it('should handle very small amounts (< 1 cent)', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice({ total: 0.005 }); // 0.5 cents -> rounds to 1 cent
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const createSessionSpy = jest
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
+        .mockResolvedValue({
+          id: 'cs_test_123',
+          url: 'https://checkout.stripe.com/pay/test',
+        } as any);
+
+      await svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001');
+
+      expect(createSessionSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [
+            expect.objectContaining({
+              price_data: expect.objectContaining({
+                unit_amount: 1, // Math.round(0.005 * 100) = 1
+              }),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('should handle large amounts correctly (> 100k)', async () => {
+      const mockConfigWithStripe = {
+        get: jest.fn((key: string, fallback?: string) => {
+          if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+          if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+          return fallback;
+        }),
+      };
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: mockConfigWithStripe },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice({ total: 999999.99 });
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      const createSessionSpy = jest
+        .spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create')
+        .mockResolvedValue({
+          id: 'cs_test_large',
+          url: 'https://checkout.stripe.com/pay/test',
+        } as any);
+
+      await svcWithStripe.createStripeCheckoutSession(TENANT_ID, 'inv-uuid-001');
+
+      expect(createSessionSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          line_items: [
+            expect.objectContaining({
+              price_data: expect.objectContaining({
+                unit_amount: 99999999, // 999999.99 * 100
+              }),
+            }),
+          ],
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
   // SECURITY: PCI DSS Compliance — Webhook Signature Verification
   // =========================================================================
   describe('SECURITY: PCI DSS webhook signature verification', () => {

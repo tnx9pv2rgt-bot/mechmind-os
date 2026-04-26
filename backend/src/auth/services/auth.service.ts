@@ -604,7 +604,7 @@ export class AuthService {
       }
 
       return payload.sub; // userId
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedException('Invalid or expired 2FA token');
     }
   }

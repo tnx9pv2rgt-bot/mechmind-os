@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Prisma } from '@prisma/client';
 import { BookingService } from './booking.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
@@ -1381,6 +1382,29 @@ describe('BookingService', () => {
       );
 
       await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(BadRequestException);
+      expect(prisma.releaseAdvisoryLock).toHaveBeenCalled();
+    });
+  });
+
+  describe('P2034 deadlock error handling', () => {
+    it('should handle Prisma P2034 serialization error', async () => {
+      const dto = {
+        slotId: SLOT_ID,
+        customerId: CUSTOMER_ID,
+        vehicleId: 'vehicle-001',
+        serviceIds: ['service-001'],
+      };
+
+      // Mock Prisma P2034 error
+      const p2034Error = Object.create(Prisma.PrismaClientKnownRequestError.prototype);
+      p2034Error.code = 'P2034';
+      p2034Error.message = 'Serialization failure';
+
+      (prisma.withSerializableTransaction as jest.Mock).mockImplementation(async (_, _cb) => {
+        throw p2034Error;
+      });
+
+      await expect(service.reserveSlot(TENANT_ID, dto)).rejects.toThrow(ConflictException);
       expect(prisma.releaseAdvisoryLock).toHaveBeenCalled();
     });
   });

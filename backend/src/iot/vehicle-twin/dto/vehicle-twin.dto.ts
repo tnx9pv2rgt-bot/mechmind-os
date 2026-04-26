@@ -19,7 +19,7 @@ export class UpdateComponentDto {
   @IsNumber()
   healthScore?: number;
 
-  @ApiProperty({ required: false, type: 'object' })
+  @ApiProperty({ required: false, type: Object })
   @IsOptional()
   metadata?: Record<string, unknown>;
 }
@@ -93,7 +93,7 @@ export class RecordDamageDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ required: false, type: 'object', description: '3D location coordinates' })
+  @ApiProperty({ required: false, type: Object, description: '3D location coordinates' })
   @IsOptional()
   location?: { x: number; y: number; z: number };
 
@@ -133,7 +133,7 @@ export class UpdateVisualizationConfigDto {
     materialName?: string;
   }[];
 
-  @ApiProperty({ required: false, type: 'object' })
+  @ApiProperty({ required: false, type: Object })
   @IsOptional()
   defaultCameraPosition?: { x: number; y: number; z: number };
 

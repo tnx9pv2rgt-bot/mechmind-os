@@ -70,14 +70,49 @@ describe('RolesController', () => {
 
     it('should use fallback label/description for roles not in ROLE_DESCRIPTIONS', () => {
       const result = controller.findAll();
-      // Any role not in the map should get fallback { label: role, description: '', permissions: [] }
-      // All standard roles ARE in the map, so we just verify all have labels
       for (const role of result.data) {
         const r = role as Record<string, unknown>;
         expect(r.label).toBeDefined();
         expect(typeof r.label).toBe('string');
         expect(r.permissions).toBeDefined();
       }
+    });
+  });
+
+  describe('findAll - fallback branch (unknown role)', () => {
+    it('should apply fallback metadata when UserRole has a value missing from ROLE_DESCRIPTIONS', () => {
+      jest.isolateModules(() => {
+        jest.doMock('@prisma/client', () => ({
+          UserRole: {
+            ADMIN: 'ADMIN',
+            CUSTOM_UNKNOWN: 'CUSTOM_UNKNOWN',
+          },
+        }));
+
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const mod = require('./roles.controller') as typeof import('./roles.controller');
+        const ctrl = new mod.RolesController();
+        const result = ctrl.findAll();
+
+        const unknown = result.data.find(
+          (r: unknown) => (r as Record<string, unknown>).id === 'CUSTOM_UNKNOWN',
+        ) as Record<string, unknown> | undefined;
+
+        expect(unknown).toBeDefined();
+        expect(unknown).toEqual({
+          id: 'CUSTOM_UNKNOWN',
+          name: 'CUSTOM_UNKNOWN',
+          label: 'CUSTOM_UNKNOWN',
+          description: '',
+          permissions: [],
+        });
+
+        const admin = result.data.find(
+          (r: unknown) => (r as Record<string, unknown>).id === 'ADMIN',
+        ) as Record<string, unknown> | undefined;
+        expect(admin).toBeDefined();
+        expect(admin?.label).toBe('Amministratore');
+      });
     });
   });
 });

@@ -4,7 +4,7 @@ import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 import { CreateVehicleDto, UpdateVehicleDto } from '../dto/vehicle.dto';
 
-const vehicleWithCustomerAndBookings = {
+const _vehicleWithCustomerAndBookings = {
   customer: true,
   bookings: {
     orderBy: { scheduledDate: 'desc' as const },
@@ -13,7 +13,7 @@ const vehicleWithCustomerAndBookings = {
 } as const;
 
 type VehicleWithRelations = Prisma.VehicleGetPayload<{
-  include: typeof vehicleWithCustomerAndBookings;
+  include: typeof _vehicleWithCustomerAndBookings;
 }>;
 
 type VehicleWithCustomer = Prisma.VehicleGetPayload<{

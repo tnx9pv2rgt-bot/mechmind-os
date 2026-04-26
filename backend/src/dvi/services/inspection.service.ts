@@ -46,7 +46,7 @@ const INSPECTION_TRANSITIONS: TransitionMap = {
   ARCHIVED: [],
 };
 
-const inspectionInclude = {
+const _inspectionInclude = {
   vehicle: true,
   customer: true,
   mechanic: { select: { id: true, name: true } },
@@ -56,7 +56,7 @@ const inspectionInclude = {
 } as const;
 
 type InspectionWithRelations = Prisma.InspectionGetPayload<{
-  include: typeof inspectionInclude;
+  include: typeof _inspectionInclude;
 }>;
 
 @Injectable()

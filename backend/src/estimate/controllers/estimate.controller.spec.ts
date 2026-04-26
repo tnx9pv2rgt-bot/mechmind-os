@@ -6,6 +6,8 @@ import { PdfService } from '../../invoice/services/pdf.service';
 describe('EstimateController', () => {
   let controller: EstimateController;
   let service: jest.Mocked<EstimateService>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let pdfService: any;
 
   const TENANT_ID = 'tenant-001';
 
@@ -48,6 +50,7 @@ describe('EstimateController', () => {
 
     controller = module.get<EstimateController>(EstimateController);
     service = module.get(EstimateService) as jest.Mocked<EstimateService>;
+    pdfService = module.get<PdfService>(PdfService);
   });
 
   it('should be defined', () => {
@@ -373,6 +376,71 @@ describe('EstimateController', () => {
         offset: 10,
       });
     });
+
+    it('should handle NaN limit by using default 50 (line 86 true branch)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      const result = await controller.findAll(TENANT_ID, undefined, undefined, 'invalid', '5');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 50,
+        offset: 5,
+      });
+      expect(result.meta.limit).toBe(50);
+    });
+
+    it('should handle NaN offset by using default 0 (line 87 true branch)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      const result = await controller.findAll(TENANT_ID, undefined, undefined, '10', 'invalid');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 10,
+        offset: 0,
+      });
+      expect(result.meta.offset).toBe(0);
+    });
+
+    it('should handle both NaN limit and offset (lines 86, 87 both true)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [],
+        total: 0,
+      } as never);
+
+      const result = await controller.findAll(TENANT_ID, undefined, undefined, 'bad', 'bad');
+
+      expect(result.meta.limit).toBe(50);
+      expect(result.meta.offset).toBe(0);
+    });
+
+    it('should correctly parse valid numeric strings for limit and offset', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      const result = await controller.findAll(TENANT_ID, undefined, undefined, '25', '5');
+
+      // Both should parse correctly
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 25,
+        offset: 5,
+      });
+      expect(result.meta.limit).toBe(25);
+      expect(result.meta.offset).toBe(5);
+    });
   });
 
   describe('TenantId isolation', () => {
@@ -419,6 +487,154 @@ describe('EstimateController', () => {
 
       expect(result).toHaveProperty('data');
       expect(result.data).toEqual(mockEstimate);
+    });
+  });
+
+  describe('downloadPdf', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let mockRes: any;
+
+    beforeEach(() => {
+      mockRes = {
+        set: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+    });
+
+    it('should set correct content-type and disposition headers', async () => {
+      const pdfBuffer = Buffer.from('<html><body>Preventivo</body></html>');
+      jest.spyOn(pdfService, 'generateEstimatePdf').mockResolvedValue(pdfBuffer);
+
+      await controller.downloadPdf(TENANT_ID, 'est-001', mockRes);
+
+      expect(mockRes.set).toHaveBeenCalledWith({
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': 'inline; filename="preventivo-est-001.html"',
+      });
+      expect(mockRes.send).toHaveBeenCalledWith(pdfBuffer);
+    });
+
+    it('should call pdfService.generateEstimatePdf with correct params', async () => {
+      jest.spyOn(pdfService, 'generateEstimatePdf').mockResolvedValue(Buffer.from('<html></html>'));
+
+      await controller.downloadPdf(TENANT_ID, 'est-xyz', mockRes);
+
+      expect(pdfService.generateEstimatePdf).toHaveBeenCalledWith('est-xyz', TENANT_ID);
+    });
+
+    it('should propagate errors from pdfService', async () => {
+      jest
+        .spyOn(pdfService, 'generateEstimatePdf')
+        .mockRejectedValue(new Error('PDF generation failed'));
+
+      await expect(controller.downloadPdf(TENANT_ID, 'est-001', mockRes)).rejects.toThrow(
+        'PDF generation failed',
+      );
+    });
+  });
+
+  describe('Edge case parameter parsing', () => {
+    it('should handle very large limit values', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [],
+        total: 0,
+      } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, '999999', '0');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 999999,
+        offset: 0,
+      });
+    });
+
+    it('should handle zero limit', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [],
+        total: 0,
+      } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, '0', '0');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 0,
+        offset: 0,
+      });
+    });
+
+    it('should handle negative limit (parsed but passed as-is to service)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [],
+        total: 0,
+      } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, '-5', '0');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: -5,
+        offset: 0,
+      });
+    });
+
+    it('should handle when limit is provided but offset is not (line 80 true, 81 false)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, '15', undefined);
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 15,
+        offset: 0,
+      });
+    });
+
+    it('should handle when offset is provided but limit is not (line 80 false, 81 true)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      await controller.findAll(TENANT_ID, undefined, undefined, undefined, '10');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 50,
+        offset: 10,
+      });
+    });
+
+    it('should default to limit=50, offset=0 when neither provided (lines 80 false, 81 false)', async () => {
+      service.findAll.mockResolvedValue({
+        estimates: [mockEstimate],
+        total: 1,
+      } as never);
+
+      const result = await controller.findAll(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        limit: 50,
+        offset: 0,
+      });
+      expect(result.meta).toEqual({ total: 1, limit: 50, offset: 0 });
     });
   });
 });

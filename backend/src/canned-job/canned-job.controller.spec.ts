@@ -60,13 +60,13 @@ describe('CannedJobController', () => {
       const paginated = { data: [mockCannedJob], total: 1, page: 1, limit: 20, pages: 1 };
       service.findAll.mockResolvedValue(paginated as never);
 
-      const result = await controller.findAll(TENANT_ID, 'Manutenzione', 'true');
+      const result = await controller.findAll(TENANT_ID, 'Manutenzione', 'true', '2', '50');
 
       expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
         category: 'Manutenzione',
         isActive: true,
-        page: undefined,
-        limit: undefined,
+        page: 2,
+        limit: 50,
       });
       expect(result).toEqual({
         success: true,
@@ -108,6 +108,20 @@ describe('CannedJobController', () => {
       });
     });
 
+    it('should handle invalid isActive (not true/false)', async () => {
+      const paginated = { data: [], total: 0, page: 1, limit: 20, pages: 0 };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      await controller.findAll(TENANT_ID, undefined, 'maybe');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: undefined,
+        isActive: undefined,
+        page: undefined,
+        limit: undefined,
+      });
+    });
+
     it('should parse page and limit as integers', async () => {
       const paginated = { data: [mockCannedJob], total: 10, page: 2, limit: 5, pages: 2 };
       service.findAll.mockResolvedValue(paginated as never);
@@ -124,20 +138,6 @@ describe('CannedJobController', () => {
       expect(result.meta.limit).toBe(5);
     });
 
-    it('should handle isActive as non-boolean string (default to undefined)', async () => {
-      const paginated = { data: [], total: 0, page: 1, limit: 20, pages: 0 };
-      service.findAll.mockResolvedValue(paginated as never);
-
-      await controller.findAll(TENANT_ID, undefined, 'maybe');
-
-      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
-        category: undefined,
-        isActive: undefined,
-        page: undefined,
-        limit: undefined,
-      });
-    });
-
     it('should handle category with filters and pagination', async () => {
       const paginated = { data: [mockCannedJob], total: 5, page: 1, limit: 10, pages: 1 };
       service.findAll.mockResolvedValue(paginated as never);
@@ -152,6 +152,40 @@ describe('CannedJobController', () => {
       });
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
+    });
+
+    it('should return proper pagination metadata', async () => {
+      const paginated = {
+        data: [mockCannedJob, mockCannedJob],
+        total: 100,
+        page: 3,
+        limit: 20,
+        pages: 5,
+      };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      await controller.findAll(TENANT_ID, undefined, 'true', '3', '20');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: undefined,
+        isActive: true,
+        page: 3,
+        limit: 20,
+      });
+    });
+
+    it('should handle all empty string parameters', async () => {
+      const paginated = { data: [], total: 0, page: 1, limit: 20, pages: 0 };
+      service.findAll.mockResolvedValue(paginated as never);
+
+      await controller.findAll(TENANT_ID, '', '', '', '');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        category: '',
+        isActive: undefined,
+        page: undefined,
+        limit: undefined,
+      });
     });
   });
 
@@ -200,6 +234,15 @@ describe('CannedJobController', () => {
       expect(service.applyToEstimate).toHaveBeenCalledWith(TENANT_ID, 'cj-001', 'est-001');
       expect(result).toEqual({ success: true, data: { created: 3 } });
     });
+
+    it('should return success with zero created items', async () => {
+      service.applyToEstimate.mockResolvedValue({ created: 0 });
+
+      const result = await controller.applyToEstimate(TENANT_ID, 'cj-001', 'est-001');
+
+      expect(result.success).toBe(true);
+      expect(result.data.created).toBe(0);
+    });
   });
 
   describe('applyToWorkOrder', () => {
@@ -210,6 +253,15 @@ describe('CannedJobController', () => {
 
       expect(service.applyToWorkOrder).toHaveBeenCalledWith(TENANT_ID, 'cj-001', 'wo-001');
       expect(result).toEqual({ success: true, data: { updated: true } });
+    });
+
+    it('should return success with updated flag', async () => {
+      service.applyToWorkOrder.mockResolvedValue({ updated: true });
+
+      const result = await controller.applyToWorkOrder(TENANT_ID, 'cj-001', 'wo-001');
+
+      expect(result.success).toBe(true);
+      expect(result.data.updated).toBe(true);
     });
   });
 });

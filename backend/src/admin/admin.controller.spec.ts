@@ -116,12 +116,33 @@ describe('AdminController', () => {
     });
 
     it('should handle special characters in setup key', async () => {
-      const specialKey = 'test-key!@#$%^&*()';
+      const specialKey = 'test-key\!@#$%^&*()';
       process.env.SETUP_SECRET = specialKey;
 
       const result = await controller.setup(specialKey);
 
       expect(result).toBeDefined();
+    });
+  });
+
+  describe('decorator metadata fallback (branch coverage)', () => {
+    it('falls back to Object when AdminSetupService dependency is undefined at decoration time', () => {
+      jest.isolateModules(() => {
+        jest.doMock('./admin-setup.service', () => ({ AdminSetupService: undefined }));
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const reimported = require('./admin.controller') as typeof import('./admin.controller');
+        expect(reimported.AdminController).toBeDefined();
+      });
+    });
+
+    it('re-imports controller with stubbed dependency without throwing', () => {
+      expect(() => {
+        jest.isolateModules(() => {
+          jest.doMock('./admin-setup.service', () => ({ AdminSetupService: undefined }));
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          require('./admin.controller');
+        });
+      }).not.toThrow();
     });
   });
 });

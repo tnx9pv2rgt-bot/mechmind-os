@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "health": {
+      "source": "tw93/claude-health",
+      "sourceType": "github",
+      "computedHash": "f11d8feb059ead671a7f224da282c4864c8207f6f3295eae2855c893e6b77667"
+    }
+  }
+}

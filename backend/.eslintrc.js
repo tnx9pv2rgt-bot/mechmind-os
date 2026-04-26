@@ -23,4 +23,18 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
   },
+  overrides: [
+    {
+      files: ['**/*.spec.ts', '**/*.test.ts', 'test/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-require-imports': 'off',
+      },
+    },
+    {
+      files: ['**/*.d.ts'],
+      rules: {
+        '@typescript-eslint/no-empty-object-type': 'off',
+      },
+    },
+  ],
 };

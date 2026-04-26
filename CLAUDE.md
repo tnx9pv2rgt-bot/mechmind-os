@@ -9,6 +9,9 @@
 - Frontend test single: `npx jest --testPathPattern=nome`
 - Docker: `docker compose up -d postgres redis`
 
+## SKILL AUTOMATICHE
+Quando ricevi un comando che corrisponde a una skill (es. /ripara-tutto, /genera-test, /ripara-file, /controlla-sicurezza, /verifica-gdpr), DEVI eseguire immediatamente la skill. NON analizzare, NON fare report preliminari. Esegui e basta.
+
 ## TEST GENERATION WORKFLOW (⚡ CRITICO)
 - **Correggi PRIMA di misurare**: Quando generi test con `/genera-test`, DEVI correggere TypeScript + ESLint PRIMA di coverage
 - **NO errori TS/ESLint nei test**: `tsc --noEmit` e `eslint src --max-warnings 0` DEVONO passare 100%
@@ -72,3 +75,8 @@ When using /compact, preserve: regole ANTI-MOCK, PUNTI FRAGILI, tenantId, TDD, s
 - Mappa dipendenze service: docs/11-DEPENDENCY-MAP.md
 - Workflow PR: docs/12-PR-WORKFLOW-EXAMPLE.md
 - Glossario: docs/05-DOMAIN-GLOSSARY.md
+
+## COMANDI DISPONIBILI
+I comandi / ora usano i nuovi script bash in .claude/scripts/.
+Le vecchie skill sono state archiviate in .claude/skills-legacy/ e non sono più attive.
+Per l'inventario completo: bash .claude/scripts/TUTTI.sh

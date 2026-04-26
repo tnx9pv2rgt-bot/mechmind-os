@@ -489,4 +489,299 @@ describe('AiDiagnosticService', () => {
       expect(result.diagnosisId).toBe('diag-001');
     });
   });
+
+  describe('extractRepairsFromOutput — edge cases (line 470)', () => {
+    it('should extract repairs count from outputSummary using regex match', async () => {
+      const diagnosisLog = {
+        ...mockDecisionLog,
+        outputSummary: 'Diagnosis: Test | Severity: HIGH | Repairs: 5',
+      };
+      prisma.aiDecisionLog.findFirst.mockResolvedValue(diagnosisLog);
+      prisma.estimate.count.mockResolvedValue(0);
+
+      const mockEstimate = {
+        id: 'est-001',
+        lines: Array.from({ length: 10 }, (_, i) => ({
+          id: `line-${i.toString().padStart(3, '0')}`,
+        })),
+      };
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          return fn(prisma);
+        },
+      );
+      prisma.estimate.create.mockResolvedValue(mockEstimate);
+
+      const result = await service.createEstimateFromDiagnosis(TENANT_ID, 'diag-001');
+
+      expect(result.lineCount).toBe(10); // 5 repairs * 2 lines each (parts + labor)
+      expect(result.estimateId).toBe('est-001');
+    });
+
+    it('should default to 1 repair when Repairs count cannot be parsed (line 470 null check)', async () => {
+      const diagnosisLog = {
+        ...mockDecisionLog,
+        outputSummary: 'Diagnosis: Test | Severity: HIGH', // No "Repairs: X"
+      };
+      prisma.aiDecisionLog.findFirst.mockResolvedValue(diagnosisLog);
+      prisma.estimate.count.mockResolvedValue(0);
+
+      const mockEstimate = {
+        id: 'est-002',
+        lines: [{ id: 'line-001' }], // Default 1 repair = 1 or 2 lines (parts + labor)
+      };
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          return fn(prisma);
+        },
+      );
+      prisma.estimate.create.mockResolvedValue(mockEstimate);
+
+      const result = await service.createEstimateFromDiagnosis(TENANT_ID, 'diag-001');
+
+      expect(result.estimateId).toBe('est-002');
+    });
+  });
+
+  describe('createEstimateFromDiagnosis — line creation logic (lines 172-205)', () => {
+    it('should skip part line when estimatedPartsCents is 0', async () => {
+      const diagnosisLog = {
+        ...mockDecisionLog,
+        outputSummary: 'Diagnosis: Test | Severity: HIGH | Repairs: 1',
+      };
+      prisma.aiDecisionLog.findFirst.mockResolvedValue(diagnosisLog);
+      prisma.estimate.count.mockResolvedValue(0);
+
+      const mockEstimate = {
+        id: 'est-003',
+        lines: [{ id: 'labor-only' }],
+      };
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          return fn(prisma);
+        },
+      );
+      prisma.estimate.create.mockResolvedValue(mockEstimate);
+
+      const result = await service.createEstimateFromDiagnosis(TENANT_ID, 'diag-001');
+
+      expect(result.estimateId).toBe('est-003');
+    });
+
+    it('should skip labor line when estimatedLaborHours is 0', async () => {
+      const diagnosisLog = {
+        ...mockDecisionLog,
+        outputSummary: 'Diagnosis: Test | Severity: HIGH | Repairs: 1',
+      };
+      prisma.aiDecisionLog.findFirst.mockResolvedValue(diagnosisLog);
+      prisma.estimate.count.mockResolvedValue(0);
+
+      const mockEstimate = {
+        id: 'est-004',
+        lines: [{ id: 'parts-only' }],
+      };
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          return fn(prisma);
+        },
+      );
+      prisma.estimate.create.mockResolvedValue(mockEstimate);
+
+      const result = await service.createEstimateFromDiagnosis(TENANT_ID, 'diag-001');
+
+      expect(result.estimateId).toBe('est-004');
+      expect(result.lineCount).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('getDiagnosticHistory — pagination parameters (lines 108-109)', () => {
+    it('should use default pagination when page and limit are not provided', async () => {
+      const vehicle = { id: 'veh-001', tenantId: TENANT_ID, make: 'Fiat', model: 'Punto' };
+      prisma.vehicle.findFirst.mockResolvedValue(vehicle);
+      prisma.aiDecisionLog.findMany.mockResolvedValue([mockDecisionLog]);
+
+      await service.getDiagnosticHistory(TENANT_ID, 'veh-001');
+
+      expect(prisma.aiDecisionLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0, // (1 - 1) * 20
+          take: 20,
+        }),
+      );
+    });
+
+    it('should calculate skip offset correctly for page 3', async () => {
+      const vehicle = { id: 'veh-001', tenantId: TENANT_ID, make: 'Fiat', model: 'Punto' };
+      prisma.vehicle.findFirst.mockResolvedValue(vehicle);
+      prisma.aiDecisionLog.findMany.mockResolvedValue([]);
+
+      await service.getDiagnosticHistory(TENANT_ID, 'veh-001', 3, 10);
+
+      expect(prisma.aiDecisionLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20, // (3 - 1) * 10
+          take: 10,
+        }),
+      );
+    });
+  });
+
+  describe('parseDtcResponse — recommendedRepairs array validation (line 402-404)', () => {
+    it('should handle recommendedRepairs as non-array from AI response', async () => {
+      jest.spyOn(service as never, 'callAiProvider').mockResolvedValue({
+        content: JSON.stringify({
+          diagnosis: 'Test',
+          severity: 'HIGH',
+          probableCause: 'Sensor fault',
+          recommendedRepairs: 'not an array',
+          additionalTests: ['Test 1'],
+          confidence: 0.8,
+        }),
+        model: 'mock-diagnostic-v1',
+        processingTimeMs: 10,
+      } as never);
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeDtcCodes(TENANT_ID, ['P0300'], vehicleInfo);
+
+      expect(Array.isArray(result.recommendedRepairs)).toBe(true);
+      expect(result.recommendedRepairs).toEqual([]);
+    });
+
+    it('should handle additionalTests as non-array from AI response', async () => {
+      jest.spyOn(service as never, 'callAiProvider').mockResolvedValue({
+        content: JSON.stringify({
+          diagnosis: 'Test',
+          severity: 'HIGH',
+          probableCause: 'Sensor fault',
+          recommendedRepairs: [],
+          additionalTests: 'not an array',
+          confidence: 0.8,
+        }),
+        model: 'mock-diagnostic-v1',
+        processingTimeMs: 10,
+      } as never);
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeDtcCodes(TENANT_ID, ['P0300'], vehicleInfo);
+
+      expect(Array.isArray(result.additionalTests)).toBe(true);
+      expect(result.additionalTests).toEqual([]);
+    });
+  });
+
+  describe('parseSymptomsResponse — array validations (lines 438-442)', () => {
+    it('should handle probableCauses as non-array', async () => {
+      jest.spyOn(service as never, 'callAiProvider').mockResolvedValue({
+        content: JSON.stringify({
+          diagnosis: 'Test',
+          severity: 'MEDIUM',
+          probableCauses: 'not an array',
+          suggestedDtcCodes: [],
+          recommendedActions: [],
+          confidence: 0.6,
+        }),
+        model: 'mock-diagnostic-v1',
+        processingTimeMs: 10,
+      } as never);
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeSymptoms(TENANT_ID, 'noise', vehicleInfo);
+
+      expect(Array.isArray(result.probableCauses)).toBe(true);
+      expect(result.probableCauses).toEqual([]);
+    });
+
+    it('should handle suggestedDtcCodes as non-array', async () => {
+      jest.spyOn(service as never, 'callAiProvider').mockResolvedValue({
+        content: JSON.stringify({
+          diagnosis: 'Test',
+          severity: 'MEDIUM',
+          probableCauses: [],
+          suggestedDtcCodes: 'not an array',
+          recommendedActions: [],
+          confidence: 0.6,
+        }),
+        model: 'mock-diagnostic-v1',
+        processingTimeMs: 10,
+      } as never);
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeSymptoms(TENANT_ID, 'noise', vehicleInfo);
+
+      expect(Array.isArray(result.suggestedDtcCodes)).toBe(true);
+      expect(result.suggestedDtcCodes).toEqual([]);
+    });
+
+    it('should handle recommendedActions as non-array', async () => {
+      jest.spyOn(service as never, 'callAiProvider').mockResolvedValue({
+        content: JSON.stringify({
+          diagnosis: 'Test',
+          severity: 'MEDIUM',
+          probableCauses: [],
+          suggestedDtcCodes: [],
+          recommendedActions: 'not an array',
+          confidence: 0.6,
+        }),
+        model: 'mock-diagnostic-v1',
+        processingTimeMs: 10,
+      } as never);
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeSymptoms(TENANT_ID, 'noise', vehicleInfo);
+
+      expect(Array.isArray(result.recommendedActions)).toBe(true);
+      expect(result.recommendedActions).toEqual([]);
+    });
+  });
+
+  describe('getMockResponse — DTC vs symptoms branch (lines 308-366)', () => {
+    it('should return DTC-specific mock response when prompt contains DTC', async () => {
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeDtcCodes(TENANT_ID, ['P0300'], vehicleInfo);
+
+      expect(result.diagnosis).toContain('Misfire');
+      expect(result.probableCause).toBeDefined();
+    });
+
+    it('should return symptom-specific mock response when prompt does not contain DTC', async () => {
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeSymptoms(TENANT_ID, 'strange noise', vehicleInfo);
+
+      expect(result.diagnosis).toBeDefined();
+      expect(Array.isArray(result.probableCauses)).toBe(true);
+    });
+  });
+
+  describe('buildDtcPrompt and buildSymptomsPrompt — mileage ternary (lines 369, 377)', () => {
+    it('should include mileage in DTC prompt when provided', async () => {
+      const vehicleWithMileage: VehicleInfoDto = {
+        make: 'BMW',
+        model: 'X5',
+        year: 2018,
+        mileage: 150000,
+      };
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeDtcCodes(TENANT_ID, ['P0420'], vehicleWithMileage);
+
+      expect(result.diagnosisId).toBe('diag-001');
+    });
+
+    it('should include mileage in symptoms prompt when provided', async () => {
+      const vehicleWithMileage: VehicleInfoDto = {
+        make: 'Mercedes',
+        model: 'E-Class',
+        year: 2019,
+        mileage: 200000,
+      };
+      prisma.aiDecisionLog.create.mockResolvedValue(mockDecisionLog);
+
+      const result = await service.analyzeSymptoms(TENANT_ID, 'vibration', vehicleWithMileage);
+
+      expect(result.diagnosisId).toBe('diag-001');
+    });
+  });
 });

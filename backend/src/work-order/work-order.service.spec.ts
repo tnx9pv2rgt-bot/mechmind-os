@@ -1859,4 +1859,477 @@ describe('WorkOrderService', () => {
       expect(result).toEqual(checkedOut);
     });
   });
+
+  // ==================== ADDITIONAL BRANCH COVERAGE TESTS ====================
+
+  describe('normalizeJsonArray - edge cases (line 43-54 branches)', () => {
+    it('should unwrap double-wrapped arrays [[item]] → [item]', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: [[{ name: 'Item1' }]],
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([{ name: 'Item1' }]);
+    });
+
+    it('should return empty array when value is null', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: null,
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([]);
+    });
+
+    it('should return empty array when value is undefined', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: undefined,
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([]);
+    });
+
+    it('should return empty array when value is not an array', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: 'string-value' as any,
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([]);
+    });
+
+    it('should not unwrap arrays that are not double-wrapped', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: [{ name: 'Item1' }, { name: 'Item2' }],
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([{ name: 'Item1' }, { name: 'Item2' }]);
+    });
+  });
+
+  describe('generateWoNumber - edge cases (line 236-239 branches)', () => {
+    it('should generate WO-2026-0001 when no last WO exists', async () => {
+      prisma.workOrder.findFirst.mockResolvedValueOnce(null);
+      prisma.workOrder.create.mockResolvedValueOnce(
+        makeMockWorkOrder({ woNumber: 'WO-2026-0001' }),
+      );
+
+      const result = await service.create(TENANT_ID, {} as any);
+
+      expect((result as any).woNumber).toBe('WO-2026-0001');
+    });
+
+    it('should use current year in WO number', async () => {
+      const year = new Date().getFullYear();
+      prisma.workOrder.findFirst.mockResolvedValueOnce(null);
+      prisma.workOrder.create.mockResolvedValueOnce(
+        makeMockWorkOrder({ woNumber: `WO-${year}-0001` }),
+      );
+
+      const result = await service.create(TENANT_ID, {} as any);
+
+      expect((result as any).woNumber).toContain(year.toString());
+    });
+
+    it('should handle workOrder with year-based search prefix', async () => {
+      const year = new Date().getFullYear();
+      const lastWo = { woNumber: `WO-${year}-0003` };
+      const createdWo = makeMockWorkOrder({ woNumber: `WO-${year}-0004` });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(lastWo);
+      prisma.workOrder.create.mockResolvedValueOnce(createdWo);
+
+      const result = await service.create(TENANT_ID, {} as any);
+
+      expect((result as any).woNumber).toBe(`WO-${year}-0004`);
+    });
+  });
+
+  describe('update - JSON field handling (line 289-295 branches)', () => {
+    it('should parse and stringify laborItems JSON field when provided', async () => {
+      const existing = makeMockWorkOrder({ version: 1 });
+      const updated = makeMockWorkOrder({ version: 2 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(updated);
+
+      const dto = {
+        laborItems: [{ id: 'item-1', hours: 2 }],
+      };
+
+      await service.update(TENANT_ID, WO_ID, dto as any);
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborItems: [{ id: 'item-1', hours: 2 }],
+          }),
+        }),
+      );
+    });
+
+    it('should handle undefined laborItems (should not include in update)', async () => {
+      const existing = makeMockWorkOrder({ version: 1 });
+      const updated = makeMockWorkOrder({ version: 2 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(updated);
+
+      const dto = {
+        mileageOut: 51000,
+        // laborItems is undefined
+      };
+
+      await service.update(TENANT_ID, WO_ID, dto as any);
+
+      const callArgs = prisma.workOrder.updateMany.mock.calls[0][0];
+      expect((callArgs.data as any).laborItems).toBeUndefined();
+    });
+
+    it('should parse and stringify partsUsed JSON field when provided', async () => {
+      const existing = makeMockWorkOrder({ version: 1 });
+      const updated = makeMockWorkOrder({ version: 2 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(updated);
+
+      const dto = {
+        partsUsed: [{ partId: 'p-1', quantity: 3 }],
+      };
+
+      await service.update(TENANT_ID, WO_ID, dto as any);
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            partsUsed: [{ partId: 'p-1', quantity: 3 }],
+          }),
+        }),
+      );
+    });
+
+    it('should parse and stringify photos JSON field when provided', async () => {
+      const existing = makeMockWorkOrder({ version: 1 });
+      const updated = makeMockWorkOrder({ version: 2 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(updated);
+
+      const dto = {
+        photos: ['photo1.jpg', 'photo2.jpg'],
+      };
+
+      await service.update(TENANT_ID, WO_ID, dto as any);
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            photos: ['photo1.jpg', 'photo2.jpg'],
+          }),
+        }),
+      );
+    });
+
+    it('should handle undefined photos (should not include in update)', async () => {
+      const existing = makeMockWorkOrder({ version: 1 });
+      const updated = makeMockWorkOrder({ version: 2 });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(existing);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(updated);
+
+      const dto = {
+        mileageOut: 51000,
+        // photos is undefined
+      };
+
+      await service.update(TENANT_ID, WO_ID, dto as any);
+
+      const callArgs = prisma.workOrder.updateMany.mock.calls[0][0];
+      expect((callArgs.data as any).photos).toBeUndefined();
+    });
+  });
+
+  describe('createInvoiceFromWo - invoice number generation (line 506 branch)', () => {
+    it('should handle NaN case in invoice number parsing for INVALID sequences', async () => {
+      const workOrder = makeMockWorkOrder({
+        status: 'COMPLETED',
+        totalCost: 100,
+        services: [],
+        parts: [],
+      });
+
+      const lastInvoice = { invoiceNumber: 'INV-2026-NOT_A_NUMBER' };
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+      prisma.invoice.findFirst.mockResolvedValueOnce(lastInvoice);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ invoiceNumber: 'INV-2026-0001' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
+      });
+
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+
+      expect(result).toBeDefined();
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should calculate VAT correctly with decimal precision', async () => {
+      const workOrder = makeMockWorkOrder({
+        status: 'COMPLETED',
+        totalCost: 123.45,
+        services: [],
+        parts: [],
+      });
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ id: 'inv-001' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
+      });
+
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('stopTimer - duration calculation (line 803, 838 branches)', () => {
+    it('should calculate duration in minutes correctly', async () => {
+      const startTime = new Date(Date.now() - 30 * 60 * 1000);
+      const activeLog = {
+        id: 'log-001',
+        startedAt: startTime,
+        stoppedAt: null,
+      };
+      const stoppedLog = {
+        ...activeLog,
+        stoppedAt: new Date(),
+        durationMinutes: 30,
+      };
+
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(activeLog);
+      prisma.technicianTimeLog.update.mockResolvedValueOnce(stoppedLog);
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce([stoppedLog]);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.stopTimer(TENANT_ID, WO_ID, 'tech-001');
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborHours: expect.any(Number),
+          }),
+        }),
+      );
+    });
+
+    it('should handle multiple stopped logs when calculating total hours', async () => {
+      const activeLog = {
+        id: 'log-001',
+        startedAt: new Date(Date.now() - 30 * 60 * 1000),
+        stoppedAt: null,
+      };
+      const stoppedLogs = [
+        { id: 'log-002', durationMinutes: 120, stoppedAt: new Date() },
+        { id: 'log-003', durationMinutes: 180, stoppedAt: new Date() },
+        { id: 'log-004', durationMinutes: 60, stoppedAt: new Date() },
+      ];
+
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(activeLog);
+      prisma.technicianTimeLog.update.mockResolvedValueOnce({
+        ...activeLog,
+        stoppedAt: new Date(),
+        durationMinutes: 30,
+      });
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce(stoppedLogs);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.stopTimer(TENANT_ID, WO_ID, 'tech-001');
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborHours: 6, // (120 + 180 + 60) / 60 = 6
+          }),
+        }),
+      );
+    });
+
+    it('should handle null durationMinutes in stopped logs', async () => {
+      const activeLog = {
+        id: 'log-001',
+        startedAt: new Date(Date.now() - 30 * 60 * 1000),
+        stoppedAt: null,
+      };
+      const stoppedLogs = [
+        { id: 'log-002', durationMinutes: 60, stoppedAt: new Date() },
+        { id: 'log-003', durationMinutes: null, stoppedAt: new Date() },
+        { id: 'log-004', durationMinutes: 30, stoppedAt: new Date() },
+      ];
+
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(activeLog);
+      prisma.technicianTimeLog.update.mockResolvedValueOnce({
+        ...activeLog,
+        stoppedAt: new Date(),
+        durationMinutes: 15,
+      });
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce(stoppedLogs);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.stopTimer(TENANT_ID, WO_ID, 'tech-001');
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborHours: 1.5, // (60 + 0 + 30) / 60 = 1.5
+          }),
+        }),
+      );
+    });
+
+    it('should handle empty stopped logs array (line 838 branch - no logs with stoppedAt)', async () => {
+      const activeLog = {
+        id: 'log-001',
+        startedAt: new Date(Date.now() - 30 * 60 * 1000),
+        stoppedAt: null,
+      };
+
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(activeLog);
+      prisma.technicianTimeLog.update.mockResolvedValueOnce({
+        ...activeLog,
+        stoppedAt: new Date(),
+        durationMinutes: 30,
+      });
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce([]);
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
+
+      await service.stopTimer(TENANT_ID, WO_ID, 'tech-001');
+
+      expect(prisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            laborHours: 0, // No completed logs, total is 0
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('normalizeJsonArray additional branch (line 43 - length > 1)', () => {
+    it('should handle multi-item arrays without unwrapping (length > 1)', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: [
+          { name: 'Item1', hours: 2 },
+          { name: 'Item2', hours: 3 },
+        ],
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toHaveLength(2);
+      expect((result as any).laborItems[0]).toEqual({ name: 'Item1', hours: 2 });
+    });
+
+    it('should handle single non-wrapped item (array.length === 1 but value is not array)', async () => {
+      const workOrder = makeMockWorkOrder({
+        laborItems: [{ name: 'Item1', hours: 2 }],
+      });
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+
+      const result = await service.findOne(TENANT_ID, WO_ID);
+
+      expect((result as any).laborItems).toEqual([{ name: 'Item1', hours: 2 }]);
+    });
+  });
+
+  describe('generateWoNumber prefix parsing (line 236-239 NaN case)', () => {
+    it('should handle INVALID sequence in WO number and reset to 1', async () => {
+      const invalidWo = { woNumber: 'WO-2026-INVALID' };
+      prisma.workOrder.findFirst.mockResolvedValueOnce(invalidWo);
+      prisma.workOrder.create.mockResolvedValueOnce(
+        makeMockWorkOrder({ woNumber: 'WO-2026-0001' }),
+      );
+
+      const result = await service.create(TENANT_ID, {} as any);
+
+      expect((result as any).woNumber).toBe('WO-2026-0001');
+    });
+
+    it('should handle WO number with non-numeric suffix', async () => {
+      const invalidWo = { woNumber: 'WO-2026-ABC' };
+      prisma.workOrder.findFirst.mockResolvedValueOnce(invalidWo);
+      prisma.workOrder.create.mockResolvedValueOnce(
+        makeMockWorkOrder({ woNumber: 'WO-2026-0001' }),
+      );
+
+      const result = await service.create(TENANT_ID, {} as any);
+
+      // When isNaN is true, sequence resets to 1
+      expect((result as any).woNumber).toBe('WO-2026-0001');
+    });
+  });
+
+  describe('createInvoiceFromWo - line 506 NaN in invoice sequence', () => {
+    it('should handle invoice number with non-numeric suffix and reset to 1', async () => {
+      const workOrder = makeMockWorkOrder({
+        status: 'COMPLETED',
+        totalCost: 100,
+        services: [],
+        parts: [],
+      });
+
+      const lastInvoice = { invoiceNumber: 'INV-2026-XYZ' };
+
+      prisma.workOrder.findFirst.mockResolvedValueOnce(workOrder);
+      prisma.invoice.findFirst.mockResolvedValueOnce(lastInvoice);
+      prisma.$transaction.mockImplementationOnce(async callback => {
+        return callback({
+          invoice: {
+            create: jest.fn().mockResolvedValueOnce({ invoiceNumber: 'INV-2026-0001' }),
+          },
+          workOrder: {
+            updateMany: jest.fn().mockResolvedValueOnce({ count: 1 }),
+            findFirst: jest.fn().mockResolvedValueOnce(workOrder),
+          },
+        });
+      });
+
+      const result = await service.createInvoiceFromWo(TENANT_ID, WO_ID);
+
+      expect(result).toBeDefined();
+    });
+  });
 });

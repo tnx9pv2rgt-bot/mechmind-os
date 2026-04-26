@@ -161,7 +161,7 @@ export class PasswordPolicyService {
       }
 
       return { breached: false, count: 0 };
-    } catch (error) {
+    } catch (_error) {
       // Network error — fail open (don't block registration if HIBP is down)
       this.logger.warn('HaveIBeenPwned API unreachable, skipping breach check');
       return { breached: false, count: 0 };

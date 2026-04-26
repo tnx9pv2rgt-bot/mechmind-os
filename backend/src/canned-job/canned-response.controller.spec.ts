@@ -47,12 +47,36 @@ describe('CannedResponseController', () => {
 
   describe('create', () => {
     it('should delegate to service and wrap in success response', async () => {
-      const dto = { title: 'Test', body: 'Body', category: 'GENERAL' };
-      service.create.mockResolvedValue(mockResponse);
+      const dto = { category: 'DVI', text: 'Test', severity: 'HIGH' };
+      const expected = { ...mockResponse, category: 'DVI', text: 'Test' };
+      service.create.mockResolvedValue(expected);
 
       const result = await controller.create(TENANT_ID, dto as never);
 
-      expect(result).toEqual({ success: true, data: mockResponse });
+      expect(result).toEqual({ success: true, data: expected });
+      expect(service.create).toHaveBeenCalledWith(TENANT_ID, dto);
+    });
+
+    it('should create with minimal dto (no severity)', async () => {
+      const dto = { category: 'COMUNICAZIONE', text: 'Minimal' };
+      const expected = { ...mockResponse, category: 'COMUNICAZIONE' };
+      service.create.mockResolvedValue(expected);
+
+      const result = await controller.create(TENANT_ID, dto as never);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(expected);
+      expect(service.create).toHaveBeenCalledWith(TENANT_ID, dto);
+    });
+
+    it('should create with isActive=false', async () => {
+      const dto = { category: 'DIAGNOSI', text: 'Inactive', isActive: false };
+      const expected = { ...mockResponse, isActive: false };
+      service.create.mockResolvedValue(expected);
+
+      const result = await controller.create(TENANT_ID, dto as never);
+
+      expect(result.success).toBe(true);
       expect(service.create).toHaveBeenCalledWith(TENANT_ID, dto);
     });
   });

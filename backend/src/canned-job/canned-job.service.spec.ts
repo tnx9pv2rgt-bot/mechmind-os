@@ -201,6 +201,30 @@ describe('CannedJobService', () => {
       mockPrisma.cannedJob.findFirst.mockResolvedValue(null);
       await expect(service.update('t1', 'x', { name: 'New' })).rejects.toThrow(NotFoundException);
     });
+
+    it('should throw NotFoundException in transaction when job no longer exists', async () => {
+      const existing = { id: 'cj-1', name: 'Job', lines: [{ id: 'old-l1' }] };
+      mockPrisma.cannedJob.findFirst.mockResolvedValueOnce(existing);
+
+      mockPrisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+          const txMock = {
+            ...mockPrisma,
+            cannedJob: {
+              ...mockPrisma.cannedJob,
+              findFirst: jest.fn().mockResolvedValue(null), // Job deleted between calls
+            },
+          };
+          return fn(txMock);
+        },
+      );
+
+      await expect(
+        service.update('t1', 'cj-1', {
+          lines: [{ type: 'PART', description: 'Filtro', quantity: 1, unitPrice: 1500 }],
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
   });
 
   describe('remove', () => {

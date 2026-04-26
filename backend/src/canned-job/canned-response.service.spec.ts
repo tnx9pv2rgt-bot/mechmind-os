@@ -29,19 +29,32 @@ describe('CannedResponseService', () => {
   });
 
   describe('create', () => {
-    it('should create a canned response', async () => {
-      const expected = { id: 'cr-1', category: 'DVI', text: 'Usura pastiglie', severity: 'HIGH' };
+    it('should create a canned response with all fields', async () => {
+      const expected = {
+        id: 'cr-1',
+        category: 'DVI',
+        text: 'Usura pastiglie',
+        severity: 'HIGH',
+        isActive: true,
+      };
       mockPrisma.cannedResponse.create.mockResolvedValue(expected);
 
       const result = await service.create('t1', {
         category: 'DVI',
         text: 'Usura pastiglie',
         severity: 'HIGH',
+        isActive: true,
       });
       expect(result).toEqual(expected);
       expect(mockPrisma.cannedResponse.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ tenantId: 't1', category: 'DVI' }),
+          data: {
+            tenantId: 't1',
+            category: 'DVI',
+            text: 'Usura pastiglie',
+            severity: 'HIGH',
+            isActive: true,
+          },
         }),
       );
     });
@@ -58,25 +71,91 @@ describe('CannedResponseService', () => {
 
       const result = await service.create('t1', { category: 'COMUNICAZIONE', text: 'Test' });
       expect(result).toEqual(expected);
+      expect(mockPrisma.cannedResponse.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: 't1',
+            severity: null,
+            isActive: true,
+          }),
+        }),
+      );
+    });
+
+    it('should create with isActive=false explicitly', async () => {
+      const expected = {
+        id: 'cr-3',
+        category: 'DIAGNOSI',
+        text: 'Inactive',
+        severity: 'LOW',
+        isActive: false,
+      };
+      mockPrisma.cannedResponse.create.mockResolvedValue(expected);
+
+      const result = await service.create('t1', {
+        category: 'DIAGNOSI',
+        text: 'Inactive',
+        severity: 'LOW',
+        isActive: false,
+      });
+      expect(result).toEqual(expected);
+      expect(mockPrisma.cannedResponse.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ isActive: false }),
+        }),
+      );
     });
   });
 
   describe('findAll', () => {
-    it('should return all canned responses for tenant', async () => {
-      const responses = [{ id: 'cr-1' }];
+    it('should return all canned responses for tenant without filter', async () => {
+      const responses = [
+        { id: 'cr-1', category: 'DVI' },
+        { id: 'cr-2', category: 'COMUNICAZIONE' },
+      ];
       mockPrisma.cannedResponse.findMany.mockResolvedValue(responses);
 
       const result = await service.findAll('t1', {});
       expect(result).toEqual(responses);
+      expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 't1' },
+        }),
+      );
     });
 
-    it('should filter by category', async () => {
-      mockPrisma.cannedResponse.findMany.mockResolvedValue([]);
+    it('should filter by category when provided', async () => {
+      const responses = [{ id: 'cr-1', category: 'DVI' }];
+      mockPrisma.cannedResponse.findMany.mockResolvedValue(responses);
 
-      await service.findAll('t1', { category: 'DVI' });
+      const result = await service.findAll('t1', { category: 'DVI' });
+      expect(result).toEqual(responses);
       expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: 't1', category: 'DVI' },
+        }),
+      );
+    });
+
+    it('should return empty array when no responses match category', async () => {
+      mockPrisma.cannedResponse.findMany.mockResolvedValue([]);
+
+      const result = await service.findAll('t1', { category: 'NONEXISTENT' });
+      expect(result).toEqual([]);
+      expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 't1', category: 'NONEXISTENT' },
+        }),
+      );
+    });
+
+    it('should order by createdAt descending', async () => {
+      mockPrisma.cannedResponse.findMany.mockResolvedValue([]);
+
+      await service.findAll('t1', {});
+      expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
         }),
       );
     });

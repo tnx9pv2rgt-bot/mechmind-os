@@ -314,5 +314,58 @@ describe('AdminSetupService', () => {
 
       await expect(service.seedDemoData()).rejects.toThrow('Unique constraint violated');
     });
+
+    it('should fall back to default password when DEMO_PASSWORD env var is not set', async () => {
+      const moduleRef: TestingModule = await Test.createTestingModule({
+        providers: [
+          AdminSetupService,
+          { provide: PrismaService, useValue: mockPrisma },
+          {
+            provide: ConfigService,
+            useValue: {
+              get: jest.fn().mockImplementation((_key: string, def?: string) => def),
+            },
+          },
+        ],
+      }).compile();
+
+      const localService = moduleRef.get<AdminSetupService>(AdminSetupService);
+      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
+      mockTx.location.upsert.mockResolvedValue(mockLocation);
+      mockTx.user.upsert
+        .mockReset()
+        .mockResolvedValueOnce(mockUsers[0])
+        .mockResolvedValueOnce(mockUsers[1])
+        .mockResolvedValueOnce(mockUsers[2]);
+
+      const result = await localService.seedDemoData();
+
+      expect(result.tenantId).toBe('tenant-uuid-1');
+      expect(mockTx.user.upsert).toHaveBeenCalledTimes(3);
+    });
+
+    it('should use provided DEMO_PASSWORD value when explicitly configured', async () => {
+      const customPasswordSpy = jest.fn().mockReturnValue('CustomP@ss123\!');
+      const moduleRef: TestingModule = await Test.createTestingModule({
+        providers: [
+          AdminSetupService,
+          { provide: PrismaService, useValue: mockPrisma },
+          { provide: ConfigService, useValue: { get: customPasswordSpy } },
+        ],
+      }).compile();
+
+      const localService = moduleRef.get<AdminSetupService>(AdminSetupService);
+      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
+      mockTx.location.upsert.mockResolvedValue(mockLocation);
+      mockTx.user.upsert
+        .mockReset()
+        .mockResolvedValueOnce(mockUsers[0])
+        .mockResolvedValueOnce(mockUsers[1])
+        .mockResolvedValueOnce(mockUsers[2]);
+
+      await localService.seedDemoData();
+
+      expect(customPasswordSpy).toHaveBeenCalledWith('DEMO_PASSWORD', 'Demo2026\!');
+    });
   });
 });

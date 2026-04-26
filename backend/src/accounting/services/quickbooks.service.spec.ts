@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InternalServerErrorException } from '@nestjs/common';
 import { QuickBooksService } from './quickbooks.service';
 import { PrismaService } from '../../common/services/prisma.service';
 
@@ -93,8 +94,69 @@ describe('QuickBooksService', () => {
     const csv = result.toString('utf-8');
     expect(csv).toContain('Date');
     expect(csv).toContain('Invoice#');
-    // No data rows
     const lines = csv.trim().split('\n');
-    expect(lines).toHaveLength(1); // Header only
+    expect(lines).toHaveLength(1);
+  });
+
+  it('should fall back to customerId when customer relation is null', async () => {
+    mockPrisma.invoice.findMany.mockResolvedValue([
+      {
+        invoiceNumber: 'INV-002',
+        customerId: 'cust-fallback-id',
+        customer: null,
+        subtotal: { toString: () => '50.00' },
+        taxAmount: { toString: () => '11.00' },
+        total: { toString: () => '61.00' },
+        status: 'DRAFT',
+        createdAt: new Date('2024-07-01T00:00:00Z'),
+      },
+    ]);
+
+    const result = await service.exportInvoicesForQuickBooks(
+      't1',
+      new Date('2024-01-01'),
+      new Date('2024-12-31'),
+    );
+
+    const csv = result.toString('utf-8');
+    expect(csv).toContain('cust-fallback-id');
+    expect(csv).toContain('INV-002');
+    expect(csv).toContain('DRAFT');
+  });
+
+  it('should fall back to customerId when customer.searchName is nullish', async () => {
+    mockPrisma.invoice.findMany.mockResolvedValue([
+      {
+        invoiceNumber: 'INV-003',
+        customerId: 'cust-no-name',
+        customer: { searchName: null },
+        subtotal: { toString: () => '10.00' },
+        taxAmount: { toString: () => '2.20' },
+        total: { toString: () => '12.20' },
+        status: 'SENT',
+        createdAt: new Date('2024-08-01T00:00:00Z'),
+      },
+    ]);
+
+    const result = await service.exportInvoicesForQuickBooks(
+      't1',
+      new Date('2024-01-01'),
+      new Date('2024-12-31'),
+    );
+
+    const csv = result.toString('utf-8');
+    expect(csv).toContain('cust-no-name');
+  });
+
+  it('should throw InternalServerErrorException when prisma fails', async () => {
+    mockPrisma.invoice.findMany.mockRejectedValue(new Error('DB down'));
+
+    await expect(
+      service.exportInvoicesForQuickBooks('t1', new Date('2024-01-01'), new Date('2024-12-31')),
+    ).rejects.toThrow(InternalServerErrorException);
+
+    await expect(
+      service.exportInvoicesForQuickBooks('t1', new Date('2024-01-01'), new Date('2024-12-31')),
+    ).rejects.toThrow('Esportazione QuickBooks fallita');
   });
 });
