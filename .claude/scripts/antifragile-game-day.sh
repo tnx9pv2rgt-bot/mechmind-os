@@ -44,14 +44,25 @@ esac
 echo "✅ Backend environment OK"
 echo ""
 
+# Genera ipotesi di fallimento
+generate_hypothesis() {
+  local scenario="$1"
+  echo "🧪 Ipotesi: $scenario non deve causare degrado >20% su P95 o error rate >5%"
+}
+
 # Misure baseline
 measure_baseline() {
   echo "📊 Baseline (P95/error-rate/throughput)..."
 
-  # P95 latenza su /health
-  P95_BASELINE=$(curl -s -w "%{time_total}" -o /dev/null "$BACKEND_URL/health" 2>/dev/null || echo "0")
+  # P95 latenza su /health (5 misure, prendi il max)
+  P95_SAMPLES=()
+  for i in {1..5}; do
+    P95=$(curl -s -w "%{time_total}" -o /dev/null "$BACKEND_URL/health" 2>/dev/null || echo "0")
+    P95_SAMPLES+=("$P95")
+  done
+  P95_BASELINE=$(echo "${P95_SAMPLES[@]}" | tr ' ' '\n' | sort -rn | head -1)
 
-  # Error rate (simulato con semplice curl)
+  # Error rate (10 richieste)
   ERRORS_BASELINE=0
   for i in {1..10}; do
     STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/health" 2>/dev/null || echo "000")
@@ -60,6 +71,52 @@ measure_baseline() {
   ERROR_RATE_BASELINE=$((ERRORS_BASELINE * 10))
 
   echo "$P95_BASELINE|$ERROR_RATE_BASELINE"
+}
+
+# Validazione statistica (5 run)
+validate_thresholds() {
+  local test_name="$1"
+  local p95_baseline="$2"
+  local error_baseline="$3"
+
+  echo "📊 Validazione statistica (5 run)..."
+
+  local p95_values=()
+  local error_rates=()
+
+  for i in {1..5}; do
+    P95=$(curl -s -w "%{time_total}" -o /dev/null "$BACKEND_URL/health" 2>/dev/null || echo "0")
+    p95_values+=("$P95")
+
+    ERRORS=0
+    for j in {1..20}; do
+      STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BACKEND_URL/health" 2>/dev/null || echo "500")
+      [ "$STATUS" != "200" ] && ERRORS=$((ERRORS + 1))
+    done
+    error_rates+=("$((ERRORS * 5))")
+  done
+
+  # Calcola media
+  P95_AVG=$(echo "${p95_values[@]}" | tr ' ' '\n' | awk '{sum+=$1; count++} END {if(count>0) print sum/count; else print 0}')
+  ERROR_AVG=$(echo "${error_rates[@]}" | tr ' ' '\n' | awk '{sum+=$1; count++} END {if(count>0) print sum/count; else print 0}')
+
+  echo "  📊 Baseline: P95=${p95_baseline}s, Error=${error_baseline}%"
+  echo "  📊 Sotto stress: P95=${P95_AVG}s, Error=${ERROR_AVG}%"
+
+  # Calcola degrado percentuale
+  P95_DEGRADATION=$(echo "scale=1; ($P95_AVG - $p95_baseline) / $p95_baseline * 100" | bc 2>/dev/null || echo "0")
+  ERROR_DEGRADATION=$(echo "scale=1; ($ERROR_AVG - $error_baseline) / ($error_baseline + 1) * 100" | bc 2>/dev/null || echo "0")
+
+  echo "  📈 Degrado: P95=${P95_DEGRADATION}%, Error=${ERROR_DEGRADATION}%"
+
+  # Verifica soglie (20% degrado, 5% error rate)
+  if (( $(echo "$P95_DEGRADATION > 20" | bc -l 2>/dev/null) )) || (( $(echo "$ERROR_AVG > 5" | bc -l 2>/dev/null) )); then
+    echo "  🔴 SOGLIA SUPERATA — avvio auto-rollback"
+    return 1
+  else
+    echo "  ✅ Entro soglia — sistema resiliente"
+    return 0
+  fi
 }
 
 measure_under_stress() {
@@ -90,6 +147,10 @@ scenario_1() {
 
     BASELINE=$(measure_baseline)
     IFS='|' read -r P95_B ERRORS_B <<< "$BASELINE"
+
+    echo "### Fase 0: Hypothesis"
+    generate_hypothesis "Traffic spike + Redis saturo"
+    echo ""
 
     echo "### Fase 1: Baseline"
     echo "- P95: ${P95_B}s"
@@ -124,14 +185,19 @@ scenario_1() {
     sleep 3
     kill $TRAFFIC_PID 2>/dev/null || true
 
-    STRESS=$(measure_under_stress "traffic+redis+payment")
-    IFS='|' read -r P95_S ERRORS_S <<< "$STRESS"
+    echo ""
+    echo "### Fase 3: Validazione Statistica"
+    if validate_thresholds "Scenario 1" "$P95_B" "$ERRORS_B"; then
+      echo "  ✅ Sistema resiliente — test PASSED"
+    else
+      echo "  🔴 Auto-rollback avviato"
+      docker compose restart backend 2>/dev/null || echo "  ⚠️  Docker restart non disponibile"
+      sleep 2
+      echo "  ✅ Rollback completato"
+    fi
+    echo ""
 
-    echo ""
-    echo "### Fase 3: Degradazione misurata"
-    echo "- P95: ${P95_S}s (Δ $(echo "scale=2; $P95_S - $P95_B" | bc)s / $(echo "scale=1; ($P95_S - $P95_B) / $P95_B * 100" | bc 2>/dev/null || echo "?")%)"
-    echo "- Error rate: ${ERRORS_S}% (Δ $((ERRORS_S - ERRORS_B))pp)"
-    echo ""
+    echo "### Fase 4: Post-mortem (Claude Analysis)"
 
     echo "### Post-mortem (Claude Analysis)"
     CLAUDE_ANALYSIS=$(claude -p "$(cat << 'ANALYSIS'

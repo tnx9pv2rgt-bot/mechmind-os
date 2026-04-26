@@ -8,6 +8,18 @@
         "npx -y @modelcontextprotocol/server-postgres \"$DATABASE_URL\""
       ],
       "env": {}
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-github"]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-fetch"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-filesystem"]
     }
   }
 }

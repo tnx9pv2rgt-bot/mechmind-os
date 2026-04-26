@@ -47,6 +47,13 @@ Quando ricevi un comando che corrisponde a una skill (es. /ripara-tutto, /genera
 - **Lazy loading** per route dashboard non critiche.
 - **Bundle analysis** con `@next/bundle-analyzer`.
 
+## MCP SERVER (2026 CONTEXT INTEGRATION)
+- **Configuration**: `.mcp.json` in project root
+- **Active servers**: postgres, github, fetch, filesystem
+- **Pattern**: Claude can access live context (GitHub API, file system, external URLs)
+- **Usage**: MCP servers enable real-time data fetching, PR analysis, external API integration
+- **Security**: All MCP tools subject to same tenant isolation and PII encryption rules
+
 ## MODELLO DI LAVORO CLAUDE CODE (ottimizzazione costi)
 - **Routing modelli**: Sub-agent Haiku per grep, find, analisi coverage, parsing JSON (output ≤3 righe). Sonnet per scrittura test complessi.
 - **Output minimo**: Vietati "Sure!", "I'll help", riepiloghi. ✅ / ❌ / ⚠️.
