@@ -78,20 +78,35 @@ if [ -z "$MODULO" ]; then
     fi
   done
 else
-  # Ripara un modulo specifico
-  SERVICE_FILE="src/$MODULO/$MODULO.service.ts"
-  CONTROLLER_FILE="src/$MODULO/$MODULO.controller.ts"
-  
-  if [ -f "$CONTROLLER_FILE" ]; then
-    CEILING=$((CEILING + 1))
-  elif [ -f "$SERVICE_FILE" ]; then
-    if fix_service "$SERVICE_FILE" 2>/dev/null; then
-      RELIABLE=$((RELIABLE + 1))
-    else
+  # Ripara un modulo specifico: cerca TUTTI i file .service.ts e .controller.ts nel modulo
+  MODULE_PATH="src/$MODULO"
+
+  if [ ! -d "$MODULE_PATH" ]; then
+    echo "Modulo non trovato: $MODULO (directory $MODULE_PATH non esiste)"
+    exit 1
+  fi
+
+  FOUND=0
+  for file in $(find "$MODULE_PATH" -name "*.service.ts" -o -name "*.controller.ts" 2>/dev/null | grep -v ".spec.ts" | sort); do
+    FOUND=1
+    echo "🔧 Trovato: $file"
+
+    if [[ "$file" == *".controller.ts" ]]; then
+      echo "  ⚠️ Controller: ceiling architetturale (max ~85% branches)"
       CEILING=$((CEILING + 1))
+    elif [[ "$file" == *".service.ts" ]]; then
+      if fix_service "$file" 2>/dev/null; then
+        RELIABLE=$((RELIABLE + 1))
+        echo "  ✅ Riparato e affidabile"
+      else
+        CEILING=$((CEILING + 1))
+        echo "  ⚠️ Ceiling (impossibile riparare)"
+      fi
     fi
-  else
-    echo "Modulo non trovato: $MODULO"
+  done
+
+  if [ "$FOUND" -eq 0 ]; then
+    echo "Nessun file .service.ts o .controller.ts trovato in $MODULE_PATH"
     exit 1
   fi
 fi
