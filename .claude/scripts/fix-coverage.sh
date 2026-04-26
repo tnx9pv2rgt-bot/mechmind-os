@@ -29,15 +29,43 @@ if [ "$ERRORS" -gt 0 ]; then
     echo "  ✅ Pacchetti base reinstallati"
   fi
 
-  # 4. Strategia 2: Riparazione profonda con Claude per errori complessi
+  # 4. Strategia 2: Riparazione AST (per errori TS risolvibili)
+  echo "  🔧 Tentativo riparazione AST con fixmyfile..."
+  npx fixmyfile --auto-fix --path src/ 2>/dev/null || true
+  REMAINING_AFTER_AST=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
+  echo "  ✅ Riparazione AST completata. Errori rimanenti: $REMAINING_AFTER_AST"
+
+  # 5. Strategia 3: Per gli errori rimanenti, genera un report di escalation
+  if [ "$REMAINING_AFTER_AST" -gt 0 ]; then
+    echo "  📋 Generazione report di escalation per $REMAINING_AFTER_AST errori strutturali..."
+
+    npx tsc --noEmit --pretty false 2>&1 | head -30 > "/tmp/ts-structural-errors.log"
+
+    # Report per ogni file con errori
+    > "/tmp/ts-structural-report.md"
+    npx tsc --noEmit --pretty false 2>&1 | grep -oP 'src/[^\(]+' | sort -u | while read -r file; do
+      echo "### $file" >> "/tmp/ts-structural-report.md"
+      echo '```' >> "/tmp/ts-structural-report.md"
+      npx tsc --noEmit --pretty false 2>&1 | grep "$file" >> "/tmp/ts-structural-report.md"
+      echo '```' >> "/tmp/ts-structural-report.md"
+      echo "" >> "/tmp/ts-structural-report.md"
+    done
+
+    echo "  ⚠️  $REMAINING_AFTER_AST errori strutturali richiedono decisione umana."
+    echo "  📄 Report salvato: /tmp/ts-structural-report.md"
+    echo "  ℹ️  Motivo: questi errori hanno multiple soluzioni valide (type narrowing, refactoring, etc.)"
+    echo "     e nessuna è automaticamente corretta senza contesto architetturale."
+  fi
+
+  # 6. Strategia 4: Riparazione profonda con Claude per errori complessi
   REMAINING=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
   if [ "$REMAINING" -gt 0 ]; then
     echo "  🧠 $REMAINING errori complessi residui. Avvio riparazione contestuale con Claude..."
 
-    # 4.a Estrazione dei file problematici
+    # 6.a Estrazione dei file problematici
     PROBLEM_FILES=$(npx tsc --noEmit --pretty false 2>&1 | grep -oP 'src/[^:]+' | sort -u | head -10)
 
-    # 4.b Per ogni file, richiedi a Claude una riparazione consapevole dell'AST
+    # 6.b Per ogni file, richiedi a Claude una riparazione consapevole dell'AST
     for file in $PROBLEM_FILES; do
       echo "    🔍 Analizzando: $file"
 
@@ -47,7 +75,7 @@ if [ "$ERRORS" -gt 0 ]; then
       # Estrazione del codice riparato
       FIXED_CODE=$(echo "$REPAIR_JSON" | jq -r '.fixed_code // empty' 2>/dev/null)
 
-      # 4.c Se il codice riparato è valido, applicalo
+      # 6.c Se il codice riparato è valido, applicalo
       if [ -n "$FIXED_CODE" ] && [ "$FIXED_CODE" != "null" ]; then
         echo "$FIXED_CODE" > "$file"
         echo "    ✅ Riparazione applicata a $file"
@@ -55,7 +83,7 @@ if [ "$ERRORS" -gt 0 ]; then
     done
   fi
 
-  # 5. Verifica finale
+  # 7. Verifica finale
   REMAINING=$(npx tsc --noEmit --pretty false 2>&1 | grep -c "error TS" || echo "0")
   if [ "$REMAINING" -gt 0 ]; then
     echo "⚠️  $REMAINING errori strutturali rimanenti (richiedono refactoring manuale)."
