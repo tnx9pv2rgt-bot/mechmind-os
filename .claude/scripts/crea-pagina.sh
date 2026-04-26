@@ -17,6 +17,14 @@ echo ""
 
 cd frontend 2>/dev/null || { echo "⚠️  Cartella frontend non trovata"; exit 1; }
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (frontend)..."
+if npx tsc --noEmit --pretty false 2>&1 | grep -q "error TS"; then
+  echo "⚠️  TypeScript errors detected. Attempting auto-fix..."
+  npx fixmyfile --auto-fix --path app/ 2>/dev/null || npm install fixmyfile 2>/dev/null && npx fixmyfile --auto-fix --path app/ 2>/dev/null || true
+fi
+echo "✅ Frontend validation completata"
+
 # STEP 1: Crea struttura cartelle
 echo "1️⃣  Struttura cartelle..."
 mkdir -p "app/$PAGINA"

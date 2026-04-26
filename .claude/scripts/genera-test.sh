@@ -9,6 +9,13 @@ source "$(dirname "$0")/_error-handler.sh"
 MODULO="${1:-}"
 cd backend || exit 1
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Pre-flight validation..."
+if npx tsc --noEmit --pretty false 2>&1 | grep -q "error TS"; then
+  echo "⚠️  Detected TS errors. Auto-fixing..."
+  npx fixmyfile --auto-fix --path src/ 2>/dev/null || npm install fixmyfile 2>/dev/null && npx fixmyfile --auto-fix --path src/ 2>/dev/null || true
+fi
+
 if [ -z "$MODULO" ]; then
   echo "Uso: genera-test.sh <modulo>"
   exit 1

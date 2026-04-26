@@ -12,6 +12,19 @@ FORMAL_REPORT="$TELEMETRY_DIR/formal-$(date +%Y%m%d-%H%M%S).md"
 
 mkdir -p "$TELEMETRY_DIR"
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (backend environment)..."
+if [ ! -d "backend" ]; then
+  echo "❌ Cartella backend non trovata"
+  exit 1
+fi
+if [ ! -d "backend/src" ]; then
+  echo "❌ Directory src non trovata in backend"
+  exit 1
+fi
+echo "✅ Backend environment OK"
+echo ""
+
 # Identifica funzioni critiche per pattern
 identify_critical_functions() {
   local MODULO="$1"

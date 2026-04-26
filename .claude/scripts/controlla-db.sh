@@ -10,6 +10,14 @@ echo ""
 
 cd backend 2>/dev/null || { echo "⚠️  Cartella backend non trovata"; exit 1; }
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation (Prisma schema accessible)
+echo "🔧 [S1] Validazione pre-volo (schema accessibile)..."
+if [ ! -f "prisma/schema.prisma" ]; then
+  echo "❌ Schema Prisma non trovato"
+  exit 1
+fi
+echo "✅ Schema validation OK"
+
 # STEP 1: Controlla tenantId su tutti i modelli
 echo "1️⃣  Controlla tenantId..."
 MISSING_TENANT=$(grep -A 5 "model " prisma/schema.prisma 2>/dev/null | grep -B 5 -v "tenantId" | grep "model " | head -20 || echo "")

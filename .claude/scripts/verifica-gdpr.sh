@@ -4,19 +4,71 @@
 # Equivalente a: /conformita-gdpr
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+source "$(dirname "$0")/_error-handler.sh"
+
+GDPR_REPORT="./.claude/telemetry/gdpr-verify-$(date +%Y%m%d-%H%M%S).md"
+mkdir -p ./.claude/telemetry
 
 echo "=== VERIFICA GDPR ==="
 echo ""
 
-cd backend 2>/dev/null || { echo "⚠️  Cartella backend non trovata"; exit 1; }
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (backend environment)..."
+if [ ! -d "backend" ]; then
+  echo "❌ Cartella backend non trovata"
+  exit 1
+fi
+if [ ! -d "backend/src" ]; then
+  echo "❌ Directory src non trovata in backend"
+  exit 1
+fi
+echo "✅ Backend environment OK"
+echo ""
 
-# STEP 1: Cerca EncryptionService usage
-echo "1️⃣  Controlla PII encryption..."
-PII_CHECKS=$(grep -r "EncryptionService\|encrypt(" src --include="*.ts" 2>/dev/null | grep -v "spec.ts" | head -20 || echo "")
+{
+  echo "# GDPR Conformità Report"
+  echo "**Data:** $(date)"
+  echo ""
 
-# STEP 2: Classifica severity
-echo "2️⃣  Classificazione severity..."
-GDPR_ANALYSIS=$(claude -p "$(cat << 'PROMPT'
+  cd backend 2>/dev/null || { echo "❌ Impossibile entrare in backend"; exit 1; }
+
+  # STEP 1: Cerca EncryptionService usage
+  echo "## 1. PII Encryption (Art. 5, 32)"
+  echo ""
+
+  PII_CHECKS=$(grep -r "EncryptionService\|encrypt(" src --include="*.ts" 2>/dev/null | grep -v "spec.ts" | head -20 || echo "")
+
+  if [ -n "$PII_CHECKS" ]; then
+    echo "Found encryption patterns:"
+    echo "\`\`\`"
+    echo "$PII_CHECKS"
+    echo "\`\`\`"
+  else
+    echo "⚠️  Nessun pattern EncryptionService trovato"
+  fi
+  echo ""
+
+  # STEP 2: Cerca soft deletes (Art. 17 - diritto all'oblio)
+  echo "## 2. Soft Deletes (Art. 17 - Right to be Forgotten)"
+  echo ""
+
+  SOFT_DELETE=$(grep -r "deletedAt" src --include="*.ts" 2>/dev/null | grep -v "spec.ts" | wc -l || echo "0")
+
+  if [ "$SOFT_DELETE" -gt 0 ]; then
+    echo "✅ Soft delete pattern found ($SOFT_DELETE occorrenze)"
+  else
+    echo "⚠️  Nessun pattern soft delete trovato"
+  fi
+  echo ""
+
+  # STEP 3: Classifica severity
+  echo "## 3. Severity Classification"
+  echo ""
+
+  if [ -n "$PII_CHECKS" ]; then
+    GDPR_ANALYSIS=$(claude -p "$(cat << 'PROMPT'
 PII encryption checks:
 PROMPT
 )${PII_CHECKS:-'(nessun risultato trovato)'}$(cat << 'PROMPT'
@@ -25,10 +77,17 @@ Classifica ogni linea per severity GDPR (CRITICO se PII non encrypted, ALTO se a
 Formato: file:linea | severity | articolo GDPR
 PROMPT
 )" 2>/dev/null || echo "⚠️  Claude CLI non disponibile")
+    echo "$GDPR_ANALYSIS"
+  else
+    echo "ℹ️  Non disponibile (nessun pattern trovato)"
+  fi
+  echo ""
 
-# STEP 3: Output
-echo "$GDPR_ANALYSIS"
+  echo "✅ Verifica GDPR completata."
 
-cd - >/dev/null 2>&1 || true
+  cd - >/dev/null 2>&1 || true
+
+} | tee "$GDPR_REPORT"
+
 echo ""
-echo "✅ Verifica GDPR completata."
+echo "📋 Report salvato: $GDPR_REPORT"

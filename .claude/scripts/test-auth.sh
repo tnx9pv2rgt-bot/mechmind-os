@@ -10,6 +10,16 @@ echo ""
 
 BASE_URL="http://localhost:3002"
 
+# FASE 0 — STRATEGIA 1: Pre-flight connectivity validation
+echo "🔧 [S1] Validazione pre-volo (raggiungibilità server)..."
+if ! curl -s --max-time 3 "$BASE_URL/health" > /dev/null 2>&1; then
+  echo "⚠️  Backend server non raggiungibile su $BASE_URL"
+  echo "  Assicurati di avere avviato: cd backend && npm run start:dev"
+  exit 1
+fi
+echo "✅ Server raggiungibile"
+
+echo ""
 echo "1️⃣  POST /v1/auth/register..."
 REGISTER=$(curl -s -X POST "$BASE_URL/v1/auth/register" \
   -H "Content-Type: application/json" \

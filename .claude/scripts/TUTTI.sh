@@ -2,40 +2,102 @@
 # INVENTARIO: Lista tutti gli script disponibili con descrizione e parametri
 # Uso: bash TUTTI.sh
 
+set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+source "$(dirname "$0")/_error-handler.sh"
+
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║          NEXO SCRIPTS INVENTORY — $(date +%Y-%m-%d)           ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (script directory)..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Leggi tutti gli script e estrai descrizione + parametri
-for script in "$SCRIPT_DIR"/*.sh; do
-  if [ "$(basename "$script")" != "TUTTI.sh" ]; then
-    name=$(basename "$script" .sh)
-    desc=$(grep "^# Descrizione:" "$script" | head -1 | sed 's/# Descrizione: //')
-    params=$(grep "^# Parametri:" "$script" | head -1 | sed 's/# Parametri: //')
-    
-    printf "📌 %-25s %s\n" "$name" "$desc"
-    [ -n "$params" ] && printf "   Parametri: %s\n" "$params"
-    echo ""
-  fi
-done
+if [ ! -d "$SCRIPT_DIR" ]; then
+  echo "❌ Directory script non trovata: $SCRIPT_DIR"
+  exit 1
+fi
 
+SCRIPT_COUNT=$(find "$SCRIPT_DIR" -maxdepth 1 -name "*.sh" -type f | wc -l)
+if [ "$SCRIPT_COUNT" -eq 0 ]; then
+  echo "❌ Nessuno script trovato in: $SCRIPT_DIR"
+  exit 1
+fi
+
+echo "✅ Script directory OK ($SCRIPT_COUNT script trovati)"
+echo ""
+
+# Leggi tutti gli script e estrai descrizione + parametri
+{
+  echo "# Scripts Inventory Report"
+  echo "**Data:** $(date)"
+  echo "**Total Scripts:** $SCRIPT_COUNT"
+  echo ""
+
+  echo "## Available Scripts"
+  echo ""
+
+  for script in "$SCRIPT_DIR"/*.sh; do
+    if [ "$(basename "$script")" != "TUTTI.sh" ] && [ "$(basename "$script")" != "_error-handler.sh" ]; then
+      name=$(basename "$script" .sh)
+      desc=$(grep "^# Descrizione:" "$script" 2>/dev/null | head -1 | sed 's/# Descrizione: //' || echo "(no description)")
+      params=$(grep "^# Parametri:" "$script" 2>/dev/null | head -1 | sed 's/# Parametri: //' || echo "nessuno")
+
+      echo "### \`$name.sh\`"
+      echo "**Descrizione:** $desc"
+      echo "**Parametri:** $params"
+      echo ""
+    fi
+  done
+
+  echo "## Categories"
+  echo ""
+  echo "| Type | Count | Scripts |"
+  echo "|------|-------|---------|"
+  echo "| Generators | 5 | crea-endpoint, crea-modulo, crea-pagina, genera-test, genera-test-ui |"
+  echo "| Test Runners | 4 | test-auth, test-caos, test-carico, test-veloci |"
+  echo "| Verifiers | 7 | controlla-db, controlla-dipendenze, controlla-skill, verifica-formale, verifica-gdpr, verifica-stati, revisione |"
+  echo "| Repairers | 2 | ripara-bug, ristruttura |"
+  echo "| Utility | 10 | _error-handler, sanity-check, TUTTI, analizza-bug, antifragile-game-day, deploy, emergenza, metriche, migra-db, valuta-modulo |"
+  echo ""
+
+  echo "## Usage"
+  echo ""
+  echo "\`\`\`bash"
+  echo "bash <script>.sh [parameters]"
+  echo "\`\`\`"
+  echo ""
+  echo "**Examples:**"
+  echo "- \`bash deploy.sh\`"
+  echo "- \`bash revisione.sh --type security\`"
+  echo "- \`bash genera-test.sh booking\`"
+  echo "- \`bash sanity-check.sh\`"
+  echo ""
+
+} | tee "./.claude/telemetry/inventory-$(date +%Y%m%d-%H%M%S).md"
+
+# Display summary to terminal
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║ CATEGORIE                                                      ║"
 echo "╠════════════════════════════════════════════════════════════════╣"
-echo "│ PURE_BASH (10): deploy, fix-coverage, migra-db, ristruttura,  │"
-echo "│                 controlla-dipendenze, emergenza, test-auth,    │"
-echo "│                 test-veloci, valuta-modulo, controlla-skill    │"
+echo "│ Generators (5): crea-endpoint, crea-modulo, crea-pagina,       │"
+echo "│                 genera-test, genera-test-ui                    │"
 echo "│                                                                │"
-echo "│ HYBRID (14): analizza-bug, verifica-stati, test-caos,          │"
-echo "│             verifica-gdpr, genera-test-ui, genera-test,        │"
-echo "│             controlla-db, metriche, crea-pagina, crea-endpoint,│"
-echo "│             crea-modulo, revisione (unificato), ripara-bug,    │"
-echo "│             test-carico                                        │"
+echo "│ Test Runners (4): test-auth, test-caos, test-carico,           │"
+echo "│                   test-veloci                                  │"
 echo "│                                                                │"
-echo "│ REFERENCE (8): docs/reference/*                                │"
+echo "│ Verifiers (7): controlla-db, controlla-dipendenze,             │"
+echo "│                controlla-skill, verifica-formale, verifica-gdpr,│"
+echo "│                verifica-stati, revisione                       │"
+echo "│                                                                │"
+echo "│ Repairers (2): ripara-bug, ristruttura                         │"
+echo "│                                                                │"
+echo "│ Utility (10): _error-handler, sanity-check, TUTTI,             │"
+echo "│               analizza-bug, antifragile-game-day, deploy,      │"
+echo "│               emergenza, metriche, migra-db, valuta-modulo     │"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Uso: bash <nome>.sh [parametri]"

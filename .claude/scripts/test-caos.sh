@@ -10,6 +10,14 @@ FAILURE="${1:-redis}"
 echo "=== TEST CAOS: $FAILURE ==="
 echo ""
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation (Docker available)
+echo "🔧 [S1] Validazione pre-volo (Docker environment)..."
+if ! docker ps > /dev/null 2>&1; then
+  echo "❌ Docker non disponibile. Avvia con: docker compose up -d"
+  exit 1
+fi
+echo "✅ Docker environment OK"
+
 # STEP 1: Simula il failure
 echo "1️⃣  Simula failure: $FAILURE..."
 

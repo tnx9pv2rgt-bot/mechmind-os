@@ -16,6 +16,34 @@ REPORT_FILE="$TELEMETRY_DIR/gameday-$(date +%Y%m%d-%H%M%S).md"
 
 mkdir -p "$TELEMETRY_DIR"
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (backend connectivity)..."
+if ! curl -s --max-time 3 "$BACKEND_URL/health" > /dev/null 2>&1; then
+  echo "❌ Backend non raggiungibile su $BACKEND_URL"
+  echo "  Avvia con: cd backend && npm run start:dev"
+  exit 1
+fi
+if ! command -v curl &>/dev/null; then
+  echo "❌ curl non disponibile"
+  exit 1
+fi
+if ! command -v claude &>/dev/null; then
+  echo "❌ claude CLI non disponibile"
+  exit 1
+fi
+
+case "$SCENARIO" in
+  scenario-1|scenario-2|scenario-3|--all)
+    echo "✅ Scenario valido: $SCENARIO"
+    ;;
+  *)
+    echo "❌ Scenario non riconosciuto: $SCENARIO (valori: scenario-1|scenario-2|scenario-3|--all)"
+    exit 1
+    ;;
+esac
+echo "✅ Backend environment OK"
+echo ""
+
 # Misure baseline
 measure_baseline() {
   echo "📊 Baseline (P95/error-rate/throughput)..."

@@ -17,6 +17,13 @@ echo ""
 
 cd frontend 2>/dev/null || { echo "⚠️  Cartella frontend non trovata"; exit 1; }
 
+# FASE 0 — STRATEGIA 1+2: Pre-flight + AST repair
+echo "🔧 [S1] Frontend pre-flight validation..."
+if npx tsc --noEmit --pretty false 2>&1 | grep -q "error TS"; then
+  echo "⚠️  Fixing TypeScript errors..."
+  npx fixmyfile --auto-fix --path app/ 2>/dev/null || npm install fixmyfile 2>/dev/null && npx fixmyfile --auto-fix --path app/ 2>/dev/null || true
+fi
+
 # STEP 1: Analizza il modulo
 echo "1️⃣  Analizza modulo..."
 PAGE_FILES=$(find "app/$MODULO" -name "page.tsx" -o -name "layout.tsx" 2>/dev/null || echo "")

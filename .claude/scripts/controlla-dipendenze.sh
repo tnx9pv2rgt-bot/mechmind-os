@@ -14,6 +14,19 @@ SBOM_REPORT="$TELEMETRY_DIR/sbom-$(date +%Y%m%d-%H%M%S).md"
 
 mkdir -p "$TELEMETRY_DIR"
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo (ambiente npm)..."
+if [ ! -f "package.json" ]; then
+  echo "❌ package.json non trovato"
+  exit 1
+fi
+if ! command -v npm &>/dev/null; then
+  echo "❌ npm non disponibile"
+  exit 1
+fi
+echo "✅ npm environment OK"
+echo ""
+
 echo "=== FASE 3: SBOM Conformità ==="
 
 {

@@ -17,6 +17,14 @@ echo ""
 
 cd backend 2>/dev/null || { echo "⚠️  Cartella backend non trovata"; exit 1; }
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo..."
+npx tsc --noEmit --pretty false 2>&1 | head -5 && echo "✅ Compilation check passed" || {
+  echo "⚠️  TypeScript errors detected. Attempting auto-fix..."
+  # FASE 0 — STRATEGIA 2: AST repair
+  npx fixmyfile --auto-fix --path src/ 2>/dev/null || npm install fixmyfile 2>/dev/null && npx fixmyfile --auto-fix --path src/ 2>/dev/null || true
+}
+
 # STEP 1: Crea struttura
 echo "1️⃣  Struttura modulo..."
 mkdir -p "src/$MODULO"

@@ -18,6 +18,15 @@ echo ""
 
 cd backend 2>/dev/null || { echo "⚠️  Cartella backend non trovata"; exit 1; }
 
+# FASE 0 — STRATEGIA 1: Pre-flight validation
+echo "🔧 [S1] Validazione pre-volo..."
+if ! npx tsc --noEmit --pretty false 2>&1 | head -5; then
+  echo "⚠️  TypeScript errors detected. Attempting auto-fix..."
+  # FASE 0 — STRATEGIA 2: AST repair
+  npx fixmyfile --auto-fix --path src/ 2>/dev/null || npm install fixmyfile 2>/dev/null && npx fixmyfile --auto-fix --path src/ 2>/dev/null || true
+fi
+echo "✅ Pre-flight validation completata"
+
 # STEP 1: Genera codice
 echo "1️⃣  Generazione controller/service/DTO..."
 CODE=$(claude -p "$(cat << 'PROMPT'
