@@ -263,4 +263,181 @@ describe('GdprWebhookController', () => {
       );
     });
   });
+
+  describe('handleDataSubjectRequest — signature verification: timingSafeEqual buffer comparison', () => {
+    it('should verify signature using timing-safe comparison (valid signature)', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'WEB_FORM',
+      };
+      const validSig = buildSignature(JSON.stringify(body), GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': validSig });
+
+      requestService.createRequest.mockResolvedValueOnce({
+        ticketNumber: 'GDPR-2026-1000',
+      } as never);
+
+      const result = await controller.handleDataSubjectRequest(body as never, req);
+      expect(result.received).toBe(true);
+      expect(requestService.createRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it('should reject signature with completely different content', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'WEB_FORM',
+      };
+      const wrongPayload = JSON.stringify({ tenantId: 'wrong', requestType: 'ACCESS', source: 'EMAIL' });
+      const sig = buildSignature(wrongPayload, GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': sig });
+
+      await expect(controller.handleDataSubjectRequest(body as never, req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should reject when signature length exceeds expected HMAC-SHA256 output', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'WEB_FORM',
+      };
+      const validSig = buildSignature(JSON.stringify(body), GDPR_WEBHOOK_SECRET);
+      const tooLongSig = validSig + 'extra_padding';
+      const req = mockReq({ 'x-webhook-signature': tooLongSig });
+
+      await expect(controller.handleDataSubjectRequest(body as never, req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('handleDataSubjectRequest — source field variations', () => {
+    it('should handle MAIL source', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'MAIL',
+      };
+      const sig = buildSignature(JSON.stringify(body), GDPR_WEBHOOK_SECRET);
+      const req = mockReq({ 'x-webhook-signature': sig });
+
+      requestService.createRequest.mockResolvedValueOnce({
+        ticketNumber: 'GDPR-2026-2000',
+      } as never);
+
+      const result = await controller.handleDataSubjectRequest(body as never, req);
+      expect(result.received).toBe(true);
+      expect(requestService.createRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ source: 'MAIL' }),
+      );
+    });
+  });
+
+  describe('handleConsentUpdate — edge cases on field presence', () => {
+    it('should throw when tenantId is null (not undefined)', async () => {
+      const body = {
+        tenantId: null,
+        customerId: 'cust-001',
+        consentType: 'MARKETING',
+        granted: true,
+        timestamp: '2026-04-29T08:00:00Z',
+        source: 'WEB_FORM',
+      } as never;
+
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw when customerId is null (not undefined)', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        customerId: null,
+        consentType: 'MARKETING',
+        granted: true,
+        timestamp: '2026-04-29T08:00:00Z',
+        source: 'WEB_FORM',
+      } as never;
+
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw when consentType is null (not undefined)', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        customerId: 'cust-001',
+        consentType: null,
+        granted: true,
+        timestamp: '2026-04-29T08:00:00Z',
+        source: 'WEB_FORM',
+      } as never;
+
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('handleDeletionConfirmation — edge cases on field presence', () => {
+    it('should throw when subProcessor is null (not undefined)', async () => {
+      const body = {
+        subProcessor: null,
+        customerId: 'cust-001',
+        deletionType: 'FULL',
+        deletedAt: '2026-04-29T12:00:00Z',
+        confirmationId: 'conf-abc-123',
+      } as never;
+
+      await expect(controller.handleDeletionConfirmation(body)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw when confirmationId is null (not undefined)', async () => {
+      const body = {
+        subProcessor: 'stripe',
+        customerId: 'cust-001',
+        deletionType: 'FULL',
+        deletedAt: '2026-04-29T12:00:00Z',
+        confirmationId: null,
+      } as never;
+
+      await expect(controller.handleDeletionConfirmation(body)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('handleDataSubjectRequest — signature header edge cases', () => {
+    it('should reject when signature is empty string', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'WEB_FORM',
+      };
+      const req = mockReq({ 'x-webhook-signature': '' });
+
+      await expect(controller.handleDataSubjectRequest(body as never, req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should reject when signature is whitespace only', async () => {
+      const body = {
+        tenantId: TENANT_ID,
+        requestType: 'ERASURE',
+        source: 'WEB_FORM',
+      };
+      const req = mockReq({ 'x-webhook-signature': '   ' });
+
+      await expect(controller.handleDataSubjectRequest(body as never, req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
 });
