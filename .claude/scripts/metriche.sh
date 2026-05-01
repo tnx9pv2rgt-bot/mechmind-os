@@ -6,6 +6,7 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 METRICS_REPORT="./.claude/telemetry/metrics-$(date +%Y%m%d-%H%M%S).md"
@@ -79,7 +80,11 @@ echo ""
   echo "## 3. Project Health Score"
   echo ""
 
-  if [ ! -f ".claude/telemetry/inventory-"* ] 2>/dev/null; then
+  _inv_found=false
+  for _inv in .claude/telemetry/inventory-*; do
+    [ -f "$_inv" ] && _inv_found=true && break
+  done
+  if [ "$_inv_found" = false ]; then
     bash TUTTI.sh > /dev/null 2>&1 || true
   fi
 
@@ -107,8 +112,8 @@ echo ""
 
   # Change failure rate: stima da commit non-fix vs fix commits
   TOTAL_COMMITS=$(git log --since="30 days ago" --oneline 2>/dev/null | wc -l)
-  FIX_COMMITS=$(git log --since="30 days ago" --oneline 2>/dev/null | grep -i "fix\|hotfix\|revert" | wc -l || echo "0")
-  CHANGE_FAIL_RATE=$([ "$TOTAL_COMMITS" -gt 0 ] && echo "scale=1; $FIX_COMMITS * 100 / $TOTAL_COMMITS" | bc || echo "0")
+  FIX_COMMITS=$(git log --since="30 days ago" --oneline 2>/dev/null | grep -ci "fix\|hotfix\|revert" || echo "0")
+  CHANGE_FAIL_RATE=$([ "$TOTAL_COMMITS" -gt 0 ] && awk "BEGIN {printf \"%.1f\", $FIX_COMMITS * 100 / $TOTAL_COMMITS}" || echo "0")
 
   # MTTR: media da incident report se disponibile
   MTTR_MINUTES="N/A"
@@ -138,7 +143,7 @@ echo ""
   echo "|---------|--------|--------------|-------|"
   echo "| Deployment Frequency (30d) | $DEPLOY_FREQ/gg | >1/gg | $([ "$DEPLOY_FREQ" -gt 1 ] && echo "✅" || echo "🟡") |"
   echo "| Lead Time | ${LEAD_TIME_MINUTES}m | <60m | $([ "$LEAD_TIME_MINUTES" -lt 60 ] && echo "✅" || echo "🟡") |"
-  echo "| Change Failure Rate | ${CHANGE_FAIL_RATE}% | <5% | $(echo "$CHANGE_FAIL_RATE < 5" | bc 2>/dev/null && echo "✅" || echo "🟡") |"
+  echo "| Change Failure Rate | ${CHANGE_FAIL_RATE}% | <5% | $(awk "BEGIN {exit !($CHANGE_FAIL_RATE < 5)}" && echo "✅" || echo "🟡") |"
   echo "| MTTR | $MTTR_MINUTES | <60m | $([ "$MTTR_MINUTES" = "N/A" ] && echo "⚠️" || echo "✅") |"
   echo "| Reliability | $RELIABILITY | 99.99% | $([ "$RELIABILITY_STATUS" = "200" ] && echo "✅" || echo "🔴") |"
   echo ""

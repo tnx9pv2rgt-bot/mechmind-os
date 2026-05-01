@@ -4,6 +4,25 @@
 # Equivalente a: /integrita-db
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+# shellcheck source=.claude/scripts/_error-handler.sh
+source "$(dirname "$0")/_error-handler.sh"
+
+mkdir -p ./.claude/telemetry
+
+get_model() {
+  local module="$1"
+  case "$module" in
+    auth|booking|invoice|payment-link|subscription|gdpr) echo "opus" ;;
+    notifications|admin|analytics|common|dvi|iot|work-order|customer|estimate|voice) echo "sonnet" ;;
+    *) echo "sonnet" ;;
+  esac
+}
+
+# Atomic RAM staging: scratch dir per output diagnostici Claude prima di promuoverli al report
+STAGING_DIR=$(mktemp -d -t db-audit.XXXXXX 2>/dev/null || echo "/tmp/db-audit-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 echo "=== INTEGRITÀ DATABASE ==="
 echo ""
@@ -37,7 +56,8 @@ N_PLUS_ONE=$(grep -r "include:\|\.find(" src --include="*.ts" 2>/dev/null | grep
 # STEP 3: Classifica severity
 echo ""
 echo "3️⃣  Severity classification..."
-SEVERITY=$(claude -p "$(cat << 'PROMPT'
+MODEL=$(get_model "${1:-}")
+SEVERITY=$(claude -p --model "$MODEL" "$(cat << 'PROMPT'
 N+1 queries trovate:
 PROMPT
 )${N_PLUS_ONE:-'(nessun risultato)'}$(cat << 'PROMPT'

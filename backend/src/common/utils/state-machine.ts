@@ -8,6 +8,7 @@ export function validateTransition(
   allowedTransitions: TransitionMap,
   entityName: string,
 ): void {
+  // eslint-disable-next-line security/detect-object-injection
   const allowed = allowedTransitions[currentStatus];
   if (!allowed || !allowed.includes(newStatus)) {
     throw new BadRequestException(

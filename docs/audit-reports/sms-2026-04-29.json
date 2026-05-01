@@ -1,0 +1,160 @@
+{
+  "eventId": "audit-sms-20260429",
+  "timestamp": "2026-04-29T00:00:00Z",
+  "module": "sms",
+  "skill": "audit-modulo",
+  "phases": {
+    "reconnaissance": "2026-04-29T00:00:00Z",
+    "execution": "2026-04-29T00:00:00Z",
+    "classification": "2026-04-29T00:00:00Z",
+    "completed": "2026-04-29T00:00:00Z"
+  },
+  "riskScore": 73,
+  "mutationScore": "N/A",
+  "coverage": {
+    "stmts": 92.85,
+    "branches": 71.62,
+    "note": "Branch gap is 100% CEILING (NestJS decorators + class-validator metadata). Functional logic coverage: service 95.81%, controller endpoints 96.59%, processor process() 100%."
+  },
+  "scores": {
+    "sicurezza": 7,
+    "performance": 8,
+    "resilienza": 7,
+    "osservabilita": 7,
+    "test": 8,
+    "architettura": 7
+  },
+  "findings": [
+    {
+      "findingId": "F-001",
+      "severity": "BLOCCANTE",
+      "file": "sms-thread.service.ts",
+      "lines": "100-160",
+      "axis": "sicurezza",
+      "description": "SMS message body stored in plaintext DB — PII not encrypted at rest. GDPR Art.32 violation and CLAUDE.md PII rule violation.",
+      "remediation": "Injected EncryptionService (AES-256-CBC). encrypt() on write (sendMessage, receiveInbound), decrypt() on read (getMessages, idempotency return).",
+      "status": "RESOLVED",
+      "traceability": ["GDPR Art.32", "OWASP A02:2021", "CLAUDE.md PII Rule"]
+    },
+    {
+      "findingId": "F-002",
+      "severity": "ALTA",
+      "file": "sms-thread.service.ts",
+      "lines": "91-116",
+      "axis": "architettura",
+      "description": "sendMessage() writes to DB only — no Twilio API call. Outbound SMS never actually sent to customer's phone.",
+      "remediation": "Inject TwilioClient (or a TwilioService wrapper), call messages.create() after DB insert. Add twilioSid to created message record.",
+      "status": "OPEN",
+      "traceability": ["OWASP A04:2021 (Insecure Design)"]
+    },
+    {
+      "findingId": "F-003",
+      "severity": "ALTA",
+      "file": "sms-thread.controller.ts",
+      "lines": "127-175",
+      "axis": "sicurezza",
+      "description": "InboundSmsDto.tenantId accepted from untrusted Twilio webhook payload. A malicious actor who knows a valid twilioSid can spoof tenantId and inject messages into another tenant's thread.",
+      "remediation": "Remove tenantId from InboundSmsDto. Derive tenantId server-side: phoneHash → smsThread lookup → thread.tenantId. The phoneHash already uniquely identifies the thread+tenant.",
+      "status": "OPEN",
+      "traceability": ["OWASP A01:2025 (Broken Access Control)", "GDPR Art.5(1)(f) Integrity"]
+    },
+    {
+      "findingId": "F-004",
+      "severity": "MEDIA",
+      "file": "sms-thread.controller.ts",
+      "lines": "39-103",
+      "axis": "sicurezza",
+      "description": "SmsThreadController (JWT-protected) has no @Throttle() decorator. Authenticated endpoints GET /threads, GET /threads/:id/messages, POST /threads/:id/send are not rate-limited.",
+      "remediation": "Add @Throttle({ default: { ttl: 60000, limit: 100 } }) at class level on SmsThreadController.",
+      "status": "OPEN",
+      "traceability": ["OWASP A04:2021"]
+    },
+    {
+      "findingId": "F-005",
+      "severity": "MEDIA",
+      "file": "sms-thread.service.ts",
+      "lines": "167-190",
+      "axis": "resilienza",
+      "description": "getOrCreateThread has theoretical TOCTOU race: two parallel requests could both read null and both attempt create. Mitigated by DB unique constraint [tenantId, customerId, phoneHash] and BullMQ serial processing for inbound.",
+      "remediation": "ACCEPTED_PATTERN — DB constraint prevents actual data corruption. Advisory lock not warranted given BullMQ serialization.",
+      "status": "ACCEPTED",
+      "traceability": []
+    },
+    {
+      "findingId": "F-006",
+      "severity": "BASSA",
+      "file": "sms-thread.controller.ts",
+      "lines": "145",
+      "axis": "sicurezza",
+      "description": "HMAC URL built from req.protocol + req.get('host'). If reverse proxy does not forward X-Forwarded-Proto, protocol may be 'http' while Twilio signed 'https', causing HMAC mismatch and false webhook rejections.",
+      "remediation": "Document: NestJS app must set app.set('trust proxy', 1) or equivalent. Add runtime check with warn if NODE_ENV=production and X-Forwarded-Proto not present.",
+      "status": "OPEN",
+      "traceability": []
+    },
+    {
+      "findingId": "F-007",
+      "severity": "BASSA",
+      "file": "sms-thread.controller.ts",
+      "lines": "154-159",
+      "axis": "sicurezza",
+      "description": "HMAC-SHA1 used for Twilio webhook signature verification. SHA1 is deprecated per NIST SP 800-131A Rev.2 (2019). Twilio's new webhook security API supports SHA256.",
+      "remediation": "Migrate to HMAC-SHA256 using Twilio Webhook Validator v2 (requires opt-in on Twilio console). Low urgency: SHA1 not broken for HMAC-specific use case (collision attacks don't apply to HMAC mode).",
+      "status": "OPEN",
+      "traceability": ["NIST SP 800-131A"]
+    },
+    {
+      "findingId": "F-008",
+      "severity": "BASSA",
+      "file": "sms-inbound.processor.ts",
+      "lines": "24",
+      "axis": "osservabilita",
+      "description": "Logger.log includes tenantId in message string. Reduces log security posture — tenantId is internal identifier that should not appear in application logs.",
+      "remediation": "Remove tenantId from log message. Use structured logger context or omit entirely: this.logger.log(`Processed job ${job.id}`).",
+      "status": "OPEN",
+      "traceability": ["ISO 27001 A.12.4"]
+    }
+  ],
+  "ceilingsAccepted": [
+    {
+      "file": "sms-thread.service.ts",
+      "lines": "10-16,18",
+      "reason": "NestJS @Injectable() multi-parameter constructor generates Istanbul BRDA entries via __decorate/__metadata. Not coverable in unit tests.",
+      "branchGap": "18.19%"
+    },
+    {
+      "file": "sms-thread.controller.ts",
+      "lines": "29,43-44,52-54",
+      "reason": "NestJS multi-decorator class (@ApiTags, @ApiBearerAuth, @UseGuards, @Roles, @Controller) and @InjectQueue constructor generate Istanbul BRDA entries.",
+      "branchGap": "25%"
+    },
+    {
+      "file": "sms-inbound.processor.ts",
+      "lines": "8-12,18-21",
+      "reason": "@Processor() + extends WorkerHost + super() call in constructor generate Istanbul BRDA entries. BullMQ WorkerHost class hierarchy not coverable in NestJS unit test module.",
+      "branchGap": "50%"
+    },
+    {
+      "file": "sms.dto.ts",
+      "lines": "8-11,19-22,25",
+      "reason": "class-validator decorators (@IsString, @IsOptional, @MaxLength, @IsUUID) generate decorator metadata BRDA entries. DTO decorator branches cannot be covered in unit tests.",
+      "branchGap": "50%"
+    }
+  ],
+  "testsTotal": 43,
+  "testsPassed": 43,
+  "quality": {
+    "assertionDensity": "2.3+",
+    "mockOnceEnforcement": true,
+    "callVerification": true,
+    "flakiness": "0% (3/3 runs)",
+    "determinism": true
+  },
+  "sources": [
+    "WebSearch: NestJS SMS security vulnerabilities 2024 2025 2026",
+    "WebSearch: GDPR PCI-DSS NestJS SMS 2025 2026",
+    "WebSearch: NestJS SMS best practices performance patterns 2026",
+    "Twilio Webhook Security docs: https://www.twilio.com/docs/usage/security",
+    "CLAUDE.md PII rule",
+    "docs/09-ERROR-CATALOG.md"
+  ]
+}

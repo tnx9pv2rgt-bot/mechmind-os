@@ -106,6 +106,7 @@ describe('AuthService', () => {
                 JWT_EXPIRES_IN_SECONDS: '900',
                 JWT_2FA_SECRET: 'test-2fa-secret',
               };
+              // eslint-disable-next-line security/detect-object-injection
               return configMap[key] ?? defaultValue;
             }),
           },

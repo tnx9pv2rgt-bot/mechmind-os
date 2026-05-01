@@ -25,6 +25,8 @@ describe('PortalController', () => {
             getInspections: jest.fn(),
             getMaintenanceSchedule: jest.fn(),
             getInvoice: jest.fn(),
+            getInvoices: jest.fn(),
+            getInvoicePdf: jest.fn(),
             getNotifications: jest.fn(),
             markNotificationsRead: jest.fn(),
             getDocuments: jest.fn(),
@@ -42,6 +44,8 @@ describe('PortalController', () => {
             updateNotificationPreferences: jest.fn(),
             getMessages: jest.fn(),
             sendMessage: jest.fn(),
+            changePassword: jest.fn(),
+            getVehicleHistory: jest.fn(),
           },
         },
       ],
@@ -358,6 +362,128 @@ describe('PortalController', () => {
       await controller.sendMessage(mockReq, { body: 'Hello' });
 
       expect(service.sendMessage).toHaveBeenCalledWith('cust-001', 'tenant-001', 'Hello');
+    });
+  });
+
+  describe('getInvoices', () => {
+    it('should delegate to service with parsed pagination params', async () => {
+      const response = { data: [], meta: { total: 5, page: 1, limit: 20 } };
+      service.getInvoices.mockResolvedValueOnce(response as never);
+
+      const result = await controller.getInvoices(
+        mockReq,
+        '2',
+        '10',
+        '2026',
+        '2026-01-01',
+        '2026-12-31',
+        'PAID',
+      );
+
+      expect(service.getInvoices).toHaveBeenCalledWith('cust-001', 'tenant-001', {
+        page: 2,
+        limit: 10,
+        year: 2026,
+        from: '2026-01-01',
+        to: '2026-12-31',
+        status: 'PAID',
+      });
+      expect(result.meta.page).toBe(1);
+    });
+
+    it('should use default values when pagination params missing', async () => {
+      const response = { data: [], meta: { total: 0, page: 1, limit: 20 } };
+      service.getInvoices.mockResolvedValueOnce(response as never);
+
+      await controller.getInvoices(mockReq);
+
+      expect(service.getInvoices).toHaveBeenCalledWith('cust-001', 'tenant-001', {
+        page: 1,
+        limit: 20,
+        year: undefined,
+        from: undefined,
+        to: undefined,
+        status: undefined,
+      });
+    });
+  });
+
+  describe('getInvoicePdf', () => {
+    it('should set PDF response headers and send buffer', async () => {
+      const mockRes = {
+        set: jest.fn().mockReturnThis(),
+        end: jest.fn(),
+      };
+      const pdfBuffer = Buffer.from('PDF content');
+      service.getInvoicePdf.mockResolvedValueOnce({
+        buffer: pdfBuffer,
+        filename: 'invoice-001.pdf',
+      } as never);
+
+      await controller.getInvoicePdf(mockReq, 'inv-001', mockRes as any);
+
+      expect(service.getInvoicePdf).toHaveBeenCalledWith('inv-001', 'cust-001', 'tenant-001');
+      expect(mockRes.set).toHaveBeenCalledWith({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="invoice-001.pdf"',
+        'Content-Length': pdfBuffer.length,
+      });
+      expect(mockRes.end).toHaveBeenCalledWith(pdfBuffer);
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should validate password length and throw if too short', async () => {
+      const body = { currentPassword: 'oldpass', newPassword: 'short' };
+
+      await expect(controller.changePassword(mockReq, body)).rejects.toThrow(
+        'La nuova password deve avere almeno 8 caratteri',
+      );
+      expect(service.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should validate password complexity and throw if missing requirements', async () => {
+      const body = { currentPassword: 'oldpass', newPassword: 'onlysmallletters' };
+
+      await expect(controller.changePassword(mockReq, body)).rejects.toThrow(
+        'La password deve contenere almeno una maiuscola, una minuscola e un numero',
+      );
+      expect(service.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should delegate to service with valid password', async () => {
+      const body = {
+        currentPassword: 'OldPass123',
+        newPassword: 'NewPass123',
+      };
+      service.changePassword.mockResolvedValueOnce({
+        success: true,
+        message: 'Password updated',
+      } as never);
+
+      const result = await controller.changePassword(mockReq, body);
+
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'cust-001',
+        'tenant-001',
+        'OldPass123',
+        'NewPass123',
+      );
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('getVehicleHistory', () => {
+    it('should delegate to service with vehicleId', async () => {
+      const response = {
+        data: { vehicle: { id: 'veh-001' }, timeline: [] },
+      };
+      service.getVehicleHistory.mockResolvedValueOnce(response as never);
+
+      const result = await controller.getVehicleHistory(mockReq, 'veh-001');
+
+      expect(service.getVehicleHistory).toHaveBeenCalledWith('veh-001', 'cust-001', 'tenant-001');
+      expect(result.data.vehicle.id).toBe('veh-001');
     });
   });
 });

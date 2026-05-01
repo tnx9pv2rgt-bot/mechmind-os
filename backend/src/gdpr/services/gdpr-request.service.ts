@@ -335,6 +335,7 @@ export class GdprRequestService {
   ): Promise<DataSubjectRequestResponse> {
     const request = await this.getRequest(requestId, tenantId);
 
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     validateTransition(request.status, status, GDPR_REQUEST_TRANSITIONS, 'GDPR request');
 
     const updateData: Record<string, unknown> = { status };

@@ -4,6 +4,8 @@
  * Starts a PostgreSQL Testcontainer and applies Prisma migrations.
  * The DATABASE_URL is stored in a temp file so globalTeardown can access it.
  */
+// @ts-nocheck
+
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { execSync } from 'child_process';
 import * as fs from 'fs';

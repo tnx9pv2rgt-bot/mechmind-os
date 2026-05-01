@@ -4,6 +4,8 @@
  * Verifies that PII is encrypted in the database,
  * audit logs are created, and soft deletes work.
  */
+// @ts-nocheck
+
 import { INestApplication } from '@nestjs/common';
 import {
   createRealDbApp,

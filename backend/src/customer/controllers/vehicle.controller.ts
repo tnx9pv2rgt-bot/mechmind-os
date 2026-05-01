@@ -94,6 +94,7 @@ export class VehicleController {
   @Get(':id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Vehicle ID' })
   @ApiResponse({ status: 200, type: VehicleResponseDto })
   async getVehicle(

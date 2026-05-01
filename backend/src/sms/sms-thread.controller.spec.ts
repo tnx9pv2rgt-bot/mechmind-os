@@ -81,7 +81,7 @@ describe('SmsThreadController', () => {
 
   describe('getMessages', () => {
     it('should return messages with meta', async () => {
-      service.getMessages.mockResolvedValue({ messages: [mockMessage], total: 1 });
+      service.getMessages.mockResolvedValueOnce({ messages: [mockMessage], total: 1 });
 
       const result = await controller.getMessages(TENANT_ID, 'thread-001', 50, 0);
 
@@ -92,16 +92,52 @@ describe('SmsThreadController', () => {
       });
       expect(service.getMessages).toHaveBeenCalledWith(TENANT_ID, 'thread-001', 50, 0);
     });
+
+    it('should return empty list when no messages', async () => {
+      service.getMessages.mockResolvedValueOnce({ messages: [], total: 0 });
+
+      const result = await controller.getMessages(TENANT_ID, 'thread-001');
+
+      expect(result).toEqual({ success: true, data: [], meta: { total: 0 } });
+    });
+
+    it('should use pagination params', async () => {
+      service.getMessages.mockResolvedValueOnce({ messages: [], total: 100 });
+
+      await controller.getMessages(TENANT_ID, 'thread-001', 25, 50);
+
+      expect(service.getMessages).toHaveBeenCalledWith(TENANT_ID, 'thread-001', 25, 50);
+    });
   });
 
   describe('sendMessage', () => {
     it('should delegate to service and return wrapped response', async () => {
-      service.sendMessage.mockResolvedValue(mockMessage);
+      service.sendMessage.mockResolvedValueOnce(mockMessage);
 
       const result = await controller.sendMessage(TENANT_ID, 'thread-001', { body: 'Hello' });
 
       expect(result).toEqual({ success: true, data: mockMessage });
       expect(service.sendMessage).toHaveBeenCalledWith(TENANT_ID, 'thread-001', 'Hello');
+    });
+
+    it('should handle empty body message', async () => {
+      const emptyMsg = { ...mockMessage, body: '' };
+      service.sendMessage.mockResolvedValueOnce(emptyMsg);
+
+      const result = await controller.sendMessage(TENANT_ID, 'thread-001', { body: '' });
+
+      expect(result).toEqual({ success: true, data: emptyMsg });
+      expect(service.sendMessage).toHaveBeenCalledWith(TENANT_ID, 'thread-001', '');
+    });
+
+    it('should handle very long message body', async () => {
+      const longBody = 'x'.repeat(1000);
+      const longMsg = { ...mockMessage, body: longBody };
+      service.sendMessage.mockResolvedValueOnce(longMsg);
+
+      const result = await controller.sendMessage(TENANT_ID, 'thread-001', { body: longBody });
+
+      expect(result).toEqual({ success: true, data: longMsg });
     });
   });
 });
@@ -140,7 +176,7 @@ describe('SmsWebhookController', () => {
   });
 
   describe('receiveInbound', () => {
-    it('should delegate to service receiveInbound', async () => {
+    it('should delegate to service receiveInbound with tenantId', async () => {
       const mockMsg = { id: 'msg-002', direction: 'INBOUND', body: 'Hey' };
       service.receiveInbound.mockResolvedValue(mockMsg);
 
@@ -151,6 +187,7 @@ describe('SmsWebhookController', () => {
           twilioSid: 'SM999',
         },
         '',
+        'tenant-123',
         {
           protocol: 'http',
           get: () => 'localhost:3000',
@@ -160,7 +197,27 @@ describe('SmsWebhookController', () => {
       );
 
       expect(result).toEqual({ success: true, data: mockMsg });
-      expect(service.receiveInbound).toHaveBeenCalledWith('hash123', 'Hey', 'SM999');
+      expect(service.receiveInbound).toHaveBeenCalledWith('tenant-123', 'hash123', 'Hey', 'SM999');
+    });
+
+    it('should throw UnauthorizedException when X-Tenant-Id header missing', async () => {
+      const result = controller.receiveInbound(
+        {
+          phoneHash: 'hash123',
+          body: 'Hey',
+          twilioSid: 'SM999',
+        },
+        '',
+        '',
+        {
+          protocol: 'http',
+          get: () => 'localhost:3000',
+          originalUrl: '/v1/sms/webhook/inbound',
+          body: {},
+        } as unknown as import('express').Request,
+      );
+
+      await expect(result).rejects.toThrow('Missing X-Tenant-Id header');
     });
   });
 });
@@ -192,6 +249,21 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     configService = mod.get(ConfigService) as jest.Mocked<ConfigService>;
   });
 
+  it('should throw UnauthorizedException when X-Tenant-Id header missing', async () => {
+    configService.get.mockReturnValue('my-auth-token');
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, '', '', req),
+    ).rejects.toThrow('Missing X-Tenant-Id header');
+  });
+
   it('should throw UnauthorizedException when auth token set but signature missing', async () => {
     configService.get.mockReturnValue('my-auth-token');
 
@@ -203,7 +275,12 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     } as unknown as import('express').Request;
 
     await expect(
-      controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, '', req),
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        '',
+        'tenant-1',
+        req,
+      ),
     ).rejects.toThrow('Missing X-Twilio-Signature header');
   });
 
@@ -241,7 +318,12 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     } as unknown as import('express').Request;
 
     await expect(
-      controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, wrongSig, req),
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        wrongSig,
+        'tenant-1',
+        req,
+      ),
     ).rejects.toThrow('Invalid Twilio signature');
   });
 
@@ -258,14 +340,15 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       '',
+      'tenant-1',
       req,
     );
 
     expect(result.success).toBe(true);
-    expect(service.receiveInbound).toHaveBeenCalledWith('h', 'msg', 'SM1');
+    expect(service.receiveInbound).toHaveBeenCalledWith('tenant-1', 'h', 'msg', 'SM1');
   });
 
-  it('should accept valid Twilio signature', async () => {
+  it('should accept valid Twilio signature with tenantId', async () => {
     const authToken = 'test-auth-token';
     configService.get.mockReturnValue(authToken);
 
@@ -298,10 +381,169 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       expectedSig,
+      'tenant-1',
       req,
     );
 
     expect(result.success).toBe(true);
-    expect(service.receiveInbound).toHaveBeenCalled();
+    expect(service.receiveInbound).toHaveBeenCalledWith('tenant-1', 'h', 'msg', 'SM1');
+  });
+
+  it('should handle inbound SMS without twilioSid', async () => {
+    const mockMsg = { id: 'msg-003', direction: 'INBOUND', body: 'No SID' };
+    service.receiveInbound.mockResolvedValueOnce(mockMsg);
+
+    const result = await controller.receiveInbound(
+      {
+        phoneHash: 'hash456',
+        body: 'No SID',
+      },
+      '',
+      'tenant-456',
+      {
+        protocol: 'http',
+        get: () => 'localhost:3000',
+        originalUrl: '/v1/sms/webhook/inbound',
+        body: {},
+      } as unknown as import('express').Request,
+    );
+
+    expect(result).toEqual({ success: true, data: mockMsg });
+    expect(service.receiveInbound).toHaveBeenCalledWith(
+      'tenant-456',
+      'hash456',
+      'No SID',
+      undefined,
+    );
+  });
+
+  it('should accept request with all optional parameters (limit and offset)', async () => {
+    const authToken = 'test-token';
+    configService.get.mockReturnValue(authToken);
+
+    const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
+    const url = 'https://localhost:3002/v1/sms/webhook/inbound';
+
+    const crypto = require('crypto');
+    const data =
+      url +
+      Object.keys(bodyParams)
+        .sort()
+        .reduce(
+          (acc: string, key: string) => acc + key + bodyParams[key as keyof typeof bodyParams],
+          '',
+        );
+    const expectedSig = crypto
+      .createHmac('sha1', authToken)
+      .update(Buffer.from(data, 'utf-8'))
+      .digest('base64');
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: bodyParams,
+    } as unknown as import('express').Request;
+
+    service.receiveInbound.mockResolvedValueOnce({ id: 'msg-x' });
+
+    const result = await controller.receiveInbound(
+      { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+      expectedSig,
+      'tenant-1',
+      req,
+    );
+
+    expect(result.success).toBe(true);
+    expect(service.receiveInbound).toHaveBeenCalledTimes(1);
+  });
+
+  it('should log warning when TWILIO_AUTH_TOKEN not configured', async () => {
+    const loggerSpy = jest.spyOn(controller['logger'], 'warn');
+    configService.get.mockReturnValue(undefined);
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    service.receiveInbound.mockResolvedValueOnce({ id: 'msg-x' });
+
+    await controller.receiveInbound(
+      { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+      '',
+      'tenant-1',
+      req,
+    );
+
+    expect(loggerSpy).toHaveBeenCalled();
+  });
+
+  it('should log error when X-Tenant-Id header missing', async () => {
+    const loggerSpy = jest.spyOn(controller['logger'], 'error');
+    configService.get.mockReturnValue(undefined);
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    const result = controller.receiveInbound(
+      { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+      '',
+      '',
+      req,
+    );
+
+    await expect(result).rejects.toThrow('Missing X-Tenant-Id header');
+    expect(loggerSpy).toHaveBeenCalled();
+  });
+
+  it('should log warning when invalid signature detected', async () => {
+    const loggerSpy = jest.spyOn(controller['logger'], 'warn');
+    const authToken = 'test-token';
+    configService.get.mockReturnValue(authToken);
+
+    const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
+    const url = 'https://localhost:3002/v1/sms/webhook/inbound';
+
+    const crypto = require('crypto');
+    const data =
+      url +
+      Object.keys(bodyParams)
+        .sort()
+        .reduce(
+          (acc: string, key: string) => acc + key + bodyParams[key as keyof typeof bodyParams],
+          '',
+        );
+    const realSig = crypto
+      .createHmac('sha1', authToken)
+      .update(Buffer.from(data, 'utf-8'))
+      .digest('base64');
+    // Create a wrong signature of the same byte-length
+    const wrongSig = Buffer.from('x'.repeat(Buffer.from(realSig, 'base64').length)).toString(
+      'base64',
+    );
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: bodyParams,
+    } as unknown as import('express').Request;
+
+    const result = controller.receiveInbound(
+      { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+      wrongSig,
+      'tenant-1',
+      req,
+    );
+
+    await expect(result).rejects.toThrow('Invalid Twilio signature');
+    expect(loggerSpy).toHaveBeenCalled();
   });
 });

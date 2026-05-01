@@ -4,6 +4,16 @@
 # Equivalente a: /chaos-test
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+# shellcheck source=.claude/scripts/_error-handler.sh
+source "$(dirname "$0")/_error-handler.sh"
+
+mkdir -p ./.claude/telemetry
+
+# Atomic RAM staging: scratch dir per output diagnostici prima di promuoverli al report
+STAGING_DIR=$(mktemp -d -t chaos-stage.XXXXXX 2>/dev/null || echo "/tmp/chaos-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 FAILURE="${1:-redis}"
 

@@ -35,6 +35,7 @@ export class GdprWebhookController {
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Ricevi richiesta data subject da form esterno' })
   @ApiResponse({ status: 202, description: 'Richiesta accettata e in coda' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
   @ApiResponse({ status: 401, description: 'Firma webhook non valida' })
   async handleDataSubjectRequest(

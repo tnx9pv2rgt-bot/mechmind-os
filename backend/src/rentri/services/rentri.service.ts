@@ -131,6 +131,7 @@ export class RentriService {
     });
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async updateEntry(
     tenantId: string,
     id: string,

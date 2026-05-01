@@ -123,6 +123,7 @@ export class RentriController {
   @Get('fir/:id')
   @ApiOperation({ summary: 'Dettaglio singolo FIR' })
   @ApiResponse({ status: 200, description: 'Dettaglio FIR' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'FIR non trovato' })
   async getFir(
     @CurrentUser('tenantId') tenantId: string,

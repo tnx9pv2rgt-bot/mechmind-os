@@ -469,6 +469,7 @@ export class LicensePlateService {
     const byProvider = {} as Record<OcrProvider, { count: number; avgConfidence: number }>;
     for (const provider of Object.values(OcrProvider)) {
       const providerDetections = detections.filter(d => d.provider === provider);
+      // eslint-disable-next-line security/detect-object-injection
       byProvider[provider] = {
         count: providerDetections.length,
         avgConfidence:
@@ -483,6 +484,7 @@ export class LicensePlateService {
     const byHour: Record<number, number> = {};
     for (const detection of detections) {
       const hour = detection.processedAt.getHours();
+      // eslint-disable-next-line security/detect-object-injection
       byHour[hour] = (byHour[hour] || 0) + 1;
     }
 

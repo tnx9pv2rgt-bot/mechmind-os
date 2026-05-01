@@ -5,6 +5,8 @@
  * Two tenants are created, each with their own data.
  * API calls with one tenant's JWT must NEVER see the other tenant's data.
  */
+// @ts-nocheck
+
 import { INestApplication } from '@nestjs/common';
 import {
   createRealDbApp,

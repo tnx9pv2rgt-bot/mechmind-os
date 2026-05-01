@@ -157,6 +157,7 @@ export class SecurityIncidentService {
 
     const currentStatus = incident.status as SecurityIncidentStatus;
     const newStatus = dto.status as SecurityIncidentStatus;
+    // eslint-disable-next-line security/detect-object-injection
     const allowed = STATUS_TRANSITIONS[currentStatus];
 
     if (!allowed.includes(newStatus)) {

@@ -116,9 +116,15 @@ export class SmsWebhookController {
   async receiveInbound(
     @Body() dto: InboundSmsDto,
     @Headers('x-twilio-signature') twilioSignature: string,
+    @Headers('x-tenant-id') tenantId: string,
     @Req() req: Request,
   ): Promise<{ success: boolean; data: unknown }> {
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
+
+    if (!tenantId) {
+      this.logger.error('Missing X-Tenant-Id header in Twilio webhook');
+      throw new UnauthorizedException('Missing X-Tenant-Id header');
+    }
 
     if (authToken) {
       if (!twilioSignature) {
@@ -131,6 +137,7 @@ export class SmsWebhookController {
         url +
         Object.keys(params)
           .sort()
+          // eslint-disable-next-line security/detect-object-injection
           .reduce((acc, key) => acc + key + params[key], '');
       const expectedSignature = crypto
         .createHmac('sha1', authToken)
@@ -148,6 +155,7 @@ export class SmsWebhookController {
     }
 
     const message = await this.smsThreadService.receiveInbound(
+      tenantId,
       dto.phoneHash,
       dto.body,
       dto.twilioSid,

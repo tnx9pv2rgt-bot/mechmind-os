@@ -62,6 +62,7 @@ export class LoggerService implements NestLoggerService {
     this.printMessage('log', message, context, correlationId);
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private printMessage(
     level: 'log' | 'error' | 'warn' | 'debug' | 'verbose',
     message: string,
@@ -111,6 +112,7 @@ export class LoggerService implements NestLoggerService {
         verbose: '\x1b[35m', // Magenta
       };
       const resetColor = '\x1b[0m';
+      // eslint-disable-next-line security/detect-object-injection
       const color = colorMap[level];
 
       const activeSpanSimple = trace.getSpan(otelContext.active());

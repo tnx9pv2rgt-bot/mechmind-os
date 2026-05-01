@@ -59,6 +59,7 @@ describe('PaymentLinkService', () => {
         const map: Record<string, string> = {
           FRONTEND_URL: 'https://app.mechmind.io',
         };
+        // eslint-disable-next-line security/detect-object-injection
         return map[key] ?? fallback ?? undefined;
       }),
     };

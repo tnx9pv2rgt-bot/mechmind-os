@@ -101,6 +101,7 @@ export class EstimateController {
   @Get(':id')
   @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get estimate by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Estimate ID' })
   @ApiResponse({ status: 200, type: EstimateResponseDto })
   async findById(

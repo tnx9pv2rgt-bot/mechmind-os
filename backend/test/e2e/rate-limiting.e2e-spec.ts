@@ -3,6 +3,7 @@
  *
  * Tests: login rate limiting after multiple failures, API rate limits
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

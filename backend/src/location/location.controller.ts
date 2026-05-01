@@ -69,8 +69,10 @@ export class LocationController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Dettaglio sede per ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'ID della sede' })
   @ApiResponse({ status: 200, description: 'Dettaglio sede', type: LocationResponseDto })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Sede non trovata' })
   async findById(
     @CurrentUser('tenantId') tenantId: string,

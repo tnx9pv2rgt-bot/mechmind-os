@@ -79,6 +79,7 @@ export class FleetController {
   @ApiOperation({ summary: 'Get fleet by ID with vehicles' })
   @ApiParam({ name: 'id', description: 'Fleet ID' })
   @ApiResponse({ status: 200, description: 'Fleet details', type: FleetResponseDto })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Fleet not found' })
   async findById(
     @CurrentUser('tenantId') tenantId: string,

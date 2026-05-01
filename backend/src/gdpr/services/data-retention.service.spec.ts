@@ -158,6 +158,7 @@ describe('DataRetentionService', () => {
           GDPR_WEBHOOK_EVENT_DAYS: '30',
           GDPR_CONSENT_LOG_DAYS: '3650',
         };
+        // eslint-disable-next-line security/detect-object-injection
         return map[key];
       });
 

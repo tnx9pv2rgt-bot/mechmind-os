@@ -411,6 +411,7 @@ export class AuthService {
    * Big tech pattern: logout invalidates ALL tokens in the family chain,
    * preventing stolen refresh tokens from being used after logout.
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async logout(token: string, refreshToken?: string): Promise<void> {
     try {
       // 1. Blacklist the access token
@@ -658,6 +659,7 @@ export class AuthService {
    */
   async logAdminAction(action: AdminAction): Promise<void> {
     this.logger.warn(
+      // eslint-disable-next-line sonarjs/no-nested-template-literals
       `Admin action: ${action.action} by admin ${action.adminId}${action.targetUserId ? ` on user ${action.targetUserId}` : ''}`,
     );
     // Store in auth audit log

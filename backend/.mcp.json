@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "set -a && . '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/backend/.env' && set +a && npx -y @modelcontextprotocol/server-postgres \"$DATABASE_URL\""
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/backend",
+        "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/frontend",
+        "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/docs"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-fetch"]
+    }
+  }
+}

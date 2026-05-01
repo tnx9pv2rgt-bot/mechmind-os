@@ -6,6 +6,7 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 BUG="${1:-}"
@@ -56,7 +57,16 @@ Scrivi un test NestJS che riproduce questo bug. Deve fallire prima del fix.
 PROMPT
 )" 2>/dev/null || echo "⚠️  Claude CLI non disponibile")
 
-  echo "$TEST_CODE" > "/tmp/bug-test.spec.ts"
+  # Stage in /tmp + extract-and-discard validation
+  echo "$TEST_CODE" > "/tmp/bug-test.staged.spec.ts"
+  # shellcheck disable=SC2016
+  sed -i.bak -E '/^```(typescript|ts)?$/d; /^```$/d' "/tmp/bug-test.staged.spec.ts" 2>/dev/null || true
+  if grep -qE "import|describe|it|test|expect" "/tmp/bug-test.staged.spec.ts"; then
+    cp "/tmp/bug-test.staged.spec.ts" "/tmp/bug-test.spec.ts"
+  else
+    echo "⚠️  Output Claude non è codice di test valido (extract-and-discard rejection)"
+    echo "// fallback empty test" > "/tmp/bug-test.spec.ts"
+  fi
 
   # STEP 2: Esegui test RED
   echo "## 2. RED Phase — Test Execution"

@@ -5,21 +5,8 @@
       "command": "/bin/sh",
       "args": [
         "-c",
-        "npx -y @modelcontextprotocol/server-postgres \"$DATABASE_URL\""
-      ],
-      "env": {}
-    },
-    "github": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-github"]
-    },
-    "fetch": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-fetch"]
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/mcp-filesystem"]
+        "set -a && . '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/backend/.env' && set +a && npx -y @modelcontextprotocol/server-postgres \"$DATABASE_URL\""
+      ]
     }
   }
 }

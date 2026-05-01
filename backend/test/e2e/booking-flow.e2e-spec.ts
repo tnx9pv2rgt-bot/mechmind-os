@@ -3,6 +3,7 @@
  *
  * Tests: create booking -> confirm -> check notification
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

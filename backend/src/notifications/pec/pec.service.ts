@@ -69,6 +69,7 @@ export class PecService {
 
       this.logger.log(`Nodemailer transport configured for ${this.smtpHost}:${this.smtpPort}`);
     } catch (error) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to initialize PEC transporter: ${errorMessage}`);
       this.transporter = null;

@@ -452,6 +452,7 @@ export class EstimateService {
     });
 
     if (!estimate) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Preventivo non trovato');
     }
 
@@ -461,6 +462,7 @@ export class EstimateService {
   /**
    * Process line-by-line approval/rejection from customer via public token
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async processApproval(
     token: string,
     approvals: LineApprovalInput[],

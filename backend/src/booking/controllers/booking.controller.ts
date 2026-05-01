@@ -243,6 +243,7 @@ export class BookingController {
   @Get(':id')
   @Roles(UserRole.MECHANIC, UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get booking by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Booking ID' })
   async getBooking(@CurrentTenant() tenantId: string, @Param('id') bookingId: string) {
     const booking = await this.bookingService.findById(tenantId, bookingId);

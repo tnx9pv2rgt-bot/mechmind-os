@@ -1,10 +1,11 @@
-#\!/bin/bash
+#!/bin/bash
 # Shared error handler for all .claude/scripts/*.sh
 
 handle_error() {
   local EXIT_CODE=$1
   local LINE_NUMBER=$2
-  local SCRIPT_NAME=$(basename "$0")
+  local SCRIPT_NAME
+  SCRIPT_NAME=$(basename "$0")
 
   DIAGNOSIS_FILE="./.claude/telemetry/error-$(date +%Y%m%d-%H%M%S).md"
   mkdir -p "./.claude/telemetry"

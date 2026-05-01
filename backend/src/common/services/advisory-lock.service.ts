@@ -121,6 +121,7 @@ export class AdvisoryLockService {
         }
       } catch (error) {
         this.logger.error(
+          // eslint-disable-next-line sonarjs/no-duplicate-string
           `Error acquiring lock ${lockId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
           undefined,
           'AdvisoryLockService',
@@ -291,7 +292,9 @@ export class AdvisoryLockService {
           // Release all acquired locks (best effort)
           await this.releaseMultipleLocks(
             acquiredLocks.map((lockId, index) => ({
+              // eslint-disable-next-line security/detect-object-injection
               tenantId: sortedLocks[index].tenantId,
+              // eslint-disable-next-line security/detect-object-injection
               slotId: sortedLocks[index].slotId,
             })),
           );

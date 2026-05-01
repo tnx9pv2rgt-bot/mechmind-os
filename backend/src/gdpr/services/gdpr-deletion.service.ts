@@ -531,6 +531,7 @@ export class GdprDeletionService {
         errors: errors.length > 0 ? errors : undefined,
       };
     } catch (error) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Failed to anonymize customer ${customerId}: ${errorMessage}`);
       errors.push(errorMessage);
@@ -555,6 +556,7 @@ export class GdprDeletionService {
    * @param tenantId - Tenant ID
    * @returns Deletion result
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async deleteCallRecordings(
     customerId: string,
     tenantId: string,

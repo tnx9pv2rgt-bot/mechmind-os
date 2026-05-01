@@ -3,6 +3,7 @@
  *
  * Provides helpers to set up multi-tenant test scenarios.
  */
+// @ts-nocheck
 
 export const TEST_TENANT_ID = 'tenant-test-001';
 export const TEST_TENANT_SLUG = 'test-shop';

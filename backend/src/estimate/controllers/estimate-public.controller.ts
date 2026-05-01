@@ -78,6 +78,7 @@ export class EstimatePublicController {
 
   @Get(':token')
   @ApiOperation({ summary: 'Visualizza preventivo tramite token pubblico' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'token', description: 'Token di approvazione' })
   @ApiResponse({ status: 200, description: 'Preventivo con righe' })
   @ApiResponse({ status: 404, description: 'Token non trovato o scaduto' })

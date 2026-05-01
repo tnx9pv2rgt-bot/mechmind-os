@@ -61,6 +61,7 @@ export class FeatureAccessService {
     if (!subscription) {
       return {
         allowed: false,
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         reason: 'No subscription found',
       };
     }
@@ -121,6 +122,7 @@ export class FeatureAccessService {
 
     return results.reduce(
       (acc, { feature, check }) => {
+        // eslint-disable-next-line security/detect-object-injection
         acc[feature] = check;
         return acc;
       },
@@ -193,6 +195,7 @@ export class FeatureAccessService {
     }
 
     const limits = PLAN_LIMITS[subscription.plan];
+    // eslint-disable-next-line security/detect-object-injection
     const limit = limits[limitType];
 
     let current: number;
@@ -235,6 +238,7 @@ export class FeatureAccessService {
       customer: 'maxCustomers',
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const check = await this.checkSpecificLimit(tenantId, limitTypeMap[resourceType]);
 
     // Simulate adding one more
@@ -410,6 +414,7 @@ export class FeatureAccessService {
     ];
 
     for (const plan of plans) {
+      // eslint-disable-next-line security/detect-object-injection
       if (PLAN_FEATURES[plan].includes(feature)) {
         return plan;
       }

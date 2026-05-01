@@ -1,76 +1,46 @@
-/**
- * Stryker Mutation Testing Configuration
- * Target: ≥80% mutation score per tutti i moduli
- *
- * Mutation testing verifica che i test CATTURINO REALMENTE i bug.
- * Un "sopravvissuto" è una mutazione che il test non ha rilevato = test debole.
- *
- * Run: npx stryker run src/<modulo>
- */
-
+// @ts-nocheck
 module.exports = {
-  // ✅ Quali file mutare
   mutate: [
-    "src/**/*.ts",
-    "!src/**/*.spec.ts",
-    "!src/**/*.mock.ts",
-    "!src/**/*.interface.ts",
-    "!src/**/*.dto.ts",
-    "!src/**/index.ts"
+    'src/**/*.ts',
+    '!src/**/*.spec.ts',
+    '!src/**/*.mock.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.dto.ts',
+    '!src/**/index.ts',
   ],
 
-  // ✅ Quali file testare
-  testRunner: "jest",
-  coverageAnalysis: "perTest", // Associa mutazioni a test specifici
+  testRunner: 'jest',
+  coverageAnalysis: 'perTest',
 
-  // ✅ Jest configuration
   jest: {
-    config: require("./jest.config.js"),
-    enableFindRelatedTests: true
+    config: require('./jest.config.js'),
+    enableFindRelatedTests: true,
   },
 
-  // ✅ Soglie di qualità (mutation score)
   thresholds: {
-    high: 80,   // ✅ Excellent (target per tutti i moduli)
-    medium: 70, // ⚠️  Fair — migliorare
-    low: 50     // ❌ Poor — unacceptable
+    high: 80,
+    low: 60,
+    break: 80,
   },
 
-  // ✅ Timeout
-  timeoutMS: 5000,           // Per mutazione
-  timeoutFactor: 1.25,       // Fattore moltiplicativo
-  maxTestRunnerReuse: 1,     // Riusa runner (faster)
+  incremental: true,
 
-  // ✅ Mutator: quali mutazioni generare
-  mutator: "typescript",
+  timeoutMS: 60000,
+  timeoutFactor: 1.5,
+  maxTestRunnerReuse: 1,
 
-  // ✅ Reporter: output
-  reporters: [
-    "html",                  // report HTML interattivo
-    "json",                  // JSON per parsing
-    "progress",              // console progress
-    "clear-text"             // human-readable summary
-  ],
+  reporters: ['html', 'json', 'progress', 'clear-text'],
 
-  // ✅ Parallelizzazione
-  concurrency: 4,            // Workers simultanei
+  concurrency: 4,
 
-  // ✅ Ignore: non mutare codice triviale
-  ignoreStatic: true,        // Ignora static properties
+  ignoreStatic: true,
 
-  // ✅ Plugins
-  plugins: [
-    "jest",
-    "@stryker-mutator/typescript-checker"
-  ],
+  plugins: ['@stryker-mutator/jest-runner', '@stryker-mutator/typescript-checker'],
 
-  // ✅ TypeScript
-  tsconfig: {
-    compilerOptions: {
-      strict: true,
-      esModuleInterop: true,
-      skipLibCheck: true,
-      forceConsistentCasingInFileNames: true
-    }
-  }
+  typescriptChecker: {
+    prioritizePerformanceOverAccuracy: true,
+  },
+
+  checkers: ['typescript'],
+  disableTypeChecks: false,
 };

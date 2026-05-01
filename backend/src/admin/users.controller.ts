@@ -30,6 +30,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: 'Lista utenti del tenant' })
   @ApiResponse({ status: 200, description: 'Lista paginata utenti' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async findAll(
     @Req() req: AuthRequest,
@@ -73,6 +74,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Dettaglio utente per ID' })
   @ApiResponse({ status: 200, description: 'Dati utente' })
   @ApiResponse({ status: 401, description: 'Non autenticato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Utente non trovato' })
   async findOne(
     @Req() req: AuthRequest,
@@ -93,6 +95,7 @@ export class UsersController {
         updatedAt: true,
       },
     });
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     if (!user) throw new NotFoundException('User not found');
     return { success: true, data: user };
   }

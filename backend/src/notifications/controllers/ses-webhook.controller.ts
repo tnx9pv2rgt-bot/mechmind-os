@@ -80,7 +80,9 @@ export class SesWebhookController {
 
     let stringToSign = '';
     for (const field of fieldsToSign) {
+      // eslint-disable-next-line security/detect-object-injection
       if (message[field] !== undefined) {
+        // eslint-disable-next-line security/detect-object-injection
         stringToSign += `${field}\n${message[field] as string}\n`;
       }
     }
@@ -105,6 +107,7 @@ export class SesWebhookController {
 
     const valid = await this.verifySnsSignature(payload);
     if (!valid) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new UnauthorizedException('Invalid SNS signature');
     }
 
@@ -134,6 +137,7 @@ export class SesWebhookController {
     } catch (error) {
       this.logger.error(
         'Error processing bounce:',
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
     }
@@ -217,6 +221,7 @@ export class SesWebhookController {
       complained: 'FAILED',
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const mappedStatus = statusMap[status];
     if (!mappedStatus) return;
 

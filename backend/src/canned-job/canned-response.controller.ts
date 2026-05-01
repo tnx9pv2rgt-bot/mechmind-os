@@ -55,6 +55,7 @@ export class CannedResponseController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get canned response by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Canned Response ID' })
   async findById(
     @CurrentTenant() tenantId: string,

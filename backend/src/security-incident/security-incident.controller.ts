@@ -81,6 +81,7 @@ export class SecurityIncidentController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Dettaglio incidente di sicurezza' })
   @ApiResponse({ status: 200, description: 'Incidente restituito' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Incidente non trovato' })
   async findOne(
     @CurrentUser('tenantId') tenantId: string,

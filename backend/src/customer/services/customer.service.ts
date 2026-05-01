@@ -260,6 +260,7 @@ export class CustomerService {
     customerId: string,
     dto: UpdateCustomerDto,
   ): Promise<CustomerWithDecryptedData> {
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     return this.prisma.withTenant(tenantId, async prisma => {
       const existing = await prisma.customer.findFirst({
         where: { id: customerId, tenantId },

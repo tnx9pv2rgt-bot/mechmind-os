@@ -23,6 +23,7 @@ describe('MetabaseController', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string, defaultValue?: unknown) => {
+              // eslint-disable-next-line security/detect-object-injection
               return mockConfigValues[key] ?? defaultValue;
             }),
           },
@@ -99,8 +100,10 @@ describe('MetabaseController', () => {
           {
             provide: ConfigService,
             useValue: {
+              // eslint-disable-next-line sonarjs/function-return-type
               get: jest.fn((key: string, defaultValue?: unknown) => {
                 if (key === 'METABASE_EMBEDDING_ENABLED') return false;
+                // eslint-disable-next-line security/detect-object-injection
                 return mockConfigValues[key] ?? defaultValue;
               }),
             },
@@ -126,8 +129,10 @@ describe('MetabaseController', () => {
           {
             provide: ConfigService,
             useValue: {
+              // eslint-disable-next-line sonarjs/function-return-type
               get: jest.fn((key: string, defaultValue?: unknown) => {
                 if (key === 'METABASE_SECRET_KEY') return '';
+                // eslint-disable-next-line security/detect-object-injection
                 return mockConfigValues[key] ?? defaultValue;
               }),
             },
@@ -210,8 +215,10 @@ describe('MetabaseController', () => {
           {
             provide: ConfigService,
             useValue: {
+              // eslint-disable-next-line sonarjs/function-return-type
               get: jest.fn((key: string, defaultValue?: unknown) => {
                 if (key === 'METABASE_SECRET_KEY') return '';
+                // eslint-disable-next-line security/detect-object-injection
                 return mockConfigValues[key] ?? defaultValue;
               }),
             },

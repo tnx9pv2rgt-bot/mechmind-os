@@ -40,6 +40,7 @@ describe('MetricsController', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string, defaultValue: number) => {
+              // eslint-disable-next-line security/detect-object-injection
               return mockConfigValues[key] ?? defaultValue;
             }),
           },
@@ -434,6 +435,7 @@ describe('MetricsController', () => {
             useValue: {
               get: jest.fn((key: string, defaultValue: number) => {
                 if (key === 'UNIT_ECONOMICS_GROSS_MARGIN') return 0;
+                // eslint-disable-next-line security/detect-object-injection
                 return mockConfigValues[key] ?? defaultValue;
               }),
             },

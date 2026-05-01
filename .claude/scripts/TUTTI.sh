@@ -1,10 +1,12 @@
 #!/bin/bash
-# INVENTARIO: Lista tutti gli script disponibili con descrizione e parametri
-# Uso: bash TUTTI.sh
+# Descrizione: Inventario completo di tutti gli script disponibili in .claude/scripts/
+# Parametri: nessuno
+# Equivalente a: /help
 
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 echo "╔════════════════════════════════════════════════════════════════╗"

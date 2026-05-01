@@ -14,6 +14,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Create Data Subject Request DTO
  */
 export class CreateDataSubjectRequestDto {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'ID del tenant', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
   @IsUUID()
   tenantId: string;

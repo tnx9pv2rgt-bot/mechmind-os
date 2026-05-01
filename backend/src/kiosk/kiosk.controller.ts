@@ -20,8 +20,10 @@ export class KioskController {
 
   @Post('lookup')
   @ApiOperation({ summary: 'Cerca prenotazione per telefono o targa' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiHeader({ name: 'x-kiosk-key', required: true, description: 'Chiave API kiosk' })
   @ApiResponse({ status: 200, description: 'Prenotazioni trovate' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Chiave kiosk non valida' })
   @ApiResponse({ status: 400, description: 'Specificare phoneHash o licensePlate' })
   async lookup(

@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: '0 2 * * *'  # Nightly 02:00 UTC — load tests only
 
 jobs:
   backend:
@@ -168,6 +170,56 @@ jobs:
         run: npm run build
         working-directory: frontend
 
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          configPath: ./frontend/.lighthouserc.json
+        continue-on-error: true
+
+  # ─── Mutation Testing (Stryker) — solo su PR, dopo unit tests ───────────────
+  # Blocca merge se mutation score < 80% (stryker.conf.js: break=80)
+
+  mutation-testing:
+    name: Mutation Testing (Stryker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: backend
+    if: github.event_name == 'pull_request'
+
+    env:
+      DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-test-secret-do-not-use-in-production
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run Stryker mutation testing (incremental, PR diff only)
+        run: npx stryker run --incremental
+        working-directory: backend
+
+      - name: Upload Stryker HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stryker-mutation-report
+          path: backend/reports/mutation/
+
   # ─── Security Gates (MANDATORY — blocks merge on failure) ───
 
   security-gates:
@@ -234,5 +286,199 @@ jobs:
       - name: License compatibility check
         run: npx license-checker --failOn "GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0;LGPL-2.0;LGPL-2.1;LGPL-3.0" --start backend/
         continue-on-error: true
+
+  # ─── Livello 2+3: Integration + API Tests (real DB, mock Redis) ───────────
+  # Runs after unit tests pass. Tests: advisory lock, tenant isolation, HTTP contract.
+
+  backend-integration:
+    name: Backend Integration + API Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: mechmind
+          POSTGRES_PASSWORD: mechmind
+          POSTGRES_DB: mechmind_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mechmind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-integration-secret-minimum-32chars!
+      JWT_REFRESH_SECRET: ci-integration-refresh-minimum-32chars!
+      JWT_2FA_SECRET: ci-integration-2fa-secret-minimum-32chars!!
+      ENCRYPTION_KEY: ci-integration-enc-key-exactly-32chars!
+      NODE_ENV: test
+      LOG_LEVEL: error
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Prisma migrate deploy (schema sync)
+        run: npx prisma migrate deploy
+        working-directory: backend
+
+      - name: Livello 2 — Integration Tests (advisory lock, tenant isolation, state machine)
+        run: >
+          npx jest
+          --config jest.integration.config.js
+          --testPathPattern='\.integration\.spec\.ts$'
+          --forceExit --ci --bail --verbose
+        working-directory: backend
+
+      - name: Livello 3 — API Contract Tests (HTTP endpoints, roles, 404/403/409)
+        run: >
+          npx jest
+          --config jest.integration.config.js
+          --testPathPattern='\.api\.spec\.ts$'
+          --forceExit --ci --bail --verbose
+        working-directory: backend
+
+  # ─── Livello 5: Load Tests (k6) — NIGHTLY ONLY, non blocca PR ──────────────
+  # Esegue solo su schedule (2:00 UTC ogni notte). NON su push/PR.
+  # Threshold: p95 < 200ms, error rate < 1%.
+
+  nightly-load-tests:
+    name: Nightly Load Tests (k6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'schedule'
+    needs: backend
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: mechmind
+          POSTGRES_PASSWORD: mechmind
+          POSTGRES_DB: mechmind_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mechmind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-load-test-secret-minimum-32chars!!!
+      JWT_REFRESH_SECRET: ci-load-test-refresh-minimum-32chars!!
+      JWT_2FA_SECRET: ci-load-test-2fa-secret-minimum-32chars!!
+      ENCRYPTION_KEY: ci-load-test-enc-key-exactly-32chars!!!
+      NODE_ENV: test
+      LOG_LEVEL: error
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Prisma migrate deploy
+        run: npx prisma migrate deploy
+        working-directory: backend
+
+      - name: Build backend
+        run: npm run build
+        working-directory: backend
+
+      - name: Start backend server
+        run: node dist/main.js &
+        working-directory: backend
+
+      - name: Wait for backend health
+        run: npx wait-on http://localhost:3002/health --timeout 30000
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6 -y
+
+      - name: Generate load test JWT
+        id: jwt
+        run: |
+          TOKEN=$(node -e "
+            const jwt = require('jsonwebtoken');
+            const t = jwt.sign(
+              { sub: 'load-test-user:load-test-tenant', email: 'load@test.com',
+                role: 'ADMIN', tenantId: 'load-test-tenant', jti: 'lt-1' },
+              process.env.JWT_SECRET, { expiresIn: '1h' }
+            );
+            console.log(t);
+          ")
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Run k6 load test (50 users, 30s)
+        run: >
+          k6 run
+          --env BASE_URL=http://localhost:3002
+          --env JWT_TOKEN=${{ steps.jwt.outputs.token }}
+          --summary-export=k6-summary.json
+          backend/tests/load/booking.k6.js
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-test-results
+          path: k6-summary.json
 
   # Deploy to staging: push to 'staging' branch triggers auto-deploy on Render

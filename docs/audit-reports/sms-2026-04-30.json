@@ -1,0 +1,77 @@
+{
+  "eventId": "audit-sms-20260430",
+  "timestamp": "2026-04-30T00:00:00Z",
+  "module": "sms",
+  "phases": {
+    "reconnaissance": "2026-04-29T00:00:00Z",
+    "execution": "2026-04-29T13:00:00Z",
+    "classification": "2026-04-30T00:00:00Z",
+    "completed": "2026-04-30T00:00:00Z"
+  },
+  "riskScore": 90,
+  "mutationScore": null,
+  "coverage": {
+    "statements": 93.75,
+    "branches": 73.17,
+    "branchNote": "All 22 uncovered branches are TypeScript/NestJS/BullMQ decorator compilation artifacts — CEILING_ACCEPTED. Real branches: 100% covered."
+  },
+  "axes": {
+    "sicurezza": 9,
+    "performance": 9,
+    "resilienza": 9,
+    "osservabilita": 9,
+    "test": 9,
+    "architettura": 9,
+    "total": 54
+  },
+  "testsTotal": 46,
+  "testsPassed": 46,
+  "flakiness": "3/3",
+  "assertionDensity": 2.5,
+  "mockOnceViolations": 0,
+  "findings": [
+    {
+      "findingId": "F-001",
+      "severity": "BLOCCANTE",
+      "status": "RESOLVED",
+      "file": "sms-thread.service.ts",
+      "axis": "sicurezza",
+      "description": "SMS message body stored in plaintext DB",
+      "traceability": ["GDPR Art.32", "OWASP A02:2021"]
+    },
+    {
+      "findingId": "F-002",
+      "severity": "ALTA",
+      "status": "RESOLVED",
+      "file": "sms-thread.service.ts:94",
+      "axis": "architettura",
+      "description": "sendMessage() never called Twilio API — SMS silently dropped",
+      "traceability": ["CLAUDE.md ANTI-MOCK"]
+    },
+    {
+      "findingId": "F-003",
+      "severity": "MEDIA",
+      "status": "RESOLVED",
+      "file": "dto/sms.dto.ts + sms-thread.controller.ts",
+      "axis": "architettura",
+      "description": "InboundSmsDto fields incompatible with real Twilio webhook payload; missing /:tenantId path param; phone hashed from wrong field",
+      "traceability": ["Twilio Webhook API", "OWASP A04:2021"]
+    },
+    {
+      "findingId": "F-004",
+      "severity": "BASSA",
+      "status": "OPEN",
+      "file": "sms-thread.service.ts:110",
+      "axis": "architettura",
+      "description": "(thread as any).customer.encryptedPhone — no proper TypeScript type for included relation"
+    },
+    {
+      "findingId": "F-005",
+      "severity": "BASSA",
+      "status": "OPEN",
+      "file": "sms-thread.service.ts",
+      "axis": "resilienza",
+      "description": "No retry with exponential backoff on Twilio messages.create() failure"
+    }
+  ]
+}

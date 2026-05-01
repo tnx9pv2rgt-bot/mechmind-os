@@ -61,6 +61,7 @@ export class MembershipService {
     });
 
     if (!program) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Programma non trovato');
     }
 

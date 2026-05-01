@@ -121,6 +121,7 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         'Failed to connect to Redis Pub/Sub:',
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
       this.isConnected = false;

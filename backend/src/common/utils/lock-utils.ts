@@ -78,6 +78,7 @@ export function validateLockOrder(locks: LockIdentifier[]): LockIdentifier[] {
   // Check if original order matches sorted order
   const isOrdered = locks.every(
     (lock, index) =>
+      // eslint-disable-next-line security/detect-object-injection
       lock.tenantId === sorted[index].tenantId && lock.slotId === sorted[index].slotId,
   );
 

@@ -41,6 +41,7 @@ export class VehicleDocumentController {
   @Get()
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'List documents for a vehicle' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'vehicleId', description: 'Vehicle ID' })
   async list(@CurrentTenant() tenantId: string, @Param('vehicleId') vehicleId: string) {
     const docs = await this.service.list(tenantId, vehicleId);

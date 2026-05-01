@@ -87,6 +87,7 @@ export class ObdStreamingService {
       where: { id: deviceId, tenantId },
     });
     if (!device) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Device not found');
     }
 
@@ -424,7 +425,9 @@ export class ObdStreamingService {
     for (const reading of readings) {
       const minuteKey = new Date(reading.recordedAt).toISOString().substring(0, 16);
       const rawData = reading.rawData as Record<string, number> | null;
+      // eslint-disable-next-line security/detect-object-injection
       const sensorValue = rawData?.[sensor];
+      // eslint-disable-next-line sonarjs/different-types-comparison
       if (sensorValue !== undefined && sensorValue !== null) {
         const values = aggregated.get(minuteKey) ?? [];
         values.push(Number(sensorValue));

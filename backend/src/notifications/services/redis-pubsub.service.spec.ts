@@ -47,6 +47,7 @@ describe('RedisPubSubService', () => {
           useValue: {
             get: jest.fn(
               (key: string, defaultValue?: string | number | boolean) =>
+                // eslint-disable-next-line security/detect-object-injection
                 defaultConfig[key] ?? defaultValue,
             ),
           },
@@ -375,6 +376,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configWithUrl[key] ?? defaultValue,
               ),
             },
@@ -414,6 +416,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configMinimalUrl[key] ?? defaultValue,
               ),
             },
@@ -460,6 +463,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configWithBadUrl[key] ?? defaultValue,
               ),
             },
@@ -504,6 +508,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   tlsConfig[key] ?? defaultValue,
               ),
             },
@@ -620,6 +625,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   defaultConfig[key] ?? defaultValue,
               ),
             },
@@ -650,6 +656,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   defaultConfig[key] ?? defaultValue,
               ),
             },

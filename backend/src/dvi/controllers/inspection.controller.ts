@@ -136,6 +136,7 @@ export class InspectionController {
     FileInterceptor('file', {
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
       fileFilter: (req, file, cb) => {
+        // eslint-disable-next-line sonarjs/prefer-regexp-exec
         if (file.mimetype.match(/image\/(jpg|jpeg|png|webp)/)) {
           cb(null, true);
         } else {

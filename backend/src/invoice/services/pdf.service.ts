@@ -282,6 +282,7 @@ export class PdfService {
     return Buffer.from(html, 'utf-8');
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async generateWorkOrderPdf(workOrderId: string, tenantId: string): Promise<Buffer> {
     const wo = await this.prisma.workOrder.findFirst({
       where: { id: workOrderId, tenantId },

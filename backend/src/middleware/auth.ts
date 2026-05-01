@@ -90,6 +90,7 @@ export function extractTokenFromCookie(
   req: Request,
   cookieName: string = 'accessToken',
 ): string | null {
+  // eslint-disable-next-line security/detect-object-injection
   return req.cookies?.[cookieName] || null;
 }
 

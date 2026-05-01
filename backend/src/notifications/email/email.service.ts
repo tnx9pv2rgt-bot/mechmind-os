@@ -273,6 +273,7 @@ export class EmailService {
       };
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Error getting email status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return null;

@@ -14,9 +14,12 @@ export class SetRecoveryPhoneDto {
 }
 
 export class VerifyPhoneDto {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @IsString({ message: 'Il codice deve essere una stringa' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @Length(6, 6, { message: 'Il codice deve essere di 6 cifre' })
   @ApiProperty({
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     description: 'Codice OTP di 6 cifre ricevuto via SMS',
     example: '123456',
   })

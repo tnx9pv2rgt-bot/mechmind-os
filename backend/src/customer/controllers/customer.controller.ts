@@ -117,6 +117,7 @@ export class CustomerController {
   @Get(':id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get customer by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Customer ID' })
   async getCustomer(@CurrentTenant() tenantId: string, @Param('id') customerId: string) {
     const customer = await this.customerService.findById(tenantId, customerId);
@@ -208,9 +209,11 @@ export class CustomerController {
     };
   }
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @Get('vehicles/:vehicleId')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'vehicleId', description: 'Vehicle ID' })
   async getVehicle(@CurrentTenant() tenantId: string, @Param('vehicleId') vehicleId: string) {
     const vehicle = await this.vehicleService.findById(tenantId, vehicleId);

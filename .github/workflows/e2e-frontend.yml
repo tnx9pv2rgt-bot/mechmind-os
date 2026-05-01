@@ -1,0 +1,100 @@
+name: Frontend E2E Tests (Playwright)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: mechmind
+          POSTGRES_PASSWORD: mechmind
+          POSTGRES_DB: mechmind_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mechmind"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ci-e2e-secret-do-not-use-in-production-e2e
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      NODE_ENV: test
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright browsers (Chromium only for CI speed)
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Prisma migrate deploy
+        run: npx prisma migrate deploy
+        working-directory: backend
+
+      - name: Start backend server
+        run: node dist/main.js &
+        working-directory: backend
+        env:
+          PORT: 3002
+
+      - name: Wait for backend health
+        run: npx wait-on http://localhost:3002/health --timeout 30000
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test --project=chromium
+        working-directory: frontend
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Upload Playwright screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: frontend/e2e-screenshots/
+          retention-days: 3

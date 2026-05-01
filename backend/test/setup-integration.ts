@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Integration test setup
 // Requires a running PostgreSQL and Redis instance (use docker-compose.test.yml)
 

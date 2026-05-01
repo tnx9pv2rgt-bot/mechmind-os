@@ -4,6 +4,8 @@
  * Full lifecycle test on real PostgreSQL via Testcontainers.
  * Verifies FK integrity, status transitions, and data persistence.
  */
+// @ts-nocheck
+
 import { INestApplication } from '@nestjs/common';
 import {
   createRealDbApp,

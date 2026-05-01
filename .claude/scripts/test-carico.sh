@@ -4,6 +4,12 @@
 # Equivalente a: /test-carico
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+# shellcheck source=.claude/scripts/_error-handler.sh
+source "$(dirname "$0")/_error-handler.sh"
+
+mkdir -p ./.claude/telemetry
 
 ENDPOINT="${1:-/v1/booking/confirm}"
 

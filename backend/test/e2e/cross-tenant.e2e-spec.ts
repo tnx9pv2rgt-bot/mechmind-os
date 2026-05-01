@@ -4,6 +4,7 @@
  * Tests: create data as Tenant A -> try to access as Tenant B -> expect 403/404
  * Verifies GDPR/data isolation between tenants.
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import {

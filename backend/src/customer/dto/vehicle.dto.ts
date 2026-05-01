@@ -56,6 +56,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle notes',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'Previous accident on left side',
   })
   @IsOptional()

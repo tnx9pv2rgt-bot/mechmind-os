@@ -1,11 +1,13 @@
 #!/bin/bash
-# FASE 2: Sistema Antifragile — GameDay automatizzati
-# Testa resilienza con scenari combinati (non singoli guasti)
-# Misura degradazione, raccoglie post-mortem, genera regole architetturali
+# Descrizione: Sistema Antifragile — GameDay con hypothesis testing e auto-rollback (Netflix Chaos 2026)
+# Parametri: [scenario] (default: scenario-1)
+# Equivalente a: /chaos-test --combined
+# Testa resilienza con scenari combinati, misura degradazione P95, raccoglie post-mortem
 
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 SCENARIO="${1:-scenario-1}"
@@ -13,6 +15,10 @@ BACKEND_URL="${BACKEND_URL:-http://localhost:3002}"
 FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
 TELEMETRY_DIR="./.claude/telemetry"
 REPORT_FILE="$TELEMETRY_DIR/gameday-$(date +%Y%m%d-%H%M%S).md"
+
+# Atomic RAM staging: scratch dir per metriche P95 e post-mortem prima di promuoverli su disco
+STAGING_DIR=$(mktemp -d -t gameday-stage.XXXXXX 2>/dev/null || echo "/tmp/gameday-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 mkdir -p "$TELEMETRY_DIR"
 
@@ -75,7 +81,6 @@ measure_baseline() {
 
 # Validazione statistica (5 run)
 validate_thresholds() {
-  local test_name="$1"
   local p95_baseline="$2"
   local error_baseline="$3"
 
@@ -104,13 +109,13 @@ validate_thresholds() {
   echo "  📊 Sotto stress: P95=${P95_AVG}s, Error=${ERROR_AVG}%"
 
   # Calcola degrado percentuale
-  P95_DEGRADATION=$(echo "scale=1; ($P95_AVG - $p95_baseline) / $p95_baseline * 100" | bc 2>/dev/null || echo "0")
-  ERROR_DEGRADATION=$(echo "scale=1; ($ERROR_AVG - $error_baseline) / ($error_baseline + 1) * 100" | bc 2>/dev/null || echo "0")
+  P95_DEGRADATION=$(awk "BEGIN {printf \"%.1f\", ($P95_AVG - $p95_baseline) / ($p95_baseline + 0.001) * 100}" 2>/dev/null || echo "0")
+  ERROR_DEGRADATION=$(awk "BEGIN {printf \"%.1f\", ($ERROR_AVG - $error_baseline) / ($error_baseline + 1) * 100}" 2>/dev/null || echo "0")
 
   echo "  📈 Degrado: P95=${P95_DEGRADATION}%, Error=${ERROR_DEGRADATION}%"
 
   # Verifica soglie (20% degrado, 5% error rate)
-  if (( $(echo "$P95_DEGRADATION > 20" | bc -l 2>/dev/null) )) || (( $(echo "$ERROR_AVG > 5" | bc -l 2>/dev/null) )); then
+  if awk "BEGIN {exit !($P95_DEGRADATION > 20)}" || awk "BEGIN {exit !($ERROR_AVG > 5)}"; then
     echo "  🔴 SOGLIA SUPERATA — avvio auto-rollback"
     return 1
   else
@@ -279,7 +284,7 @@ scenario_2() {
 
     echo ""
     echo "### Fase 3: Degradazione misurata"
-    echo "- P95: ${P95_S}s (Δ $(echo "scale=2; $P95_S - $P95_B" | bc 2>/dev/null || echo "?")s)"
+    echo "- P95: ${P95_S}s (Δ $(awk "BEGIN {printf \"%.2f\", $P95_S - $P95_B}")s)"
     echo "- Error rate: ${ERRORS_S}% (Δ $((ERRORS_S - ERRORS_B))pp)"
     echo "- GDPR export: tutti falliti (cascade failure)"
     echo ""
@@ -380,7 +385,7 @@ scenario_3() {
 
     echo ""
     echo "### Fase 3: Degradazione misurata"
-    echo "- P95: ${P95_S}s (Δ $(echo "scale=2; $P95_S - $P95_B" | bc 2>/dev/null || echo "?")s — GRAVE)"
+    echo "- P95: ${P95_S}s (Δ $(awk "BEGIN {printf \"%.2f\", $P95_S - $P95_B}")s — GRAVE)"
     echo "- Error rate: ${ERRORS_S}% (Δ $((ERRORS_S - ERRORS_B))pp — Bookings non rispondono)"
     echo "- Lock holder: A (timeout, lock still held)"
     echo "- Waiters: B, C (indefinite wait → connection pool exhaustion)"

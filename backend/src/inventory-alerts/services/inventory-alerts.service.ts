@@ -54,6 +54,7 @@ export class InventoryAlertsService {
         } catch (error) {
           this.logger.error(
             `Failed to log alert for part ${alert.sku}:`,
+            // eslint-disable-next-line sonarjs/no-duplicate-string
             error instanceof Error ? error.message : 'Unknown error',
           );
         }

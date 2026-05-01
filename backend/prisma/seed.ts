@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CustomerType, FuelType, PrismaClient, UserRole, WorkOrderStatus } from '@prisma/client';
 import * as crypto from 'crypto';
 

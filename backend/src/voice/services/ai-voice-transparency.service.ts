@@ -42,6 +42,7 @@ export class AIVoiceTransparencyService {
 
   async markVoiceCallAIGenerated(callId: string, tenantId: string): Promise<void> {
     if (!callId || !tenantId) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new BadRequestException('callId and tenantId are required');
     }
 
@@ -73,6 +74,7 @@ export class AIVoiceTransparencyService {
       );
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Failed to mark call as AI-generated: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;

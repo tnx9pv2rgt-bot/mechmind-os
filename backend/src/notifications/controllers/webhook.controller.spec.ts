@@ -393,6 +393,7 @@ describe('NotificationWebhookController', () => {
       const sortedKeys = Object.keys(payload).sort();
       let data = webhookUrl;
       for (const key of sortedKeys) {
+        // eslint-disable-next-line security/detect-object-injection
         data += key + payload[key];
       }
       const validSignature = crypto.createHmac('sha1', authToken).update(data).digest('base64');

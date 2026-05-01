@@ -3,6 +3,7 @@
  *
  * Tests: full CRUD cycle for customers with validation
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

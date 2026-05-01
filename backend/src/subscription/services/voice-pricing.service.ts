@@ -147,6 +147,7 @@ export class VoicePricingService {
     const calculation = this.calculateOptimalPricing();
 
     this.logger.log(
+      // eslint-disable-next-line sonarjs/no-nested-template-literals
       `Costo reale: €${calculation.costPerMinuteEur}/min (${calculation.providerBreakdown.map(p => `${p.name}: $${p.costPerMinuteUsd}`).join(', ')})`,
     );
     this.logger.log(

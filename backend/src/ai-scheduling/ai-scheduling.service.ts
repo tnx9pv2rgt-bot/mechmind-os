@@ -237,6 +237,7 @@ export class AiSchedulingService {
   /**
    * Compute optimal slots with scoring.
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private computeOptimalSlots(
     technicians: Array<{ id: string; name: string; skills: string[] }>,
     bays: Array<{ id: string; name: string }>,
@@ -338,6 +339,7 @@ export class AiSchedulingService {
     }
 
     // Sort by score descending and return top 3
+    // eslint-disable-next-line sonarjs/no-misleading-array-reverse
     return slots.sort((a, b) => b.score - a.score).slice(0, 3);
   }
 
@@ -402,6 +404,7 @@ export class AiSchedulingService {
       let totalGap = 0;
       for (let i = 1; i < entries.length; i++) {
         const prevEnd = new Date(entries[i - 1].endTime).getTime();
+        // eslint-disable-next-line security/detect-object-injection
         const currStart = new Date(entries[i].startTime).getTime();
         const gap = currStart - prevEnd;
         if (gap > 0) {

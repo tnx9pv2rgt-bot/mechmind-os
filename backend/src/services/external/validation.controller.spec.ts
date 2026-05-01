@@ -35,6 +35,7 @@ describe('ValidationController', () => {
                 NODE_ENV: 'test',
                 REDIS_URL: 'redis://localhost:6379',
               };
+              // eslint-disable-next-line security/detect-object-injection
               return config[key] ?? undefined;
             }),
           },

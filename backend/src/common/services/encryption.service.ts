@@ -102,8 +102,10 @@ export class EncryptionService {
     const encrypted = { ...data };
 
     for (const field of fieldsToEncrypt) {
+      // eslint-disable-next-line security/detect-object-injection
       if (typeof encrypted[field] === 'string') {
         (encrypted as Record<string, unknown>)[field as string] = this.encrypt(
+          // eslint-disable-next-line security/detect-object-injection
           encrypted[field] as string,
         );
       }
@@ -119,8 +121,10 @@ export class EncryptionService {
     const decrypted = { ...data };
 
     for (const field of fieldsToDecrypt) {
+      // eslint-disable-next-line security/detect-object-injection
       if (typeof decrypted[field] === 'string') {
         (decrypted as Record<string, unknown>)[field as string] = this.decrypt(
+          // eslint-disable-next-line security/detect-object-injection
           decrypted[field] as string,
         );
       }

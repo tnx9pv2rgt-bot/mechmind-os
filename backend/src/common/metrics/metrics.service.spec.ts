@@ -117,9 +117,11 @@ describe('MetricsService', () => {
       const expectedValues = [0, 0.5, 1];
 
       for (let i = 0; i < states.length; i++) {
+        // eslint-disable-next-line security/detect-object-injection
         service.recordCircuitBreakerState('service-' + i, states[i]);
         const metrics = await service.getMetrics();
         expect(metrics).toContain(
+          // eslint-disable-next-line security/detect-object-injection
           `circuit_breaker_state{service="service-${i}"} ${expectedValues[i]}`,
         );
       }

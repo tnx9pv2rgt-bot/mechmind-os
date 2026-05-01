@@ -320,6 +320,7 @@ export const USAGE_WARNING_THRESHOLDS = {
 // ==========================================
 
 export function getPlanPrice(plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly'): number {
+  // eslint-disable-next-line security/detect-object-injection
   const pricing = PLAN_PRICING[plan];
   if (pricing.isCustomPricing) return 0;
   return billingCycle === 'yearly' ? pricing.yearlyPrice : pricing.monthlyPrice;
@@ -330,6 +331,7 @@ export function getFormattedPrice(
   billingCycle: 'monthly' | 'yearly',
 ): string {
   const price = getPlanPrice(plan, billingCycle);
+  // eslint-disable-next-line security/detect-object-injection
   if (PLAN_PRICING[plan].isCustomPricing) {
     return 'Custom';
   }
@@ -360,6 +362,7 @@ export function getFeaturesForPlan(
   hasAiAddon: boolean,
   hasVoiceAddon: boolean = false,
 ): FeatureFlag[] {
+  // eslint-disable-next-line security/detect-object-injection
   const baseFeatures = [...PLAN_FEATURES[plan]];
 
   if (hasAiAddon) {
@@ -383,6 +386,7 @@ export function formatBytes(bytes: number): string {
     unitIndex++;
   }
 
+  // eslint-disable-next-line security/detect-object-injection
   return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
 

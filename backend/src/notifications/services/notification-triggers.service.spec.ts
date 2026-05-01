@@ -1529,6 +1529,7 @@ describe('NotificationTriggersService', () => {
 
       for (const { handler, event } of events) {
         jest.clearAllMocks();
+        // eslint-disable-next-line security/detect-object-injection
         await (service as unknown as Record<string, (...args: unknown[]) => Promise<void>>)[
           handler
         ](event);

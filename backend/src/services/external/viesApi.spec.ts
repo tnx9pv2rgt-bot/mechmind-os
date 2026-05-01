@@ -36,6 +36,7 @@ describe('ViesApiService', () => {
     const values = { ...defaults, ...overrides };
 
     return new ViesApiService({
+      // eslint-disable-next-line security/detect-object-injection
       get: (key: string) => values[key],
     } as ConfigService);
   };

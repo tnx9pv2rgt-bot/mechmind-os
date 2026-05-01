@@ -14,6 +14,7 @@ import { CustomerType, ContactChannel, CustomerSource } from '@prisma/client';
 export class CreateCustomerDto {
   @ApiProperty({
     description: 'Customer phone number',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: '+390123456789',
   })
   @IsString()
@@ -22,6 +23,7 @@ export class CreateCustomerDto {
 
   @ApiPropertyOptional({
     description: 'Customer email',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'customer@example.com',
   })
   @IsOptional()
@@ -94,6 +96,7 @@ export class CreateCustomerDto {
 
   @ApiPropertyOptional({
     description: 'Customer notes',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'Preferred contact time: morning',
   })
   @IsOptional()

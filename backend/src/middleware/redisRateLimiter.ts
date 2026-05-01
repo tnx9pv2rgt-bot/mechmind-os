@@ -397,6 +397,7 @@ function getPresetConfig(name: string): RateLimitConfig {
     api: RedisRateLimiterMiddleware.API_GENERAL_LIMIT,
   };
 
+  // eslint-disable-next-line security/detect-object-injection
   return presets[name] || RedisRateLimiterMiddleware.API_GENERAL_LIMIT;
 }
 

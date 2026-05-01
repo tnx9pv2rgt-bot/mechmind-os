@@ -89,6 +89,7 @@ describe('PasskeyService', () => {
                 WEBAUTHN_RP_NAME: 'MechMind OS',
                 WEBAUTHN_ORIGIN: 'http://localhost:3001',
               };
+              // eslint-disable-next-line security/detect-object-injection
               return map[key] ?? defaultValue;
             }),
           },

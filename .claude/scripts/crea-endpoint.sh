@@ -4,9 +4,28 @@
 # Equivalente a: /nuovo-endpoint
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+# shellcheck source=.claude/scripts/_error-handler.sh
+source "$(dirname "$0")/_error-handler.sh"
+
+mkdir -p ./.claude/telemetry
+
+# Atomic RAM staging: genera in /tmp, valida con extract-and-discard, copia su disco solo se OK
+STAGING_DIR=$(mktemp -d -t crea-endpoint.XXXXXX 2>/dev/null || echo "/tmp/crea-endpoint-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 MODULO="${1:-}"
 RISORSA="${2:-}"
+
+get_model() {
+  local module="$1"
+  case "$module" in
+    auth|booking|invoice|payment-link|subscription|gdpr) echo "opus" ;;
+    notifications|admin|analytics|common|dvi|iot|work-order|customer|estimate|voice) echo "sonnet" ;;
+    *) echo "sonnet" ;;
+  esac
+}
 
 if [ -z "$MODULO" ] || [ -z "$RISORSA" ]; then
   echo "Uso: crea-endpoint.sh <modulo> <risorsa>"
@@ -29,7 +48,8 @@ echo "✅ Pre-flight validation completata"
 
 # STEP 1: Genera codice
 echo "1️⃣  Generazione controller/service/DTO..."
-CODE=$(claude -p "$(cat << 'PROMPT'
+MODEL=$(get_model "$MODULO")
+CODE=$(claude -p --model "$MODEL" "$(cat << 'PROMPT'
 Modulo: 
 PROMPT
 )$MODULO$(cat << 'PROMPT'
@@ -48,12 +68,23 @@ Formato: NestJS pattern, @TenantId() decorator, Prisma queries con tenantId.
 PROMPT
 )" 2>/dev/null || echo "⚠️  Claude CLI non disponibile")
 
-# STEP 2: Salva file
+# STEP 2: Stage in /tmp + extract-and-discard validation + commit su disco
+echo "$CODE" > "$STAGING_DIR/${RISORSA}.staged.ts"
+
+# Extract code: ripulisce eventuali backtick markdown e verifica che il risultato sia codice TS valido
+# shellcheck disable=SC2016
+sed -i.bak -E '/^```(typescript|ts)?$/d; /^```$/d' "$STAGING_DIR/${RISORSA}.staged.ts" 2>/dev/null || true
+
+if [ ! -s "$STAGING_DIR/${RISORSA}.staged.ts" ] || ! grep -qE "import|describe|it|expect|@Controller|@Injectable|class|export" "$STAGING_DIR/${RISORSA}.staged.ts"; then
+  echo "❌ Output Claude non è codice TS valido (extract-and-discard rejection). Cleanup automatico."
+  exit 1
+fi
+
 mkdir -p "src/$MODULO"
-echo "$CODE" > "src/$MODULO/${RISORSA}.dto.ts"
-echo "$CODE" > "src/$MODULO/${RISORSA}.service.ts"
-echo "$CODE" > "src/$MODULO/${RISORSA}.controller.ts"
-echo "$CODE" > "src/$MODULO/${RISORSA}.spec.ts"
+cp "$STAGING_DIR/${RISORSA}.staged.ts" "src/$MODULO/${RISORSA}.dto.ts"
+cp "$STAGING_DIR/${RISORSA}.staged.ts" "src/$MODULO/${RISORSA}.service.ts"
+cp "$STAGING_DIR/${RISORSA}.staged.ts" "src/$MODULO/${RISORSA}.controller.ts"
+cp "$STAGING_DIR/${RISORSA}.staged.ts" "src/$MODULO/${RISORSA}.spec.ts"
 
 # STEP 3: Type check + test
 echo "2️⃣  Type check..."

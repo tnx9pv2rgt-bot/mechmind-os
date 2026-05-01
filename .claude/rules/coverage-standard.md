@@ -1,3 +1,10 @@
+---
+globs:
+  - "**/*.spec.ts"
+  - "**/*.test.ts"
+  - "**/*.spec.tsx"
+  - "**/*.test.tsx"
+---
 # Coverage Standard — 90/90 (World-Class)
 
 ## 🎯 UNIVERSAL REQUIREMENT

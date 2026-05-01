@@ -80,6 +80,24 @@ describe('PartsController', () => {
       });
       expect(result).toEqual(paginated);
     });
+
+    it('should parse page and limit parameters when provided', async () => {
+      const query = { category: 'brakes' };
+      const paginated = { data: [mockPart], total: 1, page: 2, limit: 50, pages: 1 };
+      service.getParts.mockResolvedValue(paginated as never);
+
+      const result = await controller.getParts(TENANT_ID, query as never, '2', '50');
+
+      expect(service.getParts).toHaveBeenCalledWith(TENANT_ID, {
+        category: 'brakes',
+        supplierId: undefined,
+        lowStock: undefined,
+        search: undefined,
+        page: 2,
+        limit: 50,
+      });
+      expect(result.page).toBe(2);
+    });
   });
 
   describe('getPart', () => {
@@ -137,6 +155,25 @@ describe('PartsController', () => {
         limit: undefined,
       });
       expect(result).toEqual(paginated);
+    });
+
+    it('should parse page and limit when provided', async () => {
+      const paginated = {
+        data: [],
+        total: 0,
+        page: 3,
+        limit: 100,
+        pages: 0,
+      };
+      service.getSuppliers.mockResolvedValue(paginated as never);
+
+      const result = await controller.getSuppliers(TENANT_ID, '3', '100');
+
+      expect(service.getSuppliers).toHaveBeenCalledWith(TENANT_ID, {
+        page: 3,
+        limit: 100,
+      });
+      expect(result.page).toBe(3);
     });
   });
 
@@ -204,6 +241,43 @@ describe('PartsController', () => {
       expect(service.getPurchaseOrders).toHaveBeenCalledWith(
         TENANT_ID,
         'PENDING',
+        undefined,
+        undefined,
+      );
+      expect(result).toEqual(paginated);
+    });
+
+    it('should parse pagination parameters when provided', async () => {
+      const paginated = {
+        data: [{ id: 'po-002', status: 'DELIVERED' }],
+        total: 1,
+        page: 2,
+        limit: 30,
+        pages: 1,
+      };
+      service.getPurchaseOrders.mockResolvedValue(paginated as never);
+
+      const result = await controller.getPurchaseOrders(TENANT_ID, 'DELIVERED' as never, '2', '30');
+
+      expect(service.getPurchaseOrders).toHaveBeenCalledWith(TENANT_ID, 'DELIVERED', 2, 30);
+      expect(result.page).toBe(2);
+    });
+
+    it('should handle undefined status parameter', async () => {
+      const paginated = {
+        data: [{ id: 'po-003', status: 'PENDING' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        pages: 1,
+      };
+      service.getPurchaseOrders.mockResolvedValue(paginated as never);
+
+      const result = await controller.getPurchaseOrders(TENANT_ID);
+
+      expect(service.getPurchaseOrders).toHaveBeenCalledWith(
+        TENANT_ID,
+        undefined,
         undefined,
         undefined,
       );

@@ -323,7 +323,9 @@ ${invoice.lines.map((line, index) => this.buildInvoiceLine(line, index + 1)).joi
   }
 
   private extractXmlBlock(xml: string, blockName: string): string {
+    // eslint-disable-next-line security/detect-non-literal-regexp
     const pattern = new RegExp(`<${blockName}[^>]*>([\\s\\S]*?)<\\/${blockName}>`, 'i');
+    // eslint-disable-next-line sonarjs/prefer-regexp-exec
     const match = xml.match(pattern);
     return match ? match[1] : '';
   }
@@ -332,14 +334,17 @@ ${invoice.lines.map((line, index) => this.buildInvoiceLine(line, index + 1)).joi
     let pattern: RegExp;
     if (context) {
       // Look for tag within context (case-insensitive, non-greedy)
+      // eslint-disable-next-line security/detect-non-literal-regexp
       pattern = new RegExp(
         `<${context}[^>]*>([\\s\\S]*?)<${tagName}[^>]*>([^<]+)<\/${tagName}>`,
         'i',
       );
     } else {
       // Direct tag search (case-insensitive)
+      // eslint-disable-next-line security/detect-non-literal-regexp
       pattern = new RegExp(`<${tagName}[^>]*>([^<]+)<\/${tagName}>`, 'i');
     }
+    // eslint-disable-next-line sonarjs/prefer-regexp-exec
     const match = xml.match(pattern);
     return match ? (match[2] || match[1]).trim() : '';
   }

@@ -68,6 +68,7 @@ export class ProductionBoardService {
   /**
    * Get the full board state: all service bays with current work orders, technicians, elapsed time
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async getBoardState(tenantId: string): Promise<BoardBay[]> {
     const bays = await this.prisma.serviceBay.findMany({
       where: {
@@ -218,6 +219,7 @@ export class ProductionBoardService {
       }),
     ]);
 
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     this.eventEmitter.emit('productionBoard.updated', {
       tenantId,
       action: 'assign',

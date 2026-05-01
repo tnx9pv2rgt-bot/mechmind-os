@@ -36,6 +36,7 @@ export const VOICE_PROVIDER_COSTS: ProviderCost[] = [
     name: 'Vapi',
     role: 'orchestration',
     costPerMinuteUsd: 0.05,
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     lastUpdated: '2026-03-31',
     pricingUrl: 'https://vapi.ai/pricing',
     notes: 'Base orchestration fee, fisso per tutte le chiamate',

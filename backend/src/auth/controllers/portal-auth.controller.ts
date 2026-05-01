@@ -222,6 +222,7 @@ export class PortalAuthController {
   @Throttle({ strict: { ttl: 60000, limit: 10 } })
   @ApiOperation({ summary: 'Login cliente portale' })
   @ApiResponse({ status: 200, description: 'Login riuscito' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Credenziali non valide' })
   @ApiBody({ type: PortalLoginDto })
   async login(@Body() dto: PortalLoginDto): Promise<CustomerTokenResponse> {

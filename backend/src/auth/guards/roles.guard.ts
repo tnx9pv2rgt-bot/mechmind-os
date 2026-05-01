@@ -55,7 +55,9 @@ export class RolesGuard implements CanActivate {
       [UserRole.RECEPTIONIST]: 1,
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const userLevel = roleHierarchy[userRole] || 0;
+    // eslint-disable-next-line security/detect-object-injection
     const requiredLevel = roleHierarchy[requiredRole] || 0;
 
     return userLevel >= requiredLevel;

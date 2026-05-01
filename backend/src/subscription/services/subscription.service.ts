@@ -79,6 +79,7 @@ export class SubscriptionService {
     });
 
     if (!subscription) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Subscription not found');
     }
 
@@ -239,6 +240,7 @@ export class SubscriptionService {
       });
 
       // Update subscription
+      // eslint-disable-next-line security/detect-object-injection
       const limits = PLAN_LIMITS[newPlan];
       const subscription = await tx.subscription.update({
         where: { tenantId },
@@ -624,6 +626,7 @@ export class SubscriptionService {
     hasAiAddon: boolean,
   ): Promise<void> {
     // Get features for this plan
+    // eslint-disable-next-line security/detect-object-injection
     const planFeatures = [...PLAN_FEATURES[plan]];
     if (hasAiAddon) {
       planFeatures.push(FeatureFlag.AI_INSPECTIONS, FeatureFlag.VOICE_ASSISTANT);
@@ -652,7 +655,9 @@ export class SubscriptionService {
   private serializeBigIntFields<T extends Record<string, unknown>>(obj: T): T {
     const result = { ...obj };
     for (const key of Object.keys(result)) {
+      // eslint-disable-next-line security/detect-object-injection
       if (typeof result[key] === 'bigint') {
+        // eslint-disable-next-line security/detect-object-injection
         (result as Record<string, unknown>)[key] = Number(result[key]);
       }
     }

@@ -4,8 +4,27 @@
 # Equivalente a: /genera-test-e2e
 
 set -euo pipefail
+trap "handle_error \$? \$LINENO" ERR
+
+# shellcheck source=.claude/scripts/_error-handler.sh
+source "$(dirname "$0")/_error-handler.sh"
+
+mkdir -p ./.claude/telemetry
+
+# Atomic RAM staging: genera in /tmp, valida con extract-and-discard, copia su disco solo se OK
+STAGING_DIR=$(mktemp -d -t genera-test-ui.XXXXXX 2>/dev/null || echo "/tmp/genera-test-ui-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 MODULO="${1:-}"
+
+get_model() {
+  local module="$1"
+  case "$module" in
+    auth|booking|invoice|payment-link|subscription|gdpr) echo "opus" ;;
+    notifications|admin|analytics|common|dvi|iot|work-order|customer|estimate|voice) echo "sonnet" ;;
+    *) echo "sonnet" ;;
+  esac
+}
 
 if [ -z "$MODULO" ]; then
   echo "Uso: genera-test-ui.sh <modulo>"
@@ -30,7 +49,8 @@ PAGE_FILES=$(find "app/$MODULO" -name "page.tsx" -o -name "layout.tsx" 2>/dev/nu
 
 # STEP 2: Genera test
 echo "2️⃣  Generazione test Playwright..."
-TEST_CODE=$(claude -p "$(cat << 'PROMPT'
+MODEL=$(get_model "$MODULO")
+TEST_CODE=$(claude -p --model "$MODEL" "$(cat << 'PROMPT'
 Pagina: app/
 PROMPT
 )$MODULO$(cat << 'PROMPT'
@@ -43,9 +63,18 @@ Genera un test Playwright che copra il golden path di questa pagina. Includi: lo
 PROMPT
 )" 2>/dev/null || echo "⚠️  Claude CLI non disponibile")
 
-# STEP 3: Salva test
+# STEP 3: Stage in /tmp + extract-and-discard validation + commit su disco
 mkdir -p e2e
-echo "$TEST_CODE" > "e2e/${MODULO}.spec.ts"
+echo "$TEST_CODE" > "$STAGING_DIR/${MODULO}.staged.spec.ts"
+# shellcheck disable=SC2016
+sed -i.bak -E '/^```(typescript|ts)?$/d; /^```$/d' "$STAGING_DIR/${MODULO}.staged.spec.ts" 2>/dev/null || true
+
+if [ ! -s "$STAGING_DIR/${MODULO}.staged.spec.ts" ] || ! grep -qE "import|test|expect|playwright|page\." "$STAGING_DIR/${MODULO}.staged.spec.ts"; then
+  echo "❌ Output Claude non è test Playwright valido (extract-and-discard rejection). Cleanup automatico."
+  exit 1
+fi
+
+cp "$STAGING_DIR/${MODULO}.staged.spec.ts" "e2e/${MODULO}.spec.ts"
 
 # STEP 4: Esegui test
 echo "3️⃣  Esecuzione test..."

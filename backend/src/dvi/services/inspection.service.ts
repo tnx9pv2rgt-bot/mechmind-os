@@ -139,6 +139,7 @@ export class InspectionService {
     });
 
     if (!inspection) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Inspection not found');
     }
 
@@ -441,6 +442,7 @@ export class InspectionService {
     // Dynamic import to keep PDFKit optional
     const PDFDocument = (await import('pdfkit')).default;
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     return new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -549,6 +551,7 @@ export class InspectionService {
     });
 
     if (!inspection) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Ispezione non trovata');
     }
 

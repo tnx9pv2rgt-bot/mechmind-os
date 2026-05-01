@@ -36,6 +36,7 @@ export class PredictiveMaintenanceService {
   /**
    * Predici i prossimi interventi per un veicolo basandosi su marca/modello/anno/km/storico
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async predictForVehicle(tenantId: string, vehicleId: string): Promise<PredictionResult[]> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { id: vehicleId, tenantId, deletedAt: null },

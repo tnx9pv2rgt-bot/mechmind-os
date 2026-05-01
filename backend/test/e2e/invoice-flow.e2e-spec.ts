@@ -3,6 +3,7 @@
  *
  * Tests: create invoice -> send -> mark paid -> refund
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

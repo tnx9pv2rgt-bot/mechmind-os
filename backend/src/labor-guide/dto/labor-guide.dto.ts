@@ -43,11 +43,13 @@ export class UpdateLaborGuideDto {
 }
 
 export class CreateLaborGuideEntryDto {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'Vehicle make' })
   @IsString()
   @IsNotEmpty()
   make: string;
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiPropertyOptional({ description: 'Vehicle model' })
   @IsOptional()
   @IsString()

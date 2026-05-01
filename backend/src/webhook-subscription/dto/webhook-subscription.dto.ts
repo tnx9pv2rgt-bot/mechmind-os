@@ -17,6 +17,7 @@ import { Type } from 'class-transformer';
 // ─── Enums ───
 
 export const WEBHOOK_EVENTS = [
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   'booking.created',
   'booking.cancelled',
   'booking.confirmed',

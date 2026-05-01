@@ -23,10 +23,12 @@ export { PartType };
 // ==========================================
 
 export class CreatePartDto {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'Codice SKU univoco del ricambio', example: 'FLT-OIL-5W30-1L' })
   @IsString()
   sku: string;
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'Nome del ricambio', example: 'Filtro olio motore' })
   @IsString()
   name: string;
@@ -112,6 +114,7 @@ export class CreatePartDto {
 
   @ApiPropertyOptional({
     description: 'ID del fornitore associato',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   })
   @IsOptional()
@@ -207,6 +210,7 @@ export class UpdatePartDto {
 export class CreateSupplierDto {
   @ApiProperty({
     description: 'Ragione sociale del fornitore',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'Autoricambi Bianchi S.r.l.',
   })
   @IsString()
@@ -421,6 +425,7 @@ export class PartResponseDto {
   @ApiProperty({ description: 'Scorta sotto il livello minimo', example: false })
   isLowStock: boolean;
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiPropertyOptional({ description: 'Nome del fornitore', example: 'Autoricambi Bianchi S.r.l.' })
   supplierName?: string;
 

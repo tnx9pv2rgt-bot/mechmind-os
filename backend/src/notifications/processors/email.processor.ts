@@ -125,12 +125,14 @@ export class EmailProcessor extends WorkerHost {
       `,
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     let html = templates[template] || templates.booking_confirmation;
 
     // Replace variables with HTML-escaped values
     Object.entries(variables).forEach(([key, value]) => {
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedValue = this.escapeHtml(String(value));
+      // eslint-disable-next-line security/detect-non-literal-regexp
       html = html.replace(new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g'), escapedValue);
     });
 

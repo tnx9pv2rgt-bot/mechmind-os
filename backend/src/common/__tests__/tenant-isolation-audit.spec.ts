@@ -114,6 +114,7 @@ function getAllTsFiles(dir: string): string[] {
   const results: string[] = [];
   let items: fs.Dirent[];
   try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     items = fs.readdirSync(dir, { withFileTypes: true });
   } catch {
     return results;
@@ -161,6 +162,7 @@ const ALLOWLISTED_LINES: Record<string, string> = {
 function isAllowlisted(filePath: string, lineNumber: number, functionContext: string): boolean {
   // Check file:line allowlist
   const key = `${filePath}:${lineNumber}`;
+  // eslint-disable-next-line security/detect-object-injection
   if (ALLOWLISTED_LINES[key]) return true;
 
   // Check pattern-based allowlist
@@ -183,6 +185,7 @@ describe('Tenant Isolation Audit', () => {
 
       let content: string;
       try {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         content = fs.readFileSync(file, 'utf8');
       } catch {
         continue;
@@ -192,9 +195,11 @@ describe('Tenant Isolation Audit', () => {
       const relativePath = path.relative(srcDir, file);
 
       for (let i = 0; i < lines.length; i++) {
+        // eslint-disable-next-line security/detect-object-injection
         const line = lines[i];
 
         for (const model of TENANT_MODELS) {
+          // eslint-disable-next-line security/detect-non-literal-regexp
           const regex = new RegExp(
             `prisma\\.${model}\\.(find|update|delete|create|upsert|count|aggregate)`,
           );

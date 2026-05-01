@@ -192,7 +192,9 @@ export class ReportingController {
     const safeFrom = sanitizeFilenameSegment(dto.from);
     const safeTo = sanitizeFilenameSegment(dto.to);
     const filename = `bookings_${safeFrom}_${safeTo}.${dto.format}`;
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     res.setHeader('Content-Type', dto.format === 'csv' ? 'text/csv' : 'application/json');
     res.send(data);
   }

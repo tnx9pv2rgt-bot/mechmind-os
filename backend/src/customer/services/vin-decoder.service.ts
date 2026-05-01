@@ -91,6 +91,7 @@ export class VinDecoderService {
 
       const mappedKey = VARIABLE_MAP[item.Variable];
       if (mappedKey) {
+        // eslint-disable-next-line security/detect-object-injection
         values[mappedKey] = item.Value || null;
       }
     }

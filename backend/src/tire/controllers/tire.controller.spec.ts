@@ -84,6 +84,23 @@ describe('TireController', () => {
       });
       expect(result).toEqual(paginated);
     });
+
+    it('should parse page and limit parameters', async () => {
+      const paginated = { data: [mockTireSet], total: 1, page: 2, limit: 50, pages: 1 };
+      service.findAll.mockResolvedValueOnce(paginated as never);
+      const query = {};
+
+      const result = await controller.findAll(TENANT_ID, query as never, '2', '50');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        vehicleId: undefined,
+        season: undefined,
+        isStored: undefined,
+        page: 2,
+        limit: 50,
+      });
+      expect(result.page).toBe(2);
+    });
   });
 
   describe('findById', () => {

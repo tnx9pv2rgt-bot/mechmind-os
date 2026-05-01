@@ -53,6 +53,7 @@ export class GooglePlacesService {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
     this.apiKey = this.configService.get('GOOGLE_PLACES_API_KEY') || '';
 
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
@@ -68,6 +69,7 @@ export class GooglePlacesService {
   /**
    * Autocomplete indirizzi (ottimizzato per Italia)
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async autocompleteAddress(
     input: string,
     options?: {
@@ -146,6 +148,7 @@ export class GooglePlacesService {
     } catch (error) {
       this.logger.error(
         'Autocomplete error:',
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
 
@@ -492,6 +495,7 @@ export class GooglePlacesService {
     };
 
     return (
+      // eslint-disable-next-line security/detect-object-injection
       mocks[placeId] || {
         street: 'Via Example',
         number: '1',
@@ -548,6 +552,7 @@ export async function autocompleteAddress(
         NODE_ENV: apiKey ? 'production' : 'development',
         REDIS_URL: 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);
@@ -567,6 +572,7 @@ export async function getPlaceDetails(placeId: string, apiKey?: string): Promise
         NODE_ENV: apiKey ? 'production' : 'development',
         REDIS_URL: 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);

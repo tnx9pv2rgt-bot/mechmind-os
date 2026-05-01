@@ -201,6 +201,7 @@ export class SessionService {
   /**
    * Parse User-Agent to extract device info (like Google does).
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   private parseUserAgent(ua: string): {
     deviceName: string;
     deviceType: string;

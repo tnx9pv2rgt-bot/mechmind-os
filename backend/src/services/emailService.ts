@@ -170,6 +170,7 @@ export async function sendVerificationEmail(
 ): Promise<EmailResult> {
   try {
     if (!SENDGRID_API_KEY) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new InternalServerErrorException('SendGrid API key non configurata');
     }
 
@@ -201,6 +202,7 @@ export async function sendVerificationEmail(
     return {
       success: false,
       error:
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : "Errore sconosciuto durante l'invio dell'email",
     };
   }

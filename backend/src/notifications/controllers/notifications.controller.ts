@@ -19,6 +19,7 @@ export class NotificationsController {
   @Get()
   @ApiOperation({ summary: 'Ottieni lista notifiche' })
   @ApiResponse({ status: 200, description: 'Lista notifiche restituita' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getNotifications(
     @CurrentTenant() tenantId: string,

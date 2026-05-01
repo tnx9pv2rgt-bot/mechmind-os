@@ -3,6 +3,7 @@
  *
  * Tests: admin access vs mechanic access vs receptionist access
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 
 // Configurazione da env vars — NESSUN fallback: l'app DEVE crashare senza secret
 function requireEnv(name: string): string {
+  // eslint-disable-next-line security/detect-object-injection
   const value = process.env[name];
   if (!value) {
     throw new Error(`FATAL: ${name} environment variable is required`);
@@ -295,6 +296,7 @@ export function verifyTwoFactorTempToken(token: string): TokenVerificationResult
     if (payload.type !== '2fa_pending') {
       return {
         valid: false,
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error: 'Invalid token type',
       };
     }

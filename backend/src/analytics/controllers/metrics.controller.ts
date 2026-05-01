@@ -150,6 +150,7 @@ Benchmark: <€150 for Year 1, <€80 for Year 2`,
     description: 'CAC metrics retrieved successfully',
     type: CACResponseDto,
   })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 403, description: 'Admin access required' })
   async getCAC(
     @Query('startDate') startDate?: string,

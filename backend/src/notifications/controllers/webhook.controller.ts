@@ -116,6 +116,7 @@ export class NotificationWebhookController {
       return { received: true };
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Error processing Resend webhook: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw new BadRequestException('Failed to process webhook');
@@ -203,6 +204,7 @@ export class NotificationWebhookController {
     @Body() payload: { From: string; To: string; Body: string; MessageSid: string },
   ): Promise<string> {
     if (!payload?.From || !payload?.Body) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
     }
 
@@ -396,6 +398,7 @@ export class NotificationWebhookController {
       const sortedKeys = Object.keys(params).sort();
       let data = url;
       for (const key of sortedKeys) {
+        // eslint-disable-next-line security/detect-object-injection
         data += key + (params[key] ?? '');
       }
       const expectedSignature = crypto.createHmac('sha1', authToken).update(data).digest('base64');

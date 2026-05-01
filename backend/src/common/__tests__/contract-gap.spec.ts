@@ -4,7 +4,9 @@ import * as path from 'path';
 /** Recursively collect files matching a pattern */
 function walkFiles(dir: string, ext: string[]): string[] {
   const results: string[] = [];
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   if (!fs.existsSync(dir)) return results;
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
@@ -24,6 +26,7 @@ function extractApiCalls(dirs: string[]): string[] {
   for (const dir of dirs) {
     const files = walkFiles(dir, ['.ts', '.tsx']);
     for (const file of files) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const content = fs.readFileSync(file, 'utf8');
       let match: RegExpExecArray | null;
       while ((match = apiCallRegex.exec(content)) !== null) {
@@ -49,17 +52,21 @@ describe('Contract Gap Analysis', () => {
       if (!call.startsWith('/api/')) continue;
 
       const routePath = path.join(frontendDir, 'app', call, 'route.ts');
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (fs.existsSync(routePath)) continue;
 
       // Check the call directory itself for dynamic child routes (e.g. /api/public/estimates → /api/public/estimates/[token]/route.ts)
       const callDir = path.join(frontendDir, 'app', call);
       let hasRoute = false;
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (fs.existsSync(callDir) && fs.statSync(callDir).isDirectory()) {
         try {
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
           const entries = fs.readdirSync(callDir);
           for (const entry of entries) {
             if (entry.startsWith('[')) {
               const dynamicRoute = path.join(callDir, entry, 'route.ts');
+              // eslint-disable-next-line security/detect-non-literal-fs-filename
               if (fs.existsSync(dynamicRoute)) {
                 hasRoute = true;
                 break;
@@ -74,12 +81,15 @@ describe('Contract Gap Analysis', () => {
 
       // Check parent directory for dynamic route
       const parentDir = path.join(frontendDir, 'app', path.dirname(call));
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (fs.existsSync(parentDir)) {
         try {
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
           const entries = fs.readdirSync(parentDir);
           for (const entry of entries) {
             if (entry.startsWith('[')) {
               const dynamicRoute = path.join(parentDir, entry, 'route.ts');
+              // eslint-disable-next-line security/detect-non-literal-fs-filename
               if (fs.existsSync(dynamicRoute)) {
                 hasRoute = true;
                 break;
@@ -94,16 +104,21 @@ describe('Contract Gap Analysis', () => {
       // Check grandparent too (for deeper nested dynamic routes)
       if (!hasRoute) {
         const grandparentDir = path.join(frontendDir, 'app', path.dirname(path.dirname(call)));
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         if (fs.existsSync(grandparentDir)) {
           try {
+            // eslint-disable-next-line security/detect-non-literal-fs-filename
             const entries = fs.readdirSync(grandparentDir);
             for (const entry of entries) {
               if (entry.startsWith('[')) {
                 const subDir = path.join(grandparentDir, entry);
+                // eslint-disable-next-line security/detect-non-literal-fs-filename
                 if (fs.existsSync(subDir) && fs.statSync(subDir).isDirectory()) {
+                  // eslint-disable-next-line security/detect-non-literal-fs-filename
                   const subEntries = fs.readdirSync(subDir);
                   for (const sub of subEntries) {
                     const deepRoute = path.join(subDir, sub, 'route.ts');
+                    // eslint-disable-next-line security/detect-non-literal-fs-filename
                     if (fs.existsSync(deepRoute)) {
                       hasRoute = true;
                       break;
@@ -138,6 +153,7 @@ describe('Contract Gap Analysis', () => {
 
     const mockFiles: string[] = [];
     for (const file of routeFiles) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const content = fs.readFileSync(file, 'utf8');
       if (mockPatterns.some(p => content.includes(p))) {
         mockFiles.push(file);
@@ -197,10 +213,12 @@ describe('Contract Gap Analysis', () => {
     const missingApiProperty: string[] = [];
 
     for (const file of dtoFiles) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const content = fs.readFileSync(file, 'utf8');
       const lines = content.split('\n');
 
       for (let i = 0; i < lines.length; i++) {
+        // eslint-disable-next-line security/detect-object-injection
         const line = lines[i].trim();
         if (
           line.match(/^\w+[?!]?\s*:\s*\w/) &&

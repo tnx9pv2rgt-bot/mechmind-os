@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 
 function requireEnvVar(name: string): string {
+  // eslint-disable-next-line security/detect-object-injection
   const value = process.env[name];
   if (!value) {
     throw new Error(`FATAL: ${name} environment variable is required`);

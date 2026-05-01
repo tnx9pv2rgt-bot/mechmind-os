@@ -289,7 +289,11 @@ describe('GdprWebhookController', () => {
         requestType: 'ERASURE',
         source: 'WEB_FORM',
       };
-      const wrongPayload = JSON.stringify({ tenantId: 'wrong', requestType: 'ACCESS', source: 'EMAIL' });
+      const wrongPayload = JSON.stringify({
+        tenantId: 'wrong',
+        requestType: 'ACCESS',
+        source: 'EMAIL',
+      });
       const sig = buildSignature(wrongPayload, GDPR_WEBHOOK_SECRET);
       const req = mockReq({ 'x-webhook-signature': sig });
 
@@ -347,9 +351,7 @@ describe('GdprWebhookController', () => {
         source: 'WEB_FORM',
       } as never;
 
-      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw when customerId is null (not undefined)', async () => {
@@ -362,9 +364,7 @@ describe('GdprWebhookController', () => {
         source: 'WEB_FORM',
       } as never;
 
-      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw when consentType is null (not undefined)', async () => {
@@ -377,9 +377,7 @@ describe('GdprWebhookController', () => {
         source: 'WEB_FORM',
       } as never;
 
-      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.handleConsentUpdate(body)).rejects.toThrow(BadRequestException);
     });
   });
 

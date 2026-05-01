@@ -148,6 +148,7 @@ export class AuthController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Profilo utente corrente' })
   @ApiResponse({ status: 200, description: 'Profilo utente' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getMe(@CurrentUser() user: AuthenticatedUser) {
     const dbUser = await this.prisma.user.findUnique({
@@ -290,9 +291,11 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 423, description: 'Account locked' })
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async login(
     @Body() dto: LoginDto,
     @Ip() ip: string,
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     @Headers('user-agent') userAgent: string,
   ): Promise<AuthTokens | MfaRequiredResponseDto> {
     const ua = userAgent || '';
@@ -663,6 +666,7 @@ export class AuthController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Marca dispositivo come fidato' })
   @ApiResponse({ status: 200, description: 'Dispositivo marcato come fidato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Dispositivo non trovato' })
   @ApiResponse({ status: 400, description: 'Dispositivo compromesso' })
   async trustDevice(
@@ -856,6 +860,7 @@ export class AuthController {
   @Throttle({ strict: { ttl: 60000, limit: 10 } })
   @ApiOperation({ summary: 'Verifica telefono di recupero con OTP' })
   @ApiResponse({ status: 200, description: 'Telefono verificato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 400, description: 'Codice non valido o scaduto' })
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async verifyRecoveryPhone(

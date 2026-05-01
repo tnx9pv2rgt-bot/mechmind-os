@@ -71,6 +71,7 @@ export class WebhookSubscriptionController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Dettaglio sottoscrizione webhook' })
   @ApiResponse({ status: 200, description: 'Sottoscrizione restituita' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Sottoscrizione non trovata' })
   async findOne(
     @TenantId() tenantId: string,

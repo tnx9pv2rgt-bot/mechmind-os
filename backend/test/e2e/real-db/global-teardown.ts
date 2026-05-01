@@ -3,6 +3,8 @@
  *
  * Stops and removes the PostgreSQL Testcontainer.
  */
+// @ts-nocheck
+
 import * as fs from 'fs';
 import * as path from 'path';
 

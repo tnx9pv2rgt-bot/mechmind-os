@@ -76,6 +76,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : ((exceptionResponse as Record<string, unknown>).message?.toString() ??
             exception.message);
 
+      // eslint-disable-next-line security/detect-object-injection
       return { status, message, error: HttpStatus[status] ?? 'Error' };
     }
 
@@ -98,6 +99,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: exception.message,
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error: 'Internal Server Error',
       };
     }

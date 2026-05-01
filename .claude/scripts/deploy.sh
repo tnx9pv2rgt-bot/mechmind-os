@@ -6,6 +6,7 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 DEPLOY_REPORT="./.claude/telemetry/deploy-$(date +%Y%m%d-%H%M%S).md"

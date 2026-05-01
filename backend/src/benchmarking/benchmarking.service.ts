@@ -271,6 +271,7 @@ export class BenchmarkingService {
       for (let i = 0; i < allMetrics.length; i++) {
         const percentile = Math.round((i / (allMetrics.length - 1 || 1)) * 100);
         await this.prisma.benchmarkMetric.update({
+          // eslint-disable-next-line security/detect-object-injection
           where: { id: allMetrics[i].id },
           data: {
             percentile,

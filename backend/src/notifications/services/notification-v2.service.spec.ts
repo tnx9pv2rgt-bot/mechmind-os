@@ -113,6 +113,7 @@ describe('NotificationV2Service', () => {
           useValue: {
             get: jest.fn(
               (key: string, defaultValue?: string | boolean | number) =>
+                // eslint-disable-next-line security/detect-object-injection
                 defaultConfig[key] ?? defaultValue,
             ),
           },
@@ -956,6 +957,7 @@ describe('NotificationV2Service', () => {
                   TWILIO_PHONE_NUMBER: '',
                   ENABLE_SMS_NOTIFICATIONS: false,
                 };
+                // eslint-disable-next-line security/detect-object-injection
                 return config[key] ?? defaultValue;
               }),
             },

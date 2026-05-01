@@ -3,6 +3,7 @@
  *
  * Tests: create estimate -> send -> customer approval -> convert to WO
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

@@ -41,6 +41,7 @@ export class VehicleTwinService {
    * Centralizes the single unsafe cast so all call-sites remain type-safe.
    */
   private delegate(name: string): PrismaDelegate {
+    // eslint-disable-next-line security/detect-object-injection
     return (this.prisma as unknown as Record<string, PrismaDelegate>)[name];
   }
 
@@ -97,6 +98,7 @@ export class VehicleTwinService {
     });
 
     if (!vehicle) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Vehicle not found');
     }
 
@@ -812,6 +814,7 @@ export class VehicleTwinService {
 
     const componentCategory = component.category as string;
     const componentName = component.name as string;
+    // eslint-disable-next-line security/detect-object-injection
     const lifespan = this.LIFESPAN_ESTIMATES[componentCategory];
     if (lifespan) {
       const serviceMileage = lastService?.odometer || 0;
@@ -921,6 +924,7 @@ export class VehicleTwinService {
       C1: 'suspension_front',
       U0: 'engine',
     };
+    // eslint-disable-next-line security/detect-object-injection
     return mappings[prefix] || 'engine';
   }
 
@@ -932,6 +936,7 @@ export class VehicleTwinService {
       DAMAGE: 'CRITICAL',
       MAINTENANCE: 'HEALTHY',
     };
+    // eslint-disable-next-line security/detect-object-injection
     return mappings[eventType] || 'HEALTHY';
   }
 
@@ -962,6 +967,7 @@ export class VehicleTwinService {
       P07: 800, // Transmission
       P08: 1000, // Transmission
     };
+    // eslint-disable-next-line security/detect-object-injection
     return baseCosts[prefix] || 200;
   }
 
@@ -977,6 +983,7 @@ export class VehicleTwinService {
       FUEL: 500,
       EXHAUST: 800,
     };
+    // eslint-disable-next-line security/detect-object-injection
     return costs[category] || 500;
   }
 

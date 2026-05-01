@@ -1,9 +1,12 @@
 #!/bin/bash
-# FASE 4: Verifica Formale — Estrai funzioni critiche, specifica formale, rompi invarianti
+# Descrizione: Verifica formale — estrazione funzioni critiche, specifica, rottura invarianti
+# Parametri: [modulo] (default: booking)
+# Equivalente a: /verifica-formale
 
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 MODULO="${1:-booking}"
@@ -11,6 +14,10 @@ TELEMETRY_DIR="./.claude/telemetry"
 FORMAL_REPORT="$TELEMETRY_DIR/formal-$(date +%Y%m%d-%H%M%S).md"
 
 mkdir -p "$TELEMETRY_DIR"
+
+# Atomic RAM staging: scratch dir per spec formali prima di promuoverle al report finale
+STAGING_DIR=$(mktemp -d -t formal-stage.XXXXXX 2>/dev/null || echo "/tmp/formal-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 # FASE 0 — STRATEGIA 1: Pre-flight validation
 echo "🔧 [S1] Validazione pre-volo (backend environment)..."
@@ -30,7 +37,7 @@ identify_critical_functions() {
   local MODULO="$1"
   local MODULE_PATH="backend/src/$MODULO"
 
-  if [ \! -d "$MODULE_PATH" ]; then
+  if [ ! -d "$MODULE_PATH" ]; then
     echo "❌ Modulo non trovato: $MODULO" >&2
     return 1
   fi
@@ -51,11 +58,10 @@ identify_critical_functions() {
 
 # Analizza complessità ciclomatica
 analyze_cyclomatic_complexity() {
-  local FUNC_NAME="$1"
   local FILE="$2"
 
   # Conta branch: if, else, case, catch, ternary
-  BRANCHES=$(grep -E "if\s|else\s|case\s|catch\s|\?" "$FILE" 2>/dev/null | wc -l)
+  BRANCHES=$(grep -cE "if\s|else\s|case\s|catch\s|\?" "$FILE" 2>/dev/null || echo "0")
   echo "$BRANCHES"
 }
 
@@ -110,7 +116,7 @@ analyze_cyclomatic_complexity() {
 
     if [ -n "$FIRST_FUNC_NAME" ] && [ -f "$FIRST_FUNC_FILE" ]; then
       # Extract function body (simplified)
-      FUNC_BODY=$(sed -n "/function $FIRST_FUNC_NAME\|const $FIRST_FUNC_NAME/,/^}/p" "$FIRST_FUNC_FILE" 2>/dev/null | head -30)
+      _FUNC_BODY=$(sed -n "/function $FIRST_FUNC_NAME\|const $FIRST_FUNC_NAME/,/^}/p" "$FIRST_FUNC_FILE" 2>/dev/null | head -30)
 
       FORMAL_SPEC=$(claude -p "$(cat << 'FORMAL_SPEC'
 Funzione: [FUNC_NAME]

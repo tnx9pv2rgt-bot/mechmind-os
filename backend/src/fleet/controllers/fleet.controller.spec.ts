@@ -65,6 +65,16 @@ describe('FleetController', () => {
       expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, undefined, undefined);
       expect(result).toBeDefined();
     });
+
+    it('should parse page and limit parameters', async () => {
+      const paginated = { data: [mockFleet], total: 1, page: 3, limit: 50, pages: 1 };
+      service.findAll.mockResolvedValueOnce(paginated as never);
+
+      const result = await controller.findAll(TENANT_ID, '3', '50');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, 3, 50);
+      expect(result.page).toBe(3);
+    });
   });
 
   describe('findById', () => {

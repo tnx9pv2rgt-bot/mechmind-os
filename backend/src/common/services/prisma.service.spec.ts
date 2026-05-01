@@ -14,6 +14,7 @@ describe('PrismaService', () => {
           DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
           NODE_ENV: 'test',
         };
+        // eslint-disable-next-line security/detect-object-injection
         return map[key] ?? defaultVal;
       }),
     };
@@ -159,6 +160,7 @@ describe('PrismaService', () => {
             DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
             NODE_ENV: 'development',
           };
+          // eslint-disable-next-line security/detect-object-injection
           return map[key] ?? defaultVal;
         }),
       };
@@ -260,6 +262,7 @@ describe('PrismaService', () => {
             DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
             NODE_ENV: 'production',
           };
+          // eslint-disable-next-line security/detect-object-injection
           return map[key] ?? defaultVal;
         }),
       };
@@ -277,6 +280,7 @@ describe('PrismaService', () => {
             DATABASE_URL: 'postgresql://test:test@localhost:5432/test?sslmode=require',
             NODE_ENV: 'test',
           };
+          // eslint-disable-next-line security/detect-object-injection
           return map[key] ?? defaultVal;
         }),
       };
@@ -294,6 +298,7 @@ describe('PrismaService', () => {
             DATABASE_URL: 'postgresql://test:test@localhost:5432/test?connection_limit=5',
             NODE_ENV: 'test',
           };
+          // eslint-disable-next-line security/detect-object-injection
           return map[key] ?? defaultVal;
         }),
       };
@@ -321,6 +326,7 @@ describe('PrismaService', () => {
             DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
             NODE_ENV: 'development',
           };
+          // eslint-disable-next-line security/detect-object-injection
           return map[key] ?? defaultVal;
         }),
       };

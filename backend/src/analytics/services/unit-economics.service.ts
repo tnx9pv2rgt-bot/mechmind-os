@@ -299,6 +299,7 @@ export class UnitEconomicsService {
       const totalRevenue = Number(revenueAgg._sum.total ?? 0);
 
       // ARPA = total revenue / (active count * 12 months)
+      // eslint-disable-next-line security/detect-object-injection
       const arpa = count > 0 ? Math.round(totalRevenue / (count * 12)) : (PLAN_PRICING[plan] ?? 0);
 
       // Tier-specific churn estimates based on industry benchmarks
@@ -307,6 +308,7 @@ export class UnitEconomicsService {
         MEDIUM: 0.025,
         ENTERPRISE: 0.015,
       };
+      // eslint-disable-next-line security/detect-object-injection
       const monthlyChurn = churnByTier[plan] ?? 0.03;
       const grossMargin = 0.62;
 
@@ -456,6 +458,7 @@ export class UnitEconomicsService {
         },
       });
 
+      // eslint-disable-next-line security/detect-object-injection
       const revenue = Number(revenueAgg._sum.total ?? 0) || count * (PLAN_PRICING[plan] ?? 0);
       const cogs = count * STANDARD_COGS;
       const grossMargin = revenue - cogs;

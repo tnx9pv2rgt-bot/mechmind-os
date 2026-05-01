@@ -6,10 +6,24 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 GDPR_REPORT="./.claude/telemetry/gdpr-verify-$(date +%Y%m%d-%H%M%S).md"
 mkdir -p ./.claude/telemetry
+
+get_model() {
+  local module="$1"
+  case "$module" in
+    auth|booking|invoice|payment-link|subscription|gdpr) echo "opus" ;;
+    notifications|admin|analytics|common|dvi|iot|work-order|customer|estimate|voice) echo "sonnet" ;;
+    *) echo "sonnet" ;;
+  esac
+}
+
+# Atomic RAM staging: scratch dir per output Claude prima di promuoverli al report GDPR
+STAGING_DIR=$(mktemp -d -t gdpr-stage.XXXXXX 2>/dev/null || echo "/tmp/gdpr-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 echo "=== VERIFICA GDPR ==="
 echo ""
@@ -54,7 +68,7 @@ echo ""
   echo "## 2. Soft Deletes (Art. 17 - Right to be Forgotten)"
   echo ""
 
-  SOFT_DELETE=$(grep -r "deletedAt" src --include="*.ts" 2>/dev/null | grep -v "spec.ts" | wc -l || echo "0")
+  SOFT_DELETE=$(grep -r "deletedAt" src --include="*.ts" 2>/dev/null | grep -cv "spec.ts" || echo "0")
 
   if [ "$SOFT_DELETE" -gt 0 ]; then
     echo "✅ Soft delete pattern found ($SOFT_DELETE occorrenze)"
@@ -68,7 +82,8 @@ echo ""
   echo ""
 
   if [ -n "$PII_CHECKS" ]; then
-    GDPR_ANALYSIS=$(claude -p "$(cat << 'PROMPT'
+    MODEL=$(get_model "gdpr")
+    GDPR_ANALYSIS=$(claude -p --model "$MODEL" "$(cat << 'PROMPT'
 PII encryption checks:
 PROMPT
 )${PII_CHECKS:-'(nessun risultato trovato)'}$(cat << 'PROMPT'

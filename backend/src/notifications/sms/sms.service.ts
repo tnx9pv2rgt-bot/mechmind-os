@@ -416,6 +416,7 @@ export class SmsService {
 
   private formatMessage(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      // eslint-disable-next-line security/detect-object-injection
       return data[key] !== undefined ? String(data[key]) : match;
     });
   }

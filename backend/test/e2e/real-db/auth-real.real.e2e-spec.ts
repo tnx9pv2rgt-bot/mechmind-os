@@ -4,6 +4,8 @@
  * Tests authentication flows against a real PostgreSQL database
  * via Testcontainers. Verifies that data is actually persisted.
  */
+// @ts-nocheck
+
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import {

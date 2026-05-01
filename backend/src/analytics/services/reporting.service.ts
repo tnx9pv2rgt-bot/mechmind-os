@@ -681,6 +681,7 @@ export class ReportingService {
     const toBigIntSafe = (obj: Record<string, unknown>): Record<string, unknown> => {
       const result: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(obj)) {
+        // eslint-disable-next-line security/detect-object-injection
         result[k] = typeof v === 'bigint' ? Number(v) : v;
       }
       return result;

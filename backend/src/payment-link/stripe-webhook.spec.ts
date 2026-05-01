@@ -105,6 +105,7 @@ describe('StripeWebhook - PCI DSS 4.0.1 Compliance', () => {
           FRONTEND_URL: 'https://app.mechmind.io',
           STRIPE_WEBHOOK_SECRET: STRIPE_WEBHOOK_SECRET,
         };
+        // eslint-disable-next-line security/detect-object-injection
         return map[key] ?? fallback ?? undefined;
       }),
     };

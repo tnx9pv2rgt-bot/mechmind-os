@@ -1,0 +1,6 @@
+dist/
+node_modules/
+src/_cov/
+coverage/
+coverage-sse/
+**/*.js

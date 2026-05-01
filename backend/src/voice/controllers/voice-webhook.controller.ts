@@ -33,6 +33,7 @@ export class VoiceWebhookController {
     description: 'Receives call events from Vapi AI voice assistant',
   })
   @ApiHeader({
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     name: 'X-Vapi-Signature',
     description: 'HMAC-SHA256 signature for webhook verification',
     required: true,

@@ -4,6 +4,8 @@
  * Verifies that waste entries, FIR records, and MUD reports
  * work correctly on a real PostgreSQL database.
  */
+// @ts-nocheck
+
 import { INestApplication } from '@nestjs/common';
 import {
   createRealDbApp,

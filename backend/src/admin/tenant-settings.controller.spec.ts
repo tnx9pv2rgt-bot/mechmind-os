@@ -126,6 +126,7 @@ describe('TenantSettingsController', () => {
       expect(s3.uploadBuffer).toHaveBeenCalled();
       const call = (s3.uploadBuffer as jest.Mock).mock.calls.pop();
       expect(call[1]).toMatch(
+        // eslint-disable-next-line security/detect-non-literal-regexp
         new RegExp(
           '^logos/' + TENANT_ID + '/[a-f0-9]{32}\.' + name.split('.').pop()!.toLowerCase() + '$',
         ),

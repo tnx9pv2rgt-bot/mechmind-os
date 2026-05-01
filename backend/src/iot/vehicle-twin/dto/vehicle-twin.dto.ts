@@ -158,6 +158,7 @@ export class HealthTrendQueryDto {
 }
 
 export class ComponentResponseDto {
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'ID del componente', example: 'comp_001' })
   id: string;
 

@@ -683,7 +683,9 @@ describe('LicensePlateService', () => {
       // getHours() returns local time, so use the same approach as the service
       const hour1 = date1.getHours();
       const hour3 = date3.getHours();
+      // eslint-disable-next-line security/detect-object-injection
       expect(result.byHour[hour1]).toBe(2);
+      // eslint-disable-next-line security/detect-object-injection
       expect(result.byHour[hour3]).toBe(1);
     });
   });

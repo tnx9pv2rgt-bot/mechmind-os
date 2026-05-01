@@ -427,6 +427,7 @@ export class PartsService {
       order.status !== OrderStatus.ACKNOWLEDGED &&
       order.status !== OrderStatus.PARTIALLY_RECEIVED
     ) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       validateTransition(order.status, targetStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
     }
 

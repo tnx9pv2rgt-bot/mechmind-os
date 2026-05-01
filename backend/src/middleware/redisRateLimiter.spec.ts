@@ -55,6 +55,7 @@ describe('RedisRateLimiterMiddleware', () => {
           REDIS_PASSWORD: '',
           REDIS_DB: '0',
         };
+        // eslint-disable-next-line security/detect-object-injection
         return values[key];
       }),
     };
@@ -453,6 +454,7 @@ describe('RedisRateLimiterMiddleware — advanced branches', () => {
           REDIS_PASSWORD: '',
           REDIS_DB: '0',
         };
+        // eslint-disable-next-line security/detect-object-injection
         return values[key];
       }),
     };

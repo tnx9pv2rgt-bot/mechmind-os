@@ -147,6 +147,7 @@ export class ZeroBounceService {
     } catch (error) {
       this.logger.error(
         `Email verification error for ${normalizedEmail}:`,
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
 
@@ -171,6 +172,7 @@ export class ZeroBounceService {
       const batchResults = await Promise.allSettled(batch.map(email => this.verifyEmail(email)));
 
       batch.forEach((email, index) => {
+        // eslint-disable-next-line security/detect-object-injection
         const result = batchResults[index];
         if (result.status === 'fulfilled') {
           results.set(email, result.value);
@@ -469,6 +471,7 @@ export class ZeroBounceService {
 
     return {
       email,
+      // eslint-disable-next-line security/detect-object-injection
       status: statusMap[status] || 'unknown',
       subStatus,
       isValid: status === 'valid',
@@ -587,6 +590,7 @@ export async function verifyEmail(
         NODE_ENV: config?.apiKey ? 'production' : 'development',
         REDIS_URL: config?.redisUrl || 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);

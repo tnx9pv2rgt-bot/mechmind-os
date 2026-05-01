@@ -37,7 +37,9 @@ describe('VoicePricingService', () => {
       extraMinutePrice: originalExtraPrice,
     });
     VOICE_PROVIDER_COSTS.forEach((p, i) => {
+      // eslint-disable-next-line security/detect-object-injection
       p.costPerMinuteUsd = originalCosts[i].costPerMinuteUsd;
+      // eslint-disable-next-line security/detect-object-injection
       p.lastUpdated = originalCosts[i].lastUpdated;
     });
   });

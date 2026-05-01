@@ -1,6 +1,7 @@
+// @ts-nocheck
 module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  setupFiles: ['../jest.setup.js'],
+  setupFiles: ['<rootDir>/../jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/common/__tests__/setup.ts'],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
@@ -21,13 +22,13 @@ module.exports = {
   },
   collectCoverageFrom: [
     '<rootDir>/**/*.ts',
-    '\!<rootDir>/**/*.spec.ts',
-    '\!<rootDir>/**/index.ts',
-    '\!<rootDir>/**/*.module.ts',
-    '\!<rootDir>/**/dto/**',
-    '\!<rootDir>/**/processors/**',
-    '\!<rootDir>/main.ts',
-    '\!<rootDir>/lambda.ts',
+    '!<rootDir>/**/*.spec.ts',
+    '!<rootDir>/**/index.ts',
+    '!<rootDir>/**/*.module.ts',
+    '!<rootDir>/**/dto/**',
+    '!<rootDir>/**/processors/**',
+    '!<rootDir>/main.ts',
+    '!<rootDir>/lambda.ts',
   ],
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
@@ -41,6 +42,9 @@ module.exports = {
     '^@gdpr/(.*)$': '<rootDir>/gdpr/$1',
     '(.*)/types/express$': '<rootDir>/types/__mocks__/express',
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(jose)/)',
+  ],
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/__tests__/',

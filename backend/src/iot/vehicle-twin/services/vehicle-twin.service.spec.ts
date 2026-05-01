@@ -818,6 +818,7 @@ describe('VehicleTwinService', () => {
         const severityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
         for (let i = 1; i < result.length; i++) {
           expect(severityOrder[result[i - 1].severity]).toBeLessThanOrEqual(
+            // eslint-disable-next-line security/detect-object-injection
             severityOrder[result[i].severity],
           );
         }

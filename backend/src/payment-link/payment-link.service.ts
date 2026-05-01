@@ -63,6 +63,7 @@ export class PaymentLinkService {
     });
 
     if (!invoice) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Fattura non trovata');
     }
 

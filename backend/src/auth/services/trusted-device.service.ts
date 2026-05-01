@@ -19,6 +19,7 @@ export class TrustedDeviceService {
     if (extra) {
       const sortedKeys = Object.keys(extra).sort();
       for (const key of sortedKeys) {
+        // eslint-disable-next-line security/detect-object-injection
         raw += `:${key}=${extra[key]}`;
       }
     }
@@ -94,6 +95,7 @@ export class TrustedDeviceService {
     });
 
     if (!device) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Dispositivo non trovato');
     }
 

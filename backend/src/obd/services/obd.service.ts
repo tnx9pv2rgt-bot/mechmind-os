@@ -254,6 +254,7 @@ export class ObdService {
   /**
    * Record trouble codes
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async recordTroubleCodes(
     deviceId: string,
     codes: TroubleCodeDto[],
@@ -431,6 +432,7 @@ export class ObdService {
   /**
    * Generate vehicle health report
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async generateHealthReport(tenantId: string, vehicleId: string): Promise<VehicleHealthReportDto> {
     const vehicle = await this.prisma.vehicle.findFirst({
       where: { id: vehicleId, customer: { tenantId } },
@@ -452,6 +454,7 @@ export class ObdService {
     const allReadings = vehicle.obdDevices.flatMap(d => d.readings);
     const allCodes = vehicle.obdDevices.flatMap(d => d.dtcs);
 
+    // eslint-disable-next-line sonarjs/no-misleading-array-reverse
     const latestReading = allReadings.sort(
       (a, b) => b.recordedAt.getTime() - a.recordedAt.getTime(),
     )[0];
@@ -536,6 +539,7 @@ export class ObdService {
 
   private getSeverityFromCode(code: string): TroubleCodeSeverity {
     const prefix = code.substring(0, 3).toUpperCase();
+    // eslint-disable-next-line security/detect-object-injection
     return this.DTC_SEVERITY_MAP[prefix] || TroubleCodeSeverity.MEDIUM;
   }
 

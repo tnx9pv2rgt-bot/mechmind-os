@@ -77,6 +77,7 @@ export class CannedJobController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get canned job by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Canned Job ID' })
   async findById(
     @CurrentTenant() tenantId: string,

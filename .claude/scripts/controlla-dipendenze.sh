@@ -1,11 +1,13 @@
 #!/bin/bash
-# FASE 3: SBOM Conformità — Genera CycloneDX SBOM con firma e vulnerability impact analysis
+# Descrizione: SBOM Conformità — Genera CycloneDX SBOM con firma e vulnerability impact analysis
 # Parametri: [--sign] (opzionale, firma con GPG)
-# Genere: npm audit + auditjs + @cyclonedx/bom + impact prediction
+# Equivalente a: /revisione-dipendenze
+# Pattern: npm audit + auditjs + @cyclonedx/bom + impact prediction
 
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 SIGN_SBOM="${1:---no-sign}"
@@ -29,6 +31,9 @@ echo ""
 
 echo "=== FASE 3: SBOM Conformità ==="
 
+AUDIT_JSON="/tmp/npm-audit.json"
+SBOM_FILE="/tmp/bom.xml"
+
 {
   echo "# SBOM Report"
   echo "**Data:** $(date)"
@@ -39,7 +44,6 @@ echo "=== FASE 3: SBOM Conformità ==="
   echo "## 1. Audit Vulnerabilità"
   echo ""
 
-  AUDIT_JSON="/tmp/npm-audit.json"
   npm audit --json > "$AUDIT_JSON" 2>/dev/null || true
 
   CRITICAL_COUNT=$(jq '.metadata.vulnerabilities.critical // 0' "$AUDIT_JSON" 2>/dev/null || echo "0")
@@ -68,10 +72,8 @@ echo "=== FASE 3: SBOM Conformità ==="
   echo "## 2. CycloneDX SBOM"
   echo ""
 
-  SBOM_FILE="/tmp/bom.xml"
   npx @cyclonedx/bom --output "$SBOM_FILE" 2>/dev/null || {
     echo "⚠️  CycloneDX generation error"
-    SBOM_FILE=""
   }
 
   if [ -n "$SBOM_FILE" ] && [ -f "$SBOM_FILE" ]; then

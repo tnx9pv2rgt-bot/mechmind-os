@@ -3,6 +3,7 @@
  *
  * Tests: create inspection -> add findings -> complete -> generate report
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

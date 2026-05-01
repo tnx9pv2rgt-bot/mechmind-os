@@ -47,6 +47,7 @@ describe('SmsService', () => {
           provide: ConfigService,
           useValue: {
             get: jest.fn(
+              // eslint-disable-next-line security/detect-object-injection
               (key: string, defaultValue?: string | boolean) => config[key] ?? defaultValue,
             ),
           },

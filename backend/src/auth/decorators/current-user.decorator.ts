@@ -8,6 +8,7 @@ import { AuthenticatedUser } from '../strategies/jwt.strategy';
 export const currentUserFactory = (
   data: keyof AuthenticatedUser | undefined,
   ctx: ExecutionContext,
+  // eslint-disable-next-line sonarjs/function-return-type
 ): AuthenticatedUser | AuthenticatedUser[keyof AuthenticatedUser] | null => {
   const request = ctx.switchToHttp().getRequest();
   const user = request.user as AuthenticatedUser;
@@ -18,6 +19,7 @@ export const currentUserFactory = (
 
   // If specific field requested, return only that field
   if (data) {
+    // eslint-disable-next-line security/detect-object-injection
     return user[data];
   }
 

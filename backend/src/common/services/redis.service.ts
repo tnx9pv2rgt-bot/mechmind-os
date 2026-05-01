@@ -59,6 +59,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('RedisService: ioredis client connected');
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `RedisService: Failed to connect - ${error instanceof Error ? error.message : 'Unknown error'}. ` +
           'App will start but Redis-dependent features will be unavailable.',
       );

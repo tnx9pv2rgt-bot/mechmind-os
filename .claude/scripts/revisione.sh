@@ -6,11 +6,16 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 TYPE="${1:-code}"
 REVIEW_REPORT="./.claude/telemetry/review-${TYPE}-$(date +%Y%m%d-%H%M%S).md"
 mkdir -p ./.claude/telemetry
+
+# Atomic RAM staging: scratch dir per review intermediate prima di promuovere il report finale
+STAGING_DIR=$(mktemp -d -t review-stage.XXXXXX 2>/dev/null || echo "/tmp/review-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 echo "=== REVISIONE: $TYPE ==="
 echo ""
@@ -137,7 +142,7 @@ PROMPT
     # Verifica race conditions
     RACE_RISKS=0
     if [ -d "backend/src" ]; then
-      RACE_RISKS=$(grep -rn "findFirst.*then.*update\|findUnique.*then.*update\|advisory.*lock\|SERIALIZABLE" backend/src --include="*.ts" 2>/dev/null | grep -v ".spec.ts" | wc -l || echo "0")
+      RACE_RISKS=$(grep -rn "findFirst.*then.*update\|findUnique.*then.*update\|advisory.*lock\|SERIALIZABLE" backend/src --include="*.ts" 2>/dev/null | grep -cv ".spec.ts" || echo "0")
     fi
     if [ "$RACE_RISKS" -gt 0 ]; then
       echo "  🟡 Potenziali race conditions rilevate: $RACE_RISKS occorrenze"
@@ -149,7 +154,7 @@ PROMPT
     # Verifica null pointer risks
     NULL_RISKS=0
     if [ -d "backend/src" ]; then
-      NULL_RISKS=$(grep -rn "\?\.\|!!\s\|\?\[" backend/src --include="*.ts" 2>/dev/null | grep -v ".spec.ts" | wc -l || echo "0")
+      NULL_RISKS=$(grep -rn "\?\.\|!!\s\|\?\[" backend/src --include="*.ts" 2>/dev/null | grep -cv ".spec.ts" || echo "0")
     fi
     if [ "$NULL_RISKS" -gt 0 ]; then
       echo "  🟡 Potenziali null/optional issues: $NULL_RISKS occorrenze"
@@ -161,7 +166,7 @@ PROMPT
     # Verifica PII in chiaro
     PII_LEAKS=0
     if [ -d "backend/src" ]; then
-      PII_LEAKS=$(grep -rn "console\.log.*email\|console\.log.*phone\|console\.log.*ssn\|console\.log.*password" backend/src --include="*.ts" 2>/dev/null | grep -v ".spec.ts" | wc -l || echo "0")
+      PII_LEAKS=$(grep -rn "console\.log.*email\|console\.log.*phone\|console\.log.*ssn\|console\.log.*password" backend/src --include="*.ts" 2>/dev/null | grep -cv ".spec.ts" || echo "0")
     fi
     if [ "$PII_LEAKS" -gt 0 ]; then
       echo "  🔴 PII LEAK DETECTED: $PII_LEAKS occorrenze (CRITICO)"
@@ -173,8 +178,8 @@ PROMPT
     # Verifica transazioni mancanti
     MISSING_TX=0
     if [ -d "backend/src" ]; then
-      MULTI_OP_FILES=$(find backend/src -name "*.ts" -not -name "*.spec.ts" -exec grep -l "prisma\.\w*\.\(create\|update\|delete\)" {} \; 2>/dev/null | while read f; do
-        OP_COUNT=$(grep -o "prisma\.\w*\.\(create\|update\|delete\)" "$f" 2>/dev/null | wc -l)
+      MULTI_OP_FILES=$(find backend/src -name "*.ts" -not -name "*.spec.ts" -exec grep -l "prisma\.\w*\.\(create\|update\|delete\)" {} \; 2>/dev/null | while read -r f; do
+        OP_COUNT=$(grep -co "prisma\.\w*\.\(create\|update\|delete\)" "$f" 2>/dev/null || echo "0")
         TX_COUNT=$(grep -c "\$transaction\|prisma\.\$transaction" "$f" 2>/dev/null || echo "0")
         if [ "$OP_COUNT" -gt 1 ] && [ "$TX_COUNT" -eq 0 ]; then
           echo "$f"
@@ -192,7 +197,7 @@ PROMPT
     # Verifica tenantId in Prisma queries
     MISSING_TENANT=0
     if [ -d "backend/src" ]; then
-      MISSING_TENANT=$(grep -rn "prisma\..*\.findMany\|prisma\..*\.findFirst\|prisma\..*\.findUnique\|prisma\..*\.count" backend/src --include="*.ts" 2>/dev/null | grep -v ".spec.ts" | grep -v "where.*tenantId" | wc -l || echo "0")
+      MISSING_TENANT=$(grep -rn "prisma\..*\.findMany\|prisma\..*\.findFirst\|prisma\..*\.findUnique\|prisma\..*\.count" backend/src --include="*.ts" 2>/dev/null | grep -v ".spec.ts" | grep -cv "where.*tenantId" || echo "0")
     fi
     if [ "$MISSING_TENANT" -gt 0 ]; then
       echo "  🟠 Queries senza tenantId check: $MISSING_TENANT (verify manually)"

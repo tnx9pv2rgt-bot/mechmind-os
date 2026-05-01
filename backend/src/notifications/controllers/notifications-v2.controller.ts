@@ -51,6 +51,7 @@ export class NotificationsV2Controller {
   @Get('history')
   @ApiOperation({ summary: 'Ottieni cronologia notifiche' })
   @ApiResponse({ status: 200, description: 'Cronologia restituita' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getHistory(
     @CurrentTenant() tenantId: string,
@@ -71,6 +72,7 @@ export class NotificationsV2Controller {
   @ApiOperation({ summary: 'Invia notifica immediata' })
   @ApiResponse({ status: 201, description: 'Notifica inviata' })
   @ApiResponse({ status: 401, description: 'Non autenticato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 403, description: 'Accesso negato' })
   async send(@Body() dto: SendNotificationDto) {
     return this.notificationService.sendImmediate(dto);
@@ -154,6 +156,7 @@ export class NotificationsV2Controller {
   @ApiOperation({ summary: 'Ottieni stato notifica per ID' })
   @ApiResponse({ status: 200, description: 'Stato restituito' })
   @ApiResponse({ status: 401, description: 'Non autenticato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async getStatus(
     @CurrentTenant() tenantId: string,

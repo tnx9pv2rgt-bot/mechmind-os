@@ -75,6 +75,7 @@ export class ObdStreamingGateway
       });
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       client.disconnect();
@@ -174,6 +175,7 @@ export class ObdStreamingGateway
       // Send latest reading if available
       const latestReading = await this.redis.get(`obd:latest:${payload.deviceId}`);
       if (latestReading) {
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         client.emit('sensor-data', JSON.parse(latestReading));
       }
 

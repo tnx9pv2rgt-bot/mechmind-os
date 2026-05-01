@@ -55,6 +55,7 @@ export class RolesController {
     const roles = Object.values(UserRole).map(role => ({
       id: role,
       name: role,
+      // eslint-disable-next-line security/detect-object-injection
       ...(ROLE_DESCRIPTIONS[role] || { label: role, description: '', permissions: [] }),
     }));
     return { success: true, data: roles };

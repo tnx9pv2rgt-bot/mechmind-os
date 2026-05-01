@@ -61,7 +61,7 @@ export class SmsThreadService {
       data: { unreadCount: 0 },
     });
 
-    const where = { threadId };
+    const where = { threadId, thread: { tenantId } };
 
     const [messages, total] = await Promise.all([
       this.prisma.smsMessage.findMany({
@@ -107,12 +107,17 @@ export class SmsThreadService {
   }
 
   /**
-   * Receive an inbound SMS. Finds thread by phoneHash, creates INBOUND message,
+   * Receive an inbound SMS. Finds thread by phoneHash + tenantId, creates INBOUND message,
    * increments unreadCount.
    */
-  async receiveInbound(phoneHash: string, body: string, twilioSid?: string): Promise<unknown> {
+  async receiveInbound(
+    tenantId: string,
+    phoneHash: string,
+    body: string,
+    twilioSid?: string,
+  ): Promise<unknown> {
     const thread = await this.prisma.smsThread.findFirst({
-      where: { phoneHash },
+      where: { phoneHash, tenantId },
     });
 
     if (!thread) {

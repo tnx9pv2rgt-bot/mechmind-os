@@ -67,6 +67,7 @@ export class ShopFloorGateway implements OnGatewayInit, OnGatewayConnection, OnG
       });
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       client.disconnect();

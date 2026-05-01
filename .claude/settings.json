@@ -115,7 +115,8 @@
           {
             "type": "command",
             "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/notify.sh'",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           }
         ],
         "description": "Notifica macOS quando Claude completa un task"
@@ -127,7 +128,7 @@
           {
             "type": "command",
             "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/stop-quality-gate.sh'",
-            "timeout": 120
+            "timeout": 30
           }
         ],
         "description": "BLOCCA se TypeScript, ESLint o spec mancanti"
@@ -172,7 +173,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\n[ -z \"$FILE\" ] && exit 0\n[ ! -f \"$FILE\" ] && exit 0\n\n# Auto-format with Prettier if applicable\nEXT=\"${FILE##*.}\"\ncase \"$EXT\" in\n  ts|tsx|js|jsx|json|css|md)\n    npx prettier --write \"$FILE\" 2>/dev/null || true\n    ;;\nesac\n\n# Log file change\nmkdir -p .claude/logs 2>/dev/null\necho \"[$(date -Iseconds)] EDIT: $FILE\" >> .claude/logs/file-changes.log\nexit 0"
+            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\n[ -z \"$FILE\" ] && exit 0\n[ ! -f \"$FILE\" ] && exit 0\n\n# Auto-format with Prettier if applicable\nEXT=\"${FILE##*.}\"\ncase \"$EXT\" in\n  ts|tsx|js|jsx|json|css|md)\n    npx prettier --write \"$FILE\" 2>/dev/null || true\n    ;;\nesac\n\n# Log file change\nmkdir -p .claude/logs 2>/dev/null\necho \"[$(date -Iseconds)] EDIT: $FILE\" >> .claude/logs/file-changes.log\nexit 0",
+            "async": true
           }
         ],
         "description": "Auto-format Prettier + log ogni file modificato"

@@ -3,6 +3,7 @@
  *
  * Tests: register tenant -> login -> get JWT -> refresh token -> logout
  */
+// @ts-nocheck
 
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';

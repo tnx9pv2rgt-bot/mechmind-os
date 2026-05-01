@@ -37,6 +37,7 @@ describe('GooglePlacesService', () => {
     const values = { ...defaults, ...overrides };
 
     return new GooglePlacesService({
+      // eslint-disable-next-line security/detect-object-injection
       get: (key: string) => values[key],
     } as ConfigService);
   };

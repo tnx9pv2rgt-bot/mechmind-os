@@ -63,6 +63,7 @@ export class LimitGuard implements CanActivate {
       // These are usage-based, check if within limit
       const check = await this.featureAccessService.checkSpecificLimit(
         tenantId,
+        // eslint-disable-next-line security/detect-object-injection
         limitTypeMap[limitType],
       );
 

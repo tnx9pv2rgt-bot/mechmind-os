@@ -82,6 +82,7 @@ export class CampaignController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Dettaglio campagna con statistiche' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Campaign ID' })
   @ApiResponse({ status: 200, description: 'Dettaglio campagna' })
   @ApiResponse({ status: 404, description: 'Campagna non trovata' })

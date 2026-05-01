@@ -4,6 +4,8 @@
  * Provides PrismaClient connected to the Testcontainer DB,
  * NestJS app factory, and seed utilities.
  */
+// @ts-nocheck
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';

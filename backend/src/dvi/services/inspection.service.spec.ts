@@ -25,11 +25,14 @@ const pdfEventHandlers: Record<string, ((...args: unknown[]) => void)[]> = {};
 function resetPdfMock(): void {
   // Clear event handlers
   for (const key of Object.keys(pdfEventHandlers)) {
+    // eslint-disable-next-line security/detect-object-injection
     delete pdfEventHandlers[key];
   }
 
   mockPdfDocInstance.on = jest.fn((event: string, handler: (...args: unknown[]) => void) => {
+    // eslint-disable-next-line security/detect-object-injection
     if (!pdfEventHandlers[event]) pdfEventHandlers[event] = [];
+    // eslint-disable-next-line security/detect-object-injection
     pdfEventHandlers[event].push(handler);
     return mockPdfDocInstance;
   });
@@ -346,6 +349,7 @@ describe('InspectionService', () => {
           S3_INSPECTION_PHOTOS_BUCKET: PHOTO_BUCKET,
           FRONTEND_URL: FRONTEND_URL,
         };
+        // eslint-disable-next-line security/detect-object-injection
         return configMap[key] ?? defaultValue;
       }),
     };

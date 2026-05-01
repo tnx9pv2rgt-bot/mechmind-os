@@ -15,8 +15,10 @@ export class VehicleHistoryController {
 
   @Get(':vehicleId')
   @ApiOperation({ summary: 'Cronologia completa del veicolo (locale + importata)' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'vehicleId', description: 'ID del veicolo' })
   @ApiResponse({ status: 200, description: 'Cronologia veicolo' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Veicolo non trovato' })
   async getFullHistory(
     @CurrentTenant() tenantId: string,

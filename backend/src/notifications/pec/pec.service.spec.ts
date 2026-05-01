@@ -34,6 +34,7 @@ describe('PecService', () => {
                 PEC_SMTP_PASS: 'password123',
                 PEC_FROM_ADDRESS: 'noreply@pec.aruba.it',
               };
+              // eslint-disable-next-line security/detect-object-injection
               return config[key] ?? defaultValue;
             }),
           },
@@ -67,6 +68,7 @@ describe('PecService', () => {
                   PEC_SMTP_USER: undefined,
                   PEC_SMTP_PASS: 'password123',
                 };
+                // eslint-disable-next-line security/detect-object-injection
                 return config[key] ?? defaultValue;
               }),
             },

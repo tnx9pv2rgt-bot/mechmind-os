@@ -39,6 +39,7 @@ export class PortalController {
   @Get('dashboard')
   @ApiOperation({ summary: 'Dashboard cliente portale' })
   @ApiResponse({ status: 200, description: 'Riepilogo veicoli, prenotazioni, fatture' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 401, description: 'Non autenticato' })
   async getDashboard(@Req() req: { user: { userId: string; tenantId: string } }): Promise<{
     data: Record<string, unknown>;
@@ -332,6 +333,7 @@ export class PortalController {
   @ApiOperation({ summary: 'Dettaglio preventivo' })
   @ApiResponse({ status: 200, description: 'Dati preventivo con righe' })
   @ApiResponse({ status: 401, description: 'Non autenticato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiResponse({ status: 404, description: 'Preventivo non trovato' })
   async getEstimate(
     @Req() req: { user: { userId: string; tenantId: string } },

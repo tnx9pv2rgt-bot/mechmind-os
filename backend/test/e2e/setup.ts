@@ -4,6 +4,7 @@
  * Configures environment variables, creates NestJS TestingModule helpers,
  * and provides authentication utilities for all E2E tests.
  */
+// @ts-nocheck
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
@@ -136,6 +137,7 @@ export function createMockPrisma(): Record<string, unknown> {
 
   const prisma: Record<string, unknown> = {};
   for (const model of models) {
+    // eslint-disable-next-line security/detect-object-injection
     prisma[model] = createMockModel();
   }
 

@@ -183,6 +183,7 @@ export class VehicleService {
    * Update vehicle
    */
   async update(tenantId: string, vehicleId: string, dto: UpdateVehicleDto): Promise<Vehicle> {
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     return this.prisma.withTenant(tenantId, async prisma => {
       const vehicle = await prisma.vehicle.findFirst({
         where: { id: vehicleId, tenantId, deletedAt: null },

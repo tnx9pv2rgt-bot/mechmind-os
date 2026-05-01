@@ -6,11 +6,16 @@
 set -euo pipefail
 trap "handle_error \$? \$LINENO" ERR
 
+# shellcheck source=.claude/scripts/_error-handler.sh
 source "$(dirname "$0")/_error-handler.sh"
 
 LOG="${1:-}"
 ANALYSIS_REPORT="./.claude/telemetry/bug-analysis-$(date +%Y%m%d-%H%M%S).md"
 mkdir -p ./.claude/telemetry
+
+# Atomic RAM staging: scratch dir per output Claude prima di scrivere il report
+STAGING_DIR=$(mktemp -d -t claude-stage.XXXXXX 2>/dev/null || echo "/tmp/claude-stage-$$")
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 echo "=== ANALISI BUG ==="
 echo ""
