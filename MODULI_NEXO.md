@@ -40,7 +40,7 @@
 | peppol | 92.76 | 76.92 | ⚠️ DA FIXARE |
 | portal | 80.88 | 86.52 | ⚠️ DA FIXARE |
 | predictive-maintenance | 95.70 | 90.83 | ✅ OK |
-| production-board | 95.40 | 74.25 | ⚠️ DA FIXARE |
+| production-board | 97.22 | 82.75 | ⚠️ DA FIXARE |
 | public-token | 80.00 | 65.85 | ⚠️ DA FIXARE |
 | rentri | 96.82 | 79.01 | ⚠️ DA FIXARE |
 | reviews | 97.53 | 85.71 | ⚠️ DA FIXARE |
@@ -75,7 +75,7 @@
 | security-incident | 75.75 | -14pp |
 | ai-scheduling | 72.44 | -18pp |
 | ai-compliance | 73.68 | -16pp |
-| production-board | 74.25 | -16pp |
+| production-board | 82.75 | -7.25pp |
 | payroll | 74.46 | -16pp |
 | inventory-alerts | 75.00 | -15pp |
 
