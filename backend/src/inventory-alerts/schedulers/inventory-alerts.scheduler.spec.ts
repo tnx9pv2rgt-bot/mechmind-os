@@ -21,6 +21,17 @@ describe('InventoryAlertsScheduler', () => {
   });
 
   describe('scheduleInventoryCheck', () => {
+    it('should log initial enqueue message', async () => {
+      const mockJob = { id: 'job-001' };
+      mockQueue.add.mockResolvedValueOnce(mockJob as never);
+      const logSpy = jest.spyOn(scheduler['logger'], 'log').mockImplementation();
+
+      await scheduler.scheduleInventoryCheck();
+
+      expect(logSpy).toHaveBeenCalledWith('Enqueuing inventory-alerts check-all job');
+      logSpy.mockRestore();
+    });
+
     it('should enqueue check-all job successfully', async () => {
       const mockJob = { id: 'job-001' };
       mockQueue.add.mockResolvedValueOnce(mockJob as never);

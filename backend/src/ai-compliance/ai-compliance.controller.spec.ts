@@ -151,65 +151,42 @@ describe('AiComplianceController', () => {
         inputSummary: 'Vehicle photo',
         outputSummary: 'Dent detected',
       };
-      service.logDecision.mockRejectedValueOnce(
-        new Error('Database error'),
-      );
+      service.logDecision.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(controller.logDecision(TENANT_ID, dto)).rejects.toThrow(
-        'Database error',
-      );
+      await expect(controller.logDecision(TENANT_ID, dto)).rejects.toThrow('Database error');
       expect(service.logDecision).toHaveBeenCalledWith(TENANT_ID, dto);
     });
 
     it('getDashboard should handle service error', async () => {
-      service.getDashboard.mockRejectedValueOnce(
-        new Error('Database error'),
-      );
+      service.getDashboard.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(controller.getDashboard(TENANT_ID)).rejects.toThrow(
-        'Database error',
-      );
+      await expect(controller.getDashboard(TENANT_ID)).rejects.toThrow('Database error');
       expect(service.getDashboard).toHaveBeenCalledWith(TENANT_ID);
     });
 
     it('findAll should handle service error', async () => {
       const query = { page: 1, limit: 20 };
-      service.findAll.mockRejectedValueOnce(
-        new Error('Database error'),
-      );
+      service.findAll.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(controller.findAll(TENANT_ID, query)).rejects.toThrow(
-        'Database error',
-      );
+      await expect(controller.findAll(TENANT_ID, query)).rejects.toThrow('Database error');
       expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, query);
     });
 
     it('findOne should handle service error', async () => {
-      service.findOne.mockRejectedValueOnce(
-        new Error('Database error'),
-      );
+      service.findOne.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(controller.findOne(TENANT_ID, 'dec-001')).rejects.toThrow(
-        'Database error',
-      );
+      await expect(controller.findOne(TENANT_ID, 'dec-001')).rejects.toThrow('Database error');
       expect(service.findOne).toHaveBeenCalledWith(TENANT_ID, 'dec-001');
     });
 
     it('recordReview should handle service error', async () => {
       const dto = { humanOverridden: true, humanDecision: 'Minor' };
-      service.recordHumanReview.mockRejectedValueOnce(
-        new Error('Database error'),
-      );
+      service.recordHumanReview.mockRejectedValueOnce(new Error('Database error'));
 
-      await expect(
-        controller.recordReview(TENANT_ID, USER_ID, 'dec-001', dto),
-      ).rejects.toThrow('Database error');
-      expect(service.recordHumanReview).toHaveBeenCalledWith(
-        TENANT_ID,
-        'dec-001',
-        dto,
-        USER_ID,
+      await expect(controller.recordReview(TENANT_ID, USER_ID, 'dec-001', dto)).rejects.toThrow(
+        'Database error',
       );
+      expect(service.recordHumanReview).toHaveBeenCalledWith(TENANT_ID, 'dec-001', dto, USER_ID);
     });
   });
 

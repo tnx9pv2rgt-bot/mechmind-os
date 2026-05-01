@@ -541,9 +541,7 @@ describe('SecurityIncidentService', () => {
       const recent = new Date(Date.now() - 6 * 60 * 60 * 1000);
       prisma.securityIncident.findMany
         .mockResolvedValueOnce([]) // resolvedIncidents
-        .mockResolvedValueOnce([
-          mockIncident({ detectedAt: recent, status: 'DETECTED' }),
-        ]); // checkNis2Deadlines
+        .mockResolvedValueOnce([mockIncident({ detectedAt: recent, status: 'DETECTED' })]); // checkNis2Deadlines
 
       const result = await service.getComplianceOverview(TENANT_ID);
 
@@ -855,9 +853,7 @@ describe('SecurityIncidentService', () => {
       prisma.securityIncident.count.mockResolvedValue(0);
       prisma.securityIncident.findMany
         .mockResolvedValueOnce([]) // resolvedIncidents query
-        .mockResolvedValueOnce([
-          mockIncident({ detectedAt: recent, status: 'DETECTED' }),
-        ]); // checkNis2Deadlines query
+        .mockResolvedValueOnce([mockIncident({ detectedAt: recent, status: 'DETECTED' })]); // checkNis2Deadlines query
 
       const result = await service.getComplianceOverview(TENANT_ID);
 

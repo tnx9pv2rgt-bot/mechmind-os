@@ -786,7 +786,9 @@ describe('VehicleHistoryService', () => {
       expect(result).toHaveLength(3);
       expect(result).toContainEqual(expect.objectContaining({ id: 'hist-ext-1' }));
       expect(result).toContainEqual(expect.objectContaining({ id: 'hist-ext-2' }));
-      expect(result).toContainEqual(expect.objectContaining({ source: VehicleHistorySource.LOCAL }));
+      expect(result).toContainEqual(
+        expect.objectContaining({ source: VehicleHistorySource.LOCAL }),
+      );
     });
 
     it('should handle concurrent Promise.all resolution correctly', async () => {
@@ -1308,9 +1310,21 @@ describe('VehicleHistoryService', () => {
       const dto = {
         source: VehicleHistorySourceDto.MOTORNET,
         records: [
-          { eventType: 'SERVICE', eventDate: '2025-01-01T00:00:00Z', description: 'Motornet record' },
-          { eventType: 'REPAIR', eventDate: '2025-02-01T00:00:00Z', description: 'Motornet repair' },
-          { eventType: 'INSPECTION', eventDate: '2025-03-01T00:00:00Z', description: 'Motornet inspection' },
+          {
+            eventType: 'SERVICE',
+            eventDate: '2025-01-01T00:00:00Z',
+            description: 'Motornet record',
+          },
+          {
+            eventType: 'REPAIR',
+            eventDate: '2025-02-01T00:00:00Z',
+            description: 'Motornet repair',
+          },
+          {
+            eventType: 'INSPECTION',
+            eventDate: '2025-03-01T00:00:00Z',
+            description: 'Motornet inspection',
+          },
         ],
       };
 

@@ -99,7 +99,12 @@ describe('SmsThreadController', () => {
       const result = await controller.getMessages(TENANT_ID, 'thread-001');
 
       expect(result).toEqual({ success: true, data: [], meta: { total: 0 } });
-      expect(service.getMessages).toHaveBeenCalledWith(TENANT_ID, 'thread-001', undefined, undefined);
+      expect(service.getMessages).toHaveBeenCalledWith(
+        TENANT_ID,
+        'thread-001',
+        undefined,
+        undefined,
+      );
     });
 
     it('should use pagination params', async () => {

@@ -9,12 +9,16 @@ describe('ProductionBoard Integration - DTO Validation Contracts', () => {
         technicianId: '550e8400-e29b-41d4-a716-446655440002',
       };
       // This would trigger ValidationPipe in real HTTP request
-      expect(dto.workOrderId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      expect(dto.workOrderId).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
     });
 
     it('detects invalid UUID in workOrderId', () => {
       const invalidUuid = 'not-a-uuid';
-      expect(invalidUuid).not.toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      expect(invalidUuid).not.toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+      );
     });
 
     it('detects non-string workOrderId', () => {

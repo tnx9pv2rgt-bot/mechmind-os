@@ -28,9 +28,12 @@ describe('VehicleHistoryController', () => {
           },
         },
       ],
-    }).overrideGuard(JwtAuthGuard).useValue({
-      canActivate: jest.fn().mockReturnValue(true),
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({
+        canActivate: jest.fn().mockReturnValue(true),
+      })
+      .compile();
 
     controller = module.get<VehicleHistoryController>(VehicleHistoryController);
     service = module.get(VehicleHistoryService) as jest.Mocked<VehicleHistoryService>;
@@ -95,7 +98,9 @@ describe('VehicleHistoryController', () => {
     it('should propagate service errors', async () => {
       service.getFullHistory.mockRejectedValueOnce(new Error('Service error'));
 
-      await expect(controller.getFullHistory(TENANT_ID, 'veh-001')).rejects.toThrow('Service error');
+      await expect(controller.getFullHistory(TENANT_ID, 'veh-001')).rejects.toThrow(
+        'Service error',
+      );
     });
   });
 
@@ -112,9 +117,7 @@ describe('VehicleHistoryController', () => {
 
   describe('response structure validation', () => {
     it('getFullHistory returns correct response structure', async () => {
-      const history = [
-        { id: 'rec-001', eventType: 'SERVICE', eventDate: new Date('2026-01-15') },
-      ];
+      const history = [{ id: 'rec-001', eventType: 'SERVICE', eventDate: new Date('2026-01-15') }];
       service.getFullHistory.mockResolvedValue(history as never);
 
       const result = await controller.getFullHistory(TENANT_ID, 'veh-001');

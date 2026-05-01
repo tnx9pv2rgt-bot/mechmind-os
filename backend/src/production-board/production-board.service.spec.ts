@@ -644,9 +644,7 @@ describe('ProductionBoardService', () => {
     it('should throw NotFoundException if technician is inactive', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
       prisma.serviceBay.findFirst.mockResolvedValue(makeMockBay());
-      prisma.technician.findFirst.mockResolvedValue(
-        makeMockTechnician({ isActive: false }),
-      );
+      prisma.technician.findFirst.mockResolvedValue(makeMockTechnician({ isActive: false }));
       // Need complete getBayById path mocks even though we expect early NotFoundException
       prisma.serviceBay.findMany.mockResolvedValue([]);
 
@@ -669,9 +667,7 @@ describe('ProductionBoardService', () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ assignedBayId: BAY_ID }));
       prisma.serviceBay.findFirst
         .mockResolvedValueOnce(makeMockBay({ currentWorkOrderId: WO_ID, status: 'OCCUPIED' }))
-        .mockResolvedValueOnce(
-          makeMockBay({ id: BAY_ID_2, status: 'MAINTENANCE' }),
-        );
+        .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'MAINTENANCE' }));
 
       await expect(
         service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
@@ -684,9 +680,7 @@ describe('ProductionBoardService', () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ assignedBayId: BAY_ID }));
       prisma.serviceBay.findFirst
         .mockResolvedValueOnce(makeMockBay({ currentWorkOrderId: WO_ID, status: 'OCCUPIED' }))
-        .mockResolvedValueOnce(
-          makeMockBay({ id: BAY_ID_2, status: 'CLEANING' }),
-        );
+        .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'CLEANING' }));
 
       await expect(
         service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
@@ -967,12 +961,8 @@ describe('ProductionBoardService', () => {
 
   describe('updateJobStatus - transition from IN_PROGRESS to WAITING_PARTS', () => {
     it('should transition from IN_PROGRESS to WAITING_PARTS (valid)', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(
-        makeMockWorkOrder({ status: 'IN_PROGRESS' }),
-      );
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'WAITING_PARTS' }),
-      );
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'WAITING_PARTS' }));
 
       const result = await service.updateJobStatus(WO_ID, 'WAITING_PARTS', TENANT_ID);
 
@@ -1010,12 +1000,8 @@ describe('ProductionBoardService', () => {
 
   describe('updateJobStatus - transition from IN_PROGRESS to QUALITY_CHECK', () => {
     it('should transition from IN_PROGRESS to QUALITY_CHECK', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(
-        makeMockWorkOrder({ status: 'IN_PROGRESS' }),
-      );
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'QUALITY_CHECK' }),
-      );
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'QUALITY_CHECK' }));
 
       const result = await service.updateJobStatus(WO_ID, 'QUALITY_CHECK', TENANT_ID);
 
@@ -1025,12 +1011,8 @@ describe('ProductionBoardService', () => {
 
   describe('updateJobStatus - transition from QUALITY_CHECK back to IN_PROGRESS', () => {
     it('should transition from QUALITY_CHECK back to IN_PROGRESS', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(
-        makeMockWorkOrder({ status: 'QUALITY_CHECK' }),
-      );
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'IN_PROGRESS' }),
-      );
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'QUALITY_CHECK' }));
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
 
       const result = await service.updateJobStatus(WO_ID, 'IN_PROGRESS', TENANT_ID);
 
@@ -1181,9 +1163,7 @@ describe('ProductionBoardService', () => {
     it('should allow assign with technician having no specializations', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
       prisma.serviceBay.findFirst.mockResolvedValue(makeMockBay());
-      prisma.technician.findFirst.mockResolvedValue(
-        makeMockTechnician({ specializations: [] }),
-      );
+      prisma.technician.findFirst.mockResolvedValue(makeMockTechnician({ specializations: [] }));
       prisma.$transaction.mockResolvedValue([{}, {}]);
 
       const assignedBay = makeMockBay({
@@ -1332,9 +1312,7 @@ describe('ProductionBoardService', () => {
 
     it('should filter by tenantId in updateJobStatus', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'COMPLETED' }),
-      );
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'COMPLETED' }));
 
       await service.updateJobStatus(WO_ID, 'COMPLETED', TENANT_ID);
 
@@ -1378,9 +1356,7 @@ describe('ProductionBoardService', () => {
   describe('assignToBay - bay with MAINTENANCE status', () => {
     it('should reject assigning to bay with MAINTENANCE status', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
-      prisma.serviceBay.findFirst.mockResolvedValue(
-        makeMockBay({ status: 'MAINTENANCE' }),
-      );
+      prisma.serviceBay.findFirst.mockResolvedValue(makeMockBay({ status: 'MAINTENANCE' }));
 
       await expect(
         service.assignToBay(
@@ -1399,10 +1375,7 @@ describe('ProductionBoardService', () => {
         .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'AVAILABLE' }));
 
       await expect(
-        service.moveJob(
-          { workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 },
-          TENANT_ID,
-        ),
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -1415,10 +1388,7 @@ describe('ProductionBoardService', () => {
         .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'MAINTENANCE' }));
 
       await expect(
-        service.moveJob(
-          { workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 },
-          TENANT_ID,
-        ),
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -1433,10 +1403,7 @@ describe('ProductionBoardService', () => {
         );
 
       await expect(
-        service.moveJob(
-          { workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 },
-          TENANT_ID,
-        ),
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -1446,9 +1413,11 @@ describe('ProductionBoardService', () => {
       prisma.workOrder.findFirst.mockResolvedValue(
         makeMockWorkOrder({ status: 'QUALITY_CHECK', assignedBayId: BAY_ID }),
       );
-      const updateMock = jest.fn().mockResolvedValue(
-        makeMockWorkOrder({ status: 'COMPLETED', actualCompletionTime: new Date() }),
-      );
+      const updateMock = jest
+        .fn()
+        .mockResolvedValue(
+          makeMockWorkOrder({ status: 'COMPLETED', actualCompletionTime: new Date() }),
+        );
       prisma.workOrder.update = updateMock;
 
       await service.updateJobStatus(WO_ID, 'COMPLETED', TENANT_ID);
@@ -1583,9 +1552,7 @@ describe('ProductionBoardService', () => {
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(0);
-      prisma.workOrder.findMany
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([]);
+      prisma.workOrder.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
       const result = await service.getTvPayload(TENANT_ID);
 
@@ -1640,22 +1607,15 @@ describe('ProductionBoardService', () => {
   describe('moveJob - same source and destination bay', () => {
     it('should reject when moving to same bay', async () => {
       await expect(
-        service.moveJob(
-          { workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID },
-          TENANT_ID,
-        ),
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID }, TENANT_ID),
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('updateJobStatus - transition from IN_PROGRESS to QUALITY_CHECK', () => {
     it('should transition from IN_PROGRESS to QUALITY_CHECK', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(
-        makeMockWorkOrder({ status: 'IN_PROGRESS' }),
-      );
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'QUALITY_CHECK' }),
-      );
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'QUALITY_CHECK' }));
 
       const result = await service.updateJobStatus(WO_ID, 'QUALITY_CHECK', TENANT_ID);
 
@@ -1717,9 +1677,7 @@ describe('ProductionBoardService', () => {
     it('should throw NotFoundException when bay not found', async () => {
       prisma.serviceBay.findMany.mockResolvedValue([]);
 
-      await expect(service['getBayById'](BAY_ID, TENANT_ID)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service['getBayById'](BAY_ID, TENANT_ID)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -1739,7 +1697,9 @@ describe('ProductionBoardService', () => {
       });
 
       prisma.serviceBay.findMany.mockResolvedValue([bay1, bay2]);
-      prisma.technician.findFirst.mockResolvedValueOnce(makeMockTechnician()).mockResolvedValueOnce(null);
+      prisma.technician.findFirst
+        .mockResolvedValueOnce(makeMockTechnician())
+        .mockResolvedValueOnce(null);
       prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
 
       const result = await service.getBoardState(TENANT_ID);
@@ -1888,12 +1848,8 @@ describe('ProductionBoardService', () => {
 
   describe('updateJobStatus - transition from PENDING to CHECKED_IN', () => {
     it('should transition from PENDING to CHECKED_IN', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue(
-        makeMockWorkOrder({ status: 'PENDING' }),
-      );
-      prisma.workOrder.update.mockResolvedValue(
-        makeMockWorkOrder({ status: 'CHECKED_IN' }),
-      );
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ status: 'PENDING' }));
+      prisma.workOrder.update.mockResolvedValue(makeMockWorkOrder({ status: 'CHECKED_IN' }));
 
       const result = await service.updateJobStatus(WO_ID, 'CHECKED_IN', TENANT_ID);
 
@@ -1904,9 +1860,11 @@ describe('ProductionBoardService', () => {
 
   describe('updateJobStatus - transition from PENDING to IN_PROGRESS', () => {
     it('should transition from PENDING to IN_PROGRESS and set actualStartTime', async () => {
-      const updateMock = jest.fn().mockResolvedValue(
-        makeMockWorkOrder({ status: 'IN_PROGRESS', actualStartTime: new Date() }),
-      );
+      const updateMock = jest
+        .fn()
+        .mockResolvedValue(
+          makeMockWorkOrder({ status: 'IN_PROGRESS', actualStartTime: new Date() }),
+        );
       prisma.workOrder.findFirst.mockResolvedValue(
         makeMockWorkOrder({ status: 'PENDING', actualStartTime: null }),
       );

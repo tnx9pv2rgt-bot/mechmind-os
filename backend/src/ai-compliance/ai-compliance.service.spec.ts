@@ -283,9 +283,7 @@ describe('AiComplianceService', () => {
 
   describe('error handling', () => {
     it('logDecision should throw InternalServerErrorException on create error', async () => {
-      prisma.aiDecisionLog.create.mockRejectedValueOnce(
-        new Error('DB error'),
-      );
+      prisma.aiDecisionLog.create.mockRejectedValueOnce(new Error('DB error'));
 
       const dto = {
         featureName: 'test',
@@ -301,17 +299,10 @@ describe('AiComplianceService', () => {
 
     it('recordHumanReview should throw InternalServerErrorException on update error', async () => {
       prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(mockDecision);
-      prisma.aiDecisionLog.update.mockRejectedValueOnce(
-        new Error('DB error'),
-      );
+      prisma.aiDecisionLog.update.mockRejectedValueOnce(new Error('DB error'));
 
       await expect(
-        service.recordHumanReview(
-          TENANT_ID,
-          'dec-001',
-          { humanOverridden: false },
-          USER_ID,
-        ),
+        service.recordHumanReview(TENANT_ID, 'dec-001', { humanOverridden: false }, USER_ID),
       ).rejects.toThrow('Errore durante il salvataggio della revisione umana');
     });
 
@@ -324,9 +315,7 @@ describe('AiComplianceService', () => {
     });
 
     it('findOne should throw InternalServerErrorException on query error', async () => {
-      prisma.aiDecisionLog.findFirst.mockRejectedValueOnce(
-        new Error('DB error'),
-      );
+      prisma.aiDecisionLog.findFirst.mockRejectedValueOnce(new Error('DB error'));
 
       await expect(service.findOne(TENANT_ID, 'dec-001')).rejects.toThrow(
         'Errore durante il recupero della decisione IA',

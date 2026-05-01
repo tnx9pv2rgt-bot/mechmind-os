@@ -25,10 +25,7 @@ describe('SegmentWebhookService', () => {
     const mockConfig = { get: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SegmentWebhookService,
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [SegmentWebhookService, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<SegmentWebhookService>(SegmentWebhookService);
@@ -156,10 +153,7 @@ describe('ZapierWebhookService', () => {
     const mockConfig = { get: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ZapierWebhookService,
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [ZapierWebhookService, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<ZapierWebhookService>(ZapierWebhookService);
@@ -233,7 +227,7 @@ describe('ZapierWebhookService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-        })
+        }),
       );
     });
 
@@ -268,10 +262,7 @@ describe('SlackWebhookService', () => {
     const mockConfig = { get: jest.fn().mockReturnValueOnce('xoxb-test-token') };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SlackWebhookService,
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [SlackWebhookService, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<SlackWebhookService>(SlackWebhookService);
@@ -485,19 +476,16 @@ describe('SlackWebhookService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
-            'Authorization': 'Bearer xoxb-test-token',
+            Authorization: 'Bearer xoxb-test-token',
           }),
-        })
+        }),
       );
     });
 
     it('returns false when bot token not configured', async () => {
       const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
       const module = await Test.createTestingModule({
-        providers: [
-          SlackWebhookService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [SlackWebhookService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       const newService = module.get<SlackWebhookService>(SlackWebhookService);
@@ -563,10 +551,7 @@ describe('CRMWebhookService', () => {
     const mockConfig = { get: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CRMWebhookService,
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [CRMWebhookService, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<CRMWebhookService>(CRMWebhookService);
@@ -661,7 +646,9 @@ describe('CRMWebhookService', () => {
         timestamp: new Date(),
       };
 
-      jest.spyOn(service as any, 'handleSalesforceEvent').mockRejectedValueOnce(new Error('DB error'));
+      jest
+        .spyOn(service as any, 'handleSalesforceEvent')
+        .mockRejectedValueOnce(new Error('DB error'));
 
       await expect(service.handleEvent(event)).rejects.toThrow();
     });
@@ -671,10 +658,7 @@ describe('CRMWebhookService', () => {
     it('returns false when Salesforce not configured', async () => {
       const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
       const module = await Test.createTestingModule({
-        providers: [
-          CRMWebhookService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [CRMWebhookService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       const newService = module.get<CRMWebhookService>(CRMWebhookService);
@@ -686,10 +670,7 @@ describe('CRMWebhookService', () => {
     it('returns false when HubSpot not configured', async () => {
       const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
       const module = await Test.createTestingModule({
-        providers: [
-          CRMWebhookService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [CRMWebhookService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       const newService = module.get<CRMWebhookService>(CRMWebhookService);
@@ -707,10 +688,7 @@ describe('CRMWebhookService', () => {
         }),
       };
       const module = await Test.createTestingModule({
-        providers: [
-          CRMWebhookService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [CRMWebhookService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       const newService = module.get<CRMWebhookService>(CRMWebhookService);
@@ -828,9 +806,9 @@ describe('WebhookController', () => {
 
       const mockRequest = { body: payload } as any;
 
-      await expect(
-        controller.handleSegment(payload, 'invalid-sig', mockRequest)
-      ).rejects.toThrow(HttpException);
+      await expect(controller.handleSegment(payload, 'invalid-sig', mockRequest)).rejects.toThrow(
+        HttpException,
+      );
     });
 
     it('allows Segment webhook without secret configured', async () => {
@@ -929,9 +907,9 @@ describe('WebhookController', () => {
         data: {},
       };
 
-      await expect(
-        controller.handleZapier(payload, 'invalid-secret')
-      ).rejects.toThrow(HttpException);
+      await expect(controller.handleZapier(payload, 'invalid-secret')).rejects.toThrow(
+        HttpException,
+      );
     });
 
     it('allows Zapier webhook without secret configured', async () => {
@@ -1006,10 +984,12 @@ describe('WebhookController', () => {
     });
 
     it('rejects Slack event with old timestamp (replay attack)', async () => {
-      const mockConfig = { get: jest.fn((key) => {
-        if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
-        return undefined;
-      }) };
+      const mockConfig = {
+        get: jest.fn(key => {
+          if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
+          return undefined;
+        }),
+      };
       const module = await Test.createTestingModule({
         controllers: [WebhookController],
         providers: [
@@ -1032,15 +1012,17 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackEvents(payload, 'v0=any', oldTimestamp, mockRequest)
+        controller.handleSlackEvents(payload, 'v0=any', oldTimestamp, mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
     it('rejects Slack event with invalid signature when secret configured', async () => {
-      const mockConfig = { get: jest.fn((key) => {
-        if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
-        return undefined;
-      }) };
+      const mockConfig = {
+        get: jest.fn(key => {
+          if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
+          return undefined;
+        }),
+      };
       const module = await Test.createTestingModule({
         controllers: [WebhookController],
         providers: [
@@ -1063,7 +1045,7 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackEvents(payload, 'v0=invalid', timestamp, mockRequest)
+        controller.handleSlackEvents(payload, 'v0=invalid', timestamp, mockRequest),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -1109,16 +1091,23 @@ describe('WebhookController', () => {
         rawBody: body,
       } as any;
 
-      const result = await controller.handleSlackCommands(payload, signature, timestamp, mockRequest);
+      const result = await controller.handleSlackCommands(
+        payload,
+        signature,
+        timestamp,
+        mockRequest,
+      );
 
       expect(result.response_type).toBe('ephemeral');
     });
 
     it('rejects Slack command with invalid signature when secret configured', async () => {
-      const mockConfig = { get: jest.fn((key) => {
-        if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
-        return undefined;
-      }) };
+      const mockConfig = {
+        get: jest.fn(key => {
+          if (key === 'SLACK_SIGNING_SECRET') return 'slack-secret';
+          return undefined;
+        }),
+      };
       const module = await Test.createTestingModule({
         controllers: [WebhookController],
         providers: [
@@ -1154,7 +1143,7 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackCommands(payload, 'v0=invalid', timestamp, mockRequest)
+        controller.handleSlackCommands(payload, 'v0=invalid', timestamp, mockRequest),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -1218,15 +1207,17 @@ describe('WebhookController', () => {
       const mockRequest = { body: payload } as any;
 
       await expect(
-        controller.handleCRM(payload, 'invalid-crm', 'sig', mockRequest)
+        controller.handleCRM(payload, 'invalid-crm', 'sig', mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
     it('rejects CRM webhook with invalid signature when secret configured', async () => {
-      const mockConfig = { get: jest.fn((key) => {
-        if (key === 'SALESFORCE_WEBHOOK_SECRET') return 'salesforce-secret';
-        return undefined;
-      }) };
+      const mockConfig = {
+        get: jest.fn(key => {
+          if (key === 'SALESFORCE_WEBHOOK_SECRET') return 'salesforce-secret';
+          return undefined;
+        }),
+      };
       const module = await Test.createTestingModule({
         controllers: [WebhookController],
         providers: [
@@ -1248,7 +1239,7 @@ describe('WebhookController', () => {
       const mockRequest = { body: payload } as any;
 
       await expect(
-        controller.handleCRM(payload, 'salesforce', 'invalid-sig', mockRequest)
+        controller.handleCRM(payload, 'salesforce', 'invalid-sig', mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
