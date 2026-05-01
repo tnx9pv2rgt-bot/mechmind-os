@@ -2411,4 +2411,83 @@ describe('PortalService', () => {
       expect(result.data).toEqual([]);
     });
   });
+
+  // ===========================================================================
+  // decryptCustomer - null field branches  
+  // ===========================================================================
+  describe('decryptCustomer - null encrypted fields', () => {
+    it('should return null for email when encryptedEmail is null', async () => {
+      const customer = {
+        id: CUSTOMER_ID,
+        encryptedEmail: null,
+        encryptedFirstName: 'enc-John',
+        encryptedLastName: 'enc-Doe',
+        encryptedPhone: 'enc-+39123456789',
+        customerType: 'PERSONA',
+        vehicles: [],
+      };
+      prisma.customer.findFirst.mockResolvedValue(customer);
+
+      const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.data.email).toBeNull();
+      expect(result.data.firstName).toBe('John');
+    });
+
+    it('should return null for firstName when encryptedFirstName is null', async () => {
+      const customer = {
+        id: CUSTOMER_ID,
+        encryptedEmail: 'enc-test@test.it',
+        encryptedFirstName: null,
+        encryptedLastName: 'enc-Doe',
+        encryptedPhone: 'enc-+39123456789',
+        customerType: 'PERSONA',
+        vehicles: [],
+      };
+      prisma.customer.findFirst.mockResolvedValue(customer);
+
+      const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.data.firstName).toBeNull();
+      expect(result.data.email).toBe('test@test.it');
+    });
+
+    it('should return null for lastName when encryptedLastName is null', async () => {
+      const customer = {
+        id: CUSTOMER_ID,
+        encryptedEmail: 'enc-test@test.it',
+        encryptedFirstName: 'enc-John',
+        encryptedLastName: null,
+        encryptedPhone: 'enc-+39123456789',
+        customerType: 'PERSONA',
+        vehicles: [],
+      };
+      prisma.customer.findFirst.mockResolvedValue(customer);
+
+      const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.data.lastName).toBeNull();
+      expect(result.data.firstName).toBe('John');
+    });
+
+    it('should handle all optional fields as null simultaneously', async () => {
+      const customer = {
+        id: CUSTOMER_ID,
+        encryptedEmail: null,
+        encryptedFirstName: null,
+        encryptedLastName: null,
+        encryptedPhone: 'enc-+39123456789',
+        customerType: 'PERSONA',
+        vehicles: [],
+      };
+      prisma.customer.findFirst.mockResolvedValue(customer);
+
+      const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
+
+      expect(result.data.email).toBeNull();
+      expect(result.data.firstName).toBeNull();
+      expect(result.data.lastName).toBeNull();
+      expect(result.data.phone).toBe('+39123456789');
+    });
+  });
 });
