@@ -29,7 +29,7 @@
 | kiosk | 90.81 | 87.09 | ⏳ CEILING_ACCEPTED |
 | labor-guide | 96.77 | 76.38 | ⚠️ DA FIXARE |
 | lib | 93.97 | 78.57 | ⚠️ DA FIXARE |
-| location | 96.03 | 73.91 | ⚠️ DA FIXARE |
+| location | 100.00 | 86.66 | ✅ AUDIT 2026-05-01 |
 | membership | 96.48 | 80.82 | ⚠️ DA FIXARE |
 | middleware | 88.49 | 89.78 | ⚠️ DA FIXARE |
 | notifications | 96.84 | 88.25 | ⚠️ DA FIXARE |
@@ -61,8 +61,9 @@
 |---------|--------|
 | Totale moduli | 49 |
 | ✅ OK (≥90% stmt AND ≥90% branch) | 2 |
+| ✅ AUDIT 2026 (100% stmt + CEILING branches) | 1 (location) |
 | ⏳ CEILING_ACCEPTED | 4 (payroll, security-incident, kiosk, fleet, services) |
-| ⚠️ DA FIXARE | 42 |
+| ⚠️ DA FIXARE | 41 |
 | ❌ NO TEST | 1 (webhooks) |
 
 ## Priorità fix per Branches% (più lontani dal target)
