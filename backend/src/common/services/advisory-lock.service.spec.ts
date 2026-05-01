@@ -748,12 +748,12 @@ describe('AdvisoryLockService', () => {
       await expect(
         service.acquireLockWithRetry(TENANT_ID, SLOT_ID, {
           maxAttempts: 2,
-          baseDelayMs: 10,
+          baseDelayMs: 25,
         }),
       ).rejects.toThrow(LockTimeoutError);
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeGreaterThanOrEqual(10);
+      expect(elapsed).toBeGreaterThanOrEqual(25);
     });
   });
 

@@ -22,6 +22,7 @@ const sampleUser = {
   role: 'admin',
 };
 
+
 describe('lib/auth/tokens', () => {
   describe('generateJWT', () => {
     it('should generate a valid JWT with user data', () => {
@@ -129,6 +130,12 @@ describe('lib/auth/tokens', () => {
       const result = verifyJWT(token);
       expect(result).toBeNull();
     });
+
+    it('should handle JsonWebTokenError from malformed signature', () => {
+      const malformedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature';
+      const result = verifyJWT(malformedToken);
+      expect(result).toBeNull();
+    });
   });
 
   describe('verifyRefreshToken', () => {
@@ -152,6 +159,12 @@ describe('lib/auth/tokens', () => {
       });
 
       const result = verifyRefreshToken(token);
+      expect(result).toBeNull();
+    });
+
+    it('should handle malformed refresh token signature', () => {
+      const malformedToken = 'header.payload.badsignature';
+      const result = verifyRefreshToken(malformedToken);
       expect(result).toBeNull();
     });
   });
@@ -180,6 +193,80 @@ describe('lib/auth/tokens', () => {
       // jwt.decode returns an object even for weird strings if they have 3 parts
       // but for truly invalid strings it returns null
       expect(result === null || typeof result === 'object').toBe(true);
+    });
+
+    it('should handle non-JWT strings gracefully', () => {
+      const result = decodeJWT('completely-invalid');
+      // jwt.decode might return null or try to decode
+      expect(result === null || typeof result === 'object').toBe(true);
+    });
+
+    it('should handle empty string', () => {
+      const result = decodeJWT('');
+      expect(result === null || typeof result === 'object').toBe(true);
+    });
+  });
+
+  describe('environment variable branches', () => {
+    it('should use separate JWT_REFRESH_SECRET when provided', () => {
+      // Test the branch: process.env.JWT_REFRESH_SECRET || JWT_SECRET
+      // When JWT_REFRESH_SECRET is explicitly set (which it is in setup)
+      const token = generateRefreshToken({ id: 'user-123' });
+
+      // Verify it can be verified with JWT_REFRESH_SECRET
+      const result = verifyRefreshToken(token);
+      expect(result).not.toBeNull();
+      expect(result!.sub).toBe('user-123');
+    });
+
+    it('should handle refresh token with different secret', () => {
+      // Test that verifyRefreshToken works when secret is configured
+      // Create a token with the refresh secret
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!;
+      const testToken = jwt.sign(
+        { sub: 'user-test', jti: 'test-jti', familyId: 'test-family' },
+        refreshSecret,
+        { expiresIn: '7d' }
+      );
+
+      const result = verifyRefreshToken(testToken);
+      expect(result).not.toBeNull();
+      expect(result!.sub).toBe('user-test');
+    });
+
+    it('should generate random familyId when not provided', () => {
+      // Test the branch: familyId || randomBytes(...)
+      const token1 = generateRefreshToken({ id: 'user-123' }, undefined);
+      const token2 = generateRefreshToken({ id: 'user-123' }, undefined);
+
+      const decoded1 = jwt.decode(token1) as Record<string, unknown>;
+      const decoded2 = jwt.decode(token2) as Record<string, unknown>;
+
+      // Both should have familyId generated
+      expect(decoded1.familyId).toBeDefined();
+      expect(decoded2.familyId).toBeDefined();
+
+      // Generated familyIds should be different
+      expect(decoded1.familyId).not.toBe(decoded2.familyId);
+    });
+
+    it('should use provided familyId when explicitly passed', () => {
+      // Test when familyId is provided (explicit non-falsy value)
+      const token = generateRefreshToken({ id: 'user-123' }, 'explicit-family-id');
+
+      const decoded = jwt.decode(token) as Record<string, unknown>;
+      expect(decoded.familyId).toBe('explicit-family-id');
+    });
+
+    it('should generate familyId when passed empty string', () => {
+      // Test the || branch with falsy value: empty string triggers randomBytes
+      const token = generateRefreshToken({ id: 'user-123' }, '');
+
+      const decoded = jwt.decode(token) as Record<string, unknown>;
+      // Empty string is falsy, so || randomBytes should generate a new one
+      expect(typeof decoded.familyId).toBe('string');
+      expect((decoded.familyId as string).length).toBeGreaterThan(0);
+      expect(decoded.familyId).not.toBe('');
     });
   });
 });

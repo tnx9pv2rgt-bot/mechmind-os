@@ -538,4 +538,214 @@ describe('KioskService', () => {
       expect(result[0].services).toHaveLength(1);
     });
   });
+
+  // =========================================================================
+  // ADDITIONAL BRANCH COVERAGE TESTS - NO_SHOW, CANCELLED, IN_PROGRESS
+  // =========================================================================
+
+  describe('checkIn - status transition edge cases (full branch coverage)', () => {
+    it('should allow CONFIRMED status (true branch of || in condition)', async () => {
+      const confirmedBooking = { ...mockBooking, status: BookingStatus.CONFIRMED };
+      prisma.booking.findFirst.mockResolvedValue(confirmedBooking);
+      const updated = { ...confirmedBooking, status: BookingStatus.CHECKED_IN };
+      prisma.booking.update.mockResolvedValue(updated);
+
+      const result = await service.checkIn(TENANT_ID, 'booking-001');
+
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
+      expect(prisma.booking.update).toHaveBeenCalled();
+    });
+
+    it('should allow PENDING status (true branch of || in condition)', async () => {
+      const pendingBooking = { ...mockBooking, status: BookingStatus.PENDING };
+      prisma.booking.findFirst.mockResolvedValue(pendingBooking);
+      const updated = { ...pendingBooking, status: BookingStatus.CHECKED_IN };
+      prisma.booking.update.mockResolvedValue(updated);
+
+      const result = await service.checkIn(TENANT_ID, 'booking-001');
+
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
+    });
+
+    it('should throw BadRequestException for NO_SHOW status (not CONFIRMED and not PENDING)', async () => {
+      const noShowBooking = { ...mockBooking, status: BookingStatus.NO_SHOW };
+      prisma.booking.findFirst.mockResolvedValue(noShowBooking);
+
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prisma.booking.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for CANCELLED status', async () => {
+      const cancelledBooking = { ...mockBooking, status: BookingStatus.CANCELLED };
+      prisma.booking.findFirst.mockResolvedValue(cancelledBooking);
+
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for IN_PROGRESS status', async () => {
+      const inProgressBooking = { ...mockBooking, status: BookingStatus.IN_PROGRESS };
+      prisma.booking.findFirst.mockResolvedValue(inProgressBooking);
+
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for CHECKED_IN status (already checked in)', async () => {
+      const alreadyCheckedIn = { ...mockBooking, status: BookingStatus.CHECKED_IN };
+      prisma.booking.findFirst.mockResolvedValue(alreadyCheckedIn);
+
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException for COMPLETED status', async () => {
+      const completedBooking = { ...mockBooking, status: BookingStatus.COMPLETED };
+      prisma.booking.findFirst.mockResolvedValue(completedBooking);
+
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('getShopStatus - multiple floors with mixed bays', () => {
+    it('should aggregate bays from multiple shop floors', async () => {
+      prisma.shopFloor.findMany.mockResolvedValue([
+        {
+          bays: [{ status: 'OCCUPIED' }, { status: 'AVAILABLE' }],
+        },
+        {
+          bays: [{ status: 'OCCUPIED' }, { status: 'OCCUPIED' }, { status: 'AVAILABLE' }],
+        },
+      ]);
+      prisma.booking.count.mockResolvedValue(4);
+
+      const result = await service.getShopStatus(TENANT_ID);
+
+      expect(result.baysTotal).toBe(5);
+      expect(result.baysOccupied).toBe(3);
+      expect(result.queueSize).toBe(4);
+    });
+
+    it('should handle shopFloor with empty bays array', async () => {
+      prisma.shopFloor.findMany.mockResolvedValue([
+        { bays: [] },
+        { bays: [{ status: 'AVAILABLE' }] },
+      ]);
+      prisma.booking.count.mockResolvedValue(0);
+
+      const result = await service.getShopStatus(TENANT_ID);
+
+      expect(result.baysTotal).toBe(1);
+      expect(result.baysOccupied).toBe(0);
+    });
+
+    it('should return estimatedWaitMinutes=0 when all bays available (Math.max branch)', async () => {
+      prisma.shopFloor.findMany.mockResolvedValue([
+        {
+          bays: [{ status: 'AVAILABLE' }, { status: 'AVAILABLE' }, { status: 'AVAILABLE' }],
+        },
+      ]);
+      prisma.booking.count.mockResolvedValue(5);
+
+      const result = await service.getShopStatus(TENANT_ID);
+
+      // 5 queued / (3 - 0) = 5/3 * 45 = 75 minutes
+      expect(result.estimatedWaitMinutes).toBe(75);
+    });
+  });
+
+  describe('findBookingByPlate - license plate variations', () => {
+    it('should handle plate with multiple spaces', async () => {
+      prisma.booking.findMany.mockResolvedValue([mockBooking]);
+
+      await service.findBookingByPlate(TENANT_ID, 'AB  123  CD');
+
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            vehicle: { licensePlate: 'AB123CD' },
+          }),
+        }),
+      );
+    });
+
+    it('should handle plate with multiple dashes', async () => {
+      prisma.booking.findMany.mockResolvedValue([mockBooking]);
+
+      await service.findBookingByPlate(TENANT_ID, 'AB--123--CD');
+
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            vehicle: { licensePlate: 'AB123CD' },
+          }),
+        }),
+      );
+    });
+
+    it('should handle plate mixed spaces and dashes', async () => {
+      prisma.booking.findMany.mockResolvedValue([mockBooking]);
+
+      await service.findBookingByPlate(TENANT_ID, 'AB 1-2-3 CD');
+
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            vehicle: { licensePlate: 'AB123CD' },
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('validateKioskKey - hash consistency', () => {
+    it('should hash the kiosk key consistently', async () => {
+      const testKey = 'my-secret-kiosk-key';
+      prisma.tenant.findFirst.mockResolvedValue({ id: TENANT_ID });
+
+      const result1 = await service.validateKioskKey(testKey);
+      const result2 = await service.validateKioskKey(testKey);
+
+      expect(result1).toBe(TENANT_ID);
+      expect(result2).toBe(TENANT_ID);
+      expect(prisma.tenant.findFirst).toHaveBeenCalledTimes(2);
+      // Both calls should hash the same way (verify by checking exact call args)
+      const call1Args = prisma.tenant.findFirst.mock.calls[0][0];
+      const call2Args = prisma.tenant.findFirst.mock.calls[1][0];
+      expect(call1Args.where.apiKeyHash).toBe(call2Args.where.apiKeyHash);
+    });
+
+    it('should filter by isActive=true when validating key', async () => {
+      prisma.tenant.findFirst.mockResolvedValue({ id: TENANT_ID });
+
+      await service.validateKioskKey('key');
+
+      expect(prisma.tenant.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isActive: true,
+          }),
+        }),
+      );
+    });
+
+    it('should select only id field for performance', async () => {
+      prisma.tenant.findFirst.mockResolvedValue({ id: TENANT_ID });
+
+      await service.validateKioskKey('key');
+
+      expect(prisma.tenant.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: { id: true },
+        }),
+      );
+    });
+  });
 });

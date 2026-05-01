@@ -138,4 +138,124 @@ describe('WebhookSubscriptionController', () => {
       expect(result).toEqual({ success: false });
     });
   });
+
+  describe('error handling', () => {
+    it('should propagate service exceptions on create', async () => {
+      const dto = {
+        url: 'https://client.example.com/webhooks',
+        events: ['booking.created' as const],
+        secret: 'supersecretkey1234567890',
+      };
+      service.create.mockRejectedValue(new Error('Database error'));
+
+      await expect(controller.create(TENANT_ID, dto)).rejects.toThrow('Database error');
+    });
+
+    it('should propagate service exceptions on findOne', async () => {
+      service.findOne.mockRejectedValue(new Error('Not found'));
+
+      await expect(controller.findOne(TENANT_ID, 'webhook-uuid-001')).rejects.toThrow(
+        'Not found',
+      );
+    });
+
+    it('should propagate service exceptions on update', async () => {
+      const dto = { url: 'https://new-endpoint.com/webhooks' };
+      service.update.mockRejectedValue(new Error('Invalid URL'));
+
+      await expect(
+        controller.update(TENANT_ID, 'webhook-uuid-001', dto),
+      ).rejects.toThrow('Invalid URL');
+    });
+
+    it('should propagate service exceptions on remove', async () => {
+      service.remove.mockRejectedValue(new Error('Cannot remove'));
+
+      await expect(controller.remove(TENANT_ID, 'webhook-uuid-001')).rejects.toThrow(
+        'Cannot remove',
+      );
+    });
+  });
+
+  describe('pagination and filtering', () => {
+    it('should pass pagination params to service.findAll', async () => {
+      const query = { page: 2, limit: 50, isActive: true };
+      service.findAll.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 2,
+        limit: 50,
+      });
+
+      await controller.findAll(TENANT_ID, query);
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, query);
+    });
+
+    it('should pass event filter to service.findAll', async () => {
+      const query = { event: 'invoice.paid' as const };
+      service.findAll.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      });
+
+      await controller.findAll(TENANT_ID, query);
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ event: 'invoice.paid' }),
+      );
+    });
+
+    it('should handle empty result set', async () => {
+      service.findAll.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+      });
+
+      const result = await controller.findAll(TENANT_ID, {});
+
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+  });
+
+  describe('partial updates', () => {
+    it('should allow partial update of URL only', async () => {
+      const dto = { url: 'https://new-url.com/webhooks' };
+      const updated = mockSubscription({ url: 'https://new-url.com/webhooks' });
+      service.update.mockResolvedValue(updated);
+
+      const result = await controller.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      expect(service.update).toHaveBeenCalledWith(TENANT_ID, 'webhook-uuid-001', dto);
+      expect(result).toEqual(updated);
+    });
+
+    it('should allow partial update of events only', async () => {
+      const dto = { events: ['invoice.paid' as const] };
+      const updated = mockSubscription({ events: ['invoice.paid'] });
+      service.update.mockResolvedValue(updated);
+
+      const result = await controller.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      expect(service.update).toHaveBeenCalledWith(TENANT_ID, 'webhook-uuid-001', dto);
+      expect(result).toEqual(updated);
+    });
+
+    it('should allow toggling isActive status', async () => {
+      const dto = { isActive: false };
+      const updated = mockSubscription({ isActive: false });
+      service.update.mockResolvedValue(updated);
+
+      const result = await controller.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      expect(service.update).toHaveBeenCalledWith(TENANT_ID, 'webhook-uuid-001', dto);
+      expect(result.isActive).toBe(false);
+    });
+  });
 });

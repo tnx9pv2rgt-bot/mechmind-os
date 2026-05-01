@@ -454,4 +454,201 @@ describe('HealthController', () => {
       expect(res.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
     });
   });
+
+  describe('getMemoryInfo branch coverage', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should return warning status when heap is between 256MB and 512MB', async () => {
+      const mockMemUsage = {
+        rss: 300 * 1024 * 1024,
+        heapUsed: 350 * 1024 * 1024,
+        heapTotal: 400 * 1024 * 1024,
+        external: 10 * 1024 * 1024,
+        arrayBuffers: 0,
+      };
+
+      jest.spyOn(process, 'memoryUsage').mockReturnValueOnce(mockMemUsage as never);
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.memory.status).toBe('warning');
+      expect(call.memory.heapUsed).toBe(350);
+    });
+
+    it('should return critical status when heap exceeds 512MB', async () => {
+      const mockMemUsage = {
+        rss: 600 * 1024 * 1024,
+        heapUsed: 550 * 1024 * 1024,
+        heapTotal: 700 * 1024 * 1024,
+        external: 20 * 1024 * 1024,
+        arrayBuffers: 0,
+      };
+
+      jest.spyOn(process, 'memoryUsage').mockReturnValueOnce(mockMemUsage as never);
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.memory.status).toBe('critical');
+      expect(call.memory.heapUsed).toBe(550);
+    });
+
+    it('should return ok status when heap below 256MB', async () => {
+      const mockMemUsage = {
+        rss: 100 * 1024 * 1024,
+        heapUsed: 100 * 1024 * 1024,
+        heapTotal: 200 * 1024 * 1024,
+        external: 5 * 1024 * 1024,
+        arrayBuffers: 0,
+      };
+
+      jest.spyOn(process, 'memoryUsage').mockReturnValueOnce(mockMemUsage as never);
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.memory.status).toBe('ok');
+    });
+
+    it('should correctly round memory values to nearest MB', async () => {
+      const mockMemUsage = {
+        rss: 123456789,
+        heapUsed: 234567890,
+        heapTotal: 345678901,
+        external: 456789,
+        arrayBuffers: 0,
+      };
+
+      jest.spyOn(process, 'memoryUsage').mockReturnValueOnce(mockMemUsage as never);
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      const mem = call.memory;
+      expect(Number.isInteger(mem.rss)).toBe(true);
+      expect(Number.isInteger(mem.heapUsed)).toBe(true);
+      expect(Number.isInteger(mem.heapTotal)).toBe(true);
+      expect(Number.isInteger(mem.external)).toBe(true);
+    });
+  });
+
+  describe('Promise.allSettled branch coverage', () => {
+    it('should handle both checks failing simultaneously', async () => {
+      prisma.$queryRaw.mockRejectedValueOnce(new Error('DB down') as never);
+      redis.set.mockRejectedValueOnce(new Error('Redis down') as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.checks.database.status).toBe('down');
+      expect(call.checks.redis.status).toBe('down');
+      expect(call.status).toBe('unhealthy');
+    });
+
+    it('should handle database check rejected while redis is fulfilled', async () => {
+      prisma.$queryRaw.mockRejectedValueOnce(new Error('DB error') as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.checks.database.status).toBe('down');
+      expect(call.checks.redis.status).toBe('up');
+    });
+
+    it('should handle redis check rejected while database is fulfilled', async () => {
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockRejectedValueOnce(new Error('Redis error') as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.checks.database.status).toBe('up');
+      expect(call.checks.redis.status).toBe('down');
+    });
+  });
+
+  describe('Readiness check database isolation', () => {
+    it('should skip database check when isShuttingDown is true', async () => {
+      shutdownService.isShuttingDown = true;
+      prisma.$queryRaw.mockClear();
+
+      const res = mockResponse();
+      await controller.readiness(res as never);
+
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    });
+
+    it('should call database check when isShuttingDown is false', async () => {
+      shutdownService.isShuttingDown = false;
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+
+      const res = mockResponse();
+      await controller.readiness(res as never);
+
+      expect(prisma.$queryRaw).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
+    });
+  });
+
+  describe('allUp boolean branch coverage in health()', () => {
+    it('should compute allUp as true when all checks pass', async () => {
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.status).toBe('ok');
+    });
+
+    it('should compute allUp as false when redis fails', async () => {
+      prisma.$queryRaw.mockResolvedValueOnce([{ '?column?': 1 }] as never);
+      redis.set.mockRejectedValueOnce(new Error('Redis error') as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.status).toBe('degraded');
+    });
+
+    it('should compute allUp as false and dbUp as false when db fails', async () => {
+      prisma.$queryRaw.mockRejectedValueOnce(new Error('DB error') as never);
+      redis.set.mockResolvedValueOnce(undefined as never);
+      redis.get.mockResolvedValueOnce('pong' as never);
+
+      const res = mockResponse();
+      await controller.health(res as never);
+
+      const call = res.json.mock.calls[0][0];
+      expect(call.status).toBe('unhealthy');
+    });
+  });
 });

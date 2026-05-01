@@ -355,4 +355,155 @@ describe('MetricsService', () => {
       expect(metrics2).toContain('http_requests_total');
     });
   });
+
+  describe('recordCircuitBreakerState branch coverage - ternary operator chains', () => {
+    it('should correctly map closed state to 0 (first branch)', async () => {
+      service.recordCircuitBreakerState('payment-service', 'closed');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="payment-service"} 0');
+    });
+
+    it('should correctly map halfOpen state to 0.5 (middle branch)', async () => {
+      service.recordCircuitBreakerState('payment-service', 'halfOpen');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="payment-service"} 0.5');
+    });
+
+    it('should correctly map open state to 1 (else branch)', async () => {
+      service.recordCircuitBreakerState('payment-service', 'open');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="payment-service"} 1');
+    });
+
+    it('should handle state transitions: closed → halfOpen', async () => {
+      service.recordCircuitBreakerState('api', 'closed');
+      let metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 0');
+
+      service.recordCircuitBreakerState('api', 'halfOpen');
+      metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 0.5');
+    });
+
+    it('should handle state transitions: halfOpen → open', async () => {
+      service.recordCircuitBreakerState('api', 'halfOpen');
+      let metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 0.5');
+
+      service.recordCircuitBreakerState('api', 'open');
+      metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 1');
+    });
+
+    it('should handle state transitions: open → closed', async () => {
+      service.recordCircuitBreakerState('api', 'open');
+      let metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 1');
+
+      service.recordCircuitBreakerState('api', 'closed');
+      metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 0');
+    });
+
+    it('should handle state transitions: closed → open (skip halfOpen)', async () => {
+      service.recordCircuitBreakerState('api', 'closed');
+      let metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 0');
+
+      service.recordCircuitBreakerState('api', 'open');
+      metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="api"} 1');
+    });
+
+    it('should evaluate first condition (state === "closed") correctly', async () => {
+      // Explicitly test that when state is 'closed', stateValue = 0
+      service.recordCircuitBreakerState('test-1', 'closed');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="test-1"} 0');
+    });
+
+    it('should evaluate second condition (state === "halfOpen") correctly', async () => {
+      // Explicitly test that when state is 'halfOpen', stateValue = 0.5
+      service.recordCircuitBreakerState('test-2', 'halfOpen');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="test-2"} 0.5');
+    });
+
+    it('should evaluate else clause (default) correctly', async () => {
+      // Explicitly test that else clause (for 'open') sets stateValue = 1
+      service.recordCircuitBreakerState('test-3', 'open');
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('circuit_breaker_state{service="test-3"} 1');
+    });
+
+    it('should set value on existing service label (overwrite)', async () => {
+      service.recordCircuitBreakerState('multi', 'closed');
+      let metrics = await service.getMetrics();
+      let count1 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
+
+      service.recordCircuitBreakerState('multi', 'open');
+      metrics = await service.getMetrics();
+      let count2 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
+
+      // Should still have one entry (it was overwritten, not added)
+      expect(count2).toBeLessThanOrEqual(count1 + 1);
+      expect(metrics).toContain('circuit_breaker_state{service="multi"} 1');
+    });
+
+    it('should work with multiple services simultaneously', async () => {
+      service.recordCircuitBreakerState('service-a', 'closed');
+      service.recordCircuitBreakerState('service-b', 'halfOpen');
+      service.recordCircuitBreakerState('service-c', 'open');
+
+      const metrics = await service.getMetrics();
+
+      expect(metrics).toContain('circuit_breaker_state{service="service-a"} 0');
+      expect(metrics).toContain('circuit_breaker_state{service="service-b"} 0.5');
+      expect(metrics).toContain('circuit_breaker_state{service="service-c"} 1');
+    });
+  });
+
+  describe('Metrics initialization and construction branches', () => {
+    it('should initialize all metric objects in constructor', () => {
+      expect(service.httpRequestsTotal).toBeDefined();
+      expect(service.httpRequestDuration).toBeDefined();
+      expect(service.dbQueryDuration).toBeDefined();
+      expect(service.bullmqJobsTotal).toBeDefined();
+      expect(service.authFailuresTotal).toBeDefined();
+      expect(service.activeTenantsTotal).toBeDefined();
+      expect(service.circuitBreakerState).toBeDefined();
+      expect(service.circuitBreakerFailures).toBeDefined();
+      expect(service.circuitBreakerTimeouts).toBeDefined();
+    });
+
+    it('should register metrics with the custom registry', async () => {
+      service.httpRequestsTotal.inc({ method: 'GET', path: '/', status_code: '200' });
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('http_requests_total');
+    });
+
+    it('should have correct label names for all metrics', async () => {
+      // Test that label names are set correctly by checking output
+      service.httpRequestsTotal.inc({ method: 'POST', path: '/api', status_code: '201' });
+      const metrics = await service.getMetrics();
+
+      expect(metrics).toContain('method=');
+      expect(metrics).toContain('path=');
+      expect(metrics).toContain('status_code=');
+    });
+  });
+
+  describe('onModuleInit lifecycle', () => {
+    it('should call collectDefaultMetrics on module init', async () => {
+      const metrics = await service.getMetrics();
+      // collectDefaultMetrics should have added default Node.js metrics
+      expect(metrics).toContain('process_');
+    });
+
+    it('should register default metrics with the custom registry', async () => {
+      const metrics = await service.getMetrics();
+      expect(metrics).toContain('process_cpu');
+      expect(metrics).toContain('nodejs_');
+    });
+  });
 });

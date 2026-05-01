@@ -295,4 +295,162 @@ describe('AllExceptionsFilter', () => {
       );
     });
   });
+
+  describe('Branch coverage: Sentry reporting and sanitization', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      logger = { error: jest.fn(), log: jest.fn(), warn: jest.fn(), debug: jest.fn() };
+      mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+      mockRequest = { method: 'POST', url: '/api/create' };
+      mockHost = {
+        switchToHttp: () => ({
+          getResponse: () => mockResponse,
+          getRequest: () => mockRequest,
+        }),
+      } as unknown as ArgumentsHost;
+    });
+
+    it('should report 500 status code to Sentry', () => {
+      configService = { get: jest.fn().mockReturnValue('production') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new Error('Internal server error');
+      filter.catch(exception, mockHost);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(exception);
+    });
+
+    it('should report 503 status code to Sentry', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new HttpException('Service unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+      filter.catch(exception, mockHost);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(exception);
+    });
+
+    it('should NOT report 400 status code to Sentry', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new HttpException('Bad request', HttpStatus.BAD_REQUEST);
+      jest.spyOn(exception, 'getResponse').mockReturnValue('Bad request');
+      filter.catch(exception, mockHost);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it('should NOT report 404 status code to Sentry', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new HttpException('Not found', HttpStatus.NOT_FOUND);
+      jest.spyOn(exception, 'getResponse').mockReturnValue('Not found');
+      filter.catch(exception, mockHost);
+
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it('should sanitize 500+ errors but keep 4xx intact in production', () => {
+      configService = { get: jest.fn().mockReturnValue('production') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      // 500 error - should be sanitized
+      const serverError = new Error('Database connection failed');
+      filter.catch(serverError, mockHost);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'An internal error occurred. Please try again later.',
+        }),
+      );
+
+      // Reset mocks
+      jest.clearAllMocks();
+      mockResponse.status.mockReturnThis();
+
+      // 400 error - should NOT be sanitized
+      const clientError = new HttpException('Invalid email format', HttpStatus.BAD_REQUEST);
+      jest.spyOn(clientError, 'getResponse').mockReturnValue('Invalid email format');
+      filter.catch(clientError, mockHost);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Invalid email format',
+        }),
+      );
+    });
+
+    it('should expose stack trace in development for Error types', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new Error('Test error');
+      exception.stack = 'Error: Test error\n    at Object.<anonymous> (/test.ts:1:1)';
+      filter.catch(exception, mockHost);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('at Object'),
+      );
+    });
+
+    it('should handle HttpStatus lookup for HttpException status codes', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      jest.spyOn(exception, 'getResponse').mockReturnValue('Unauthorized');
+      filter.catch(exception, mockHost);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: HttpStatus.UNAUTHORIZED,
+          error: expect.stringMatching(/Unauthorized|UNAUTHORIZED/i),
+        }),
+      );
+    });
+
+    it('should include timestamp in all error responses', () => {
+      configService = { get: jest.fn().mockReturnValue('development') };
+      filter = new AllExceptionsFilter(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const exception = new Error('Test');
+      filter.catch(exception, mockHost);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timestamp: expect.stringMatching(/\d{4}-\d{2}-\d{2}T/),
+        }),
+      );
+    });
+  });
 });

@@ -122,4 +122,136 @@ describe('KioskController', () => {
       expect(result).toEqual({ success: true, data: status });
     });
   });
+
+  // =========================================================================
+  // BRANCH COVERAGE TESTS - validateKey helper & edge cases
+  // =========================================================================
+
+  describe('validateKey (private helper) - branch coverage', () => {
+    it('should throw UnauthorizedException when kioskKey is empty string', async () => {
+      await expect(controller.lookup('', { phoneHash: 'hash' } as never)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(service.validateKioskKey).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException when kioskKey is undefined/null', async () => {
+      // Simulate missing header by passing undefined
+      const result = controller.lookup(undefined as never, { phoneHash: 'hash' } as never);
+      await expect(result).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should call validateKioskKey with the provided key', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.findBookingByPhone.mockResolvedValue([]);
+
+      await controller.lookup(KIOSK_KEY, { phoneHash: 'hash123' } as never);
+
+      expect(service.validateKioskKey).toHaveBeenCalledWith(KIOSK_KEY);
+    });
+  });
+
+  describe('lookup - branch coverage for both phoneHash and licensePlate', () => {
+    it('should prioritize phoneHash when both phoneHash and licensePlate provided', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.findBookingByPhone.mockResolvedValue([{ id: 'book-001' }] as never);
+
+      const result = await controller.lookup(KIOSK_KEY, {
+        phoneHash: 'hash123',
+        licensePlate: 'AB123CD',
+      } as never);
+
+      expect(service.findBookingByPhone).toHaveBeenCalledWith(TENANT_ID, 'hash123');
+      expect(service.findBookingByPlate).not.toHaveBeenCalled();
+      expect(result.data).toEqual([{ id: 'book-001' }]);
+    });
+
+    it('should use licensePlate when phoneHash is undefined/empty', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.findBookingByPlate.mockResolvedValue([{ id: 'book-002' }] as never);
+
+      const result = await controller.lookup(KIOSK_KEY, {
+        phoneHash: undefined,
+        licensePlate: 'AB123CD',
+      } as never);
+
+      expect(service.findBookingByPlate).toHaveBeenCalledWith(TENANT_ID, 'AB123CD');
+      expect(service.findBookingByPhone).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when both phoneHash and licensePlate are missing', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+
+      await expect(controller.lookup(KIOSK_KEY, {} as never)).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(service.findBookingByPhone).not.toHaveBeenCalled();
+      expect(service.findBookingByPlate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkIn - branch coverage for tenantId validation', () => {
+    it('should throw UnauthorizedException when key returns different tenantId', async () => {
+      service.validateKioskKey.mockResolvedValue('tenant-different');
+
+      await expect(
+        controller.checkIn(KIOSK_KEY, { bookingId: 'book-001', tenantId: TENANT_ID } as never),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(service.checkIn).not.toHaveBeenCalled();
+    });
+
+    it('should call service.checkIn with correct tenantId when key matches', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.checkIn.mockResolvedValue({ id: 'book-001', status: 'CHECKED_IN' } as never);
+
+      await controller.checkIn(KIOSK_KEY, {
+        bookingId: 'book-001',
+        tenantId: TENANT_ID,
+      } as never);
+
+      expect(service.checkIn).toHaveBeenCalledWith(TENANT_ID, 'book-001', undefined);
+    });
+
+    it('should pass customerNotes through to service.checkIn', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.checkIn.mockResolvedValue({ id: 'book-001', status: 'CHECKED_IN' } as never);
+
+      await controller.checkIn(KIOSK_KEY, {
+        bookingId: 'book-001',
+        tenantId: TENANT_ID,
+        customerNotes: 'Customer arrived',
+      } as never);
+
+      expect(service.checkIn).toHaveBeenCalledWith(TENANT_ID, 'book-001', 'Customer arrived');
+    });
+  });
+
+  describe('getShopStatus - branch coverage for tenantId validation', () => {
+    it('should throw UnauthorizedException when key returns different tenantId than param', async () => {
+      service.validateKioskKey.mockResolvedValue('tenant-different');
+
+      await expect(controller.getShopStatus(KIOSK_KEY, TENANT_ID)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(service.getShopStatus).not.toHaveBeenCalled();
+    });
+
+    it('should call service.getShopStatus when key matches tenantId param', async () => {
+      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.getShopStatus.mockResolvedValue({
+        baysTotal: 4,
+        baysOccupied: 2,
+        queueSize: 3,
+        estimatedWaitMinutes: 45,
+      } as never);
+
+      const result = await controller.getShopStatus(KIOSK_KEY, TENANT_ID);
+
+      expect(service.getShopStatus).toHaveBeenCalledWith(TENANT_ID);
+      expect(result.success).toBe(true);
+    });
+  });
 });

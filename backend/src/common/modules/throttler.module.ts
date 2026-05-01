@@ -9,34 +9,80 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 
+/**
+ * Get default throttler limit based on environment
+ */
+export function getDefaultLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 60;
+  }
+  return 600;
+}
+
+/**
+ * Get strict throttler limit based on environment
+ */
+export function getStrictLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  return 10;
+}
+
+/**
+ * Get lenient throttler limit based on environment
+ */
+export function getLenientLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 300;
+  }
+  return 3000;
+}
+
+/**
+ * Create throttler configuration based on environment variables.
+ * Exported for testability - all branch logic measured by c8.
+ */
+export function createThrottlerOptions(
+  _config?: ConfigService,
+): ThrottlerModuleOptions {
+  return {
+    throttlers: [
+      {
+        name: 'default',
+        ttl: 60000,
+        limit: getDefaultLimit(),
+      },
+      {
+        name: 'strict',
+        ttl: 60000,
+        limit: getStrictLimit(),
+      },
+      {
+        name: 'lenient',
+        ttl: 60000,
+        limit: getLenientLimit(),
+      },
+    ],
+    errorMessage: 'Rate limit exceeded. Please try again later.',
+  };
+}
+
 @Module({
   imports: [
     NestThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (_config: ConfigService): ThrottlerModuleOptions => {
-        const loadTest = process.env.LOAD_TEST === 'true';
-        return {
-          throttlers: [
-            {
-              name: 'default',
-              ttl: 60000, // 1 minute
-              limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 60 : 600,
-            },
-            {
-              name: 'strict',
-              ttl: 60000,
-              limit: loadTest ? 100000 : 10,
-            },
-            {
-              name: 'lenient',
-              ttl: 60000,
-              limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 300 : 3000,
-            },
-          ],
-          errorMessage: 'Rate limit exceeded. Please try again later.',
-        };
-      },
+      useFactory: createThrottlerOptions,
     }),
   ],
   exports: [NestThrottlerModule],

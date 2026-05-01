@@ -149,4 +149,139 @@ describe('LoggerInterceptor', () => {
       expect(errorLog).not.toContain('at Object');
     });
   });
+
+  describe('Branch coverage: user context and headers', () => {
+    beforeEach(() => {
+      logger = {
+        log: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        setStructuredContext: jest.fn(),
+      };
+      configService = { get: jest.fn().mockReturnValue('development') };
+    });
+
+    it('should handle missing x-correlation-id header gracefully', async () => {
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            method: 'GET',
+            url: '/test',
+            headers: {},
+            user: { tenantId: 'tenant-1', userId: 'user-1' },
+          }),
+          getResponse: () => ({ statusCode: 200 }),
+        }),
+        getClass: () => ({ name: 'TestController' }),
+        getHandler: () => ({ name: 'testMethod' }),
+      } as unknown as ExecutionContext;
+
+      interceptor = new LoggerInterceptor(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const next: CallHandler = { handle: () => of('data') };
+      const result$ = interceptor.intercept(context, next);
+      await lastValueFrom(result$);
+
+      expect(logger.setStructuredContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestId: undefined,
+          tenantId: 'tenant-1',
+          userId: 'user-1',
+        }),
+      );
+    });
+
+    it('should handle missing user object (no tenantId/userId)', async () => {
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => ({
+            method: 'POST',
+            url: '/public',
+            headers: { 'x-correlation-id': 'corr-123' },
+          }),
+          getResponse: () => ({ statusCode: 201 }),
+        }),
+        getClass: () => ({ name: 'PublicController' }),
+        getHandler: () => ({ name: 'publicMethod' }),
+      } as unknown as ExecutionContext;
+
+      interceptor = new LoggerInterceptor(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const next: CallHandler = { handle: () => of('result') };
+      const result$ = interceptor.intercept(context, next);
+      await lastValueFrom(result$);
+
+      expect(logger.setStructuredContext).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestId: 'corr-123',
+          tenantId: undefined,
+          userId: undefined,
+        }),
+      );
+    });
+
+    it('should handle error with status code property', async () => {
+      const context = createContext('DELETE', '/api/resource');
+      const error = new Error('Forbidden');
+      (error as any).status = 403;
+      const next: CallHandler = { handle: () => throwError(() => error) };
+
+      interceptor = new LoggerInterceptor(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const result$ = interceptor.intercept(context, next);
+      await expect(lastValueFrom(result$)).rejects.toThrow('Forbidden');
+
+      expect(logger.setStructuredContext).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 403 }),
+      );
+    });
+
+    it('should handle error without status code (default 500)', async () => {
+      const context = createContext('GET', '/api/crash');
+      const error = new Error('Unexpected error');
+      const next: CallHandler = { handle: () => throwError(() => error) };
+
+      interceptor = new LoggerInterceptor(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const result$ = interceptor.intercept(context, next);
+      await expect(lastValueFrom(result$)).rejects.toThrow('Unexpected error');
+
+      expect(logger.setStructuredContext).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 500 }),
+      );
+    });
+
+    it('should log different HTTP methods', async () => {
+      interceptor = new LoggerInterceptor(
+        logger as unknown as LoggerService,
+        configService as unknown as ConfigService,
+      );
+
+      const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+      for (const method of methods) {
+        const context = createContext(method, `/api/${method.toLowerCase()}`);
+        const next: CallHandler = { handle: () => of('ok') };
+        const result$ = interceptor.intercept(context, next);
+        await lastValueFrom(result$);
+
+        expect(logger.log).toHaveBeenCalledWith(
+          expect.stringContaining(`[REQUEST] ${method}`),
+          'LoggerInterceptor',
+        );
+      }
+    });
+  });
 });

@@ -86,6 +86,31 @@ describe('LaborGuideController', () => {
       });
       expect(result).toEqual(paginated);
     });
+
+    it('should parse page and limit query parameters correctly', async () => {
+      const paginated = { data: [mockGuide], total: 100, page: 2, limit: 25, pages: 4 };
+      service.findAllGuides.mockResolvedValueOnce(paginated as never);
+
+      const result = await controller.findAllGuides(TENANT_ID, '2', '25');
+
+      expect(service.findAllGuides).toHaveBeenCalledWith(TENANT_ID, {
+        page: 2,
+        limit: 25,
+      });
+      expect(result).toEqual(paginated);
+    });
+
+    it('should handle undefined page and limit', async () => {
+      const paginated = { data: [mockGuide], total: 1, page: 1, limit: 50, pages: 1 };
+      service.findAllGuides.mockResolvedValueOnce(paginated as never);
+
+      await controller.findAllGuides(TENANT_ID, undefined, undefined);
+
+      expect(service.findAllGuides).toHaveBeenCalledWith(TENANT_ID, {
+        page: undefined,
+        limit: undefined,
+      });
+    });
   });
 
   describe('searchEntries', () => {
@@ -105,6 +130,41 @@ describe('LaborGuideController', () => {
         undefined,
       );
       expect(result).toEqual(paginated);
+    });
+
+    it('should parse page and limit query parameters in search', async () => {
+      const paginated = { data: [mockEntry], total: 50, page: 3, limit: 20, pages: 3 };
+      service.searchEntries.mockResolvedValueOnce(paginated as never);
+      const query = { make: 'Toyota', model: 'Corolla', category: 'Brakes' };
+
+      const result = await controller.searchEntries(TENANT_ID, query as never, '3', '20');
+
+      expect(service.searchEntries).toHaveBeenCalledWith(
+        TENANT_ID,
+        'Toyota',
+        'Corolla',
+        'Brakes',
+        3,
+        20,
+      );
+      expect(result).toEqual(paginated);
+    });
+
+    it('should handle undefined page and limit in search', async () => {
+      const paginated = { data: [mockEntry], total: 1, page: 1, limit: 50, pages: 1 };
+      service.searchEntries.mockResolvedValueOnce(paginated as never);
+      const query = { make: 'Toyota' };
+
+      await controller.searchEntries(TENANT_ID, query as never, undefined, undefined);
+
+      expect(service.searchEntries).toHaveBeenCalledWith(
+        TENANT_ID,
+        'Toyota',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -185,6 +245,78 @@ describe('LaborGuideController', () => {
 
       expect(service.deleteEntry).toHaveBeenCalledWith(TENANT_ID, 'entry-001');
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('DTO validation integration', () => {
+    it('should accept CreateLaborGuideDto with optional fields', async () => {
+      service.createGuide.mockResolvedValue(mockGuide as never);
+
+      const dto = {
+        name: 'Test Guide',
+        description: 'Optional description',
+        source: 'MANUFACTURER',
+      };
+
+      const result = await controller.createGuide(TENANT_ID, dto as never);
+
+      expect(service.createGuide).toHaveBeenCalledWith(TENANT_ID, dto);
+      expect(result).toEqual(mockGuide);
+    });
+
+    it('should accept CreateLaborGuideEntryDto with optional years', async () => {
+      service.addEntry.mockResolvedValue(mockEntry as never);
+
+      const dto = {
+        make: 'Toyota',
+        model: 'Corolla',
+        operationCode: 'BRAKE_PAD',
+        operationName: 'Brake Pad Replacement',
+        category: 'Brakes',
+        laborTimeMinutes: 90,
+        yearFrom: 2020,
+        yearTo: 2025,
+        difficultyLevel: 3,
+        notes: 'Standard operation',
+      };
+
+      const result = await controller.addEntry(TENANT_ID, 'guide-001', dto as never);
+
+      expect(service.addEntry).toHaveBeenCalledWith(TENANT_ID, 'guide-001', dto);
+      expect(result).toEqual(mockEntry);
+    });
+
+    it('should accept UpdateLaborGuideEntryDto with partial fields', async () => {
+      service.updateEntry.mockResolvedValue(mockEntry as never);
+
+      const dto = {
+        laborTimeMinutes: 120,
+        notes: 'Updated notes',
+      };
+
+      const result = await controller.updateEntry(TENANT_ID, 'entry-001', dto as never);
+
+      expect(service.updateEntry).toHaveBeenCalledWith(TENANT_ID, 'entry-001', dto);
+      expect(result).toEqual(mockEntry);
+    });
+
+    it('should accept SearchLaborGuideDto with optional filters', async () => {
+      const paginated = { data: [mockEntry], total: 1, page: 1, limit: 50, pages: 1 };
+      service.searchEntries.mockResolvedValueOnce(paginated as never);
+
+      const query = { make: 'Toyota', category: 'Brakes' };
+
+      const result = await controller.searchEntries(TENANT_ID, query as never);
+
+      expect(service.searchEntries).toHaveBeenCalledWith(
+        TENANT_ID,
+        'Toyota',
+        undefined,
+        'Brakes',
+        undefined,
+        undefined,
+      );
+      expect(result).toEqual(paginated);
     });
   });
 });

@@ -13,19 +13,38 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const idempotencyKey = request.headers['idempotency-key'] as string | undefined;
 
-    if (!idempotencyKey || !['POST', 'PUT', 'PATCH'].includes(request.method)) {
+    // Guard 1: Check idempotency key exists
+    const hasIdempotencyKey = !!idempotencyKey;
+    if (!hasIdempotencyKey) {
       return next.handle();
     }
 
-    const cacheKey = `idempotency:${idempotencyKey}`;
-
-    if (this.redis.isAvailable) {
-      const cached = await this.redis.get(cacheKey);
-      if (cached) {
-        return of(JSON.parse(cached));
-      }
+    // Guard 2: Check method is mutative
+    const isMutativeMethod = ['POST', 'PUT', 'PATCH'].includes(request.method);
+    if (!isMutativeMethod) {
+      return next.handle();
     }
 
+    // All guards passed - proceed with caching logic
+    const cacheKey = `idempotency:${idempotencyKey}`;
+
+    // Check Redis availability before attempting cache hit
+    if (!this.redis.isAvailable) {
+      return next.handle().pipe(
+        tap(async response => {
+          // Skip caching if Redis unavailable
+        }),
+      );
+    }
+
+    // Redis is available - try cache
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      // Cache hit - return immediately without calling next handler
+      return of(JSON.parse(cached));
+    }
+
+    // Cache miss - call handler and cache result
     return next.handle().pipe(
       tap(async response => {
         if (this.redis.isAvailable) {

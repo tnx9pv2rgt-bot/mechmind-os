@@ -274,4 +274,133 @@ describe('MetricsInterceptor', () => {
       }
     });
   });
+
+  describe('Branch coverage: path normalization and route handling', () => {
+    it('should use request.url when request.route is undefined (path normalization branch 1)', done => {
+      const noRouteContext = {
+        switchToHttp: () => ({
+          getRequest: () =>
+            ({
+              method: 'GET',
+              url: '/api/fallback',
+              route: undefined,
+            }) as unknown as Request,
+          getResponse: () =>
+            ({
+              statusCode: 200,
+            }) as unknown as Response,
+        }),
+      } as ExecutionContext;
+
+      const incSpy = jest.spyOn(metricsService.httpRequestsTotal, 'inc');
+      interceptor.intercept(noRouteContext, mockCallHandler).subscribe(() => {
+        expect(incSpy).toHaveBeenCalledWith({
+          method: 'GET',
+          path: '/api/fallback',
+          status_code: '200',
+        });
+        done();
+      });
+    });
+
+    it('should use request.url when request.route.path is null (path normalization branch 2)', done => {
+      const nullPathContext = {
+        switchToHttp: () => ({
+          getRequest: () =>
+            ({
+              method: 'GET',
+              url: '/api/alternative',
+              route: { path: null },
+            }) as unknown as Request,
+          getResponse: () =>
+            ({
+              statusCode: 200,
+            }) as unknown as Response,
+        }),
+      } as ExecutionContext;
+
+      const incSpy = jest.spyOn(metricsService.httpRequestsTotal, 'inc');
+      interceptor.intercept(nullPathContext, mockCallHandler).subscribe(() => {
+        expect(incSpy).toHaveBeenCalledWith({
+          method: 'GET',
+          path: '/api/alternative',
+          status_code: '200',
+        });
+        done();
+      });
+    });
+
+    it('should handle complex nested paths without route (fallback to url)', done => {
+      const complexPathContext = {
+        switchToHttp: () => ({
+          getRequest: () =>
+            ({
+              method: 'PUT',
+              url: '/api/deeply/nested/resources/550e8400-e29b-41d4-a716-446655440000',
+              route: undefined,
+            }) as unknown as Request,
+          getResponse: () =>
+            ({
+              statusCode: 200,
+            }) as unknown as Response,
+        }),
+      } as ExecutionContext;
+
+      const incSpy = jest.spyOn(metricsService.httpRequestsTotal, 'inc');
+      interceptor.intercept(complexPathContext, mockCallHandler).subscribe(() => {
+        expect(incSpy).toHaveBeenCalledWith({
+          method: 'PUT',
+          path: '/api/deeply/nested/resources/:id',
+          status_code: '200',
+        });
+        done();
+      });
+    });
+  });
+
+  describe('Branch coverage: error handling edge cases', () => {
+    it('should record metrics when error has status property as 0 (falsy, defaults to 500)', done => {
+      const zeroStatusError = {
+        handle: () => throwError(() => ({ status: 0 })),
+      };
+
+      const incSpy = jest.spyOn(metricsService.httpRequestsTotal, 'inc');
+
+      interceptor.intercept(mockContext, zeroStatusError).subscribe(
+        () => {
+          fail('should not succeed');
+        },
+        () => {
+          expect(incSpy).toHaveBeenCalledWith({
+            method: 'GET',
+            path: '/api/bookings',
+            status_code: '500',
+          });
+          done();
+        },
+      );
+    });
+
+    it('should record metrics for error.status as 429 (rate limiting)', done => {
+      const rateLimitError = {
+        handle: () => throwError(() => ({ status: 429 })),
+      };
+
+      const incSpy = jest.spyOn(metricsService.httpRequestsTotal, 'inc');
+
+      interceptor.intercept(mockContext, rateLimitError).subscribe(
+        () => {
+          fail('should not succeed');
+        },
+        () => {
+          expect(incSpy).toHaveBeenCalledWith({
+            method: 'GET',
+            path: '/api/bookings',
+            status_code: '429',
+          });
+          done();
+        },
+      );
+    });
+  });
 });

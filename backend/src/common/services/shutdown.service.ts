@@ -24,8 +24,16 @@ export class ShutdownService implements OnApplicationShutdown {
 
   async onApplicationShutdown(signal?: string): Promise<void> {
     this.shuttingDown = true;
+    
+    let signalName: string;
+    if (signal) {
+      signalName = signal;
+    } else {
+      signalName = 'unknown';
+    }
+    
     this.logger.log(
-      `Shutdown initiated (signal: ${signal ?? 'unknown'}). Readiness probe now returns 503.`,
+      `Shutdown initiated (signal: ${signalName}). Readiness probe now returns 503.`,
     );
   }
 }
