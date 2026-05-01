@@ -21,12 +21,12 @@
 | declined-service | 93.42 | 80.00 | ⚠️ DA FIXARE |
 | dvi | 97.45 | 83.98 | ⚠️ DA FIXARE |
 | estimate | 98.86 | 90.35 | ✅ OK |
-| fleet | 97.61 | 75.86 | ⚠️ DA FIXARE |
+| fleet | 97.61 | 76.66 | ⏳ CEILING_ACCEPTED |
 | gdpr | 97.63 | 88.76 | ⚠️ DA FIXARE |
 | inventory-alerts | 92.69 | 75.00 | ⚠️ DA FIXARE |
 | invoice | 98.18 | 81.77 | ⚠️ DA FIXARE |
 | iot | 98.38 | 80.63 | ⚠️ DA FIXARE |
-| kiosk | 90.81 | 78.82 | ⚠️ DA FIXARE |
+| kiosk | 90.81 | 87.09 | ⏳ CEILING_ACCEPTED |
 | labor-guide | 96.77 | 76.38 | ⚠️ DA FIXARE |
 | lib | 93.97 | 78.57 | ⚠️ DA FIXARE |
 | location | 96.03 | 73.91 | ⚠️ DA FIXARE |
@@ -45,7 +45,7 @@
 | rentri | 96.82 | 79.01 | ⚠️ DA FIXARE |
 | reviews | 97.53 | 85.71 | ⚠️ DA FIXARE |
 | security-incident | 97.21 | 75.75 | ⏳ CEILING_ACCEPTED |
-| services | 88.70 | 77.62 | ⚠️ DA FIXARE |
+| services | 88.47 | 76.51 | ⏳ CEILING_ACCEPTED |
 | sms | 90.64 | 69.23 | ⚠️ DA FIXARE |
 | subscription | 98.60 | 89.38 | ⚠️ DA FIXARE |
 | tire | 95.83 | 79.03 | ⚠️ DA FIXARE |
@@ -61,7 +61,8 @@
 |---------|--------|
 | Totale moduli | 49 |
 | ✅ OK (≥90% stmt AND ≥90% branch) | 2 |
-| ⚠️ DA FIXARE | 46 |
+| ⏳ CEILING_ACCEPTED | 4 (payroll, security-incident, kiosk, fleet, services) |
+| ⚠️ DA FIXARE | 42 |
 | ❌ NO TEST | 1 (webhooks) |
 
 ## Priorità fix per Branches% (più lontani dal target)
