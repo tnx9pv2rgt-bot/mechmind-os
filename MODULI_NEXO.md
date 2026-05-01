@@ -36,7 +36,7 @@
 | obd | 98.05 | 89.54 | ⚠️ DA FIXARE |
 | parts | 98.33 | 84.66 | ⚠️ DA FIXARE |
 | payment-link | 93.22 | 81.94 | ⚠️ DA FIXARE |
-| payroll | 96.69 | 74.46 | ⚠️ DA FIXARE |
+| payroll | 98.29 | 86.41 | ⏳ CEILING_ACCEPTED |
 | peppol | 92.76 | 76.92 | ⚠️ DA FIXARE |
 | portal | 80.88 | 86.52 | ⚠️ DA FIXARE |
 | predictive-maintenance | 95.70 | 90.83 | ✅ OK |
