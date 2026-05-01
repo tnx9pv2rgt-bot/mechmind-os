@@ -57,7 +57,7 @@ describe('SmsThreadController', () => {
 
   describe('getThreads', () => {
     it('should return threads with meta', async () => {
-      service.getThreads.mockResolvedValue({ threads: [mockThread], total: 1 });
+      service.getThreads.mockResolvedValueOnce({ threads: [mockThread], total: 1 });
 
       const result = await controller.getThreads(TENANT_ID, 20, 0);
 
@@ -70,7 +70,7 @@ describe('SmsThreadController', () => {
     });
 
     it('should pass undefined limit/offset when not provided', async () => {
-      service.getThreads.mockResolvedValue({ threads: [], total: 0 });
+      service.getThreads.mockResolvedValueOnce({ threads: [], total: 0 });
 
       const result = await controller.getThreads(TENANT_ID);
 
@@ -99,13 +99,15 @@ describe('SmsThreadController', () => {
       const result = await controller.getMessages(TENANT_ID, 'thread-001');
 
       expect(result).toEqual({ success: true, data: [], meta: { total: 0 } });
+      expect(service.getMessages).toHaveBeenCalledWith(TENANT_ID, 'thread-001', undefined, undefined);
     });
 
     it('should use pagination params', async () => {
       service.getMessages.mockResolvedValueOnce({ messages: [], total: 100 });
 
-      await controller.getMessages(TENANT_ID, 'thread-001', 25, 50);
+      const result = await controller.getMessages(TENANT_ID, 'thread-001', 25, 50);
 
+      expect(result.meta.total).toBe(100);
       expect(service.getMessages).toHaveBeenCalledWith(TENANT_ID, 'thread-001', 25, 50);
     });
   });
@@ -138,6 +140,7 @@ describe('SmsThreadController', () => {
       const result = await controller.sendMessage(TENANT_ID, 'thread-001', { body: longBody });
 
       expect(result).toEqual({ success: true, data: longMsg });
+      expect(service.sendMessage).toHaveBeenCalledWith(TENANT_ID, 'thread-001', longBody);
     });
   });
 });
@@ -178,7 +181,7 @@ describe('SmsWebhookController', () => {
   describe('receiveInbound', () => {
     it('should delegate to service receiveInbound with tenantId', async () => {
       const mockMsg = { id: 'msg-002', direction: 'INBOUND', body: 'Hey' };
-      service.receiveInbound.mockResolvedValue(mockMsg);
+      service.receiveInbound.mockResolvedValueOnce(mockMsg);
 
       const result = await controller.receiveInbound(
         {
@@ -234,7 +237,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
         {
           provide: SmsThreadService,
           useValue: {
-            receiveInbound: jest.fn().mockResolvedValue({ id: 'msg-x' }),
+            receiveInbound: jest.fn(),
           },
         },
         {
@@ -262,6 +265,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     await expect(
       controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, '', '', req),
     ).rejects.toThrow('Missing X-Tenant-Id header');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
   });
 
   it('should throw UnauthorizedException when auth token set but signature missing', async () => {
@@ -282,6 +286,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
         req,
       ),
     ).rejects.toThrow('Missing X-Twilio-Signature header');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
   });
 
   it('should throw when signature does not match (same-length base64)', async () => {
@@ -329,6 +334,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should skip signature verification when TWILIO_AUTH_TOKEN is not set', async () => {
     configService.get.mockReturnValue(undefined);
+    service.receiveInbound.mockResolvedValueOnce({ id: 'msg-001' });
 
     const req = {
       protocol: 'https',
@@ -351,6 +357,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
   it('should accept valid Twilio signature with tenantId', async () => {
     const authToken = 'test-auth-token';
     configService.get.mockReturnValue(authToken);
+    service.receiveInbound.mockResolvedValueOnce({ id: 'msg-002' });
 
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
     const url = 'https://localhost:3002/v1/sms/webhook/inbound';

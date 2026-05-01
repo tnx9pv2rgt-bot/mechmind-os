@@ -271,5 +271,178 @@ describe('AiComplianceService', () => {
       expect(result.pendingReview).toBe(0);
       expect(result.byFeature).toEqual({});
     });
+
+    it('should throw InternalServerErrorException on database error', async () => {
+      prisma.$transaction.mockRejectedValueOnce(new Error('DB connection failed'));
+
+      await expect(service.getDashboard(TENANT_ID)).rejects.toThrow(
+        'Errore durante il recupero della dashboard AI',
+      );
+    });
+  });
+
+  describe('error handling', () => {
+    it('logDecision should throw InternalServerErrorException on create error', async () => {
+      prisma.aiDecisionLog.create.mockRejectedValueOnce(
+        new Error('DB error'),
+      );
+
+      const dto = {
+        featureName: 'test',
+        modelUsed: 'test',
+        inputSummary: 'test',
+        outputSummary: 'test',
+      };
+
+      await expect(service.logDecision(TENANT_ID, dto)).rejects.toThrow(
+        'Errore durante il salvataggio della decisione IA',
+      );
+    });
+
+    it('recordHumanReview should throw InternalServerErrorException on update error', async () => {
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(mockDecision);
+      prisma.aiDecisionLog.update.mockRejectedValueOnce(
+        new Error('DB error'),
+      );
+
+      await expect(
+        service.recordHumanReview(
+          TENANT_ID,
+          'dec-001',
+          { humanOverridden: false },
+          USER_ID,
+        ),
+      ).rejects.toThrow('Errore durante il salvataggio della revisione umana');
+    });
+
+    it('findAll should throw InternalServerErrorException on transaction error', async () => {
+      prisma.$transaction.mockRejectedValueOnce(new Error('DB error'));
+
+      await expect(service.findAll(TENANT_ID, { page: 1 })).rejects.toThrow(
+        'Errore durante il recupero delle decisioni IA',
+      );
+    });
+
+    it('findOne should throw InternalServerErrorException on query error', async () => {
+      prisma.aiDecisionLog.findFirst.mockRejectedValueOnce(
+        new Error('DB error'),
+      );
+
+      await expect(service.findOne(TENANT_ID, 'dec-001')).rejects.toThrow(
+        'Errore durante il recupero della decisione IA',
+      );
+    });
+
+    it('findAll should apply multiple filters correctly', async () => {
+      prisma.$transaction.mockResolvedValueOnce([[mockDecision], 1]);
+
+      await service.findAll(TENANT_ID, {
+        page: 1,
+        limit: 20,
+        featureName: 'damage_analysis',
+        humanReviewed: true,
+        dateFrom: '2026-03-01T00:00:00Z',
+        dateTo: '2026-03-31T23:59:59Z',
+      });
+
+      const txCall = prisma.$transaction.mock.calls[prisma.$transaction.mock.calls.length - 1];
+      expect(txCall).toBeDefined();
+      expect(txCall[0]).toHaveLength(2);
+    });
+
+    it('findAll should handle only dateFrom without dateTo', async () => {
+      prisma.$transaction.mockResolvedValueOnce([[], 0]);
+
+      await service.findAll(TENANT_ID, {
+        page: 1,
+        dateFrom: '2026-03-01T00:00:00Z',
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('findAll should handle only dateTo without dateFrom', async () => {
+      prisma.$transaction.mockResolvedValueOnce([[], 0]);
+
+      await service.findAll(TENANT_ID, {
+        page: 1,
+        dateTo: '2026-03-31T23:59:59Z',
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('findAll should handle pagination with custom page and limit', async () => {
+      prisma.$transaction.mockResolvedValueOnce([[mockDecision], 1]);
+
+      const result = await service.findAll(TENANT_ID, {
+        page: 3,
+        limit: 50,
+      });
+
+      expect(result.data).toEqual([mockDecision]);
+      expect(result.total).toBe(1);
+    });
+
+    it('findAll should use default pagination when not provided', async () => {
+      prisma.$transaction.mockResolvedValueOnce([[mockDecision], 1]);
+
+      const result = await service.findAll(TENANT_ID, {});
+
+      expect(result).toEqual({ data: [mockDecision], total: 1 });
+    });
+  });
+
+  describe('dashboard edge cases', () => {
+    it('getDashboard should handle decimal confidence correctly', async () => {
+      prisma.$transaction.mockResolvedValue([
+        5,
+        1,
+        2,
+        { _avg: { confidence: new Prisma.Decimal('0.123456789') } },
+        [{ featureName: 'test', _count: 5 }],
+      ]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.avgConfidence).toBe(0.1235); // rounded to 4 decimals
+    });
+
+    it('getDashboard should handle overrideRate calculation', async () => {
+      prisma.$transaction.mockResolvedValue([
+        100,
+        25,
+        10,
+        { _avg: { confidence: new Prisma.Decimal(0.9) } },
+        [],
+      ]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.overrideRate).toBe(0.25);
+      expect(result.byFeature).toEqual({});
+    });
+
+    it('getDashboard should populate byFeature correctly with multiple features', async () => {
+      prisma.$transaction.mockResolvedValue([
+        20,
+        5,
+        3,
+        { _avg: { confidence: new Prisma.Decimal(0.75) } },
+        [
+          { featureName: 'damage_analysis', _count: 10 },
+          { featureName: 'diagnosis', _count: 5 },
+          { featureName: 'scheduling', _count: 5 },
+        ],
+      ]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.byFeature).toEqual({
+        damage_analysis: 10,
+        diagnosis: 5,
+        scheduling: 5,
+      });
+    });
   });
 });

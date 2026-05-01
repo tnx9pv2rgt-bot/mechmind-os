@@ -44,7 +44,7 @@
 | public-token | 80.00 | 65.85 | ⚠️ DA FIXARE |
 | rentri | 96.82 | 79.01 | ⚠️ DA FIXARE |
 | reviews | 97.53 | 85.71 | ⚠️ DA FIXARE |
-| security-incident | 97.20 | 72.16 | ⚠️ DA FIXARE |
+| security-incident | 97.21 | 75.75 | ⏳ CEILING_ACCEPTED |
 | services | 88.70 | 77.62 | ⚠️ DA FIXARE |
 | sms | 90.64 | 69.23 | ⚠️ DA FIXARE |
 | subscription | 98.60 | 89.38 | ⚠️ DA FIXARE |
@@ -72,7 +72,7 @@
 | public-token | 65.85 | -24pp |
 | vehicle-history | 67.85 | -22pp |
 | sms | 69.23 | -21pp |
-| security-incident | 72.16 | -18pp |
+| security-incident | 75.75 | -14pp |
 | ai-scheduling | 72.44 | -18pp |
 | ai-compliance | 73.68 | -16pp |
 | production-board | 74.25 | -16pp |

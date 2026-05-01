@@ -122,4 +122,60 @@ describe('ProductionBoardController', () => {
       expect(result).toEqual({ success: true, data: payload });
     });
   });
+
+  describe('Error handling', () => {
+    it('should propagate service errors from getBoardState', async () => {
+      const error = new Error('Database error');
+      service.getBoardState.mockRejectedValue(error);
+
+      await expect(controller.getBoardState(TENANT_ID)).rejects.toThrow(error);
+      expect(service.getBoardState).toHaveBeenCalledWith(TENANT_ID);
+    });
+
+    it('should propagate service errors from assignToBay', async () => {
+      const error = new Error('Bay not available');
+      service.assignToBay.mockRejectedValue(error);
+      const dto = { bayId: 'bay-001', workOrderId: 'wo-001', technicianId: 'tech-001' };
+
+      await expect(controller.assignToBay(TENANT_ID, dto as never)).rejects.toThrow(error);
+    });
+
+    it('should propagate service errors from moveJob', async () => {
+      const error = new Error('Invalid move');
+      service.moveJob.mockRejectedValue(error);
+      const dto = { workOrderId: 'wo-001', fromBayId: 'bay-001', toBayId: 'bay-002' };
+
+      await expect(controller.moveJob(TENANT_ID, dto as never)).rejects.toThrow(error);
+    });
+
+    it('should propagate service errors from updateJobStatus', async () => {
+      const error = new Error('Invalid transition');
+      service.updateJobStatus.mockRejectedValue(error);
+
+      await expect(
+        controller.updateJobStatus(TENANT_ID, 'wo-001', { status: 'IN_PROGRESS' } as never),
+      ).rejects.toThrow(error);
+    });
+
+    it('should propagate service errors from getUnassignedJobs', async () => {
+      const error = new Error('Query failed');
+      service.getUnassignedJobs.mockRejectedValue(error);
+
+      await expect(controller.getUnassignedJobs(TENANT_ID)).rejects.toThrow(error);
+    });
+
+    it('should propagate service errors from getTodayKpis', async () => {
+      const error = new Error('KPI calculation failed');
+      service.getTodayKpis.mockRejectedValue(error);
+
+      await expect(controller.getTodayKpis(TENANT_ID)).rejects.toThrow(error);
+    });
+
+    it('should propagate service errors from getTvPayload', async () => {
+      const error = new Error('TV payload generation failed');
+      service.getTvPayload.mockRejectedValue(error);
+
+      await expect(controller.getTvPayload(TENANT_ID)).rejects.toThrow(error);
+    });
+  });
 });

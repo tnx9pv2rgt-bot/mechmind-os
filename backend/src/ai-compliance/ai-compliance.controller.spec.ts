@@ -142,4 +142,131 @@ describe('AiComplianceController', () => {
       expect(result).toEqual(dashboard);
     });
   });
+
+  describe('error handling branches', () => {
+    it('logDecision should handle service error', async () => {
+      const dto = {
+        featureName: 'damage_analysis',
+        modelUsed: 'gpt-4-vision',
+        inputSummary: 'Vehicle photo',
+        outputSummary: 'Dent detected',
+      };
+      service.logDecision.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
+
+      await expect(controller.logDecision(TENANT_ID, dto)).rejects.toThrow(
+        'Database error',
+      );
+      expect(service.logDecision).toHaveBeenCalledWith(TENANT_ID, dto);
+    });
+
+    it('getDashboard should handle service error', async () => {
+      service.getDashboard.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
+
+      await expect(controller.getDashboard(TENANT_ID)).rejects.toThrow(
+        'Database error',
+      );
+      expect(service.getDashboard).toHaveBeenCalledWith(TENANT_ID);
+    });
+
+    it('findAll should handle service error', async () => {
+      const query = { page: 1, limit: 20 };
+      service.findAll.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
+
+      await expect(controller.findAll(TENANT_ID, query)).rejects.toThrow(
+        'Database error',
+      );
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, query);
+    });
+
+    it('findOne should handle service error', async () => {
+      service.findOne.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
+
+      await expect(controller.findOne(TENANT_ID, 'dec-001')).rejects.toThrow(
+        'Database error',
+      );
+      expect(service.findOne).toHaveBeenCalledWith(TENANT_ID, 'dec-001');
+    });
+
+    it('recordReview should handle service error', async () => {
+      const dto = { humanOverridden: true, humanDecision: 'Minor' };
+      service.recordHumanReview.mockRejectedValueOnce(
+        new Error('Database error'),
+      );
+
+      await expect(
+        controller.recordReview(TENANT_ID, USER_ID, 'dec-001', dto),
+      ).rejects.toThrow('Database error');
+      expect(service.recordHumanReview).toHaveBeenCalledWith(
+        TENANT_ID,
+        'dec-001',
+        dto,
+        USER_ID,
+      );
+    });
+  });
+
+  describe('multiple query variations', () => {
+    it('findAll with only featureName filter', async () => {
+      service.findAll.mockResolvedValueOnce({ data: [], total: 0 });
+
+      await controller.findAll(TENANT_ID, { featureName: 'test' });
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, { featureName: 'test' });
+    });
+
+    it('findAll with page and limit only', async () => {
+      service.findAll.mockResolvedValueOnce({ data: [mockDecision], total: 1 });
+
+      await controller.findAll(TENANT_ID, { page: 2, limit: 10 });
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, { page: 2, limit: 10 });
+    });
+
+    it('findAll with empty query object', async () => {
+      service.findAll.mockResolvedValueOnce({ data: [mockDecision], total: 1 });
+
+      await controller.findAll(TENANT_ID, {});
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {});
+    });
+
+    it('recordReview with no humanDecision (override=false)', async () => {
+      const dto = { humanOverridden: false };
+      service.recordHumanReview.mockResolvedValueOnce({
+        ...mockDecision,
+        humanReviewed: true,
+      });
+
+      await controller.recordReview(TENANT_ID, USER_ID, 'dec-001', dto);
+
+      expect(service.recordHumanReview).toHaveBeenCalledWith(TENANT_ID, 'dec-001', dto, USER_ID);
+    });
+
+    it('logDecision with all optional fields', async () => {
+      const dto: any = {
+        featureName: 'damage_analysis',
+        modelUsed: 'gpt-4-vision',
+        inputSummary: 'Vehicle photo',
+        outputSummary: 'Dent detected',
+        confidence: 0.95,
+        entityType: 'inspection',
+        entityId: 'insp-123',
+        userId: USER_ID,
+        processingTimeMs: 5000,
+      };
+      service.logDecision.mockResolvedValueOnce(mockDecision);
+
+      await controller.logDecision(TENANT_ID, dto);
+
+      expect(service.logDecision).toHaveBeenCalledWith(TENANT_ID, dto);
+    });
+  });
 });

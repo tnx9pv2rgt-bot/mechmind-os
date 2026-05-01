@@ -124,8 +124,9 @@ describe('SmsThreadService', () => {
       prisma.smsThread.findMany.mockResolvedValueOnce([]);
       prisma.smsThread.count.mockResolvedValueOnce(0);
 
-      await service.getThreads(TENANT_ID, 10, 5);
+      const result = await service.getThreads(TENANT_ID, 10, 5);
 
+      expect(result).toEqual({ threads: [], total: 0 });
       expect(prisma.smsThread.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 10, skip: 5 }),
       );
@@ -158,6 +159,9 @@ describe('SmsThreadService', () => {
       prisma.smsThread.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getMessages(TENANT_ID, 'bad-id')).rejects.toThrow(NotFoundException);
+      expect(prisma.smsThread.findFirst).toHaveBeenCalledWith({
+        where: { id: 'bad-id', tenantId: TENANT_ID },
+      });
     });
   });
 

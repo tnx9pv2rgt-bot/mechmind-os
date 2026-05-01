@@ -14,8 +14,6 @@ describe('SmsInboundProcessor', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    // Default mock for all tests. Override with Once in specific tests.
-    mockService.receiveInbound.mockResolvedValue({ id: 'msg-001' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [SmsInboundProcessor, { provide: SmsThreadService, useValue: mockService }],
@@ -33,6 +31,7 @@ describe('SmsInboundProcessor', () => {
         twilioSid: 'SM001',
       };
       const job = { id: 'job-1', data: jobData } as Job<typeof jobData>;
+      mockService.receiveInbound.mockResolvedValueOnce({ id: 'msg-001' });
 
       await processor.process(job);
 
@@ -53,6 +52,7 @@ describe('SmsInboundProcessor', () => {
         twilioSid: undefined,
       };
       const job = { id: 'job-2', data: jobData } as Job<typeof jobData>;
+      mockService.receiveInbound.mockResolvedValueOnce({ id: 'msg-002' });
 
       await processor.process(job);
 
@@ -87,6 +87,7 @@ describe('SmsInboundProcessor', () => {
         twilioSid: 'SM-cross',
       };
       const job = { id: 'job-4', data: jobData } as Job<typeof jobData>;
+      mockService.receiveInbound.mockResolvedValueOnce({ id: 'msg-004' });
 
       await processor.process(job);
 
