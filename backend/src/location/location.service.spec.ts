@@ -68,7 +68,7 @@ describe('LocationService', () => {
   // =========================================================================
   describe('create', () => {
     it('should create a location with all fields', async () => {
-      prisma.location.create.mockResolvedValue(mockLocation);
+      prisma.location.create.mockResolvedValueOnce(mockLocation);
 
       const dto = {
         name: 'Sede Centrale',
@@ -101,7 +101,7 @@ describe('LocationService', () => {
     });
 
     it('should default country to IT when not provided', async () => {
-      prisma.location.create.mockResolvedValue(mockLocation);
+      prisma.location.create.mockResolvedValueOnce(mockLocation);
 
       await service.create(TENANT_ID, {
         name: 'Test',
@@ -116,7 +116,7 @@ describe('LocationService', () => {
     });
 
     it('should default isMain to false when not provided', async () => {
-      prisma.location.create.mockResolvedValue(mockLocation);
+      prisma.location.create.mockResolvedValueOnce(mockLocation);
 
       await service.create(TENANT_ID, {
         name: 'Test',
@@ -129,6 +129,139 @@ describe('LocationService', () => {
         data: expect.objectContaining({ isMain: false }),
       });
     });
+
+    it('should preserve explicit country when provided', async () => {
+      const locFR = { ...mockLocation, country: 'FR' };
+      prisma.location.create.mockResolvedValueOnce(locFR);
+
+      await service.create(TENANT_ID, {
+        name: 'Sede Francia',
+        address: 'Rue Paris 1',
+        city: 'Paris',
+        postalCode: '75001',
+        country: 'FR',
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ country: 'FR' }),
+      });
+    });
+
+    it('should preserve explicit isMain when true', async () => {
+      const mainLoc = { ...mockLocation, isMain: true };
+      prisma.location.create.mockResolvedValueOnce(mainLoc);
+
+      await service.create(TENANT_ID, {
+        name: 'Principale',
+        address: 'Main St',
+        city: 'Milano',
+        postalCode: '20100',
+        isMain: true,
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ isMain: true }),
+      });
+    });
+
+    it('should include tenantId in all create calls', async () => {
+      prisma.location.create.mockResolvedValueOnce(mockLocation);
+
+      await service.create(TENANT_ID, {
+        name: 'Test',
+        address: 'Via Test',
+        city: 'Roma',
+        postalCode: '00100',
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ tenantId: TENANT_ID }),
+      });
+    });
+
+    it('should log location creation with tenant context', async () => {
+      prisma.location.create.mockResolvedValueOnce(mockLocation);
+
+      await service.create(TENANT_ID, {
+        name: 'Sede Milano',
+        address: 'Via Roma 1',
+        city: 'Milano',
+        postalCode: '20100',
+      });
+
+      expect(logger.log).toHaveBeenCalledWith(
+        expect.stringContaining('Creating location "Sede Milano"'),
+      );
+    });
+
+    it('should handle nullable country field with default', async () => {
+      const loc = { ...mockLocation, country: 'IT' };
+      prisma.location.create.mockResolvedValueOnce(loc);
+
+      await service.create(TENANT_ID, {
+        name: 'Test',
+        address: 'Via Test',
+        city: 'Roma',
+        postalCode: '00100',
+        country: undefined,
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ country: 'IT' }),
+      });
+    });
+
+    it('should handle nullable isMain field with default', async () => {
+      const loc = { ...mockLocation, isMain: false };
+      prisma.location.create.mockResolvedValueOnce(loc);
+
+      await service.create(TENANT_ID, {
+        name: 'Test',
+        address: 'Via Test',
+        city: 'Roma',
+        postalCode: '00100',
+        isMain: undefined,
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ isMain: false }),
+      });
+    });
+
+    it('should coalesce null country to IT', async () => {
+      const loc = { ...mockLocation, country: 'IT' };
+      prisma.location.create.mockResolvedValueOnce(loc);
+
+      await service.create(TENANT_ID, {
+        name: 'Test',
+        address: 'Via Test',
+        city: 'Roma',
+        postalCode: '00100',
+        country: null as any,
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ country: 'IT' }),
+      });
+    });
+
+    it('should coalesce null isMain to false', async () => {
+      const loc = { ...mockLocation, isMain: false };
+      prisma.location.create.mockResolvedValueOnce(loc);
+
+      await service.create(TENANT_ID, {
+        name: 'Test',
+        address: 'Via Test',
+        city: 'Roma',
+        postalCode: '00100',
+        isMain: null as any,
+      });
+
+      expect(prisma.location.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ isMain: false }),
+      });
+      expect(prisma.location.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   // =========================================================================
@@ -136,8 +269,8 @@ describe('LocationService', () => {
   // =========================================================================
   describe('findAll', () => {
     it('should return paginated results', async () => {
-      prisma.location.findMany.mockResolvedValue([mockLocation]);
-      prisma.location.count.mockResolvedValue(1);
+      prisma.location.findMany.mockResolvedValueOnce([mockLocation]);
+      prisma.location.count.mockResolvedValueOnce(1);
 
       const result = await service.findAll(TENANT_ID);
 
@@ -148,11 +281,12 @@ describe('LocationService', () => {
         limit: 20,
         pages: 1,
       });
+      expect(result.data[0].id).toBe(LOCATION_ID);
     });
 
     it('should only return active locations', async () => {
-      prisma.location.findMany.mockResolvedValue([]);
-      prisma.location.count.mockResolvedValue(0);
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(0);
 
       await service.findAll(TENANT_ID);
 
@@ -164,8 +298,8 @@ describe('LocationService', () => {
     });
 
     it('should use default pagination', async () => {
-      prisma.location.findMany.mockResolvedValue([]);
-      prisma.location.count.mockResolvedValue(0);
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(0);
 
       await service.findAll(TENANT_ID);
 
@@ -178,8 +312,8 @@ describe('LocationService', () => {
     });
 
     it('should apply custom pagination', async () => {
-      prisma.location.findMany.mockResolvedValue([]);
-      prisma.location.count.mockResolvedValue(50);
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(50);
 
       const result = await service.findAll(TENANT_ID, 3, 10);
 
@@ -195,12 +329,48 @@ describe('LocationService', () => {
     });
 
     it('should calculate pages correctly with remainder', async () => {
-      prisma.location.findMany.mockResolvedValue([]);
-      prisma.location.count.mockResolvedValue(25);
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(25);
 
       const result = await service.findAll(TENANT_ID, 1, 10);
 
       expect(result.pages).toBe(3); // ceil(25/10)
+      expect(result.total).toBe(25);
+    });
+
+    it('should handle multiple locations in results', async () => {
+      const locations = [mockLocation, { ...mockLocation, id: 'loc-002', name: 'Sede 2' }];
+      prisma.location.findMany.mockResolvedValueOnce(locations);
+      prisma.location.count.mockResolvedValueOnce(2);
+
+      const result = await service.findAll(TENANT_ID, 1, 10);
+
+      expect(result.data.length).toBe(2);
+      expect(result.total).toBe(2);
+    });
+
+    it('should handle empty results', async () => {
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(0);
+
+      const result = await service.findAll(TENANT_ID);
+
+      expect(result.data).toEqual([]);
+      expect(result.pages).toBe(0);
+    });
+
+    it('should order results by createdAt descending', async () => {
+      prisma.location.findMany.mockResolvedValueOnce([]);
+      prisma.location.count.mockResolvedValueOnce(0);
+
+      await service.findAll(TENANT_ID);
+
+      expect(prisma.location.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+      expect(prisma.location.count).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -209,7 +379,7 @@ describe('LocationService', () => {
   // =========================================================================
   describe('findById', () => {
     it('should return location when found', async () => {
-      prisma.location.findFirst.mockResolvedValue(mockLocation);
+      prisma.location.findFirst.mockResolvedValueOnce(mockLocation);
 
       const result = await service.findById(TENANT_ID, LOCATION_ID);
 
@@ -217,14 +387,39 @@ describe('LocationService', () => {
         where: { id: LOCATION_ID, tenantId: TENANT_ID },
       });
       expect(result).toEqual(mockLocation);
+      expect(result.id).toBe(LOCATION_ID);
     });
 
     it('should throw NotFoundException when not found', async () => {
-      prisma.location.findFirst.mockResolvedValue(null);
+      prisma.location.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.findById(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
       await expect(service.findById(TENANT_ID, 'nonexistent')).rejects.toThrow(
         'Sede con ID nonexistent non trovata',
+      );
+    });
+
+    it('should enforce tenant isolation - return not found for different tenant', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(null);
+
+      await expect(service.findById('other-tenant', LOCATION_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.location.findFirst).toHaveBeenCalledWith({
+        where: { id: LOCATION_ID, tenantId: 'other-tenant' },
+      });
+    });
+
+    it('should call Prisma findFirst with correct tenant filter', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(mockLocation);
+
+      await service.findById(TENANT_ID, LOCATION_ID);
+
+      expect(prisma.location.findFirst).toHaveBeenCalledTimes(1);
+      expect(prisma.location.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
       );
     });
   });
@@ -233,26 +428,38 @@ describe('LocationService', () => {
   // update
   // =========================================================================
   describe('update', () => {
-    it('should update location', async () => {
-      prisma.location.findFirst.mockResolvedValue(mockLocation);
+    it('should update location with tenantId isolation', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(mockLocation);
       const updated = { ...mockLocation, name: 'Nuova Sede' };
-      prisma.location.update.mockResolvedValue(updated);
+      prisma.location.update.mockResolvedValueOnce(updated);
 
       const result = await service.update(TENANT_ID, LOCATION_ID, { name: 'Nuova Sede' });
 
       expect(prisma.location.update).toHaveBeenCalledWith({
-        where: { id: LOCATION_ID },
+        where: { id: LOCATION_ID, tenantId: TENANT_ID },
         data: { name: 'Nuova Sede' },
       });
       expect(result.name).toBe('Nuova Sede');
     });
 
     it('should throw NotFoundException if location does not exist', async () => {
-      prisma.location.findFirst.mockResolvedValue(null);
+      prisma.location.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.update(TENANT_ID, 'nonexistent', { name: 'Test' })).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('should enforce cross-tenant isolation on update', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(null);
+
+      await expect(service.update('other-tenant', LOCATION_ID, { name: 'Hack' })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.location.findFirst).toHaveBeenCalledWith({
+        where: { id: LOCATION_ID, tenantId: 'other-tenant' },
+      });
+      expect(prisma.location.update).not.toHaveBeenCalled();
     });
   });
 
@@ -260,23 +467,33 @@ describe('LocationService', () => {
   // delete (soft delete)
   // =========================================================================
   describe('delete', () => {
-    it('should soft-delete by setting isActive=false', async () => {
-      prisma.location.findFirst.mockResolvedValue(mockLocation);
-      prisma.location.update.mockResolvedValue({ ...mockLocation, isActive: false });
+    it('should soft-delete by setting isActive=false with tenantId isolation', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(mockLocation);
+      prisma.location.update.mockResolvedValueOnce({ ...mockLocation, isActive: false });
 
       const result = await service.delete(TENANT_ID, LOCATION_ID);
 
       expect(prisma.location.update).toHaveBeenCalledWith({
-        where: { id: LOCATION_ID },
+        where: { id: LOCATION_ID, tenantId: TENANT_ID },
         data: { isActive: false },
       });
       expect(result.isActive).toBe(false);
     });
 
     it('should throw NotFoundException if location does not exist', async () => {
-      prisma.location.findFirst.mockResolvedValue(null);
+      prisma.location.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.delete(TENANT_ID, 'nonexistent')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should enforce cross-tenant isolation on delete', async () => {
+      prisma.location.findFirst.mockResolvedValueOnce(null);
+
+      await expect(service.delete('other-tenant', LOCATION_ID)).rejects.toThrow(NotFoundException);
+      expect(prisma.location.findFirst).toHaveBeenCalledWith({
+        where: { id: LOCATION_ID, tenantId: 'other-tenant' },
+      });
+      expect(prisma.location.update).not.toHaveBeenCalled();
     });
   });
 });

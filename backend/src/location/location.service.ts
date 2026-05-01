@@ -83,7 +83,7 @@ export class LocationService {
     await this.findById(tenantId, id);
 
     const location = await this.prisma.location.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...dto,
       },
@@ -96,7 +96,7 @@ export class LocationService {
     await this.findById(tenantId, id);
 
     const location = await this.prisma.location.update({
-      where: { id },
+      where: { id, tenantId },
       data: { isActive: false },
     });
 
