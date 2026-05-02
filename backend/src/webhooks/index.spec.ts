@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import { HttpException, BadRequestException } from '@nestjs/common';
 import { createHmac } from 'crypto';
 import {
   WebhookController,

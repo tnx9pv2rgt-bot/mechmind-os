@@ -48,7 +48,12 @@ describe('PortalService', () => {
       booking: { findMany: jest.fn(), findFirst: jest.fn(), count: jest.fn(), create: jest.fn() },
       bookingSlot: { findMany: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
       inspection: { findMany: jest.fn(), findFirst: jest.fn() },
-      invoice: { findMany: jest.fn(), findFirst: jest.fn(), aggregate: jest.fn(), count: jest.fn() },
+      invoice: {
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        aggregate: jest.fn(),
+        count: jest.fn(),
+      },
       notification: { findMany: jest.fn(), count: jest.fn(), updateMany: jest.fn() },
       estimate: { findMany: jest.fn(), findFirst: jest.fn(), updateMany: jest.fn() },
       workOrder: { findMany: jest.fn() },
@@ -1685,8 +1690,8 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('REVISION_EXPIRED');
-      expect(result.data[0].needsAttention).toBe(true);
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('REVISION_EXPIRED');
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
     });
 
     it('should detect REVISION_EXPIRING_SOON (date between now and 30 days)', async () => {
@@ -1707,8 +1712,10 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('REVISION_EXPIRING_SOON');
-      expect(result.data[0].needsAttention).toBe(true);
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain(
+        'REVISION_EXPIRING_SOON',
+      );
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
     });
 
     it('should detect INSURANCE_EXPIRED', async () => {
@@ -1729,7 +1736,7 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('INSURANCE_EXPIRED');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('INSURANCE_EXPIRED');
     });
 
     it('should detect TAX_EXPIRED', async () => {
@@ -1750,7 +1757,7 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('TAX_EXPIRED');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('TAX_EXPIRED');
     });
 
     it('should detect SERVICE_DUE_SOON when mileage >= nextServiceDueKm - 1000', async () => {
@@ -1768,7 +1775,7 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('SERVICE_DUE_SOON');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('SERVICE_DUE_SOON');
     });
 
     it('should detect multiple alerts on same vehicle', async () => {
@@ -1789,8 +1796,10 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts.length).toBeGreaterThanOrEqual(3);
-      expect(result.data[0].needsAttention).toBe(true);
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts.length).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
     });
   });
 
@@ -1801,7 +1810,13 @@ describe('PortalService', () => {
     it('should filter invoices by year', async () => {
       prisma.customer.findFirst.mockResolvedValue(mockCustomer);
       prisma.invoice.findMany.mockResolvedValue([
-        { id: 'inv-1', invoiceNumber: 'INV-001', total: 100, status: 'PAID', createdAt: new Date('2026-03-01') },
+        {
+          id: 'inv-1',
+          invoiceNumber: 'INV-001',
+          total: 100,
+          status: 'PAID',
+          createdAt: new Date('2026-03-01'),
+        },
       ]);
       prisma.invoice.count.mockResolvedValue(1);
 
@@ -2115,8 +2130,12 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('INSURANCE_EXPIRING_SOON');
-      expect(result.data[0].alerts).not.toContain('INSURANCE_EXPIRED');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain(
+        'INSURANCE_EXPIRING_SOON',
+      );
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
+        'INSURANCE_EXPIRED',
+      );
     });
 
     it('should detect TAX_EXPIRING_SOON (not EXPIRED)', async () => {
@@ -2137,8 +2156,8 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toContain('TAX_EXPIRING_SOON');
-      expect(result.data[0].alerts).not.toContain('TAX_EXPIRED');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('TAX_EXPIRING_SOON');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain('TAX_EXPIRED');
     });
 
     it('should not detect alerts when all expirations are far in future', async () => {
@@ -2159,8 +2178,8 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).toEqual([]);
-      expect(result.data[0].needsAttention).toBe(false);
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toEqual([]);
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(false);
     });
 
     it('should not trigger SERVICE_DUE_SOON when mileage below threshold', async () => {
@@ -2178,7 +2197,9 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).not.toContain('SERVICE_DUE_SOON');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
+        'SERVICE_DUE_SOON',
+      );
     });
 
     it('should not trigger SERVICE_DUE_SOON when nextServiceDueKm is null', async () => {
@@ -2196,7 +2217,9 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).not.toContain('SERVICE_DUE_SOON');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
+        'SERVICE_DUE_SOON',
+      );
     });
 
     it('should not trigger SERVICE_DUE_SOON when mileage is null', async () => {
@@ -2214,7 +2237,9 @@ describe('PortalService', () => {
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
-      expect(result.data[0].alerts).not.toContain('SERVICE_DUE_SOON');
+      expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
+        'SERVICE_DUE_SOON',
+      );
     });
   });
 
@@ -2224,10 +2249,22 @@ describe('PortalService', () => {
   describe('getDocuments - branch coverage', () => {
     it('should filter documents by INSPECTION_REPORT type', async () => {
       prisma.invoice.findMany.mockResolvedValue([
-        { id: 'inv-1', invoiceNumber: 'INV-001', createdAt: new Date(), status: 'PAID', total: 100, pdfUrl: null },
+        {
+          id: 'inv-1',
+          invoiceNumber: 'INV-001',
+          createdAt: new Date(),
+          status: 'PAID',
+          total: 100,
+          pdfUrl: null,
+        },
       ]);
       prisma.inspection.findMany.mockResolvedValue([
-        { id: 'insp-1', startedAt: new Date(), status: 'COMPLETED', vehicle: { make: 'Fiat', model: 'Panda' } },
+        {
+          id: 'insp-1',
+          startedAt: new Date(),
+          status: 'COMPLETED',
+          vehicle: { make: 'Fiat', model: 'Panda' },
+        },
       ]);
 
       const result = await service.getDocuments(CUSTOMER_ID, TENANT_ID, 'INSPECTION_REPORT');
@@ -2239,7 +2276,14 @@ describe('PortalService', () => {
 
     it('should return empty array when type filter matches nothing', async () => {
       prisma.invoice.findMany.mockResolvedValue([
-        { id: 'inv-1', invoiceNumber: 'INV-001', createdAt: new Date(), status: 'PAID', total: 100, pdfUrl: null },
+        {
+          id: 'inv-1',
+          invoiceNumber: 'INV-001',
+          createdAt: new Date(),
+          status: 'PAID',
+          total: 100,
+          pdfUrl: null,
+        },
       ]);
       prisma.inspection.findMany.mockResolvedValue([]);
 
@@ -2263,7 +2307,12 @@ describe('PortalService', () => {
     it('should use nullish coalescing for vehicle model when present', async () => {
       prisma.invoice.findMany.mockResolvedValue([]);
       prisma.inspection.findMany.mockResolvedValue([
-        { id: 'insp-1', startedAt: new Date(), status: 'COMPLETED', vehicle: { make: 'Fiat', model: 'Panda' } },
+        {
+          id: 'insp-1',
+          startedAt: new Date(),
+          status: 'COMPLETED',
+          vehicle: { make: 'Fiat', model: 'Panda' },
+        },
       ]);
 
       const result = await service.getDocuments(CUSTOMER_ID, TENANT_ID);
@@ -2274,7 +2323,14 @@ describe('PortalService', () => {
 
     it('should preserve nullish coalescing for paymentMethod in invoice', async () => {
       prisma.invoice.findMany.mockResolvedValue([
-        { id: 'inv-1', invoiceNumber: 'INV-001', createdAt: new Date(), status: 'PAID', total: 100, pdfUrl: null },
+        {
+          id: 'inv-1',
+          invoiceNumber: 'INV-001',
+          createdAt: new Date(),
+          status: 'PAID',
+          total: 100,
+          pdfUrl: null,
+        },
       ]);
       prisma.inspection.findMany.mockResolvedValue([]);
 
@@ -2413,7 +2469,7 @@ describe('PortalService', () => {
   });
 
   // ===========================================================================
-  // decryptCustomer - null field branches  
+  // decryptCustomer - null field branches
   // ===========================================================================
   describe('decryptCustomer - null encrypted fields', () => {
     it('should return null for email when encryptedEmail is null', async () => {

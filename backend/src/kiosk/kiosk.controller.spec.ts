@@ -11,6 +11,8 @@ describe('KioskController', () => {
   const TENANT_ID = 'tenant-001';
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [KioskController],
       providers: [
@@ -43,7 +45,7 @@ describe('KioskController', () => {
     });
 
     it('should throw UnauthorizedException when kiosk key is invalid', async () => {
-      service.validateKioskKey.mockResolvedValue(null as never);
+      service.validateKioskKey.mockResolvedValueOnce(null as never);
 
       await expect(controller.lookup('bad-key', { phoneHash: 'hash' } as never)).rejects.toThrow(
         UnauthorizedException,
@@ -51,14 +53,14 @@ describe('KioskController', () => {
     });
 
     it('should throw BadRequestException when neither phoneHash nor licensePlate provided', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
 
       await expect(controller.lookup(KIOSK_KEY, {} as never)).rejects.toThrow(BadRequestException);
     });
 
     it('should search by phoneHash when provided', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.findBookingByPhone.mockResolvedValue([{ id: 'book-001' }] as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.findBookingByPhone.mockResolvedValueOnce([{ id: 'book-001' }] as never);
 
       const result = await controller.lookup(KIOSK_KEY, { phoneHash: 'hash123' } as never);
 
@@ -67,8 +69,8 @@ describe('KioskController', () => {
     });
 
     it('should search by licensePlate when phoneHash not provided', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.findBookingByPlate.mockResolvedValue([{ id: 'book-002' }] as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.findBookingByPlate.mockResolvedValueOnce([{ id: 'book-002' }] as never);
 
       const result = await controller.lookup(KIOSK_KEY, { licensePlate: 'AB123CD' } as never);
 
@@ -79,7 +81,7 @@ describe('KioskController', () => {
 
   describe('checkIn', () => {
     it('should throw UnauthorizedException when tenant mismatch', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
 
       await expect(
         controller.checkIn(KIOSK_KEY, { bookingId: 'book-001', tenantId: 'other-tenant' } as never),
@@ -87,9 +89,9 @@ describe('KioskController', () => {
     });
 
     it('should check in booking on valid request', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
       const booking = { id: 'book-001', status: 'CHECKED_IN' };
-      service.checkIn.mockResolvedValue(booking as never);
+      service.checkIn.mockResolvedValueOnce(booking as never);
 
       const result = await controller.checkIn(KIOSK_KEY, {
         bookingId: 'book-001',
@@ -104,7 +106,7 @@ describe('KioskController', () => {
 
   describe('getShopStatus', () => {
     it('should throw UnauthorizedException when tenant mismatch', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
 
       await expect(controller.getShopStatus(KIOSK_KEY, 'other-tenant')).rejects.toThrow(
         UnauthorizedException,
@@ -112,9 +114,9 @@ describe('KioskController', () => {
     });
 
     it('should return shop status on valid request', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
       const status = { queue: 3, avgWait: 25 };
-      service.getShopStatus.mockResolvedValue(status as never);
+      service.getShopStatus.mockResolvedValueOnce(status as never);
 
       const result = await controller.getShopStatus(KIOSK_KEY, TENANT_ID);
 
@@ -142,8 +144,8 @@ describe('KioskController', () => {
     });
 
     it('should call validateKioskKey with the provided key', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.findBookingByPhone.mockResolvedValue([]);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.findBookingByPhone.mockResolvedValueOnce([]);
 
       await controller.lookup(KIOSK_KEY, { phoneHash: 'hash123' } as never);
 
@@ -153,8 +155,8 @@ describe('KioskController', () => {
 
   describe('lookup - branch coverage for both phoneHash and licensePlate', () => {
     it('should prioritize phoneHash when both phoneHash and licensePlate provided', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.findBookingByPhone.mockResolvedValue([{ id: 'book-001' }] as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.findBookingByPhone.mockResolvedValueOnce([{ id: 'book-001' }] as never);
 
       const result = await controller.lookup(KIOSK_KEY, {
         phoneHash: 'hash123',
@@ -167,10 +169,10 @@ describe('KioskController', () => {
     });
 
     it('should use licensePlate when phoneHash is undefined/empty', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.findBookingByPlate.mockResolvedValue([{ id: 'book-002' }] as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.findBookingByPlate.mockResolvedValueOnce([{ id: 'book-002' }] as never);
 
-      const result = await controller.lookup(KIOSK_KEY, {
+      await controller.lookup(KIOSK_KEY, {
         phoneHash: undefined,
         licensePlate: 'AB123CD',
       } as never);
@@ -180,11 +182,9 @@ describe('KioskController', () => {
     });
 
     it('should throw BadRequestException when both phoneHash and licensePlate are missing', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
 
-      await expect(controller.lookup(KIOSK_KEY, {} as never)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.lookup(KIOSK_KEY, {} as never)).rejects.toThrow(BadRequestException);
 
       expect(service.findBookingByPhone).not.toHaveBeenCalled();
       expect(service.findBookingByPlate).not.toHaveBeenCalled();
@@ -193,7 +193,7 @@ describe('KioskController', () => {
 
   describe('checkIn - branch coverage for tenantId validation', () => {
     it('should throw UnauthorizedException when key returns different tenantId', async () => {
-      service.validateKioskKey.mockResolvedValue('tenant-different');
+      service.validateKioskKey.mockResolvedValueOnce('tenant-different');
 
       await expect(
         controller.checkIn(KIOSK_KEY, { bookingId: 'book-001', tenantId: TENANT_ID } as never),
@@ -203,8 +203,8 @@ describe('KioskController', () => {
     });
 
     it('should call service.checkIn with correct tenantId when key matches', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.checkIn.mockResolvedValue({ id: 'book-001', status: 'CHECKED_IN' } as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.checkIn.mockResolvedValueOnce({ id: 'book-001', status: 'CHECKED_IN' } as never);
 
       await controller.checkIn(KIOSK_KEY, {
         bookingId: 'book-001',
@@ -215,8 +215,8 @@ describe('KioskController', () => {
     });
 
     it('should pass customerNotes through to service.checkIn', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.checkIn.mockResolvedValue({ id: 'book-001', status: 'CHECKED_IN' } as never);
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.checkIn.mockResolvedValueOnce({ id: 'book-001', status: 'CHECKED_IN' } as never);
 
       await controller.checkIn(KIOSK_KEY, {
         bookingId: 'book-001',
@@ -230,7 +230,7 @@ describe('KioskController', () => {
 
   describe('getShopStatus - branch coverage for tenantId validation', () => {
     it('should throw UnauthorizedException when key returns different tenantId than param', async () => {
-      service.validateKioskKey.mockResolvedValue('tenant-different');
+      service.validateKioskKey.mockResolvedValueOnce('tenant-different');
 
       await expect(controller.getShopStatus(KIOSK_KEY, TENANT_ID)).rejects.toThrow(
         UnauthorizedException,
@@ -240,8 +240,8 @@ describe('KioskController', () => {
     });
 
     it('should call service.getShopStatus when key matches tenantId param', async () => {
-      service.validateKioskKey.mockResolvedValue(TENANT_ID);
-      service.getShopStatus.mockResolvedValue({
+      service.validateKioskKey.mockResolvedValueOnce(TENANT_ID);
+      service.getShopStatus.mockResolvedValueOnce({
         baysTotal: 4,
         baysOccupied: 2,
         queueSize: 3,

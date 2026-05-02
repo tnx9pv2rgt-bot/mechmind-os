@@ -590,6 +590,111 @@ describe('SecurityIncidentService', () => {
       expect(updateCall.data).not.toHaveProperty('rootCause');
       expect(updateCall.data).not.toHaveProperty('preventiveMeasures');
     });
+
+    it('should branch each conditional spread field false path', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      // All fields explicitly undefined → all conditionals evaluate false
+      await service.update(TENANT_ID, 'inc-uuid-001', {
+        title: undefined,
+        description: undefined,
+        severity: undefined,
+        incidentType: undefined,
+        affectedSystems: undefined,
+        affectedUsers: undefined,
+        dataBreached: undefined,
+        responseActions: undefined,
+        rootCause: undefined,
+        preventiveMeasures: undefined,
+      });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      // Verify no fields are set (empty data object after conditionals)
+      expect(updateCall.data).toEqual({});
+      expect(prisma.securityIncident.update).toHaveBeenCalledWith({
+        where: { id: 'inc-uuid-001' },
+        data: {},
+      });
+    });
+
+    it('should include description when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { description: 'New desc' });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('description', 'New desc');
+    });
+
+    it('should include severity when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { severity: 'CRITICAL' });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('severity', 'CRITICAL');
+    });
+
+    it('should include incidentType when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { incidentType: 'malware' });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('incidentType', 'malware');
+    });
+
+    it('should include affectedSystems when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { affectedSystems: ['api'] });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('affectedSystems', ['api']);
+    });
+
+    it('should include affectedUsers when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { affectedUsers: 50 });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('affectedUsers', 50);
+    });
+
+    it('should include dataBreached when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { dataBreached: true });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('dataBreached', true);
+    });
+
+    it('should include responseActions when defined', async () => {
+      const inc = mockIncident();
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.update(TENANT_ID, 'inc-uuid-001', { responseActions: 'Isolated' });
+
+      const updateCall = prisma.securityIncident.update.mock.calls[0][0];
+      expect(updateCall.data).toHaveProperty('responseActions', 'Isolated');
+    });
   });
 
   // ─── findAll — additional filters ───
@@ -872,6 +977,30 @@ describe('SecurityIncidentService', () => {
 
       expect(result.incidentResponsePlanActive).toBe(false);
     });
+
+
+    it('should handle empty incidents list in getDashboard gracefully', async () => {
+      prisma.securityIncident.findMany.mockResolvedValue([]);
+
+      const result = await service.getDashboard(TENANT_ID);
+
+      expect(result.total).toBe(0);
+      expect(result.avgResolutionTimeHours).toBeNull();
+      expect(result.nis2Alerts).toHaveLength(0);
+    });
+
+    it('should handle incident with exact boundary timestamp edges', async () => {
+      const veryOld = new Date(Date.now() - 72 * 60 * 60 * 1000); // exactly 72h = 3 days
+      prisma.securityIncident.findMany.mockResolvedValue([
+        mockIncident({ detectedAt: veryOld, status: 'DETECTED' }),
+      ]);
+
+      const alerts = await service.checkNis2Deadlines(TENANT_ID);
+
+      // Exactly at boundary: earlyWarningOverdue (24h passed), fullReportOverdue should be close
+      expect(alerts[0].hoursElapsed).toBeCloseTo(72, 0);
+      expect(alerts[0].earlyWarningOverdue).toBe(true);
+    });
   });
 
   // ─── updateStatus — edge case with incident not found after findOne ───
@@ -882,6 +1011,53 @@ describe('SecurityIncidentService', () => {
       await expect(
         service.updateStatus(TENANT_ID, 'nonexistent', { status: 'INVESTIGATING' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should not set containedAt for non-CONTAINED transitions', async () => {
+      const inc = mockIncident({ status: 'DETECTED' });
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.updateStatus(TENANT_ID, 'inc-uuid-001', { status: 'INVESTIGATING' });
+
+      const callArgs = prisma.securityIncident.update.mock.calls[0][0];
+      expect(callArgs.data.containedAt).toBeUndefined();
+    });
+
+    it('should not set resolvedAt for non-RESOLVED transitions', async () => {
+      const inc = mockIncident({ status: 'INVESTIGATING' });
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.updateStatus(TENANT_ID, 'inc-uuid-001', { status: 'CONTAINED' });
+
+      const callArgs = prisma.securityIncident.update.mock.calls[0][0];
+      expect(callArgs.data.resolvedAt).toBeUndefined();
+    });
+
+    it('should not set reportedAt for non-REPORTED_ACN transitions', async () => {
+      const inc = mockIncident({ status: 'CONTAINED' });
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue(inc);
+
+      await service.updateStatus(TENANT_ID, 'inc-uuid-001', { status: 'RESOLVED' });
+
+      const callArgs = prisma.securityIncident.update.mock.calls[0][0];
+      expect(callArgs.data.reportedAt).toBeUndefined();
+    });
+
+    it('should transition REPORTED_ACN -> CLOSED without setting timestamps', async () => {
+      const inc = mockIncident({ status: 'REPORTED_ACN' });
+      prisma.securityIncident.findUnique.mockResolvedValue(inc);
+      prisma.securityIncident.update.mockResolvedValue({ ...inc, status: 'CLOSED' });
+
+      await service.updateStatus(TENANT_ID, 'inc-uuid-001', { status: 'CLOSED' });
+
+      const callArgs = prisma.securityIncident.update.mock.calls[0][0];
+      expect(callArgs.data.status).toBe('CLOSED');
+      expect(callArgs.data.containedAt).toBeUndefined();
+      expect(callArgs.data.resolvedAt).toBeUndefined();
+      expect(callArgs.data.reportedAt).toBeUndefined();
     });
   });
 

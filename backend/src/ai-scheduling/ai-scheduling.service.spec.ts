@@ -144,7 +144,7 @@ describe('AiSchedulingService', () => {
     });
 
     it('should return empty array when no technicians available', async () => {
-      prisma.technician.findMany.mockResolvedValue([]);
+      prisma.technician.findMany.mockResolvedValueOnce([]);
 
       const result = await service.suggestOptimalSlots(TENANT_ID, {
         serviceType: 'TAGLIANDO',
@@ -152,10 +152,15 @@ describe('AiSchedulingService', () => {
       });
 
       expect(result).toHaveLength(0);
+      expect(prisma.technician.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
 
     it('should return empty array when no bays available', async () => {
-      prisma.serviceBay.findMany.mockResolvedValue([]);
+      prisma.serviceBay.findMany.mockResolvedValueOnce([]);
 
       const result = await service.suggestOptimalSlots(TENANT_ID, {
         serviceType: 'TAGLIANDO',
@@ -163,6 +168,11 @@ describe('AiSchedulingService', () => {
       });
 
       expect(result).toHaveLength(0);
+      expect(prisma.serviceBay.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ shopFloor: { tenantId: TENANT_ID } }),
+        }),
+      );
     });
 
     it('should filter technicians by required skills', async () => {
@@ -201,6 +211,7 @@ describe('AiSchedulingService', () => {
       if (preferredSlots.length > 0 && otherSlots.length > 0) {
         expect(preferredSlots[0].score).toBeGreaterThanOrEqual(otherSlots[0].score);
       }
+      expect(prisma.booking.findMany).toHaveBeenCalled();
     });
   });
 
@@ -236,7 +247,7 @@ describe('AiSchedulingService', () => {
         },
       ];
 
-      prisma.booking.findMany.mockResolvedValue(mockBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(mockBookings);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
@@ -257,21 +268,26 @@ describe('AiSchedulingService', () => {
     });
 
     it('should handle empty schedule', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
       expect(result.currentOrder).toHaveLength(0);
       expect(result.optimizedOrder).toHaveLength(0);
       expect(result.estimatedTimeSavedMinutes).toBe(0);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
   });
 
   describe('getCapacityForecast', () => {
     it('should return capacity forecast for date range', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
-      prisma.technician.count.mockResolvedValue(2);
-      prisma.serviceBay.count.mockResolvedValue(3);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
+      prisma.technician.count.mockResolvedValueOnce(2);
+      prisma.serviceBay.count.mockResolvedValueOnce(3);
 
       const result = await service.getCapacityForecast(TENANT_ID, '2026-03-30', '2026-04-03');
 
@@ -287,17 +303,29 @@ describe('AiSchedulingService', () => {
         expect(day.availableTechnicians).toBe(2);
         expect(day.availableBays).toBe(3);
       }
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
+      expect(prisma.technician.count).toHaveBeenCalled();
+      expect(prisma.serviceBay.count).toHaveBeenCalled();
     });
 
     it('should skip weekends in forecast', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
-      prisma.technician.count.mockResolvedValue(1);
-      prisma.serviceBay.count.mockResolvedValue(1);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
+      prisma.technician.count.mockResolvedValueOnce(1);
+      prisma.serviceBay.count.mockResolvedValueOnce(1);
 
       // 2026-03-28 is Saturday, 2026-03-29 is Sunday
       const result = await service.getCapacityForecast(TENANT_ID, '2026-03-28', '2026-03-29');
 
       expect(result).toHaveLength(0);
+      expect(prisma.technician.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
 
     it('should calculate utilization based on bookings', async () => {
@@ -306,21 +334,23 @@ describe('AiSchedulingService', () => {
         { scheduledDate: new Date('2026-03-30T10:00:00Z') },
         { scheduledDate: new Date('2026-03-30T11:00:00Z') },
       ];
-      prisma.booking.findMany.mockResolvedValue(bookings);
-      prisma.technician.count.mockResolvedValue(1);
-      prisma.serviceBay.count.mockResolvedValue(1);
+      prisma.booking.findMany.mockResolvedValueOnce(bookings);
+      prisma.technician.count.mockResolvedValueOnce(1);
+      prisma.serviceBay.count.mockResolvedValueOnce(1);
 
       const result = await service.getCapacityForecast(TENANT_ID, '2026-03-30', '2026-03-30');
 
       expect(result).toHaveLength(1);
       expect(result[0].bookedSlots).toBe(3);
       expect(result[0].utilizationPercent).toBeGreaterThan(0);
+      expect(prisma.booking.findMany).toHaveBeenCalled();
+      expect(prisma.serviceBay.count).toHaveBeenCalled();
     });
 
     it('should handle zero total slots (no technicians/bays)', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
-      prisma.technician.count.mockResolvedValue(0);
-      prisma.serviceBay.count.mockResolvedValue(0);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
+      prisma.technician.count.mockResolvedValueOnce(0);
+      prisma.serviceBay.count.mockResolvedValueOnce(0);
 
       const result = await service.getCapacityForecast(TENANT_ID, '2026-03-30', '2026-03-31');
 
@@ -329,6 +359,8 @@ describe('AiSchedulingService', () => {
         expect(day.totalSlots).toBe(8);
         expect(day.utilizationPercent).toBe(0);
       }
+      expect(prisma.technician.count).toHaveBeenCalled();
+      expect(prisma.serviceBay.count).toHaveBeenCalled();
     });
   });
 
@@ -345,7 +377,7 @@ describe('AiSchedulingService', () => {
           },
         },
       ];
-      prisma.booking.findMany.mockResolvedValue(existingBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(existingBookings);
 
       const dto = {
         serviceType: 'TAGLIANDO',
@@ -368,7 +400,7 @@ describe('AiSchedulingService', () => {
         preferredDate: '2026-03-30',
       };
 
-      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
 
       const result = await service.suggestOptimalSlots(TENANT_ID, dto);
 
@@ -383,6 +415,7 @@ describe('AiSchedulingService', () => {
         );
         expect(slot.reasoning).toMatch(/(Slot ottimale|Buon compromesso|Slot disponibile)/);
       }
+      expect(prisma.technician.findMany).toHaveBeenCalled();
     });
 
     it('should handle technician with no technicianId in bookings', async () => {
@@ -397,7 +430,7 @@ describe('AiSchedulingService', () => {
           },
         },
       ];
-      prisma.booking.findMany.mockResolvedValue(existingBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(existingBookings);
 
       const dto = {
         serviceType: 'TAGLIANDO',
@@ -408,6 +441,11 @@ describe('AiSchedulingService', () => {
 
       // Should generate slots even with null technicianId bookings
       expect(result.length).toBeGreaterThanOrEqual(0);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
 
     it('should apply all scoring rules correctly', async () => {
@@ -431,7 +469,7 @@ describe('AiSchedulingService', () => {
           },
         },
       ];
-      prisma.booking.findMany.mockResolvedValue(existingBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(existingBookings);
 
       const dto = {
         serviceType: 'TAGLIANDO',
@@ -446,6 +484,8 @@ describe('AiSchedulingService', () => {
         // First slot should have highest score (preferred date + morning + skill match)
         expect(result[0].score).toBeGreaterThanOrEqual(50);
       }
+      expect(prisma.technician.findMany).toHaveBeenCalled();
+      expect(prisma.serviceBay.findMany).toHaveBeenCalled();
     });
 
     it('should trigger low score and high workload reasoning branches', async () => {
@@ -479,7 +519,7 @@ describe('AiSchedulingService', () => {
         });
       }
 
-      prisma.booking.findMany.mockResolvedValue(existingBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(existingBookings);
 
       const dto = {
         serviceType: 'DIAGNOSI',
@@ -493,6 +533,7 @@ describe('AiSchedulingService', () => {
       expect(reasonings).toMatch(
         /(tecnico con carico elevato|tecnico libero|carico di lavoro bilanciato)/,
       );
+      expect(prisma.serviceBay.findMany).toHaveBeenCalled();
     });
   });
 
@@ -514,13 +555,18 @@ describe('AiSchedulingService', () => {
         },
       ];
 
-      prisma.booking.findMany.mockResolvedValue(mockBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(mockBookings);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
       expect(result.currentOrder).toHaveLength(1);
       expect(result.optimizedOrder).toHaveLength(1);
       expect(result.estimatedTimeSavedMinutes).toBe(0);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
 
     it('should handle bookings with null technicianId', async () => {
@@ -553,13 +599,14 @@ describe('AiSchedulingService', () => {
         },
       ];
 
-      prisma.booking.findMany.mockResolvedValue(mockBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(mockBookings);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
       expect(result.currentOrder).toHaveLength(2);
       expect(result.optimizedOrder).toHaveLength(2);
       expect(result.estimatedTimeSavedMinutes).toBeGreaterThanOrEqual(0);
+      expect(prisma.technician.findMany).toHaveBeenCalled();
     });
 
     it('should handle booking with null service', async () => {
@@ -579,12 +626,17 @@ describe('AiSchedulingService', () => {
         },
       ];
 
-      prisma.booking.findMany.mockResolvedValue(mockBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(mockBookings);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
       expect(result.currentOrder[0].serviceType).toBe('Servizio generico');
       expect(result.currentOrder).toHaveLength(1);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
     });
 
     it('should group bookings by technician correctly', async () => {
@@ -630,7 +682,7 @@ describe('AiSchedulingService', () => {
         },
       ];
 
-      prisma.booking.findMany.mockResolvedValue(mockBookings);
+      prisma.booking.findMany.mockResolvedValueOnce(mockBookings);
 
       const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
@@ -640,6 +692,8 @@ describe('AiSchedulingService', () => {
         .map((entry, idx) => (entry.technicianId === 'tech-002' ? idx : -1))
         .filter(idx => idx !== -1);
       expect(tech2Indices.length).toBeGreaterThan(0);
+      expect(prisma.technician.findMany).toHaveBeenCalled();
+      expect(prisma.aiDecisionLog.create).toHaveBeenCalled();
     });
   });
 });

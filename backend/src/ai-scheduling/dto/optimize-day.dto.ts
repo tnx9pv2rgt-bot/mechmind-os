@@ -8,7 +8,7 @@ import { IsDateString } from 'class-validator';
 export class OptimizeDayDto {
   @ApiProperty({ description: 'Data da ottimizzare (ISO)', example: '2026-03-30' })
   @IsDateString()
-  date: string;
+  date!: string;
 }
 
 export interface ScheduleEntry {

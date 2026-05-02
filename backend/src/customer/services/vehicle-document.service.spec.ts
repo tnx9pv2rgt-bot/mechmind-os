@@ -883,5 +883,94 @@ describe('VehicleDocumentService', () => {
         }),
       });
     });
+
+    it('should propagate S3 upload error to caller', async () => {
+      // Arrange
+      (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
+      (s3.uploadBuffer as jest.Mock).mockRejectedValueOnce(new Error('S3 bucket not found'));
+
+      // Act & Assert
+      await expect(
+        service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', 'Documento'),
+      ).rejects.toThrow('S3 bucket not found');
+
+      expect((prisma.vehicleDocument as Record<string, jest.Mock>).create).not.toHaveBeenCalled();
+    });
+
+    it('should propagate database creation error to caller', async () => {
+      // Arrange
+      (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(mockVehicle);
+      (s3.uploadBuffer as jest.Mock).mockResolvedValueOnce({
+        Key: 'vehicles/vehicle-001/documents/abc123.pdf',
+      });
+      (prisma.vehicleDocument as Record<string, jest.Mock>).create.mockRejectedValueOnce(
+        new Error('Unique constraint violation'),
+      );
+
+      // Act & Assert
+      await expect(
+        service.upload(TENANT_ID, VEHICLE_ID, USER_ID, mockFile, 'LIBRETTO', 'Documento'),
+      ).rejects.toThrow('Unique constraint violation');
+    });
+  });
+
+  describe('comprehensive integration scenarios', () => {
+    it('should handle vehicle not found with specific error message', async () => {
+      // Arrange
+      (prisma.vehicle as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+
+      // Act & Assert
+      await expect(
+        service.upload(TENANT_ID, 'unknown-vehicle-id', USER_ID, mockFile, 'LIBRETTO', 'Doc'),
+      ).rejects.toThrow(`Veicolo unknown-vehicle-id non trovato`);
+    });
+
+    it('should delete document with null S3 response handling', async () => {
+      // Arrange
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
+      (s3.delete as jest.Mock).mockResolvedValueOnce(undefined);
+
+      // Act
+      await service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID);
+
+      // Assert
+      expect(s3.delete).toHaveBeenCalledWith('mechmind-uploads', mockDocument.s3Key);
+      expect((prisma.vehicleDocument as Record<string, jest.Mock>).delete).toHaveBeenCalledWith({
+        where: { id: DOCUMENT_ID },
+      });
+    });
+
+    it('should propagate S3 deletion error', async () => {
+      // Arrange
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
+      (s3.delete as jest.Mock).mockRejectedValueOnce(new Error('S3 delete failed'));
+
+      // Act & Assert
+      await expect(service.remove(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(
+        'S3 delete failed',
+      );
+
+      // DB delete should not be called if S3 fails
+      expect((prisma.vehicleDocument as Record<string, jest.Mock>).delete).not.toHaveBeenCalled();
+    });
+
+    it('should propagate signed URL generation error', async () => {
+      // Arrange
+      (prisma.vehicleDocument as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(
+        mockDocument,
+      );
+      (s3.getSignedUrlForKey as jest.Mock).mockRejectedValueOnce(
+        new Error('Invalid S3 key format'),
+      );
+
+      // Act & Assert
+      await expect(service.getDownloadUrl(TENANT_ID, VEHICLE_ID, DOCUMENT_ID)).rejects.toThrow(
+        'Invalid S3 key format',
+      );
+    });
   });
 });

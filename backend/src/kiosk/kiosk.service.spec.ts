@@ -1,9 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { BookingStatus } from '@prisma/client';
 import { KioskService } from './kiosk.service';
-import { PrismaService } from '../common/services/prisma.service';
 
 describe('KioskService', () => {
   let service: KioskService;
@@ -28,7 +25,7 @@ describe('KioskService', () => {
     services: [{ service: { name: 'Tagliando' } }],
   };
 
-  beforeEach(async () => {
+  beforeEach(() => {
     prisma = {
       customerEncrypted: { findMany: jest.fn() },
       booking: {
@@ -43,15 +40,8 @@ describe('KioskService', () => {
 
     eventEmitter = { emit: jest.fn() };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        KioskService,
-        { provide: PrismaService, useValue: prisma },
-        { provide: EventEmitter2, useValue: eventEmitter },
-      ],
-    }).compile();
-
-    service = module.get<KioskService>(KioskService);
+    // Directly instantiate service with mocked dependencies
+    service = new KioskService(prisma as any, eventEmitter as any);
   });
 
   it('should be defined', () => {
@@ -262,8 +252,9 @@ describe('KioskService', () => {
       prisma.customerEncrypted.findMany.mockResolvedValue([{ id: 'cust-001' }]);
       prisma.booking.findMany.mockResolvedValue([mockBooking]);
 
-      await service.findBookingByPhone(TENANT_ID, 'hash-abc');
+      const result = await service.findBookingByPhone(TENANT_ID, 'hash-abc');
 
+      expect(result).toHaveLength(1);
       expect(prisma.booking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { scheduledDate: 'asc' },
@@ -275,8 +266,9 @@ describe('KioskService', () => {
       prisma.customerEncrypted.findMany.mockResolvedValue([{ id: 'cust-001' }]);
       prisma.booking.findMany.mockResolvedValue([]);
 
-      await service.findBookingByPhone(TENANT_ID, 'hash-abc');
+      const result = await service.findBookingByPhone(TENANT_ID, 'hash-abc');
 
+      expect(result).toEqual([]);
       expect(prisma.booking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -291,8 +283,10 @@ describe('KioskService', () => {
     it('should normalize plate: uppercase and remove spaces/dashes', async () => {
       prisma.booking.findMany.mockResolvedValue([mockBooking]);
 
-      await service.findBookingByPlate(TENANT_ID, 'ab 123-cd');
+      const result = await service.findBookingByPlate(TENANT_ID, 'ab 123-cd');
 
+      expect(result).toHaveLength(1);
+      expect(result[0].vehiclePlate).toBe('AB123CD');
       expect(prisma.booking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -305,8 +299,10 @@ describe('KioskService', () => {
     it('should normalize plate already uppercase', async () => {
       prisma.booking.findMany.mockResolvedValue([mockBooking]);
 
-      await service.findBookingByPlate(TENANT_ID, 'AB123CD');
+      const result = await service.findBookingByPlate(TENANT_ID, 'AB123CD');
 
+      expect(result).toHaveLength(1);
+      expect(result[0].vehiclePlate).toBe('AB123CD');
       expect(prisma.booking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -319,8 +315,9 @@ describe('KioskService', () => {
     it('should exclude soft-deleted and filter by status', async () => {
       prisma.booking.findMany.mockResolvedValue([]);
 
-      await service.findBookingByPlate(TENANT_ID, 'AB123CD');
+      const result = await service.findBookingByPlate(TENANT_ID, 'AB123CD');
 
+      expect(result).toEqual([]);
       expect(prisma.booking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -381,8 +378,9 @@ describe('KioskService', () => {
       prisma.shopFloor.findMany.mockResolvedValue([{ bays: [{ status: 'AVAILABLE' }] }]);
       prisma.booking.count.mockResolvedValue(3);
 
-      await service.getShopStatus(TENANT_ID);
+      const result = await service.getShopStatus(TENANT_ID);
 
+      expect(result.queueSize).toBe(3);
       expect(prisma.booking.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -396,8 +394,9 @@ describe('KioskService', () => {
       prisma.shopFloor.findMany.mockResolvedValue([{ bays: [{ status: 'AVAILABLE' }] }]);
       prisma.booking.count.mockResolvedValue(0);
 
-      await service.getShopStatus(TENANT_ID);
+      const result = await service.getShopStatus(TENANT_ID);
 
+      expect(result.queueSize).toBe(0);
       expect(prisma.booking.count).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -419,8 +418,9 @@ describe('KioskService', () => {
       };
       prisma.booking.update.mockResolvedValue(updated);
 
-      await service.checkIn(TENANT_ID, 'booking-001', 'New customer notes');
+      const result = await service.checkIn(TENANT_ID, 'booking-001', 'New customer notes');
 
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
       expect(prisma.booking.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -440,8 +440,9 @@ describe('KioskService', () => {
       };
       prisma.booking.update.mockResolvedValue(updated);
 
-      await service.checkIn(TENANT_ID, 'booking-001', 'New customer notes');
+      const result = await service.checkIn(TENANT_ID, 'booking-001', 'New customer notes');
 
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
       expect(prisma.booking.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -457,8 +458,9 @@ describe('KioskService', () => {
       const updated = { ...bookingWithNotes, status: BookingStatus.CHECKED_IN };
       prisma.booking.update.mockResolvedValue(updated);
 
-      await service.checkIn(TENANT_ID, 'booking-001');
+      const result = await service.checkIn(TENANT_ID, 'booking-001');
 
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
       expect(prisma.booking.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -472,8 +474,9 @@ describe('KioskService', () => {
       prisma.booking.findFirst.mockResolvedValue(mockBooking);
       prisma.booking.update.mockResolvedValue({ ...mockBooking, status: BookingStatus.CHECKED_IN });
 
-      await service.checkIn(TENANT_ID, 'booking-001', 'Notes');
+      const result = await service.checkIn(TENANT_ID, 'booking-001', 'Notes');
 
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'booking.checked_in',
         expect.objectContaining({
@@ -489,8 +492,9 @@ describe('KioskService', () => {
       prisma.booking.findFirst.mockResolvedValue(mockBooking);
       prisma.booking.update.mockResolvedValue({ ...mockBooking, status: BookingStatus.CHECKED_IN });
 
-      await service.checkIn(TENANT_ID, 'booking-001');
+      const result = await service.checkIn(TENANT_ID, 'booking-001');
 
+      expect(result.status).toBe(BookingStatus.CHECKED_IN);
       expect(prisma.booking.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -565,15 +569,14 @@ describe('KioskService', () => {
       const result = await service.checkIn(TENANT_ID, 'booking-001');
 
       expect(result.status).toBe(BookingStatus.CHECKED_IN);
+      expect(prisma.booking.update).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException for NO_SHOW status (not CONFIRMED and not PENDING)', async () => {
       const noShowBooking = { ...mockBooking, status: BookingStatus.NO_SHOW };
       prisma.booking.findFirst.mockResolvedValue(noShowBooking);
 
-      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(BadRequestException);
       expect(prisma.booking.update).not.toHaveBeenCalled();
     });
 
@@ -581,36 +584,32 @@ describe('KioskService', () => {
       const cancelledBooking = { ...mockBooking, status: BookingStatus.CANCELLED };
       prisma.booking.findFirst.mockResolvedValue(cancelledBooking);
 
-      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(BadRequestException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for IN_PROGRESS status', async () => {
       const inProgressBooking = { ...mockBooking, status: BookingStatus.IN_PROGRESS };
       prisma.booking.findFirst.mockResolvedValue(inProgressBooking);
 
-      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(BadRequestException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for CHECKED_IN status (already checked in)', async () => {
       const alreadyCheckedIn = { ...mockBooking, status: BookingStatus.CHECKED_IN };
       prisma.booking.findFirst.mockResolvedValue(alreadyCheckedIn);
 
-      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(BadRequestException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for COMPLETED status', async () => {
       const completedBooking = { ...mockBooking, status: BookingStatus.COMPLETED };
       prisma.booking.findFirst.mockResolvedValue(completedBooking);
 
-      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.checkIn(TENANT_ID, 'booking-001')).rejects.toThrow(BadRequestException);
+      expect(prisma.booking.update).not.toHaveBeenCalled();
     });
   });
 

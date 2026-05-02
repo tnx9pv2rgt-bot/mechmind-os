@@ -4,3 +4,4 @@
 {"ts":"2026-05-01T19:10:00Z","type":"CEILING_ACCEPTED","file":"pivaService.ts::calculateLuhnCheckDigit","reason":"Mathematical Luhn algorithm, branch (digit > 9) is numerically exercised but hard to isolate","gate":"branches-coverage"}
 {"ts":"2026-05-01T19:10:00Z","type":"CEILING_ACCEPTED","file":"external/viesApi.spec.ts","reason":"External API mocks: catch silenzioso su fetch error (line 566) is intentional graceful degradation","gate":"branches-coverage"}
 {"ts":"2026-05-01T19:10:00Z","type":"RESOLVED","findingId":"F-001","severity":"MEDIA","fix":"Added 11 targeted branch tests for pivaService: Luhn algorithm, VIES fetch paths, cache expiry, NODE_ENV checks","traceability":["OWASP A10:2025 Exceptional Conditions"]}
+{"ts":"2026-05-02T10:45:42Z","type":"AUDIT_RE-CONFIRMED","module":"services","stmt":"88.47%","branch":"76.51%","ceiling_hash":"STABLE","gates_passed":"12/14","report":"docs/audit-reports/services-2026-05-02.md"}

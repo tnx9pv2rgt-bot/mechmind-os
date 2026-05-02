@@ -8,12 +8,12 @@ import { IsString, IsOptional, IsInt, IsArray, IsDateString, Min } from 'class-v
 export class SuggestSlotsDto {
   @ApiProperty({ description: 'Tipo di servizio richiesto', example: 'TAGLIANDO' })
   @IsString()
-  serviceType: string;
+  serviceType!: string;
 
   @ApiProperty({ description: 'Durata stimata in minuti', example: 90 })
   @IsInt()
   @Min(15)
-  estimatedDuration: number;
+  estimatedDuration!: number;
 
   @ApiPropertyOptional({
     description: 'Competenze richieste del tecnico',

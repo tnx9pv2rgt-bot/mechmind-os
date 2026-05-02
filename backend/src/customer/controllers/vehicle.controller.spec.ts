@@ -89,6 +89,109 @@ describe('VehicleController', () => {
         meta: { total: 0, limit: 50, offset: 0 },
       });
     });
+
+    it('should parse limit when provided and use default offset', async () => {
+      service.findAll.mockResolvedValue({ vehicles: [mockVehicle], total: 1 } as never);
+
+      const result = await controller.getVehicles(TENANT_ID, '30');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        limit: 30,
+        offset: undefined,
+        search: undefined,
+        status: undefined,
+      });
+      expect(result.meta.limit).toBe(30);
+      expect(result.meta.offset).toBe(0);
+    });
+
+    it('should parse offset when provided and use default limit', async () => {
+      service.findAll.mockResolvedValue({ vehicles: [mockVehicle], total: 1 } as never);
+
+      const result = await controller.getVehicles(TENANT_ID, undefined, '10');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        limit: undefined,
+        offset: 10,
+        search: undefined,
+        status: undefined,
+      });
+      expect(result.meta.limit).toBe(50);
+      expect(result.meta.offset).toBe(10);
+    });
+
+    it('should apply search filter when provided', async () => {
+      service.findAll.mockResolvedValue({ vehicles: [mockVehicle], total: 1 } as never);
+
+      await controller.getVehicles(TENANT_ID, undefined, undefined, 'Corolla');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        limit: undefined,
+        offset: undefined,
+        search: 'Corolla',
+        status: undefined,
+      });
+    });
+
+    it('should apply status filter when provided', async () => {
+      service.findAll.mockResolvedValue({ vehicles: [mockVehicle], total: 1 } as never);
+
+      await controller.getVehicles(TENANT_ID, undefined, undefined, undefined, 'INACTIVE');
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        limit: undefined,
+        offset: undefined,
+        search: undefined,
+        status: 'INACTIVE',
+      });
+    });
+  });
+
+  describe('getExpiringVehicles', () => {
+    it('should call findExpiring with default days when not provided', async () => {
+      service.findExpiring = jest.fn().mockResolvedValue({
+        vehicles: [mockVehicle],
+        summary: { totalExpiring: 1, byType: {} },
+      });
+
+      const result = await controller.getExpiringVehicles(TENANT_ID);
+
+      expect(service.findExpiring).toHaveBeenCalledWith(TENANT_ID, 60);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual([mockVehicle]);
+    });
+
+    it('should call findExpiring with provided days parameter', async () => {
+      service.findExpiring = jest.fn().mockResolvedValue({
+        vehicles: [mockVehicle],
+        summary: { totalExpiring: 1, byType: { insurance: 1 } },
+      });
+
+      const result = (await controller.getExpiringVehicles(TENANT_ID, '30')) as {
+        success: boolean;
+        data: unknown;
+        summary: unknown;
+      };
+
+      expect(service.findExpiring).toHaveBeenCalledWith(TENANT_ID, 30);
+      expect(result.summary).toBeDefined();
+    });
+
+    it('should return empty list when no vehicles are expiring', async () => {
+      service.findExpiring = jest.fn().mockResolvedValue({
+        vehicles: [],
+        summary: { totalExpiring: 0, byType: {} },
+      });
+
+      const result = (await controller.getExpiringVehicles(TENANT_ID, '90')) as {
+        success: boolean;
+        data: unknown;
+        summary: unknown;
+      };
+
+      expect(result.data).toEqual([]);
+      expect(result.summary).toBeDefined();
+    });
   });
 
   describe('getVehicle', () => {
@@ -146,6 +249,32 @@ describe('VehicleController', () => {
 
       expect(service.delete).toHaveBeenCalledWith(TENANT_ID, 'veh-001');
       expect(result).toEqual({ success: true, message: 'Vehicle deleted successfully' });
+    });
+  });
+
+  describe('decodeVin', () => {
+    it('should call vinDecoderService.decode and return result wrapped in success response', async () => {
+      const vinDecoderService = controller['vinDecoderService'];
+      const decodedVin = {
+        vin: '1HGBH41JXMN109186',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2021,
+        fuelType: 'Gasoline',
+        engineDisplacement: '1.5',
+        power: '174',
+        transmissionType: 'Automatic',
+        driveType: 'FWD',
+        vehicleType: 'PASSENGER CAR',
+        bodyClass: 'Sedan',
+      };
+
+      (vinDecoderService.decode as jest.Mock).mockResolvedValueOnce(decodedVin);
+
+      const result = await controller.decodeVin('1HGBH41JXMN109186');
+
+      expect(vinDecoderService.decode).toHaveBeenCalledWith('1HGBH41JXMN109186');
+      expect(result).toEqual({ success: true, data: decodedVin });
     });
   });
 });

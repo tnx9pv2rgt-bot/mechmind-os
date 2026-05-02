@@ -1,5 +1,4 @@
 import { Job } from 'bullmq';
-import { SESClient } from '@aws-sdk/client-ses';
 import { EmailProcessor } from './email.processor';
 import { Logger } from '@nestjs/common';
 
@@ -54,9 +53,7 @@ describe('EmailProcessor', () => {
       });
 
       // Mock the SES client send to avoid actual AWS calls
-      jest
-        .spyOn(processor['ses'], 'send' as keyof SESClient)
-        .mockResolvedValueOnce({ MessageId: 'msg-123' });
+      jest.spyOn(processor['ses'] as any, 'send').mockResolvedValueOnce({ MessageId: 'msg-123' });
 
       await processor.process(job);
 
@@ -65,7 +62,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should send email via SES when job is processed', async () => {
-      const sesSpy = jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      const sesSpy = (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-124',
       });
 
@@ -81,7 +78,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should use booking_confirmation template by default', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-125',
       });
 
@@ -95,7 +92,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should use booking_reminder template when specified', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-126',
       });
 
@@ -109,7 +106,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should replace template variables in email body', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-127',
       });
 
@@ -128,7 +125,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should escape HTML entities in template variables', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-128',
       });
 
@@ -147,7 +144,7 @@ describe('EmailProcessor', () => {
 
     it('should throw error when SES send fails', async () => {
       const error = new Error('SES API Error');
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockRejectedValueOnce(error);
+      jest.spyOn(processor['ses'] as any, 'send').mockRejectedValueOnce(error);
 
       const job = createJob();
 
@@ -156,7 +153,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should handle various template types', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-129',
       });
 
@@ -171,7 +168,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should send email with all job data fields', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-130',
       });
 
@@ -194,7 +191,7 @@ describe('EmailProcessor', () => {
 
     it('should use default SES from email when env not set', async () => {
       delete process.env.SES_FROM_EMAIL;
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-131',
       });
 
@@ -206,7 +203,7 @@ describe('EmailProcessor', () => {
     });
 
     it('should handle multiple variable replacements', async () => {
-      jest.spyOn(processor['ses'], 'send' as keyof SESClient).mockResolvedValueOnce({
+      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
         MessageId: 'msg-132',
       });
 

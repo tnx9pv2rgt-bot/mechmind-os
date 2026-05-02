@@ -143,5 +143,105 @@ describe('PublicTokenController', () => {
         ['type', 'entityId', 'entityType', 'metadata'].sort(),
       );
     });
+
+    it('should validate token and cast metadata to Record', async () => {
+      const testRecord = {
+        type: 'PAYMENT',
+        entityId: 'inv-123',
+        entityType: 'Invoice',
+        metadata: { amount: 1500, currency: 'EUR' },
+      };
+      service.validateToken.mockResolvedValueOnce(testRecord as never);
+
+      const result = await controller.resolveToken('token-inv-123');
+
+      expect(result).toBeDefined();
+      expect(result.type).toBe('PAYMENT');
+      expect(result.entityId).toBe('inv-123');
+      expect(result.entityType).toBe('Invoice');
+      expect(result.metadata).toEqual({ amount: 1500, currency: 'EUR' });
+      expect(service.validateToken).toHaveBeenCalledTimes(1);
+      expect(service.validateToken).toHaveBeenCalledWith('token-inv-123');
+    });
+
+    it('should handle undefined metadata by casting to null', async () => {
+      const recordWithoutMetadata = {
+        type: 'ESTIMATE_APPROVAL',
+        entityId: 'est-456',
+        entityType: 'Estimate',
+        metadata: undefined,
+      };
+      service.validateToken.mockResolvedValueOnce(recordWithoutMetadata as never);
+
+      const result = await controller.resolveToken('token-est-456');
+
+      expect(result.metadata).toBeUndefined();
+      expect(service.validateToken).toHaveBeenCalledWith('token-est-456');
+    });
+
+    it('should preserve type, entityId, entityType through response mapping', async () => {
+      const record = {
+        id: 'uuid-map-test',
+        tenantId: 'tenant-123',
+        token: 'token-test',
+        type: 'DVI_REPORT',
+        entityId: 'dvi-789',
+        entityType: 'Inspection',
+        metadata: { reportId: 'RPT-001', status: 'pending' },
+        expiresAt: new Date(),
+        usedAt: null,
+        createdAt: new Date(),
+      };
+      service.validateToken.mockResolvedValueOnce(record as never);
+
+      const result = await controller.resolveToken('token-test');
+
+      expect(result.type).toBe(record.type);
+      expect(result.entityId).toBe(record.entityId);
+      expect(result.entityType).toBe(record.entityType);
+      expect(result.metadata).toBe(record.metadata);
+      expect((result as any).id).toBeUndefined();
+      expect((result as any).tenantId).toBeUndefined();
+      expect((result as any).token).toBeUndefined();
+      expect((result as any).expiresAt).toBeUndefined();
+    });
+
+    it('should delegate validation errors transparently', async () => {
+      const errors = [
+        new NotFoundException('Non trovato'),
+        new BadRequestException('Token scaduto'),
+        new BadRequestException('Token già utilizzato'),
+      ];
+
+      for (const error of errors) {
+        service.validateToken.mockRejectedValueOnce(error);
+        await expect(controller.resolveToken('bad-token')).rejects.toThrow(error.constructor);
+        expect(service.validateToken).toHaveBeenCalled();
+      }
+    });
+
+    it('should handle complex nested metadata structures', async () => {
+      const complexMetadata = {
+        nestedData: {
+          level1: {
+            level2: ['array', 'of', 'values'],
+          },
+        },
+        timestamp: '2026-05-02T10:30:00Z',
+        flags: { active: true, premium: false },
+      };
+      service.validateToken.mockResolvedValueOnce({
+        type: 'ESTIMATE_APPROVAL',
+        entityId: 'est-complex',
+        entityType: 'Estimate',
+        metadata: complexMetadata,
+      } as never);
+
+      const result = await controller.resolveToken('token-complex');
+
+      expect(result.metadata).toEqual(complexMetadata);
+      expect(typeof result.metadata).toBe('object');
+      expect((result.metadata as any).nestedData.level1.level2).toEqual(['array', 'of', 'values']);
+    });
   });
 });

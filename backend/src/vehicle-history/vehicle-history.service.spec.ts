@@ -591,6 +591,7 @@ describe('VehicleHistoryService', () => {
 
       const result = await service.addManualRecord(TENANT_ID, VEHICLE_ID, dto);
 
+      expect(result.costCents).toEqual(new Prisma.Decimal(20000));
       expect(prisma.vehicleHistoryRecord.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           costCents: expect.any(Prisma.Decimal),

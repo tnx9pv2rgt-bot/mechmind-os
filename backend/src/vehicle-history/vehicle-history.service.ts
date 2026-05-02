@@ -6,6 +6,8 @@ import { ManualRecordDto } from './dto/manual-record.dto';
 
 export interface VehicleHistoryEntry {
   id: string;
+  vehicleId: string;
+  vin: string | null;
   source: VehicleHistorySource;
   eventType: string;
   eventDate: Date;
@@ -134,6 +136,8 @@ export class VehicleHistoryService {
 
     return workOrders.map(wo => ({
       id: `local-${wo.id}`,
+      vehicleId,
+      vin: null,
       source: VehicleHistorySource.LOCAL,
       eventType: 'SERVICE',
       eventDate: wo.actualCompletionTime ?? wo.createdAt,

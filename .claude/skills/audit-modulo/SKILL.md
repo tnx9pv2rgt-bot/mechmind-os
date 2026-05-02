@@ -1,6 +1,6 @@
 ---
 name: audit-modulo
-description: Orchestratore unico di qualità — 4 fasi ESAA (2026-edition). Backend NestJS + Prisma + BullMQ + Redis. Frontend Next.js 14 App Router + React 19 + Playwright. 15 quality gate, 22 assi di analisi, supply chain audit, Core Web Vitals, visual regression, OWASP Top 10:2025, PCI DSS 4.0.1, GDPR Art.32, OpenTelemetry, Stryker, Semgrep. Decision memory append-only. Auto-escala modello. Mai chiamare tools/fix-coverage.
+description: Orchestratore unico di qualità — 4 fasi (2026-edition). Backend NestJS + Prisma + BullMQ + Redis. Frontend Next.js 14 App Router + React 19 + Playwright. 14 quality gate, 6 assi backend, 8 assi frontend, supply chain audit, Core Web Vitals, OWASP Top 10:2025, PCI DSS 4.0.1, GDPR Art.32, OpenTelemetry, Stryker, Semgrep. Decision memory append-only.
 ---
 
 # audit-modulo — Orchestratore Unico di Qualità (2026 Edition)
@@ -13,7 +13,7 @@ description: Orchestratore unico di qualità — 4 fasi ESAA (2026-edition). Bac
 
 - Assorbe tutto fix-coverage. NON chiama `tools/fix-coverage` né `/fix-coverage`.
 - Esegue tutto internamente con Read / Write / Edit / Bash / WebSearch.
-- Fonti di riferimento: OWASP Top 10:2025, PCI DSS 4.0.1, GDPR Art.32, CVE-2025-66478, CVE-2025-29927, ESAA arXiv 2603.06365, Cloudflare AI Review blog.cloudflare.com/ai-code-review.
+- Fonti: OWASP Top 10:2025, PCI DSS 4.0.1, GDPR Art.32, CVE-2025-66478, CVE-2025-29927, ESAA arXiv 2603.06365.
 
 ---
 
@@ -31,15 +31,21 @@ Sovrasta qualsiasi esempio storico.
 
 ## REGOLA DEL 100
 
-La skill NON si ferma finché TUTTI gli assi non sono a 10/10.
+La skill NON si ferma finché TUTTI gli assi non sono chiusi (risolti o CEILING documentato).
 
-**Backend (6 assi):** Sicurezza · Performance · Resilienza · Osservabilità · Test · Architettura
-**Frontend (8 assi):** Component Isolation · E2E · Self-Healing · Accessibilità · Server Security · Performance Budget · Visual Regression · Security Headers
+**Score asse (formula corretta — NASA NPR 7150.2D §3.7.2):**
+```
+score_asse = (gate_superati) / (gate_totali - gate_ceiling) * 10
+```
 
-Se un problema è tecnicamente irrisolvibile (es. decorator NestJS, middleware ceiling Next.js):
-1. Marca `CEILING_ACCEPTED` in `.audit-decisions.jsonl`
-2. Assegna 10/10 con nota "CEILING ACCEPTED"
-3. Prosegue immediatamente
+**CEILING_ACCEPTED** = gate architetturalmente non raggiungibile (NestJS decorator IIFE, DTO class-validator metadata, BullMQ WorkerHost super()). Il gate viene **escluso dal denominatore** — MAI sommato al numeratore. Un CEILING non è un successo: è un limite accettato con documentazione tracciata.
+
+Riportare sempre in modo trasparente:
+```
+Test: 7.2/10  [ceiling: 2 gate esclusi — NestJS @Injectable IIFE, DTO class-validator]
+```
+
+**MAI scrivere "Test: 10/10 [CEILING ACCEPTED]" — è falsa sicurezza.**
 
 **Questa regola sovrascrive qualsiasi altra logica di stop.**
 
@@ -47,36 +53,47 @@ Se un problema è tecnicamente irrisolvibile (es. decorator NestJS, middleware c
 
 ## REGOLA D'ORO — Spietatezza operativa
 
-Ogni problema trovato va **RISOLTO SUBITO** con Edit/Write. Dopo ogni modifica: test immediati. Non accumulare errori. Non segnalare e basta.
+Ogni problema trovato va **RISOLTO SUBITO** con Edit/Write. Dopo ogni modifica: test immediati. Non accumulare errori.
 
 ---
 
-## Step −1 — Parsing argomenti & Model Routing per Fase
+## Step −1 — Pre-flight, Parsing & Model Routing
 
-**Flags:**
+### Guard esistenza modulo (OBBLIGATORIO — prima azione assoluta)
+
+```bash
+[ -d "backend/src/{NOME_MODULO}" ] || {
+  echo "❌ Modulo '{NOME_MODULO}' non trovato in backend/src/. Disponibili:"
+  ls backend/src/ | sort | head -30
+  exit 1
+}
+# Se --frontend: verifica anche la controparte frontend
+# [ -d "frontend/src/{NOME_MODULO}" ] || echo "⚠️ Nessuna controparte frontend trovata"
+```
+
+### Flags:
 - `--frontend` → attiva 8 assi frontend
 - `--e2e` → esegue Playwright (richiede server running)
 - `--supply-chain` → esegue npm audit + lockfile integrity
 - `--load` → esegue k6 load test (richiede script tests/load.js)
 
-**Model Routing (Advisor Strategy — Anthropic 2026):**
+### Model Routing (Advisor Strategy — Anthropic 2026):
 
-Assignment fisso per fase, NON cascading dinamico. Risparmio atteso: ~51% vs modello uniforme.
+Assignment fisso per fase. Risparmio atteso: ~51% vs modello uniforme.
 
 | Fase | Task | Modello | Rationale |
 |------|------|---------|-----------|
-| 1 — Reconnaissance | grep, read file, baseline coverage, CVE scan | `haiku` | retrieve-only, nessuna sintesi complessa |
-| 2.1 — Test generation | scrittura test, fix codice, Edit/Write | `sonnet` | sempre, indipendentemente dal tier modulo |
-| 2.2 — Analisi chirurgica | lettura file service/controller | `haiku` | pattern matching, nessuna decisione critica |
+| 1 — Reconnaissance | grep, read file, baseline coverage, CVE scan | `haiku` | retrieve-only |
+| 2.1 — Test generation | scrittura test, fix codice, Edit/Write | `sonnet` | sempre |
+| 2.2 — Analisi chirurgica | lettura file service/controller | `haiku` | pattern matching |
 | 3 — Risk classification | calcolo score, traceability | `haiku` | formula deterministica |
 | 4 — Report | markdown output, JSON evento | `haiku` | templating strutturato |
 | Security review TIER_1 | OWASP deep-dive, architettura | `opus` | solo `auth`, `booking`, `invoice`, `payment-link`, `subscription`, `gdpr`, `webhooks` |
 
-**Come applicare nei subagenti:**
 ```
-Agent({ subagent_type: "Explore",   model: "haiku",  ... })  // fase 1, 2.2
-Agent({ subagent_type: "...",        model: "sonnet", ... })  // fase 2.1 test gen
-Agent({ subagent_type: "code-reviewer", model: "opus", ... }) // fase 4 security TIER_1
+Agent({ subagent_type: "Explore",       model: "haiku",  ... })  // fase 1, 2.2
+Agent({ subagent_type: "...",           model: "sonnet", ... })  // fase 2.1 test gen
+Agent({ subagent_type: "code-reviewer", model: "opus",   ... })  // security TIER_1
 ```
 
 **Regola:** test generation usa sonnet SEMPRE — qualità indistinguibile da opus a 10× minor costo (AWS AMET benchmark 2026).
@@ -98,16 +115,19 @@ shasum -a 256 backend/src/{NOME_MODULO}/**/*.{service,controller,processor}.ts 2
 
 ### 1.2 — WebSearch contestuale 2026
 
-Esegui sempre **tutti** questi:
-
 ```
+# Esegui SEMPRE (tutti i moduli, backend e frontend):
 "NestJS {NOME_MODULO} security vulnerabilities CVE 2025 2026"
-"NestJS {NOME_MODULO} OWASP Top 10 2025 best practices"
-"Next.js {NOME_MODULO} App Router security 2025 2026"
-"GDPR Art.32 PCI DSS 4.0.1 eIDAS 2.0 {NOME_MODULO} 2025 2026"
-"Playwright 2026 visual regression self-healing AI healer"
-"React 19 React Compiler hooks anti-patterns 2025 2026"
+"OWASP Top 10:2025 {NOME_MODULO} NestJS best practices"
+"GDPR Art.32 PCI DSS 4.0.1 {NOME_MODULO} 2025"
 "supply chain attack npm {NOME_MODULO} CVE 2025 2026"
+
+# Solo se --frontend:
+"Next.js {NOME_MODULO} App Router security 2025 2026"
+"React 19 Compiler hooks anti-patterns 2025 2026"
+
+# Solo se --e2e:
+"Playwright 2026 visual regression self-healing locator repair"
 ```
 
 Annota: CVE note, pattern obbligatori, normative, fonti citate nel report.
@@ -140,10 +160,14 @@ cd frontend && npx playwright test --reporter=json tests/e2e/{NOME_MODULO}*.spec
 
 ```bash
 # CVE-2025-66478: Next.js RCE via RSC Flight protocol (CVSS 9.1)
-cd frontend && node -e "const v=require('./node_modules/next/package.json').version; \
-  const [maj,min,patch]=v.split('.').map(Number); \
-  const vuln=(maj===15&&min<=2&&patch<3)||(maj===16&&min===0&&patch<=6); \
-  console.log(vuln?'❌ BLOCCANTE CVE-2025-66478 Next.js '+v:'✅ Next.js '+v+' safe')" 2>/dev/null || echo "⚠️ Next.js not found"
+# Vulnerabile: v15 < 15.2.3 ; v13-v14 qualsiasi versione
+cd frontend && node -e "
+  const v = require('./node_modules/next/package.json').version;
+  const [maj, min, patch] = v.split('.').map(Number);
+  const vuln = (maj === 15 && (min < 2 || (min === 2 && patch < 3))) ||
+               (maj >= 13 && maj < 15);
+  console.log(vuln ? '❌ BLOCCANTE CVE-2025-66478 Next.js ' + v : '✅ Next.js ' + v + ' safe');
+" 2>/dev/null || echo "⚠️ Next.js not found"
 
 # CVE-2025-29927: Middleware bypass via x-middleware-subrequest (CVSS 9.1)
 cd frontend && grep -r "x-middleware-subrequest" src/ middleware.ts 2>/dev/null && \
@@ -252,10 +276,8 @@ expect.extend(toHaveNoViolations);
 describe('<Component>', () => {
   it('renders accessible UI (WCAG 2.1 AA)', async () => {
     const { container } = render(<<Component> {...mockProps} />);
-    // Accessibilità automatica con axe-core
     const results = await axe(container);
     expect(results).toHaveNoViolations();
-    // WAI-ARIA roles, non test-id — RTL 2026
     expect(screen.getByRole('button', { name: /invia/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
@@ -272,14 +294,13 @@ describe('<Component>', () => {
 
   it('cleanup — no memory leak from useEffect', () => {
     const { unmount } = render(<<Component> {...mockProps} />);
-    expect(() => unmount()).not.toThrow(); // verifica cleanup
-    expect(mockProps.onCleanup ?? jest.fn()).not.toThrow?.();
+    expect(() => unmount()).not.toThrow();
   });
 });
 ```
 
 **Regole non negoziabili:**
-- TypeScript strict: zero `any`, zero `@ts-ignore`, `noUncheckedIndexedAccess: true`
+- TypeScript ≥5.0 strict: zero `any`, zero `@ts-ignore`, `noUncheckedIndexedAccess: true` in tsconfig
 - `tenantId` assertito in OGNI `where` Prisma
 - `mockResolvedValueOnce` / `mockRejectedValueOnce` dentro i test (mai senza `Once` fuori `beforeEach`)
 - ≥2 `expect(...)` per ogni `it(...)`
@@ -288,7 +309,14 @@ describe('<Component>', () => {
 - Frontend: `userEvent.setup()` non `fireEvent`, `getByRole`/`getByLabelText` non `getByTestId`
 - Frontend: ogni componente con `axe()` check accessibilità
 
-#### 2.1.c — 15 QUALITY GATE
+#### 2.1.c — 14 QUALITY GATE
+
+**Pre-flight open handle detection (eseguire PRIMA dei gate):**
+```bash
+# --forceExit non maschera il problema: rileva prima, fixa poi
+cd backend && npx jest {spec} --detectOpenHandles --forceExit 2>&1 | grep -i "open handle" | head -5
+# Se output non vuoto → chiudi gli handle (DB connection, timer, HTTP server) prima di procedere
+```
 
 Esegui in sequenza. Se fallisce → Edit + retry (max 3). Se irrimediabile → `CEILING_ACCEPTED`.
 
@@ -297,58 +325,114 @@ Esegui in sequenza. Se fallisce → Edit + retry (max 3). Se irrimediabile → `
 | 1 | **TypeScript strict** | `cd backend && npx tsc --noEmit --strict --pretty false 2>&1 \| grep {spec}` | 0 errori |
 | 2 | **ESLint** | `cd backend && npx eslint "{spec}" --fix --max-warnings 0` | 0 errori dopo autofix |
 | 3 | **Coverage c8** | `cd backend && bash ../.claude/scripts/ramdisk-wrapper.sh "npx c8 --include {src} --reporter=text-summary npx jest {spec} --no-coverage --forceExit --silent" "{src} {spec}"` | Stmts ≥90% AND Branches ≥90% |
-| 4 | **Mutation (Stryker)** | `cd backend && bash ../.claude/scripts/ramdisk-wrapper.sh "npx stryker run --mutate {src} --thresholds.high=80 --thresholds.break=70 2>/dev/null \|\| echo SKIP" "{src} {spec}"` | score ≥80% (skip se non installato, break <70% = FAIL) |
-| 5 | **Flakiness** | `for i in 1 2 3; do bash ../.claude/scripts/ramdisk-wrapper.sh "npx jest {spec} --forceExit --silent" "{spec}"; done` | 3/3 PASS |
-| 6 | **Assertion density** | `grep -c "expect(" {spec}` / `grep -cE "(^│\s)it\(" {spec}` | ≥2 avg |
-| 7 | **Mock once enforcement** | `awk '/beforeEach\(/,/}\)/{next} /mockResolvedValue\(│mockRejectedValue\(│mockReturnValue\(/' {spec} \| grep -v "Once" \| wc -l` | 0 violazioni |
-| 8 | **Call verification** | `grep -cE "toHaveBeenCalled" {spec}` ≥ `grep -cE "(^│\s)it\(" {spec}` | ≥1 per test con mock |
-| 9 | **Determinism (Qodo 2.1)** | `for i in 1 2 3; do JEST_SEED=$(date +%N) bash ../.claude/scripts/ramdisk-wrapper.sh "npx jest {spec} --forceExit --silent" "{spec}"; done` | 3/3 PASS identico |
-| 10 | **Property tests** | check `{file}.property.spec.ts` con fast-check | esistente o `N/A` |
-| 11 | **Supply chain** | `npm audit --audit-level=high --json \| jq '.metadata.vulnerabilities.critical + .metadata.vulnerabilities.high'` | 0 critical+high |
-| 12 | **CVE versioni critiche** | Version check Next.js (CVE-2025-66478), dipendenze conosciute | 0 versioni vulnerabili |
-| 13 | **Semgrep SAST** | `semgrep --config=p/owasp-top-ten --config=p/typescript --quiet --error src/{NOME_MODULO}/ 2>/dev/null \|\| echo SKIP` | 0 ERROR severity |
-| 14 | **No stack trace esposto** | `grep -rn "stack" src/{NOME_MODULO}/*.ts \| grep -v "spec\|\.log\(.*stack" \| grep "res\.\|response\.\|message.*stack"` | 0 match |
-| 15 | **React anti-patterns** (solo --frontend) | `grep -rn "useEffect.*\[\]" frontend/src/{NOME_MODULO} \| grep -v "spec"` → verifica cleanup; `grep -rn "process\.env\." frontend/src/{NOME_MODULO} \| grep -v "NODE_ENV\|spec"` | 0 empty deps senza cleanup, 0 env leak client-side |
-
-**AST pragmatica per gate 6/7/8:**
-```bash
-SPEC="{path}.spec.ts"
-EXPECT_COUNT=$(grep -c "expect(" "$SPEC" || echo 0)
-IT_COUNT=$(grep -cE "(^|\s)it\(" "$SPEC" || echo 0)
-TOHAVE_COUNT=$(grep -cE "toHaveBeenCalled(With|Times)?" "$SPEC" || echo 0)
-echo "G6-density: $((EXPECT_COUNT / (IT_COUNT==0?1:IT_COUNT)))"
-echo "G7-violations: $(awk '/beforeEach\(/,/}\)/{next} /mockResolvedValue\(|mockRejectedValue\(|mockReturnValue\(/' "$SPEC" | grep -v "Once" | wc -l)"
-[ "$TOHAVE_COUNT" -ge "$IT_COUNT" ] && echo "G8: OK" || echo "G8: FAIL"
-```
-
-### 2.2 — ANALISI CHIRURGICA
-
-Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`page.tsx` (frontend), leggi con **Read** ed esegui tutti gli assi come unico agente.
+| 4 | **Mutation (Stryker)** | Vedi pre-check OOM sotto | score ≥80% (CEILING se OOM risk o non installato) |
+| 5 | **Flakiness + Randomize** | `for i in 1 2 3; do bash ../.claude/scripts/ramdisk-wrapper.sh "npx jest {spec} --forceExit --silent --randomize" "{spec}"; done` | 3/3 PASS (ordine casuale — richiede Jest ≥29) |
+| 6 | **Assertion density** | vedi script AST sotto | ≥2 avg `expect()` per `it()` |
+| 7 | **Mock once enforcement** | vedi script AST sotto | 0 violazioni |
+| 8 | **Call verification** | vedi script AST sotto | ≥1 `toHaveBeenCalled*` per test con mock |
+| 9 | **Property tests** | vedi criteri sotto | PASS o SKIP documentato in .audit-decisions.jsonl |
+| 10 | **Supply chain** | `npm audit --audit-level=high --json \| jq '.metadata.vulnerabilities.critical + .metadata.vulnerabilities.high'` | 0 critical+high |
+| 11 | **CVE versioni critiche** | Version check Next.js (CVE-2025-66478 — vedi fix logica in 1.4) | 0 versioni vulnerabili |
+| 12 | **Semgrep SAST** | `semgrep --config=p/owasp-top-ten --config=p/typescript --quiet --error src/{NOME_MODULO}/ 2>/dev/null \|\| echo SKIP` | 0 ERROR severity |
+| 13 | **No stack trace esposto** | `grep -rn "stack" src/{NOME_MODULO}/*.ts \| grep -v "spec\|\.log\(.*stack" \| grep "res\.\|response\.\|message.*stack"` | 0 match |
+| 14 | **React anti-patterns** (solo --frontend) | `grep -rn "useEffect.*\[\]" frontend/src/{NOME_MODULO} \| grep -v "spec"` → verifica cleanup; `grep -rn "process\.env\." frontend/src/{NOME_MODULO} \| grep -v "NODE_ENV\|spec"` | 0 empty deps senza cleanup, 0 env leak client-side |
 
 ---
 
-#### BACKEND — 6 assi (1–10)
+**Gate 4 — Stryker OOM pre-check (obbligatorio su Mac mini 8GB):**
+```bash
+TOTAL_LOC=$(find src/{NOME_MODULO} -name "*.ts" ! -name "*.spec.ts" \
+  -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $1}')
+if [ "${TOTAL_LOC:-0}" -gt 800 ]; then
+  echo "⚠️ Gate 4 CEILING_ACCEPTED: ${TOTAL_LOC} LOC > 800 — OOM risk (8GB RAM). Stryker skipped."
+  # Append: {"ts":"...","type":"CEILING_ACCEPTED","gate":"mutation-stryker","reason":"LOC > 800 OOM risk"}
+else
+  cd backend && bash ../.claude/scripts/ramdisk-wrapper.sh \
+    "npx stryker run --mutate {src} --concurrency 1 --timeoutMS 5000 \
+     --thresholds.high=80 --thresholds.break=70 2>/dev/null || echo SKIP" \
+    "{src} {spec}"
+fi
+```
 
-**Asse 1 — SICUREZZA** (OWASP Top 10:2025 aggiornato)
+**Gate 5 — versione Jest check:**
+```bash
+# --randomize richiede Jest ≥29. Se versione inferiore, esegui senza --randomize
+npx jest --version 2>/dev/null | awk -F. '{
+  if ($1+0 < 29) print "⚠️ Jest <29: --randomize non disponibile, run senza flag"
+}'
+```
+
+**Script AST per gate 6/7/8:**
+```bash
+SPEC="{path}.spec.ts"
+EXPECT_COUNT=$(grep -c "expect(" "$SPEC" 2>/dev/null || echo 0)
+IT_COUNT=$(grep -cE "(^|\s)it\(" "$SPEC" 2>/dev/null || echo 0)
+TOHAVE_COUNT=$(grep -cE "toHaveBeenCalled(With|Times)?" "$SPEC" 2>/dev/null || echo 0)
+
+# Gate 6 — assertion density
+DENSITY=$((EXPECT_COUNT / (IT_COUNT==0?1:IT_COUNT)))
+echo "G6-density: $DENSITY"
+[ "$DENSITY" -ge 2 ] && echo "G6: OK" || echo "G6: FAIL (media $DENSITY < 2)"
+
+# Gate 7 — mock once (grep corretto: conta le righe con mock senza Once
+#          che NON si trovano in blocchi setup: beforeEach/afterEach/beforeAll/afterAll)
+VIOLATIONS=$(grep -n "mockResolvedValue\b\|mockRejectedValue\b\|mockReturnValue\b" "$SPEC" \
+  | grep -v "Once\b" \
+  | grep -v "beforeEach\|afterEach\|afterAll\|beforeAll" \
+  | wc -l)
+echo "G7-violations: $VIOLATIONS"
+[ "$VIOLATIONS" -eq 0 ] && echo "G7: OK" || echo "G7: FAIL ($VIOLATIONS righe senza Once)"
+
+# Gate 8 — call verification
+[ "$TOHAVE_COUNT" -ge "$IT_COUNT" ] && echo "G8: OK" || echo "G8: FAIL ($TOHAVE_COUNT < $IT_COUNT)"
+```
+
+**Gate 9 — Property tests (gate reale, non opzionale):**
+```
+Obbligatorio se il modulo contiene funzioni con:
+  - parsing di formato custom (XML, CSV, PEPPOL, FatturaPA, FIR, MUD)
+  - calcolo numerico (somme, markup, tasse, percentuali, ammortamenti)
+  - encoding / decoding / hashing (Luhn, CF, IBAN, P.IVA)
+  - validazione con ≥3 branch condizionali
+
+Verifica:
+  find src/{NOME_MODULO} -name "*.property.spec.ts" | wc -l
+
+FAIL se: funzione complessa rilevata E nessun *.property.spec.ts presente
+SKIP documentato se: nessuna funzione complessa nel modulo
+  → append .audit-decisions.jsonl: {"type":"PROPERTY_TEST_SKIP","reason":"no complex algorithm"}
+```
+
+---
+
+### 2.2 — ANALISI CHIRURGICA
+
+Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`page.tsx` (frontend), leggi con **Read** ed esegui tutti gli assi.
+
+---
+
+#### BACKEND — 6 assi
+
+**Asse 1 — SICUREZZA** (OWASP Top 10:2025)
 
 | Domain | Check | Severità |
 |--------|-------|----------|
 | A01:2025 Broken Access Control | `tenantId` in OGNI `where` Prisma; nessun `findUnique` senza tenant | BLOCCANTE |
-| A02:2025 Cryptographic Failures | PII via `EncryptionService` (AES-256-CBC); TLS 1.3; no MD5/SHA1; chiave non in codebase | BLOCCANTE |
-| A03:2025 **Supply Chain Failures** (NEW 2025) | `npm audit --audit-level=high`; lockfile committed; no `^` prefix su deps critici; verifica pre-install scripts malevoli | BLOCCANTE |
+| A02:2025 Cryptographic Failures | PII via `EncryptionService`; TLS 1.3; no MD5/SHA1; chiave non in codebase; IV casuale per ogni encrypt (`crypto.randomBytes(16)` — mai hardcoded né counter sequenziale) | BLOCCANTE |
+| A03:2025 Supply Chain Failures | `npm audit --audit-level=high`; lockfile committed; no `^` su deps critici; verifica pre-install scripts malevoli | BLOCCANTE |
 | A04:2025 Insecure Design | State machine `validateTransition()`; advisory lock booking; idempotency key su webhook | ALTA |
 | A05:2025 Security Misconfiguration | CORS no wildcard `*`; no stack trace in response; NODE_ENV check; BullMQ dashboard protetto | ALTA |
-| A06:2025 Vulnerable Components | Versioni dipendenze con CVE noti; `npm audit`; Semgrep `p/owasp-top-ten` | ALTA |
-| A07:2025 Auth & Identity Failures | JWT `jti` revocabile; `@UseGuards(JwtAuthGuard, RolesGuard)` su tutti gli endpoint; MFA per accesso admin (PCI DSS 4.0.1) | BLOCCANTE |
+| A06:2025 Vulnerable Components | Versioni con CVE noti; `npm audit`; Semgrep `p/owasp-top-ten` | ALTA |
+| A07:2025 Auth & Identity Failures | JWT `jti` revocabile; `@UseGuards(JwtAuthGuard, RolesGuard)` su tutti gli endpoint; MFA (PCI DSS 4.0.1) | BLOCCANTE |
 | A08:2025 Software Integrity Failures | Webhook: HMAC `crypto.timingSafeEqual` + length check; mai fidarsi del payload | BLOCCANTE |
 | A09:2025 Logging & Monitoring Failures | Structured logger su ogni operazione mutativa; Prometheus counter; no PII nei log | ALTA |
-| A10:2025 **Mishandling Exceptional Conditions** (NEW 2025) | Nessun `catch` silenzioso; nessuno stack trace in response (`err.stack` non esposto); `HttpException` solo in controller | ALTA |
+| A10:2025 Mishandling Exceptional Conditions | Nessun `catch` silenzioso; nessuno stack trace in response; `HttpException` solo in controller | ALTA |
 | Tenant isolation | `where: { tenantId }` + RLS PostgreSQL `SET app.current_tenant` | BLOCCANTE |
 | Secrets | No secret hardcoded; `.env` non committato; `ConfigService.get()` con fallback controllato | BLOCCANTE |
 | Rate limiting | `@Throttle()` su endpoint pubblici; Redis store per multi-instance | ALTA |
-| PCI DSS 4.0.1 | MFA su tutti gli utenti (non solo admin); CSP headers; script integrity check settimanale | BLOCCANTE (se pagamenti) |
+| PCI DSS 4.0.1 | MFA su tutti gli utenti; CSP headers; script integrity check settimanale | BLOCCANTE (se pagamenti) |
 | AI/LLM security | Prompt injection; output sanitization; no secrets in prompt | ALTA (se LLM integrato) |
-| Cryptography | AES-256 (non CBC → prefer GCM); no hardcoded IV; key rotation plan | ALTA |
+| Cryptography | EncryptionService usa AES-256-CBC con IV random: accettabile per PCI DSS 4.0.1. Finding MEDIA: pianificare migrazione a AES-256-GCM (authenticated encryption integrata, nessun HMAC separato richiesto). Non blocca il rilascio. | MEDIA |
 
 **Asse 2 — PERFORMANCE**
 
@@ -357,7 +441,7 @@ Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`pa
 - BullMQ per operazioni pesanti (>100ms): mai bloccare il thread principale
 - Paginazione obbligatoria: `take` + `skip` su tutte le liste
 - Cache Redis per dati letti frequentemente (TTL ragionevole)
-- OpenTelemetry: inizializzato **prima** di `NestFactory.create()` in `main.ts` (critco per auto-instrumentazione Prisma/Express)
+- OpenTelemetry: inizializzato **prima** di `NestFactory.create()` in `main.ts` (critico per auto-instrumentazione Prisma/Express)
 - k6 thresholds (se --load): `http_req_duration: p(95)<200ms`, `http_req_failed: rate<0.01`
 
 **Asse 3 — RESILIENZA**
@@ -373,22 +457,22 @@ Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`pa
 **Asse 4 — OSSERVABILITÀ**
 
 - Logger strutturato con correlation ID propagato da request a BullMQ job
-- OpenTelemetry traces: verify `initTracer()` è prima riga di `main.ts` (prima di qualsiasi import NestJS)
+- OpenTelemetry traces: `initTracer()` è prima riga di `main.ts` (prima di qualsiasi import NestJS)
 - Prometheus: counter per ogni operazione critica (auth failures, webhook verifications, job errors)
 - Health check: `/health` verifica DB + Redis + BullMQ queue depth
 - DORA 5th metric: Rework Rate — ogni hotfix documentato come evento di ritorno
-- Alert configurati per: 5xx rate >1%, p95 latency >500ms, queue depth >1000
+- Alert: 5xx rate >1%, p95 latency >500ms, queue depth >1000
 
 **Asse 5 — TEST**
 
 - Coverage reale (c8): Stmts ≥90% AND Branches ≥90%
 - Mutation score (Stryker) ≥80% (`--thresholds.break=70` = fail assoluto)
-- 42% del codice generato da AI (2026 media): verifica che i test non siano "echo test" (coverage alta + mutation bassa = red flag)
-- Flakiness: 3/3 PASS con seed diversi
+- 42% del codice 2026 è AI-generato: coverage alta + mutation bassa = **red flag "echo test"**
+- Flakiness: 3/3 PASS con ordine randomizzato (`--randomize`, Jest ≥29)
 - Assertion density ≥2 per test
 - Mock once enforcement: 0 violazioni
 - Ogni stato della state machine testato (happy + error)
-- Test cross-tenant isolation: query con `tenantId` sbagliato deve ritornare NotFoundException
+- Test cross-tenant isolation: query con `tenantId` sbagliato → NotFoundException
 
 **Asse 6 — ARCHITETTURA**
 
@@ -396,9 +480,9 @@ Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`pa
 - Domain exceptions nei service (mai `HttpException`)
 - DTO dedicati con class-validator (mai Prisma model esposto direttamente)
 - Domain events per audit trail su operazioni mutative
-- TypeScript 6.0 strict: `noUncheckedIndexedAccess: true` in `tsconfig.json`
+- TypeScript ≥5.0 strict: `noUncheckedIndexedAccess: true` in `tsconfig.json`
 - SonarQube "Sonar way for AI Code": se codice AI-generato, verifica gate specifici
-- Nessun `any`, nessun `// @ts-ignore`, nessun raw SQL
+- Nessun `any`, nessun `@ts-ignore`, nessun raw SQL
 - Prisma solo via `PrismaService` (no `new PrismaClient()` diretto)
 
 ---
@@ -412,13 +496,12 @@ Per OGNI `.service.ts`, `.controller.ts`, `.processor.ts` (backend) o `.tsx`/`pa
 - `waitFor()` per operazioni async
 - Nessun implementation detail testato (no `.className`, no `.innerHTML`)
 - `jest-axe` su ogni componente: `const results = await axe(container); expect(results).toHaveNoViolations()`
-- Cleanup useEffect: `const { unmount } = render(...)` → `unmount()` → verifica no warning
+- Cleanup useEffect: `const { unmount } = render(...) → unmount() → verifica no warning`
 - React 19 Compiler: anche con auto-memoization, verificare cleanup espliciti in `useEffect`
 
 **Asse 8 — E2E CRITICAL PATH (Playwright 2026)**
 
 ```typescript
-// Percorso critico obbligatorio: login → operazione core → logout
 test('critical path: {NOME_MODULO} flow', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel(/email/i).fill('test@nexo.it');
@@ -426,11 +509,9 @@ test('critical path: {NOME_MODULO} flow', async ({ page }) => {
   await page.getByRole('button', { name: /accedi/i }).click();
   await page.waitForURL('/dashboard');
 
-  // operazione core modulo
   await page.goto('/{NOME_MODULO}');
-  // ... azioni specifiche ...
+  // azioni specifiche modulo
 
-  // verifica risultato
   await expect(page.getByRole('alert')).not.toBeVisible();
   await expect(page.getByText(/completato/i)).toBeVisible();
 });
@@ -441,21 +522,25 @@ cd frontend && npx playwright test tests/e2e/{NOME_MODULO}*.spec.ts \
   --reporter=json 2>/dev/null | jq '.stats'
 ```
 
-**Asse 9 — SELF-HEALING LOCATOR (Functionize fingerprint 2026)**
+**Asse 9 — SELF-HEALING LOCATOR**
 
 Se un test Playwright fallisce per selettore non trovato:
 
-1. Cattura DOM: `await page.content()` + `await page.accessibility.snapshot()`
-2. Fingerprint multi-attributo (3500 elementi/page, 200 attr/elemento):
-   - `id`, `aria-label`, `role`, `text`, `data-testid`, `name`, `placeholder`, `class` (prime 3), `parent.role`, `position`
+1. Cattura DOM e snapshot ARIA:
+   ```typescript
+   const html = await page.content();
+   const snapshot = await page.ariaSnapshot(); // Playwright ≥1.50 — rimpiazza page.accessibility.snapshot() deprecata
+   ```
+2. Fingerprint multi-attributo: `id`, `aria-label`, `role`, `text`, `name`, `placeholder`, `class` (prime 3), `parent.role`, `position`
 3. Calcola similarità Levenshtein/Jaccard per ogni candidato
-4. Match ≥85% → **ripara selettore** con **Edit** + ritesta
-5. Match <85% → **fail loudly** con: `❌ Self-healing FAILED: nessun elemento con similarità ≥85% trovato. DOM snapshot: {path}`
-6. Playwright AI Healer (MCP, 2026): se disponibile, usa `--ai-healer` → ~75% auto-repair rate
+4. Match ≥85% → **ripara selettore** con Edit + ritesta
+5. Match <85% → **fail loudly**: `❌ Self-healing FAILED: nessun elemento ≥85% similarità. DOM snapshot: {path}`
+
+Nota: cloud AI healing (BrowserStack AI, Microsoft Playwright Portal) richiede il loro CLI wrapper. Non esiste un flag `--ai-healer` nativo in Playwright — non usarlo.
 
 **Asse 10 — ACCESSIBILITÀ (WCAG 2.1 AA)**
 
-> ⚠️ WCAG 3.0 è ancora Working Draft (marzo 2026) — NON usarlo come standard. Target: WCAG 2.1 Level AA.
+> ⚠️ WCAG 3.0 è ancora Working Draft (marzo 2026) — NON usarlo. Target: WCAG 2.1 Level AA.
 
 - axe-core: `npx axe https://localhost:3000/{path} --tags wcag2aa 2>&1 | grep -c "violation"`
 - aria-label su tutti i bottoni/input
@@ -463,8 +548,8 @@ Se un test Playwright fallisce per selettore non trovato:
 - Focus management: focus trap nei dialog, focus restoration al close
 - Keyboard navigation: Tab order logico, Escape chiude dialog
 - Touch target ≥44×44px (CLAUDE.md regola)
-- Contrasto colore ≥4.5:1 (AA) — verifica con axe
-- Note: axe-core cattura ~35% delle violazioni WCAG — testa manualmente i flussi critici
+- Contrasto colore ≥4.5:1 (AA)
+- Nota: axe-core cattura ~35% delle violazioni WCAG — testa manualmente i flussi critici
 
 **Asse 11 — SERVER COMPONENT SECURITY (Next.js 14 App Router)**
 
@@ -485,7 +570,7 @@ grep -r "NEXT_PUBLIC_.*SECRET\|NEXT_PUBLIC_.*TOKEN\|NEXT_PUBLIC_.*KEY" \
 ```
 
 Checks:
-- Auth checks in Route Handlers + Server Actions (non in middleware)
+- Auth in Route Handlers + Server Actions (non in middleware)
 - Nessun secret in `NEXT_PUBLIC_*` env vars
 - Server Components: nessun `fetch()` con credenziali admin esposto al client
 - `headers()` / `cookies()` da `next/headers` solo in Server Components
@@ -493,8 +578,7 @@ Checks:
 **Asse 12 — PERFORMANCE BUDGET (Core Web Vitals 2026)**
 
 ```bash
-# Core Web Vitals 2026: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1
-# INP è ora fattore di ranking Google (sostituisce FID da 2024)
+# INP sostituisce FID come fattore di ranking Google da 2024
 cd frontend && npx lighthouse http://localhost:3000/{path} \
   --chrome-flags="--headless=new" \
   --output=json --quiet 2>/dev/null | jq '{
@@ -506,39 +590,30 @@ cd frontend && npx lighthouse http://localhost:3000/{path} \
     cls_ok: (.audits["cumulative-layout-shift"].numericValue <= 0.1)
   }' 2>/dev/null || echo "⚠️ Lighthouse non disponibile"
 
-# Bundle size budget: 200KB JS per route (HashiCorp standard 2026)
+# Bundle budget: 200KB JS per route (HashiCorp standard 2026)
 cd frontend && npx size-limit --json 2>/dev/null | \
   jq '.[] | select(.size > 200000) | {name, size, exceeded: true}' || \
   echo "⚠️ size-limit non configurato"
 
-# React anti-pattern: useEffect con deps vuoti senza cleanup
+# React: useEffect con deps vuoti senza cleanup
 grep -rn "useEffect" frontend/src/{NOME_MODULO}/ --include="*.tsx" | \
   grep -v "return\|spec" | grep "\[\]" | \
   while IFS=: read f ln rest; do
-    # verifica che il blocco abbia return cleanup
     awk "NR>=$ln && NR<=$((ln+10))" "$f" | grep -q "return" || \
       echo "⚠️ useEffect senza cleanup: $f:$ln"
   done
 ```
 
-Soglie:
-- LCP: ≤2.5s ✅ / 2.5–4s ⚠️ / >4s ❌
-- INP: ≤200ms ✅ / 200–500ms ⚠️ / >500ms ❌
-- CLS: ≤0.1 ✅ / 0.1–0.25 ⚠️ / >0.25 ❌
-- Bundle JS: ≤200KB ✅ / 200–400KB ⚠️ / >400KB ❌
+Soglie: LCP ≤2.5s ✅ / INP ≤200ms ✅ / CLS ≤0.1 ✅ / Bundle ≤200KB ✅
 
 **Asse 13 — VISUAL REGRESSION (Playwright 2026)**
 
 ```typescript
-// visual-regression.spec.ts — generato automaticamente
-import { test, expect } from '@playwright/test';
-
 test.describe('{NOME_MODULO} visual regression', () => {
   test('desktop layout', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/{NOME_MODULO}');
     await page.waitForLoadState('networkidle');
-    // Maschera contenuti dinamici (timestamp, avatar, ID)
     await expect(page).toHaveScreenshot('desktop.png', {
       maxDiffPixels: 50,
       mask: [
@@ -565,31 +640,19 @@ test.describe('{NOME_MODULO} visual regression', () => {
 ```
 
 ```bash
-# Aggiorna baseline solo in CI (mai in locale)
-cd frontend && npx playwright test tests/visual/{NOME_MODULO}*.spec.ts \
-  --update-snapshots  # solo su main branch in CI
+# Aggiorna baseline solo in CI su main branch — mai in locale
+cd frontend && npx playwright test tests/visual/{NOME_MODULO}*.spec.ts --update-snapshots
 ```
 
 **Asse 14 — SECURITY HEADERS (Next.js CSP)**
 
 ```bash
-# CSP: nonce-based, strict-dynamic, no unsafe-eval in prod
 curl -sI http://localhost:3000 | grep -i "content-security-policy" || \
   echo "❌ BLOCCANTE: CSP header mancante"
-
-# X-Frame-Options
-curl -sI http://localhost:3000 | grep -i "x-frame-options" || \
-  echo "⚠️ X-Frame-Options mancante"
-
-# Strict-Transport-Security
-curl -sI http://localhost:3000 | grep -i "strict-transport-security" || \
-  echo "⚠️ HSTS mancante"
-
-# Verifica next.config.js per headers()
+curl -sI http://localhost:3000 | grep -i "x-frame-options" || echo "⚠️ X-Frame-Options mancante"
+curl -sI http://localhost:3000 | grep -i "strict-transport-security" || echo "⚠️ HSTS mancante"
 grep -A 30 "headers()" frontend/next.config.* 2>/dev/null || \
   echo "⚠️ Security headers non configurati in next.config"
-
-# CSP deve contenere nonce o strict-dynamic
 grep -r "nonce\|strict-dynamic" frontend/middleware.ts frontend/next.config.* 2>/dev/null || \
   echo "⚠️ CSP non usa nonce né strict-dynamic — vulnerabile a XSS"
 ```
@@ -606,27 +669,33 @@ Checks:
 
 ```
 max_iterations = 5
+prev_branches = -1
+stagnation_count = 0
+
 for i in 1..5:
   run gate 3 (coverage)
   if Stmts ≥90% AND Branches ≥90%: BREAK
-  identifica righe/branch scoperti
+
+  # Rilevamento stagnazione universale — tutti i tipi di file
+  if coverage_branches[i] == prev_branches:
+    stagnation_count += 1
+    if stagnation_count >= 2:
+      # Ceiling specifico per tipo file:
+      if *.controller.ts: CEILING_ACCEPTED ("NestJS @ApiOperation/@Controller/@Get/@Post IIFE")
+      if *.processor.ts:  CEILING_ACCEPTED ("BullMQ WorkerHost super() + @Processor() IIFE")
+      if *.dto.ts:        CEILING_ACCEPTED ("class-validator @IsString/@IsOptional metadata branch")
+      if *.service.ts:    CEILING_ACCEPTED ("TS interface/array artifacts o @Injectable IIFE")
+      BREAK
+  else:
+    stagnation_count = 0
+  prev_branches = coverage_branches[i]
+
+  identifica righe/branch scoperti (npx c8 --reporter=text)
   aggiungi test mirati (Edit)
-
-  if i == 3 AND *.controller.ts AND no improvement:
-    CEILING_ACCEPTED (NestJS @ApiOperation/@Controller decoratori)
-    BREAK
-
-  if i == 3 AND *.processor.ts AND no improvement:
-    CEILING_ACCEPTED (BullMQ WorkerHost super() + @Processor decoratori)
-    BREAK
-
-  if i == 3 AND *.dto.ts AND no improvement:
-    CEILING_ACCEPTED (class-validator @IsString/@IsNotEmpty decoratori)
-    BREAK
 ```
 
-**Frontend ceiling**: test Playwright fallisce per DOM change → self-healing prima di marcare FAILED.
-**Mutation ceiling**: se Stryker non installato → gate 4 = N/A (non blocca).
+**Frontend ceiling**: test Playwright fallisce per DOM change → esegui self-healing (Asse 9) prima di FAILED.
+**Mutation ceiling**: Stryker non installato o LOC >800 → Gate 4 = CEILING_ACCEPTED.
 
 ### 2.4 — Output evento Executed
 
@@ -635,10 +704,12 @@ for i in 1..5:
  "backend":{"files":[{"path":"...","gates":{
    "ts":true,"eslint":true,"coverage":{"stmts":94,"branches":91},
    "mutation":82,"flakiness":true,"assertion":2.4,"mockOnce":true,
-   "callVerify":true,"determinism":true,"supplyChain":true,"semgrep":true,
-   "noStackTrace":true,"cveCheck":true},"ceilings":[]}}]},
+   "callVerify":true,"propertyTests":"SKIP","supplyChain":true,
+   "cveCheck":true,"semgrep":true,"noStackTrace":true,"reactAntiPatterns":"N/A"},
+   "ceilings":[],"scorePerAsse":{"test":"7.2/10 [ceiling: 2 gate]"}}}]},
  "frontend":{"componentIsolation":true,"e2e":"3/3","selfHealing":"OK",
-   "a11y":{"violations":0},"serverSecurity":true,"performanceBudget":{"lcp":1800,"inp":150,"cls":0.05},
+   "a11y":{"violations":0},"serverSecurity":true,
+   "performanceBudget":{"lcp":1800,"inp":150,"cls":0.05},
    "visualRegression":"baseline-updated","securityHeaders":true},
  "findings":[...]}
 ```
@@ -653,16 +724,16 @@ for i in 1..5:
 | Livello | Definizione | Esempi 2026 |
 |---------|-------------|-------------|
 | **BLOCCANTE** | Blocca merge. Vuln critica, data leak, compliance violation. | tenantId mancante, CVE-2025-66478 non patchato, PII plaintext, stack trace esposto, npm critical CVE, HMAC non verificato |
-| **ALTA** | Da risolvere entro sprint. Bug funzionale o security gap non immediato. | Rate limit assente, OpenTelemetry non inizializzato, MFA mancante, useEffect senza cleanup, CSP mancante |
-| **MEDIA** | Da pianificare. Performance/maintainability senza rischio immediato. | N+1 query, bundle >200KB, LCP >2.5s, mutation score 70-80%, indice mancante |
-| **BASSA** | Segnalato, accettabile. | DTO inline, naming subottimale, visual regression non configurata, DORA metric non tracciata |
+| **ALTA** | Da risolvere entro sprint. | Rate limit assente, OpenTelemetry non inizializzato, MFA mancante, useEffect senza cleanup, CSP mancante |
+| **MEDIA** | Da pianificare. | N+1 query, bundle >200KB, LCP >2.5s, mutation 70-80%, migrazione AES-256-GCM |
+| **BASSA** | Accettabile. | Naming subottimale, visual regression non configurata, DORA non tracciata |
 
 ### 3.2 — Risk score composito (2026)
 
 ```
 risk_score = (
     sicurezza    * 0.28 +
-    supply_chain * 0.12 +   ← NUOVO 2026 (OWASP A03:2025)
+    supply_chain * 0.12 +   ← OWASP A03:2025
     resilienza   * 0.18 +
     test         * 0.18 +
     osservabilita* 0.12 +
@@ -670,13 +741,23 @@ risk_score = (
     architettura * 0.05
 ) * 10  // 0-100
 
+# penalita_bloccanti: UNA penalità per finding BLOCCANTE aperto,
+# indipendentemente dall'asse di appartenenza (no double-counting tra asse e penalità)
 penalita_bloccanti = num_BLOCCANTI_aperti * 15
 final_risk = max(0, risk_score - penalita_bloccanti)
 ```
 
-`final_risk` ≥80 = production-ready. <60 = blocca rilascio.
+**Score asse (con CEILING trasparente — mai inflato):**
+```
+score_asse = (gate_superati_asse) / (gate_totali_asse - gate_ceiling_asse) * 10
+```
 
-**Frontend risk score aggiuntivo:**
+**Verdict production-ready (backend + frontend combinati):**
+```
+production_ready = (final_risk >= 80) AND (NOT --frontend OR frontend_risk >= 70)
+```
+
+**Frontend risk score:**
 ```
 frontend_risk = (
     server_security  * 0.35 +
@@ -689,10 +770,10 @@ frontend_risk = (
 
 ### 3.3 — Mutation score affianca coverage
 
-- Stryker score <70% → ALTA severità (fail assoluto con `--thresholds.break=70`)
+- Stryker score <70% → ALTA severità (fail assoluto: `--thresholds.break=70`)
 - Stryker score 70-80% → MEDIA
 - Stryker score ≥80% → OK
-- 42% del codice 2026 è AI-generato: coverage alta + mutation bassa = **red flag specifico** (test "echo test")
+- 42% codice 2026 è AI-generato: coverage alta + mutation bassa = **red flag "echo test"**
 
 ### 3.4 — Traceability 2026
 
@@ -701,7 +782,7 @@ frontend_risk = (
 | OWASP A01:2025 Broken Access Control | tenantId mancante in query |
 | OWASP A03:2025 Supply Chain (NEW) | npm critical CVE, pre-install script malevolo |
 | OWASP A10:2025 Exceptional Conditions (NEW) | stack trace esposto, catch silenzioso |
-| CVE-2025-66478 Next.js RCE | versione Next.js vulnerabile |
+| CVE-2025-66478 Next.js RCE | versione Next.js vulnerabile (v15 <15.2.3 o v13-v14) |
 | CVE-2025-29927 Middleware bypass | auth in middleware invece di handler |
 | GDPR Art.32 Encryption at rest | PII non cifrato |
 | PCI DSS 4.0.1 §8.4 MFA | MFA non su tutti gli utenti |
@@ -709,15 +790,25 @@ frontend_risk = (
 | ISO 27001 A.12.4 Logging | operazione mutativa senza audit log |
 | Core Web Vitals 2026 | LCP >2.5s, INP >200ms, CLS >0.1 |
 | WCAG 2.1 AA | violazioni axe-core |
+| NASA NPR 7150.2D §3.7.2 | CEILING_ACCEPTED tracciato come WAIVED, mai come MET |
 
 ### 3.5 — DORA Rework Rate (5th metric, 2026)
 
 Per ogni hotfix applicato durante l'audit:
 ```json
-{"ts":"{ISO8601}","type":"DORA_REWORK","module":"{NOME}","reason":"security gap","sprint":"2026-W18"}
+{"ts":"{ISO8601}","type":"DORA_REWORK","module":"{NOME}","reason":"security gap","sprint":"2026-W{N}"}
 ```
 
 Append in `.audit-decisions.jsonl`. Rework rate >15% del sprint → flag architetturale.
+
+### 3.6 — Output evento Classified
+
+```json
+{"eventId":"class-{TS}","phase":"RISK_CLASSIFICATION","module":"{NOME_MODULO}",
+ "riskScore":{N},"frontendRisk":{N},"productionReady":true|false,
+ "openBlockers":{N},"ceilingsAccepted":{N},"mutationScore":{N},
+ "doraReworkCount":{N}}
+```
 
 ---
 
@@ -735,7 +826,8 @@ REPORT="docs/audit-reports/{NOME_MODULO}-$(date +%Y-%m-%d).md"
 ```markdown
 # Audit Report: `{NOME_MODULO}`
 **Data:** {YYYY-MM-DD HH:MM} | **Sessione:** audit-{NOME_MODULO}-{YYYY-MM-DD}
-**Risk Score:** {final_risk}/100 | **Mutation Score:** {N}% | **Frontend Risk:** {N}/100
+**Risk Score:** {N}/100 backend · {N}/100 frontend | **Production-ready:** ✅/❌
+**Mutation Score:** {N}% Stryker
 
 ## CVE & Supply Chain
 | CVE | Status | Action |
@@ -745,29 +837,29 @@ REPORT="docs/audit-reports/{NOME_MODULO}-$(date +%Y-%m-%d).md"
 | npm high/critical | {N} | ... |
 
 ## Coverage (c8)
-| | Prima | Dopo |
-|--|-------|------|
-| Statements | X% | Y% |
-| Branches | X% | Y% (CEILING: ...) |
+| | Prima | Dopo | CEILING |
+|--|-------|------|---------|
+| Statements | X% | Y% | — |
+| Branches | X% | Y% | N gate esclusi (motivo architetturale) |
 
-## Score Backend (1-10)
-| Asse | Score | Note |
-|------|-------|------|
-| Sicurezza | X/10 | ... |
-| Supply Chain | X/10 | ... |
-| Performance | X/10 | ... |
-| Resilienza | X/10 | ... |
-| Osservabilità | X/10 | ... |
-| Test | X/10 | mutation: N% |
-| Architettura | X/10 | ... |
-| **TOTALE** | **XX/70** | |
+## Score Backend (trasparente — CEILING escluso dal denominatore)
+| Asse | Gate superati | Gate ceiling | Score |
+|------|--------------|--------------|-------|
+| Sicurezza | X/Y | N (motivo) | Z/10 |
+| Supply Chain | X/Y | N | Z/10 |
+| Performance | X/Y | N | Z/10 |
+| Resilienza | X/Y | N | Z/10 |
+| Osservabilità | X/Y | N | Z/10 |
+| Test | X/Y | N | Z/10 |
+| Architettura | X/Y | N | Z/10 |
+| **TOTALE** | | | **XX/70** |
 
-## Score Frontend (1-10, se --frontend)
+## Score Frontend (se --frontend)
 | Asse | Score | Note |
 |------|-------|------|
 | Component Isolation | X/10 | RTL 2026 |
 | E2E | X/10 | Playwright |
-| Self-Healing | X/10 | Functionize |
+| Self-Healing | X/10 | ariaSnapshot (Playwright ≥1.50) |
 | Accessibilità | X/10 | WCAG 2.1 AA, axe violations: N |
 | Server Security | X/10 | CVE-2025-29927 |
 | Performance Budget | X/10 | LCP Ns, INP Nms, CLS N |
@@ -796,12 +888,9 @@ REPORT="docs/audit-reports/{NOME_MODULO}-$(date +%Y-%m-%d).md"
 ## Fonti Consultate
 - CVE-2025-66478: https://www.praetorian.com/blog/critical-advisory-remote-code-execution-in-next-js-cve-2025-66478-with-working-exploit/
 - OWASP Top 10:2025: https://owasp.org/Top10/2025/
+- NASA NPR 7150.2D: https://swehb.nasa.gov/spaces/SWEHBVD/pages/102695524/SWE-189+-+Code+Coverage+Measurements
 - Core Web Vitals 2026: https://roastweb.com/blog/core-web-vitals-explained-2026
-- Cloudflare AI Review: https://blog.cloudflare.com/ai-code-review/
 - PCI DSS 4.0.1: https://www.upguard.com/blog/pci-compliance
-- Semgrep NestJS: https://www.anshumanbhartiya.com/posts/detect-authz-at-scale-nestjs
-- Playwright Visual Regression: https://bug0.com/knowledge-base/playwright-visual-regression-testing
-- Supply Chain (Axios March 2026): https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/
 
 ## Prossimi Passi
 1. Immediato: ...
@@ -818,6 +907,7 @@ REPORT="docs/audit-reports/{NOME_MODULO}-$(date +%Y-%m-%d).md"
   "module": "{NOME_MODULO}",
   "riskScore": 78,
   "frontendRisk": 82,
+  "productionReady": true,
   "mutationScore": 85,
   "coverage": {"stmts": 94, "branches": 91},
   "cveChecks": {"CVE-2025-66478": "safe", "CVE-2025-29927": "safe"},
@@ -838,13 +928,13 @@ DECISIONS="backend/src/{NOME_MODULO}/.audit-decisions.jsonl"
 mkdir -p "$(dirname "$DECISIONS")"
 ```
 
-Tipi di entry:
 ```json
-{"ts":"{ISO8601}","type":"CEILING_ACCEPTED","file":"...","sha256":"...","reason":"...","gate":"coverage-branches"}
-{"ts":"{ISO8601}","type":"RESOLVED","findingId":"F-001","severity":"BLOCCANTE","fix":"...","traceability":["..."]}
+{"ts":"{ISO8601}","type":"CEILING_ACCEPTED","file":"...","sha256":"...","reason":"...","gate":"coverage-branches","gatesExcluded":["gate-3-branches","gate-4-stryker"]}
+{"ts":"{ISO8601}","type":"RESOLVED","findingId":"F-001","severity":"BLOCCANTE","fix":"...","traceability":["OWASP A01:2025"]}
 {"ts":"{ISO8601}","type":"ACCEPTED_PATTERN","file":"...","pattern":"...","reason":"..."}
 {"ts":"{ISO8601}","type":"DORA_REWORK","module":"...","reason":"...","sprint":"2026-W{N}"}
 {"ts":"{ISO8601}","type":"CVE_CHECKED","cve":"CVE-2025-66478","result":"safe","version":"15.2.4"}
+{"ts":"{ISO8601}","type":"PROPERTY_TEST_SKIP","file":"...","reason":"no complex algorithm (no parsing/calculation/encoding/validation ≥3-branch)"}
 ```
 
 ### 4.4 — Output a schermo (REGOLA SILENZIO)
@@ -855,9 +945,10 @@ Massimo 10 righe finali:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 audit-modulo 2026 — {NOME_MODULO}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Coverage:     Stmts {X}% / Branches {Y}% [{CEILING note}]
+Coverage:     Stmts {X}% / Branches {Y}%  [ceiling: {N} gate esclusi]
 Mutation:     {N}% Stryker
 Risk:         {N}/100 backend · {N}/100 frontend
+Production:   ✅ READY / ❌ BLOCKED
 CVE:          CVE-2025-66478 {✅/❌} · CVE-2025-29927 {✅/❌} · npm-high {N}
 BLOCCANTI:    {N} risolti / {N} rimasti
 Tests:        {N} total · {N}/3 flakiness
@@ -895,6 +986,9 @@ Report:       docs/audit-reports/{NOME_MODULO}-{DATE}.md
 - `npm install` con `^` su dipendenze critiche (supply chain)
 - OpenTelemetry inizializzato dopo `NestFactory.create()`
 - Stack trace esposto in HTTP response (OWASP A10:2025)
+- `page.accessibility.snapshot()` — deprecata Playwright ≥1.44 (usare `page.ariaSnapshot()`)
+- Flag `--ai-healer` — non esiste in Playwright nativo; cloud AI healing richiede BrowserStack/MS Portal CLI
+- "Test: 10/10 [CEILING ACCEPTED]" — CEILING va escluso dal denominatore, mai inflato al numeratore
 
 ## Riferimenti 2026
 
@@ -903,6 +997,7 @@ Report:       docs/audit-reports/{NOME_MODULO}-{DATE}.md
 | CVE-2025-66478 Next.js RCE | https://www.praetorian.com/blog/critical-advisory-remote-code-execution-in-next-js-cve-2025-66478-with-working-exploit/ |
 | CVE-2025-29927 Middleware bypass | https://workos.com/blog/nextjs-app-router-authentication-guide-2026 |
 | OWASP Top 10:2025 | https://owasp.org/Top10/2025/ |
+| NASA NPR 7150.2D §3.7.2 | https://swehb.nasa.gov/spaces/SWEHBVD/pages/102695524/SWE-189+-+Code+Coverage+Measurements |
 | PCI DSS 4.0.1 | https://www.upguard.com/blog/pci-compliance |
 | Cloudflare AI Code Review | https://blog.cloudflare.com/ai-code-review/ |
 | Qodo Gen 1.0 agentic | https://www.qodo.ai/blog/qodo-gen-1-0-evolving-ai-test-generation-to-agentic-workflows/ |
@@ -910,6 +1005,7 @@ Report:       docs/audit-reports/{NOME_MODULO}-{DATE}.md
 | SonarQube AI Code Assurance | https://docs.sonarsource.com/sonarqube-server/2025.1/instance-administration/analysis-functions/ai-code-assurance/quality-gates-for-ai-code |
 | Core Web Vitals 2026 | https://roastweb.com/blog/core-web-vitals-explained-2026 |
 | Playwright Visual Regression | https://bug0.com/knowledge-base/playwright-visual-regression-testing |
+| Playwright ariaSnapshot API | https://playwright.dev/docs/api/class-page#page-aria-snapshot |
 | Functionize self-healing | https://www.functionize.com/automated-testing/self-healing-test-automation |
 | WCAG 2.1 AA (non 3.0) | https://www.vervali.com/blog/wcag-3-0-accessibility-testing-compliance-2026-standards-timeline-tools-and-how-to-prepare-your-stack/ |
 | Semgrep NestJS authz | https://www.anshumanbhartiya.com/posts/detect-authz-at-scale-nestjs |
@@ -917,9 +1013,10 @@ Report:       docs/audit-reports/{NOME_MODULO}-{DATE}.md
 | Shai-Hulud npm worm Sept 2025 | https://unit42.paloaltonetworks.com/npm-supply-chain-attack/ |
 | k6 thresholds Grafana | https://grafana.com/docs/k6/latest/using-k6/thresholds/ |
 | OpenTelemetry NestJS | https://signoz.io/blog/opentelemetry-nestjs/ |
-| TypeScript strict 2026 | https://oneuptime.com/blog/post/2026-02-20-typescript-strict-mode-guide/view |
+| TypeScript strict mode | https://oneuptime.com/blog/post/2026-02-20-typescript-strict-mode-guide/view |
 | ESAA arXiv | https://arxiv.org/abs/2603.06365 |
 | Stryker thresholds | https://medium.com/@giorgi0203/stop-making-stryker-run-tests-it-never-needed-9afb7a2e1627 |
 | Google Engineering Practices | https://google.github.io/eng-practices/review/ |
+| Jest --randomize flag | https://jestjs.io/docs/cli#--randomize |
 
 **Sii spietato. Zero complimenti. Ogni critica ha una fix concreta o un comando eseguibile.**

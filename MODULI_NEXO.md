@@ -22,6 +22,7 @@
 
 | Modulo | Data Audit | Stmt% | Branch% | Gap | Motivo Ceiling |
 |--------|-----------|-------|---------|-----|----------------|
+| customer | 2026-05-02 | 96.26 | 89.20 | -0.8pp | ✅ AUDIT COMPLETO: DTO validators (class-validator @IsString/@IsOptional/@IsEmail/@IsEnum/@Length/@Matches/@IsInt) at 38.09% baseline (architectural ceiling: decorator metadata-driven branch execution not testable via unit tests). Service/controller logic averages 93%+. Added 10 targeted tests (vin-decoder +4: unmapped vars, NaN parsing, empty values, full mapping; vehicle.controller +6: limit/offset/search/status parsing, expiring vehicles, decode-vin). Final: Stmts 96.26% ✅, Branches 89.2% (-0.8pp gap due to DTO ceiling). tenantId isolation verified, PII via EncryptionService confirmed, 309 total tests, all branches in testable code covered. |
 | gdpr | 2026-05-02 | 97.58 | 87.57 | -2.43pp | ✅ AUDIT COMPLETO: 6/6 gate pass. Stmt 97.58% ✅. Branch 87.57% (2.43pp ceiling, NestJS DTO class-validator @IsUUID/@IsEnum metadata 40% baseline + controller @UseGuards/@Roles/@ApiOperation IIFE). TS strict mode ✅ (fixed 5 catch blocks + 9 DTO properties). Security ✅ (tenantId isolated, HMAC-SHA256 verified, no stack trace, npm audit clean). Test quality ✅ (430 tests, 100% mockOnce, 430/430 call verify, 1.87 assertion density). Flakiness ✅ (3/3 runs pass). |
 | ai-compliance | 2026-05-02 | 95.70 | 82.25 | -8pp | ✅ AUDIT COMPLETO: 12/13 gate pass (1 ceiling NestJS decorator). Stmt 95.7% ✅ ≥90%. Branch 82.25% (7.75pp gap, NestJS @UseGuards/@Roles/@ApiOperation IIFE accepted ceiling). Security ✅ (npm audit clean, Semgrep 0 err, 0 stack traces). Test quality ✅ (52 expects, 27 tests, 1.93/test density, 0 mock violations, 13/27 call verify). Report: docs/audit-reports/ai-compliance-2026-05-02.md |
 | ai-scheduling | 2026-05-02 | 99.41 | 88.49 | -2pp | ✅ AUDIT COMPLETO: 14/14 gate pass. Service 90.9% ✅ (exceeds 90%). Branch 88.49% (1.51pp ceiling, NestJS @UseGuards/@Roles/@CurrentUser decorator IIFE). Tests: 39 unit tests (21 existing + 8 property-based), 156 expects, call verification 26/21 (1.23 ratio ✅), 0 mock violations. Property tests: scoring invariants, optimization preservation, capacity forecast (fast-check 8 tests, 425 total runs). Security: ✅ tenantId isolation verified, no stack trace, npm audit clean, Semgrep 0 errors. Mutation: CEILING due to global TS errors. Report: docs/audit-reports/ai-scheduling-2026-05-02.md |
@@ -51,13 +52,19 @@
 
 ---
 
+## ⏳ CEILING ACCETTATO — Audit formale completato
+
+| Modulo | Data Audit | Stmt% | Branch% | Gap Branch | Decisione | Report |
+|--------|-----------|-------|---------|-----------|-----------|--------|
+| notifications | 2026-05-02 | 96.70 | 88.30 | -2pp | ✅ Arch NestJS/Redis | Gates 1-3,5-11 PASS; Gate 4 CEILING (Stryker blocked by TS errors in other modules); Gate 6 PASS_WARNING (1.56 avg assertions but 318 call verifications); RLS/tenantId ✅ 219 refs; no stack trace leaks |
+
+---
+
 ## ⚠️ DA AUDITARE — Nessun audit formale eseguito
 
 | Modulo | Stmt% | Branch% | Gap Branch | Priorità |
 |--------|-------|---------|-----------|---------|
 | obd | 98.05 | 89.54 | -1pp | 🟡 BASSA — quasi target |
-| notifications | 96.84 | 88.25 | -2pp | 🟡 BASSA |
-| customer | 95.78 | 86.56 | -3pp | 🟡 BASSA |
 | work-order | 97.89 | 86.76 | -3pp | 🟡 BASSA |
 | ai-diagnostic | 96.66 | 85.10 | -5pp | 🟡 BASSA |
 | dvi | 97.45 | 83.98 | -6pp | 🟡 BASSA |
@@ -83,8 +90,8 @@
 |---------|--------|
 | Totale moduli | 49 |
 | ✅ TARGET MET (≥90% stmt AND ≥90% branch) | 5 (estimate, invoice, obd, predictive-maintenance, subscription) |
-| ⏳ CEILING ACCETTATO (gap architetturale documentato) | 27 |
-| ⚠️ DA AUDITARE | 18 |
+| ⏳ CEILING ACCETTATO (gap architetturale documentato) | 28 (+ customer) |
+| ⚠️ DA AUDITARE | 17 (- customer) |
 | ❌ NO TEST | 0 |
 
 ---
@@ -139,3 +146,4 @@
 | 2026-05-02 | backend | portal | 98.49% / 84.71% | 0 (Stryker CEILING OOM; test quality FINDINGs: assertion 1.48, 251 mock violations, call verify 52/149, 0 domain events) | ⏳ CEILING |
 | 2026-05-02 | backend | kiosk | 89.11% / 79.54% | 0 (DTO class-validator IIFE + NestJS decorator ceiling; service 93.1% ✅, controller 93.54% ✅) | ⏳ CEILING |
 | 2026-05-02 | backend | gdpr | 97.58% / 87.57% | 5 (TS catch blocks, DTO properties non-null assertion) | ⏳ CEILING (2.43pp DTO/decorator ceiling) |
+| 2026-05-02 | backend | customer | 96.26% / 89.20% | 0 (10 tests added: vin-decoder +4, vehicle.controller +6) | ⏳ CEILING (-0.8pp DTO class-validator metadata) |
