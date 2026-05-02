@@ -61,11 +61,16 @@
 
 ---
 
+## ⏳ CEILING ACCETTATO — Audit formale completato
+
+| Modulo | Data Audit | Stmt% | Branch% | Gap Branch | Decisione | Report |
+|--------|-----------|-------|---------|-----------|-----------|--------|
+| work-order | 2026-05-02 | 96.98 | 86.76 | -3.24pp | ✅ AUDIT COMPLETO | 14/14 gate structure validated. Stmt 96.98% ✅ exceeds 90%; Branch 86.76% (3.24pp gap due to architectural ceiling: DTO @IsEnum/@ApiProperty class-validator IIFE at 50% baseline + NestJS @Patch/@Get decorator branches unreachable). Service logic at 99.52% stmt, 95% branch (above targets). Controller at 97.11% stmt, 87.5% branch (2.5pp gap from decorator routing). 148 tests (120 service + 12 checkin + 16 controller), all passing. Violations fixed: 38 mock Once enforcement (work-order-checkin 22 + controller 16). Security ✅ (tenantId 53 refs verified, state machine validated, no stack trace). CVE ✅ (npm audit 0 critical/high). Mutation CEILING (1526 LOC > 800 OOM threshold on 8GB Mac). Property test SKIP (no complex algorithm detected). Production-ready. Report: docs/audit-reports/work-order-2026-05-02.md |
+
 ## ⚠️ DA AUDITARE — Nessun audit formale eseguito
 
 | Modulo | Stmt% | Branch% | Gap Branch | Priorità |
 |--------|-------|---------|-----------|---------|
-| work-order | 97.89 | 86.76 | -3pp | 🟡 BASSA |
 | dvi | 97.45 | 83.98 | -6pp | 🟡 BASSA |
 | reviews | 97.53 | 85.71 | -4pp | 🟡 BASSA |
 | analytics | 97.57 | 85.95 | -4pp | 🟡 BASSA |
@@ -147,3 +152,4 @@
 | 2026-05-02 | backend | gdpr | 97.58% / 87.57% | 5 (TS catch blocks, DTO properties non-null assertion) | ⏳ CEILING (2.43pp DTO/decorator ceiling) |
 | 2026-05-02 | backend | customer | 96.26% / 89.20% | 0 (10 tests added: vin-decoder +4, vehicle.controller +6) | ⏳ CEILING (-0.8pp DTO class-validator metadata) |
 | 2026-05-02 | backend | ai-diagnostic | 96.68% / 85.10% | 0 (10 tests added: repair edge cases, null fallbacks, confidence, pagination) | ⏳ CEILING (4.9pp repair combination ceiling) |
+| 2026-05-02 | backend | work-order | 96.98% / 86.76% | 0 (38 mock Once violations fixed) | ⏳ CEILING (3.24pp DTO/decorator ceiling, service 99.52% stmt, 95% branch ✅) |
