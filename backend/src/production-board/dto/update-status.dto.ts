@@ -20,5 +20,5 @@ export class UpdateJobStatusDto {
   })
   @IsString()
   @IsIn([...VALID_STATUSES])
-  status: string;
+  status!: string;
 }

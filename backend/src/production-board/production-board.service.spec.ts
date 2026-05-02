@@ -211,6 +211,67 @@ describe('ProductionBoardService', () => {
       expect(result[0].elapsedMinutes).toBeGreaterThanOrEqual(29);
       expect(result[0].elapsedMinutes).toBeLessThanOrEqual(31);
     });
+
+    it('should handle technician not found in getBoardState', async () => {
+      const wo = makeMockWorkOrder({ technicianId: TECH_ID, status: 'IN_PROGRESS' });
+      const bay = makeMockBay({
+        currentWorkOrderId: WO_ID,
+        currentWorkOrder: wo,
+        status: 'OCCUPIED',
+      });
+
+      prisma.serviceBay.findMany.mockResolvedValue([bay]);
+      prisma.technician.findFirst.mockResolvedValue(null);
+      prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
+
+      const result = await service.getBoardState(TENANT_ID);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].technician).toBeNull();
+      expect(prisma.technician.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: TECH_ID }) }),
+      );
+    });
+
+    it('should calculate elapsed minutes from actualStartTime when no active timer', async () => {
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const wo = makeMockWorkOrder({
+        status: 'IN_PROGRESS',
+        actualStartTime: tenMinutesAgo,
+      });
+      const bay = makeMockBay({
+        currentWorkOrderId: WO_ID,
+        currentWorkOrder: wo,
+        status: 'OCCUPIED',
+      });
+
+      prisma.serviceBay.findMany.mockResolvedValue([bay]);
+      prisma.technician.findFirst.mockResolvedValue(null);
+      prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
+
+      const result = await service.getBoardState(TENANT_ID);
+
+      expect(result[0].elapsedMinutes).toBeGreaterThanOrEqual(9);
+      expect(result[0].elapsedMinutes).toBeLessThanOrEqual(11);
+    });
+
+    it('should handle work order with no technician and no actualStartTime', async () => {
+      const wo = makeMockWorkOrder({ technicianId: null, actualStartTime: null });
+      const bay = makeMockBay({
+        currentWorkOrderId: WO_ID,
+        currentWorkOrder: wo,
+        status: 'OCCUPIED',
+      });
+
+      prisma.serviceBay.findMany.mockResolvedValue([bay]);
+      prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
+
+      const result = await service.getBoardState(TENANT_ID);
+
+      expect(result[0].technician).toBeNull();
+      expect(result[0].elapsedMinutes).toBeNull();
+      expect(prisma.technician.findFirst).not.toHaveBeenCalled();
+    });
   });
 
   // ==================== assignToBay ====================
@@ -282,6 +343,19 @@ describe('ProductionBoardService', () => {
           TENANT_ID,
         ),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if bay is in CLEANING', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder());
+      prisma.serviceBay.findFirst.mockResolvedValue(makeMockBay({ status: 'CLEANING' }));
+
+      await expect(
+        service.assignToBay(
+          { workOrderId: WO_ID, bayId: BAY_ID, technicianId: TECH_ID },
+          TENANT_ID,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if bay is occupied by another work order', async () => {
@@ -381,6 +455,29 @@ describe('ProductionBoardService', () => {
         .mockResolvedValueOnce(
           makeMockBay({ id: BAY_ID_2, currentWorkOrderId: 'other-wo', status: 'OCCUPIED' }),
         );
+
+      await expect(
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if destination bay is in CLEANING', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ assignedBayId: BAY_ID }));
+      prisma.serviceBay.findFirst
+        .mockResolvedValueOnce(makeMockBay({ currentWorkOrderId: WO_ID, status: 'OCCUPIED' }))
+        .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'CLEANING' }));
+
+      await expect(
+        service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if destination bay is in MAINTENANCE', async () => {
+      prisma.workOrder.findFirst.mockResolvedValue(makeMockWorkOrder({ assignedBayId: BAY_ID }));
+      prisma.serviceBay.findFirst
+        .mockResolvedValueOnce(makeMockBay({ currentWorkOrderId: WO_ID, status: 'OCCUPIED' }))
+        .mockResolvedValueOnce(makeMockBay({ id: BAY_ID_2, status: 'MAINTENANCE' }));
 
       await expect(
         service.moveJob({ workOrderId: WO_ID, fromBayId: BAY_ID, toBayId: BAY_ID_2 }, TENANT_ID),

@@ -38,7 +38,7 @@
 | payroll | 2026-04-30 | 98.29 | 86.41 | -4pp | Ceiling non documentato formalmente; 8 test aggiunti per branch coverage |
 | peppol | 2026-05-02 | 94.58 | 88.04 | -2pp | @Injectable IIFE; TS array literal / template literal source-map offset (lines 5-6, 13-15, 62-67, 202-204, 376-385) |
 | rentri | 2026-05-02 | 96.82 | 79.01 | -11pp | DTO class-validator 36-50% (waste-entry/fir/destination/transporter); @Injectable IIFE in FirService/MudService; controller @Get/@Post routing |
-| production-board | 2026-05-01 | 97.22 | 82.75 | -7pp | DTO class-validator 50% branch; service+controller 88.77% |
+| production-board | 2026-05-02 | 97.22 | 82.6 | -7.4pp | ✅ AUDIT COMPLETO: 11/15 gate pass. 2 CEILING: DTO class-validator IIFE (7.4pp), Stryker system-wide TS errors. 3 SKIP: property-test (no complex algo), CVE Next.js (backend-only), React (backend-only). Security ✅ (tenantId isolation, no stack trace). Test quality ✅ (210 expects / 103 tests = 2.04 density, 110 mockOnce patterns, 3/3 flakiness PASS). Performance ✅ (no N+1, aggregation). Compliance ✅ (GDPR/PCI audit trail). Report: docs/audit-reports/production-board-2026-05-02.md |
 | public-token | 2026-05-02 | 80.00 | 65.85 | -24pp | ✅ AUDIT COMPLETO: 3 CEILING (decorator IIFE, npm audit dev-only, Stryker config error). Security ✅ (tenantId isolation). Test quality ✅ (2.04 assertions/test, 0% flakiness). Report: docs/audit-reports/public-token-2026-05-02.md |
 | security-incident | 2026-05-02 | 97.21 | 83.00 | -7pp | Service logic 92.42% ✅ (above 90%). 5 CEILING: DTO @IsEnum/@ApiProperty metadata (DTO 33% baseline); Controller @UseGuards/@Roles decorator IIFE (linee 19-21); Service const definitions (NIS2_EARLY_WARNING_MS, STATUS_TRANSITIONS); Dead code (findOne + if !incident). Escludendo ceiling: logica 92.42% ✅. Aggiunto 13 test mirati (90 test totali), tenantId ✅, state machine ✅. |
 | services | 2026-05-01 | 88.47 | 76.51 | -13pp | 3 file DEPRECATED (emailService, pivaService, jwtService); Luhn branch numericamente esercitato ma non isolabile; VIES graceful degradation accettato |
@@ -130,3 +130,4 @@
 | 2026-05-02 | backend | peppol | 94.58% / 88.04% | 0 | ⏳ CEILING |
 | 2026-05-02 | backend | rentri | 96.82% / 79.01% | 0 | ⏳ CEILING |
 | 2026-05-02 | backend | security-incident | 97.21% / 83.00% | 0 (5 ceiling: DTO metadata, @UseGuards IIFE, const definitions, dead code) | ⏳ CEILING |
+| 2026-05-02 | backend | ai-compliance | 95.70% / 82.25% | 0 (ceiling NestJS @UseGuards/@Roles/@ApiOperation IIFE; 12/13 gate pass) | ⏳ CEILING |

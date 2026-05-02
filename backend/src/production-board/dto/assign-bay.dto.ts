@@ -5,15 +5,15 @@ export class AssignBayDto {
   @ApiProperty({ description: "ID dell'ordine di lavoro da assegnare", example: 'uuid' })
   @IsString()
   @IsUUID()
-  workOrderId: string;
+  workOrderId!: string;
 
   @ApiProperty({ description: 'ID della postazione di lavoro', example: 'uuid' })
   @IsString()
   @IsUUID()
-  bayId: string;
+  bayId!: string;
 
   @ApiProperty({ description: 'ID del tecnico assegnato', example: 'uuid' })
   @IsString()
   @IsUUID()
-  technicianId: string;
+  technicianId!: string;
 }

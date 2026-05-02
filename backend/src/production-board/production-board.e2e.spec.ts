@@ -1,6 +1,4 @@
 describe('ProductionBoard Integration - DTO Validation Contracts', () => {
-  const TENANT_ID = 'tenant-001';
-
   describe('AssignBayDto validation through ValidationPipe', () => {
     it('validates UUID format for workOrderId', () => {
       const dto = {
