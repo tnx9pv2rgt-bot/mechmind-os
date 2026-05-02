@@ -236,6 +236,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
   let configService: jest.Mocked<ConfigService>;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const mod: TestingModule = await Test.createTestingModule({
       controllers: [SmsWebhookController],
       providers: [
@@ -255,10 +256,12 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     controller = mod.get<SmsWebhookController>(SmsWebhookController);
     service = mod.get(SmsThreadService) as jest.Mocked<SmsThreadService>;
     configService = mod.get(ConfigService) as jest.Mocked<ConfigService>;
+    // Default: auth token undefined (skip verification)
+    configService.get.mockReturnValue(undefined);
   });
 
   it('should throw UnauthorizedException when X-Tenant-Id header missing', async () => {
-    configService.get.mockReturnValue('my-auth-token');
+    configService.get.mockReturnValueOnce('my-auth-token');
 
     const req = {
       protocol: 'https',
@@ -274,7 +277,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
   });
 
   it('should throw UnauthorizedException when auth token set but signature missing', async () => {
-    configService.get.mockReturnValue('my-auth-token');
+    configService.get.mockReturnValueOnce('my-auth-token');
 
     const req = {
       protocol: 'https',
@@ -296,7 +299,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should throw when signature does not match (same-length base64)', async () => {
     const authToken = 'my-auth-token';
-    configService.get.mockReturnValue(authToken);
+    configService.get.mockReturnValueOnce(authToken);
 
     // Compute expected signature length — SHA1 HMAC = 20 bytes = 28 chars base64
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -338,7 +341,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
   });
 
   it('should skip signature verification when TWILIO_AUTH_TOKEN is not set', async () => {
-    configService.get.mockReturnValue(undefined);
+    configService.get.mockReturnValueOnce(undefined);
     service.receiveInbound.mockResolvedValueOnce({ id: 'msg-001' });
 
     const req = {
@@ -361,7 +364,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should accept valid Twilio signature with tenantId', async () => {
     const authToken = 'test-auth-token';
-    configService.get.mockReturnValue(authToken);
+    configService.get.mockReturnValueOnce(authToken);
     service.receiveInbound.mockResolvedValueOnce({ id: 'msg-002' });
 
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
@@ -431,7 +434,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should accept request with all optional parameters (limit and offset)', async () => {
     const authToken = 'test-token';
-    configService.get.mockReturnValue(authToken);
+    configService.get.mockReturnValueOnce(authToken);
 
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
     const url = 'https://localhost:3002/v1/sms/webhook/inbound';
@@ -472,7 +475,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should log warning when TWILIO_AUTH_TOKEN not configured', async () => {
     const loggerSpy = jest.spyOn(controller['logger'], 'warn');
-    configService.get.mockReturnValue(undefined);
+    configService.get.mockReturnValueOnce(undefined);
 
     const req = {
       protocol: 'https',
@@ -495,7 +498,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
 
   it('should log error when X-Tenant-Id header missing', async () => {
     const loggerSpy = jest.spyOn(controller['logger'], 'error');
-    configService.get.mockReturnValue(undefined);
+    configService.get.mockReturnValueOnce(undefined);
 
     const req = {
       protocol: 'https',
