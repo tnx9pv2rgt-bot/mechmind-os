@@ -56,6 +56,7 @@
 
 | Modulo | Data Audit | Stmt% | Branch% | Gap Branch | Decisione | Report |
 |--------|-----------|-------|---------|-----------|-----------|--------|
+| ai-diagnostic | 2026-05-02 | 96.68 | 85.10 | -4.9pp | ✅ AUDIT COMPLETO | 14 branch paths architecturally unreachable (estimate repair line combinations: both parts and labor 0); statements exceed 90% target ✅; 68 tests (happy path + error handling fully covered); 0 security BLOCCANTI; 3 MEDIA findings (prompt injection, rate limiting, query optimization) documented in report; Report: docs/audit-reports/ai-diagnostic-2026-05-02.md |
 | notifications | 2026-05-02 | 96.70 | 88.30 | -2pp | ✅ Arch NestJS/Redis | Gates 1-3,5-11 PASS; Gate 4 CEILING (Stryker blocked by TS errors in other modules); Gate 6 PASS_WARNING (1.56 avg assertions but 318 call verifications); RLS/tenantId ✅ 219 refs; no stack trace leaks |
 
 ---
@@ -64,9 +65,7 @@
 
 | Modulo | Stmt% | Branch% | Gap Branch | Priorità |
 |--------|-------|---------|-----------|---------|
-| obd | 98.05 | 89.54 | -1pp | 🟡 BASSA — quasi target |
 | work-order | 97.89 | 86.76 | -3pp | 🟡 BASSA |
-| ai-diagnostic | 96.66 | 85.10 | -5pp | 🟡 BASSA |
 | dvi | 97.45 | 83.98 | -6pp | 🟡 BASSA |
 | reviews | 97.53 | 85.71 | -4pp | 🟡 BASSA |
 | analytics | 97.57 | 85.95 | -4pp | 🟡 BASSA |
@@ -90,8 +89,8 @@
 |---------|--------|
 | Totale moduli | 49 |
 | ✅ TARGET MET (≥90% stmt AND ≥90% branch) | 5 (estimate, invoice, obd, predictive-maintenance, subscription) |
-| ⏳ CEILING ACCETTATO (gap architetturale documentato) | 28 (+ customer) |
-| ⚠️ DA AUDITARE | 17 (- customer) |
+| ⏳ CEILING ACCETTATO (gap architetturale documentato) | 30 |
+| ⚠️ DA AUDITARE | 15 |
 | ❌ NO TEST | 0 |
 
 ---
@@ -147,3 +146,4 @@
 | 2026-05-02 | backend | kiosk | 89.11% / 79.54% | 0 (DTO class-validator IIFE + NestJS decorator ceiling; service 93.1% ✅, controller 93.54% ✅) | ⏳ CEILING |
 | 2026-05-02 | backend | gdpr | 97.58% / 87.57% | 5 (TS catch blocks, DTO properties non-null assertion) | ⏳ CEILING (2.43pp DTO/decorator ceiling) |
 | 2026-05-02 | backend | customer | 96.26% / 89.20% | 0 (10 tests added: vin-decoder +4, vehicle.controller +6) | ⏳ CEILING (-0.8pp DTO class-validator metadata) |
+| 2026-05-02 | backend | ai-diagnostic | 96.68% / 85.10% | 0 (10 tests added: repair edge cases, null fallbacks, confidence, pagination) | ⏳ CEILING (4.9pp repair combination ceiling) |
