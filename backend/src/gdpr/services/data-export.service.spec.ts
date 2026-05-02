@@ -897,8 +897,8 @@ describe('DataExportService (GDPR Art. 20)', () => {
       }
 
       expect(loggerService.error).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Error),
+        expect.stringContaining('Failed to generate data export'),
+        undefined,
         'DataExportService',
       );
     });

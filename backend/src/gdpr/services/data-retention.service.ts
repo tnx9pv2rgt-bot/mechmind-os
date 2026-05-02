@@ -163,7 +163,9 @@ export class DataRetentionService {
         'DataRetentionService',
       );
     } catch (error) {
-      this.logger.error(`Scheduled retention enforcement failed: ${error.message}`);
+      this.logger.error(
+        `Scheduled retention enforcement failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Alert on-call team for manual intervention
     }
   }
@@ -191,7 +193,9 @@ export class DataRetentionService {
 
       this.loggerService.log('Weekly deep cleanup completed', 'DataRetentionService');
     } catch (error) {
-      this.logger.error(`Weekly deep cleanup failed: ${error.message}`);
+      this.logger.error(
+        `Weekly deep cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -250,8 +254,9 @@ export class DataRetentionService {
       const optOutResult = await this.processOptOutCustomers(tenantId);
       customersAnonymized += optOutResult.count;
     } catch (error) {
-      this.logger.error(`Retention enforcement error: ${error.message}`);
-      errors.push(error.message);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Retention enforcement error: ${errorMsg}`);
+      errors.push(errorMsg);
     }
 
     const completedAt = new Date();
@@ -348,7 +353,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to anonymize customer ${customer.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to anonymize customer ${customer.id}: ${errorMsg}`);
       }
     }
 
@@ -418,9 +424,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(
-          `Failed to process opt-out for customer ${log.customer.id}: ${error.message}`,
-        );
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to process opt-out for customer ${log.customer.id}: ${errorMsg}`);
       }
     }
 
@@ -500,7 +505,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to delete recording ${recording.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to delete recording ${recording.id}: ${errorMsg}`);
       }
     }
 
@@ -565,7 +571,8 @@ export class DataRetentionService {
       return { count: result };
     } catch (error) {
       // Table may not exist yet
-      this.logger.debug(`Webhook events cleanup skipped: ${error.message}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.debug(`Webhook events cleanup skipped: ${errorMsg}`);
       return { count: 0 };
     }
   }
@@ -612,7 +619,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to clean snapshot for request ${request.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to clean snapshot for request ${request.id}: ${errorMsg}`);
       }
     }
 

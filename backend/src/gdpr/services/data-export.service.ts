@@ -224,9 +224,10 @@ export class DataExportService {
         exportId,
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       this.loggerService.error(
-        `Failed to generate export token for tenant ${tenantId}`,
-        error,
+        `Failed to generate export token for tenant ${tenantId}: ${errorMsg}`,
+        undefined,
         'DataExportService',
       );
       throw new BadRequestException('Failed to generate export token');
@@ -549,9 +550,10 @@ export class DataExportService {
 
       return JSON.parse(serialized) as CompleteDataExport;
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       this.loggerService.error(
-        `Failed to generate data export ${exportId}`,
-        error,
+        `Failed to generate data export ${exportId}: ${errorMsg}`,
+        undefined,
         'DataExportService',
       );
       throw new BadRequestException('Failed to generate data export');

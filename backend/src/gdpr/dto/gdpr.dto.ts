@@ -17,7 +17,7 @@ export class CreateDataSubjectRequestDto {
   // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ description: 'ID del tenant', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
   @IsUUID()
-  tenantId: string;
+  tenantId!: string;
 
   @ApiProperty({
     description: 'Tipo di richiesta GDPR',
@@ -25,7 +25,7 @@ export class CreateDataSubjectRequestDto {
     example: 'ACCESS',
   })
   @IsEnum(['ACCESS', 'DELETION', 'RECTIFICATION', 'PORTABILITY', 'RESTRICTION', 'OBJECTION'])
-  requestType: string;
+  requestType!: string;
 
   @ApiPropertyOptional({ description: 'Email del richiedente', example: 'mario.rossi@example.com' })
   @IsOptional()
@@ -97,7 +97,7 @@ export class UpdateRequestStatusDto {
     'REJECTED',
     'CANCELLED',
   ])
-  status: string;
+  status!: string;
 
   @ApiPropertyOptional({ description: 'Note sullo stato', example: 'Verifica identità completata' })
   @IsOptional()
@@ -111,7 +111,7 @@ export class UpdateRequestStatusDto {
 export class VerifyIdentityDto {
   @ApiProperty({ description: 'Metodo di verifica identità', example: 'document_upload' })
   @IsString()
-  method: string;
+  method!: string;
 
   @ApiPropertyOptional({ description: 'Documenti di verifica', example: ['carta_identita.pdf'] })
   @IsOptional()
@@ -133,11 +133,11 @@ export class CreateConsentDto {
     example: 'GDPR',
   })
   @IsEnum(['GDPR', 'MARKETING', 'CALL_RECORDING', 'DATA_SHARING', 'THIRD_PARTY', 'ANALYTICS'])
-  consentType: string;
+  consentType!: string;
 
   @ApiProperty({ description: 'Consenso concesso', example: true })
   @IsBoolean()
-  granted: boolean;
+  granted!: boolean;
 
   @ApiPropertyOptional({ description: 'Metodo di raccolta del consenso', example: 'web_form' })
   @IsOptional()
@@ -177,14 +177,14 @@ export class QueueDeletionDto {
     example: 'c3d4e5f6-a7b8-9012-cdef-234567890abc',
   })
   @IsUUID()
-  requestId: string;
+  requestId!: string;
 
   @ApiProperty({
     description: 'Motivo della cancellazione',
     example: 'Richiesta del cliente ai sensi Art. 17 GDPR',
   })
   @IsString()
-  reason: string;
+  reason!: string;
 
   @ApiPropertyOptional({
     description: 'Metodo di verifica utilizzato',
@@ -205,7 +205,7 @@ export class ExportRequestDto {
     example: 'JSON',
   })
   @IsEnum(['JSON', 'CSV', 'PDF'])
-  format: string;
+  format!: string;
 
   @ApiPropertyOptional({
     description: 'ID della richiesta associata',
@@ -222,14 +222,14 @@ export class ExportRequestDto {
 export class UpdateRetentionPolicyDto {
   @ApiProperty({ description: 'ID del tenant', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
   @IsString()
-  tenantId: string;
+  tenantId!: string;
 
   @ApiProperty({ description: 'Tipo di dato soggetto a retention', example: 'customer_data' })
   @IsString()
-  dataType: string;
+  dataType!: string;
 
   @ApiProperty({ description: 'Giorni di conservazione', example: 365 })
-  days: number;
+  days!: number;
 }
 
 /**
@@ -238,18 +238,18 @@ export class UpdateRetentionPolicyDto {
 export class DataRectificationDto {
   @ApiProperty({ description: 'ID del cliente', example: 'b2c3d4e5-f6a7-8901-bcde-f12345678901' })
   @IsUUID()
-  customerId: string;
+  customerId!: string;
 
   @ApiProperty({ description: 'ID del tenant', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
   @IsUUID()
-  tenantId: string;
+  tenantId!: string;
 
   @ApiProperty({
     description: 'Modifiche ai dati da rettificare',
     example: { email: 'nuovo@example.com' },
   })
   @IsObject()
-  changes: Record<string, unknown>;
+  changes!: Record<string, unknown>;
 
   @ApiPropertyOptional({ description: 'Motivo della rettifica', example: 'Indirizzo email errato' })
   @IsOptional()
@@ -263,18 +263,18 @@ export class DataRectificationDto {
 export class GdprWebhookPayloadDto {
   @ApiProperty({ description: 'Tipo di evento webhook', example: 'data_deletion_completed' })
   @IsString()
-  event: string;
+  event!: string;
 
   @ApiProperty({ description: "Timestamp dell'evento (ISO 8601)", example: '2026-03-16T10:30:00Z' })
   @IsDateString()
-  timestamp: string;
+  timestamp!: string;
 
   @ApiProperty({
     description: "Dati dell'evento",
     example: { requestId: 'req_123', status: 'completed' },
   })
   @IsObject()
-  data: Record<string, unknown>;
+  data!: Record<string, unknown>;
 
   @ApiPropertyOptional({
     description: 'Firma HMAC per verifica',
