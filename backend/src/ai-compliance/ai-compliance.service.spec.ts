@@ -69,7 +69,7 @@ describe('AiComplianceService', () => {
 
   describe('logDecision', () => {
     it('should create an AI decision log with tenantId', async () => {
-      prisma.aiDecisionLog.create.mockResolvedValue(mockDecision);
+      prisma.aiDecisionLog.create.mockResolvedValueOnce(mockDecision);
 
       const dto = {
         featureName: 'damage_analysis',
@@ -93,10 +93,12 @@ describe('AiComplianceService', () => {
         }),
       });
       expect(result).toEqual(mockDecision);
+      expect(result.tenantId).toBe(TENANT_ID);
+      expect(result.featureName).toBe('damage_analysis');
     });
 
     it('should handle null confidence', async () => {
-      prisma.aiDecisionLog.create.mockResolvedValue({ ...mockDecision, confidence: null });
+      prisma.aiDecisionLog.create.mockResolvedValueOnce({ ...mockDecision, confidence: null });
 
       const dto = {
         featureName: 'diagnosis_suggestion',
@@ -105,19 +107,20 @@ describe('AiComplianceService', () => {
         outputSummary: 'Likely ignition coil failure',
       };
 
-      await service.logDecision(TENANT_ID, dto);
+      const result = await service.logDecision(TENANT_ID, dto);
 
       expect(prisma.aiDecisionLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           confidence: null,
         }),
       });
+      expect(result.confidence).toBeNull();
     });
   });
 
   describe('recordHumanReview', () => {
     it('should update decision with human review', async () => {
-      prisma.aiDecisionLog.findFirst.mockResolvedValue(mockDecision);
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(mockDecision);
       const reviewed = {
         ...mockDecision,
         humanReviewed: true,
@@ -125,7 +128,7 @@ describe('AiComplianceService', () => {
         reviewedBy: USER_ID,
         reviewedAt: new Date(),
       };
-      prisma.aiDecisionLog.update.mockResolvedValue(reviewed);
+      prisma.aiDecisionLog.update.mockResolvedValueOnce(reviewed);
 
       const result = await service.recordHumanReview(
         TENANT_ID,
@@ -149,8 +152,8 @@ describe('AiComplianceService', () => {
     });
 
     it('should record override with human decision', async () => {
-      prisma.aiDecisionLog.findFirst.mockResolvedValue(mockDecision);
-      prisma.aiDecisionLog.update.mockResolvedValue({
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(mockDecision);
+      prisma.aiDecisionLog.update.mockResolvedValueOnce({
         ...mockDecision,
         humanReviewed: true,
         humanOverridden: true,
@@ -166,10 +169,14 @@ describe('AiComplianceService', () => {
 
       expect(result.humanOverridden).toBe(true);
       expect(result.humanDecision).toBe('Damage is minor, not moderate');
+      expect(prisma.aiDecisionLog.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT_ID }) })
+      );
+      expect(prisma.aiDecisionLog.update).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException for non-existent decision', async () => {
-      prisma.aiDecisionLog.findFirst.mockResolvedValue(null);
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         service.recordHumanReview(TENANT_ID, 'non-existent', { humanOverridden: false }, USER_ID),
@@ -179,46 +186,54 @@ describe('AiComplianceService', () => {
 
   describe('findAll', () => {
     it('should return paginated results with tenantId filter', async () => {
-      prisma.$transaction.mockResolvedValue([[mockDecision], 1]);
+      prisma.$transaction.mockResolvedValueOnce([[mockDecision], 1]);
 
       const result = await service.findAll(TENANT_ID, { page: 1, limit: 20 });
 
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(result).toEqual({ data: [mockDecision], total: 1 });
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
     it('should apply feature name filter', async () => {
-      prisma.$transaction.mockResolvedValue([[], 0]);
+      prisma.$transaction.mockResolvedValueOnce([[], 0]);
 
-      await service.findAll(TENANT_ID, { featureName: 'damage_analysis' });
+      const result = await service.findAll(TENANT_ID, { featureName: 'damage_analysis' });
 
       const txCall = prisma.$transaction.mock.calls[0][0];
       expect(txCall).toHaveLength(2);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should apply date range filter', async () => {
-      prisma.$transaction.mockResolvedValue([[], 0]);
+      prisma.$transaction.mockResolvedValueOnce([[], 0]);
 
-      await service.findAll(TENANT_ID, {
+      const result = await service.findAll(TENANT_ID, {
         dateFrom: '2026-03-01T00:00:00Z',
         dateTo: '2026-03-31T23:59:59Z',
       });
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should apply humanReviewed filter', async () => {
-      prisma.$transaction.mockResolvedValue([[], 0]);
+      prisma.$transaction.mockResolvedValueOnce([[], 0]);
 
-      await service.findAll(TENANT_ID, { humanReviewed: false });
+      const result = await service.findAll(TENANT_ID, { humanReviewed: false });
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
   describe('findOne', () => {
     it('should return a single decision', async () => {
-      prisma.aiDecisionLog.findFirst.mockResolvedValue(mockDecision);
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(mockDecision);
 
       const result = await service.findOne(TENANT_ID, 'dec-001');
 
@@ -229,7 +244,7 @@ describe('AiComplianceService', () => {
     });
 
     it('should throw NotFoundException for non-existent decision', async () => {
-      prisma.aiDecisionLog.findFirst.mockResolvedValue(null);
+      prisma.aiDecisionLog.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.findOne(TENANT_ID, 'non-existent')).rejects.toThrow(NotFoundException);
     });
@@ -237,7 +252,7 @@ describe('AiComplianceService', () => {
 
   describe('getDashboard', () => {
     it('should return compliance dashboard stats', async () => {
-      prisma.$transaction.mockResolvedValue([
+      prisma.$transaction.mockResolvedValueOnce([
         10, // totalDecisions
         2, // overriddenCount
         3, // pendingReview
@@ -261,7 +276,7 @@ describe('AiComplianceService', () => {
     });
 
     it('should handle zero decisions gracefully', async () => {
-      prisma.$transaction.mockResolvedValue([0, 0, 0, { _avg: { confidence: null } }, []]);
+      prisma.$transaction.mockResolvedValueOnce([0, 0, 0, { _avg: { confidence: null } }, []]);
 
       const result = await service.getDashboard(TENANT_ID);
 
@@ -325,7 +340,7 @@ describe('AiComplianceService', () => {
     it('findAll should apply multiple filters correctly', async () => {
       prisma.$transaction.mockResolvedValueOnce([[mockDecision], 1]);
 
-      await service.findAll(TENANT_ID, {
+      const result = await service.findAll(TENANT_ID, {
         page: 1,
         limit: 20,
         featureName: 'damage_analysis',
@@ -337,6 +352,7 @@ describe('AiComplianceService', () => {
       const txCall = prisma.$transaction.mock.calls[prisma.$transaction.mock.calls.length - 1];
       expect(txCall).toBeDefined();
       expect(txCall[0]).toHaveLength(2);
+      expect(result.data).toEqual([mockDecision]);
     });
 
     it('findAll should handle only dateFrom without dateTo', async () => {
@@ -347,7 +363,7 @@ describe('AiComplianceService', () => {
         dateFrom: '2026-03-01T00:00:00Z',
       });
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it('findAll should handle only dateTo without dateFrom', async () => {
@@ -358,7 +374,7 @@ describe('AiComplianceService', () => {
         dateTo: '2026-03-31T23:59:59Z',
       });
 
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
     it('findAll should handle pagination with custom page and limit', async () => {
@@ -371,6 +387,7 @@ describe('AiComplianceService', () => {
 
       expect(result.data).toEqual([mockDecision]);
       expect(result.total).toBe(1);
+      expect(prisma.$transaction).toHaveBeenCalled();
     });
 
     it('findAll should use default pagination when not provided', async () => {
@@ -379,12 +396,13 @@ describe('AiComplianceService', () => {
       const result = await service.findAll(TENANT_ID, {});
 
       expect(result).toEqual({ data: [mockDecision], total: 1 });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('dashboard edge cases', () => {
     it('getDashboard should handle decimal confidence correctly', async () => {
-      prisma.$transaction.mockResolvedValue([
+      prisma.$transaction.mockResolvedValueOnce([
         5,
         1,
         2,
@@ -398,7 +416,7 @@ describe('AiComplianceService', () => {
     });
 
     it('getDashboard should handle overrideRate calculation', async () => {
-      prisma.$transaction.mockResolvedValue([
+      prisma.$transaction.mockResolvedValueOnce([
         100,
         25,
         10,
@@ -413,7 +431,7 @@ describe('AiComplianceService', () => {
     });
 
     it('getDashboard should populate byFeature correctly with multiple features', async () => {
-      prisma.$transaction.mockResolvedValue([
+      prisma.$transaction.mockResolvedValueOnce([
         20,
         5,
         3,
