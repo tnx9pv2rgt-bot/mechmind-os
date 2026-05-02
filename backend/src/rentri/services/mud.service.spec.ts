@@ -355,4 +355,152 @@ describe('MudService', () => {
       expect(preview.rows[0].operationCount).toBe(3);
     });
   });
+
+  // =========================================================================
+  // Branch coverage: destination aggregation edge cases
+  // =========================================================================
+  describe('MudService destination aggregation branch coverage', () => {
+    it('should aggregate entries with same destination correctly', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({
+          cerCode: '130205*',
+          quantityKg: 10,
+          destination: { name: 'Dest Alpha' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          quantityKg: 20,
+          destination: { name: 'Dest Alpha' },
+        }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const preview = await service.getPreview(TENANT_ID, YEAR);
+
+      expect(preview.rows[0].mainDestination).toBe('Dest Alpha');
+      expect(preview.rows[0].operationCount).toBe(2);
+    });
+
+    it('should pick highest count destination when multiple destinations present', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest A' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest A' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest A' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest B' },
+        }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const preview = await service.getPreview(TENANT_ID, YEAR);
+
+      expect(preview.rows[0].mainDestination).toBe('Dest A');
+    });
+
+    it('should sum quantities correctly across multiple CER codes', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({
+          cerCode: '130205*',
+          cerDescription: 'Oli',
+          quantityKg: 100,
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          cerDescription: 'Oli',
+          quantityKg: 150,
+        }),
+        mockEntry({
+          cerCode: '160103',
+          cerDescription: 'Pneumatici',
+          quantityKg: 500,
+        }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const preview = await service.getPreview(TENANT_ID, YEAR);
+
+      expect(preview.totalKg).toBe(750);
+      const oils = preview.rows.find(r => r.cerCode === '130205*');
+      expect(oils?.totalKg).toBe(250);
+    });
+
+    it('should accumulate operation count for same CER code', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({ cerCode: '130205*', quantityKg: 5 }),
+        mockEntry({ cerCode: '130205*', quantityKg: 5 }),
+        mockEntry({ cerCode: '130205*', quantityKg: 5 }),
+        mockEntry({ cerCode: '130205*', quantityKg: 5 }),
+        mockEntry({ cerCode: '130205*', quantityKg: 5 }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const preview = await service.getPreview(TENANT_ID, YEAR);
+
+      expect(preview.rows[0].operationCount).toBe(5);
+      expect(preview.rows[0].totalKg).toBe(25);
+    });
+
+    it('should handle maxCount comparisons correctly in destination selection', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest X' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest X' },
+        }),
+        mockEntry({
+          cerCode: '130205*',
+          destination: { name: 'Dest Y' },
+        }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const preview = await service.getPreview(TENANT_ID, YEAR);
+
+      expect(preview.rows[0].mainDestination).toBe('Dest X');
+    });
+  });
+
+  // =========================================================================
+  // CSV export edge cases
+  // =========================================================================
+  describe('exportCsv edge cases', () => {
+    it('should handle toFixed(3) decimal formatting correctly', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({ quantityKg: 10.1234 }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const csv = await service.exportCsv(TENANT_ID, YEAR);
+
+      expect(csv).toContain('10.123');
+    });
+
+    it('should handle operations with no destination', async () => {
+      prisma.wasteEntry.findMany.mockResolvedValue([
+        mockEntry({
+          cerCode: '130205*',
+          destination: null,
+        }),
+      ]);
+      prisma.wasteFir.count.mockResolvedValue(0);
+
+      const csv = await service.exportCsv(TENANT_ID, YEAR);
+
+      const lines = csv.split('\n');
+      expect(lines[1]).toContain('""');
+    });
+  });
 });

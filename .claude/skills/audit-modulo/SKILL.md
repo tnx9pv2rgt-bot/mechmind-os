@@ -51,7 +51,7 @@ Ogni problema trovato va **RISOLTO SUBITO** con Edit/Write. Dopo ogni modifica: 
 
 ---
 
-## Step −1 — Parsing argomenti & Auto-escalation modello
+## Step −1 — Parsing argomenti & Model Routing per Fase
 
 **Flags:**
 - `--frontend` → attiva 8 assi frontend
@@ -59,14 +59,27 @@ Ogni problema trovato va **RISOLTO SUBITO** con Edit/Write. Dopo ogni modifica: 
 - `--supply-chain` → esegue npm audit + lockfile integrity
 - `--load` → esegue k6 load test (richiede script tests/load.js)
 
-**Tier modello:**
+**Model Routing (Advisor Strategy — Anthropic 2026):**
 
-| Tier | Moduli | Modello |
-|------|--------|---------|
-| TIER_1 (security-critical) | `auth`, `booking`, `invoice`, `payment-link`, `subscription`, `gdpr`, `common/services`, `common/guard`, `common/middleware`, `webhooks`, `webhook-subscription` | sonnet |
-| TIER_2 (business logic) | tutto il resto backend, `frontend/*` | haiku |
+Assignment fisso per fase, NON cascading dinamico. Risparmio atteso: ~51% vs modello uniforme.
 
-Se la sessione è già sul modello corretto → non cambiare (evita reset contesto).
+| Fase | Task | Modello | Rationale |
+|------|------|---------|-----------|
+| 1 — Reconnaissance | grep, read file, baseline coverage, CVE scan | `haiku` | retrieve-only, nessuna sintesi complessa |
+| 2.1 — Test generation | scrittura test, fix codice, Edit/Write | `sonnet` | sempre, indipendentemente dal tier modulo |
+| 2.2 — Analisi chirurgica | lettura file service/controller | `haiku` | pattern matching, nessuna decisione critica |
+| 3 — Risk classification | calcolo score, traceability | `haiku` | formula deterministica |
+| 4 — Report | markdown output, JSON evento | `haiku` | templating strutturato |
+| Security review TIER_1 | OWASP deep-dive, architettura | `opus` | solo `auth`, `booking`, `invoice`, `payment-link`, `subscription`, `gdpr`, `webhooks` |
+
+**Come applicare nei subagenti:**
+```
+Agent({ subagent_type: "Explore",   model: "haiku",  ... })  // fase 1, 2.2
+Agent({ subagent_type: "...",        model: "sonnet", ... })  // fase 2.1 test gen
+Agent({ subagent_type: "code-reviewer", model: "opus", ... }) // fase 4 security TIER_1
+```
+
+**Regola:** test generation usa sonnet SEMPRE — qualità indistinguibile da opus a 10× minor costo (AWS AMET benchmark 2026).
 
 ---
 

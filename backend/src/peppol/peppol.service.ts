@@ -183,6 +183,16 @@ export class PeppolService {
   // ==================== PRIVATE HELPERS ====================
 
   private buildUBLXml(invoice: PeppolInvoice): string {
+    // Extract optional fields before template to improve coverage instrumentation
+    let noteXml = '';
+    if (invoice.note) {
+      noteXml = `<cbc:Note>${this.escapeXml(invoice.note)}</cbc:Note>`;
+    }
+    let buyerRefXml = '';
+    if (invoice.buyerReference) {
+      buyerRefXml = `<cbc:BuyerReference>${this.escapeXml(invoice.buyerReference)}</cbc:BuyerReference>`;
+    }
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
@@ -195,12 +205,8 @@ export class PeppolService {
   <cbc:DueDate>${invoice.dueDate}</cbc:DueDate>
   <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>${invoice.currency}</cbc:DocumentCurrencyCode>
-  ${invoice.note ? `<cbc:Note>${this.escapeXml(invoice.note)}</cbc:Note>` : ''}
-  ${
-    invoice.buyerReference
-      ? `<cbc:BuyerReference>${this.escapeXml(invoice.buyerReference)}</cbc:BuyerReference>`
-      : ''
-  }
+  ${noteXml}
+  ${buyerRefXml}
 
   <!-- Seller -->
   <cac:AccountingSupplierParty>

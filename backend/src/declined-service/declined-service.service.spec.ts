@@ -92,6 +92,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(expected);
+      expect(result.id).toBe('ds-uuid-001');
+      expect(result.tenantId).toBe(TENANT_ID);
     });
 
     it('should create without optional vehicleId and severity', async () => {
@@ -116,6 +118,24 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
     });
+
+    it('should verify tenantId isolation on create', async () => {
+      const input = {
+        estimateId: 'est-uuid-001',
+        estimateLineId: 'line-uuid-001',
+        customerId: 'cust-uuid-001',
+        serviceDescription: 'Sostituzione pastiglie freno anteriori',
+        estimatedCostCents: 15000,
+      };
+      const expected = mockDeclinedService();
+      prisma.declinedService.create.mockResolvedValue(expected);
+
+      await service.trackDeclinedService(TENANT_ID, input);
+
+      const callArgs = prisma.declinedService.create.mock.calls[0][0];
+      expect(callArgs.data.tenantId).toBe(TENANT_ID);
+      expect(callArgs.data.tenantId).toBe('tenant-uuid-001');
+    });
   });
 
   // ─── getDeclinedServices ───
@@ -135,32 +155,38 @@ describe('DeclinedServiceService', () => {
           take: 20,
         }),
       );
+      expect(result.data).toHaveLength(1);
+      expect(result.pages).toBe(1);
     });
 
     it('should apply customerId filter', async () => {
       prisma.declinedService.findMany.mockResolvedValue([]);
       prisma.declinedService.count.mockResolvedValue(0);
 
-      await service.getDeclinedServices(TENANT_ID, { customerId: 'cust-uuid-001' });
+      const result = await service.getDeclinedServices(TENANT_ID, { customerId: 'cust-uuid-001' });
 
       expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID, customerId: 'cust-uuid-001' },
         }),
       );
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should apply severity filter', async () => {
       prisma.declinedService.findMany.mockResolvedValue([]);
       prisma.declinedService.count.mockResolvedValue(0);
 
-      await service.getDeclinedServices(TENANT_ID, { severity: 'CRITICAL' });
+      const result = await service.getDeclinedServices(TENANT_ID, { severity: 'CRITICAL' });
 
       expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { tenantId: TENANT_ID, severity: 'CRITICAL' },
         }),
       );
+      expect(result.total).toBe(0);
+      expect(result.pages).toBe(0);
     });
 
     it('should apply date range filter', async () => {
@@ -210,6 +236,82 @@ describe('DeclinedServiceService', () => {
         }),
       );
     });
+
+    it('should apply only dateFrom filter', async () => {
+      prisma.declinedService.findMany.mockResolvedValue([]);
+      prisma.declinedService.count.mockResolvedValue(0);
+
+      await service.getDeclinedServices(TENANT_ID, { dateFrom: '2026-02-01' });
+
+      expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId: TENANT_ID,
+            declinedAt: { gte: new Date('2026-02-01') },
+          },
+        }),
+      );
+    });
+
+    it('should apply only dateTo filter', async () => {
+      prisma.declinedService.findMany.mockResolvedValue([]);
+      prisma.declinedService.count.mockResolvedValue(0);
+
+      await service.getDeclinedServices(TENANT_ID, { dateTo: '2026-03-15' });
+
+      expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId: TENANT_ID,
+            declinedAt: { lte: new Date('2026-03-15') },
+          },
+        }),
+      );
+    });
+
+    it('should apply multiple filters combined', async () => {
+      prisma.declinedService.findMany.mockResolvedValue([]);
+      prisma.declinedService.count.mockResolvedValue(0);
+
+      await service.getDeclinedServices(TENANT_ID, {
+        customerId: 'cust-uuid-001',
+        severity: 'CRITICAL',
+        dateFrom: '2026-01-01',
+        dateTo: '2026-03-31',
+        followedUp: true,
+      });
+
+      expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId: TENANT_ID,
+            customerId: 'cust-uuid-001',
+            severity: 'CRITICAL',
+            declinedAt: {
+              gte: new Date('2026-01-01'),
+              lte: new Date('2026-03-31'),
+            },
+            followUpSentAt: { not: null },
+          },
+        }),
+      );
+    });
+
+    it('should paginate correctly with page > 1', async () => {
+      prisma.declinedService.findMany.mockResolvedValue([]);
+      prisma.declinedService.count.mockResolvedValue(100);
+
+      const result = await service.getDeclinedServices(TENANT_ID, {}, 3, 25);
+
+      expect(prisma.declinedService.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 50,
+          take: 25,
+        }),
+      );
+      expect(result.page).toBe(3);
+      expect(result.pages).toBe(4);
+    });
   });
 
   // ─── getFollowUpCandidates ───
@@ -221,6 +323,8 @@ describe('DeclinedServiceService', () => {
       const result = await service.getFollowUpCandidates(TENANT_ID, 30);
 
       expect(result).toEqual(candidates);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('ds-uuid-001');
       expect(prisma.declinedService.findMany).toHaveBeenCalledWith({
         where: {
           tenantId: TENANT_ID,
@@ -247,6 +351,43 @@ describe('DeclinedServiceService', () => {
         }),
       );
     });
+
+    it('should filter correctly for candidates without follow-up or conversion', async () => {
+      const candidates = [mockDeclinedService()];
+      prisma.declinedService.findMany.mockResolvedValue(candidates);
+
+      const result = await service.getFollowUpCandidates(TENANT_ID, 30);
+
+      expect(prisma.declinedService.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId: TENANT_ID,
+          declinedAt: { lte: expect.any(Date) },
+          followUpSentAt: null,
+          convertedAt: null,
+        },
+        include: { customer: true, estimate: true },
+        orderBy: { declinedAt: 'asc' },
+      });
+      expect(result).toEqual(candidates);
+    });
+
+    it('should calculate date cutoff correctly for 14 days', async () => {
+      prisma.declinedService.findMany.mockResolvedValue([]);
+
+      const beforeCall = new Date();
+      beforeCall.setDate(beforeCall.getDate() - 14);
+
+      await service.getFollowUpCandidates(TENANT_ID, 14);
+
+      const afterCall = new Date();
+      afterCall.setDate(afterCall.getDate() - 14);
+
+      const callArgs = prisma.declinedService.findMany.mock.calls[0][0];
+      const cutoff = (callArgs.where as any).declinedAt.lte;
+
+      expect(cutoff.getTime()).toBeLessThanOrEqual(beforeCall.getTime());
+      expect(cutoff.getTime()).toBeGreaterThanOrEqual(afterCall.getTime());
+    });
   });
 
   // ─── markFollowUpSent ───
@@ -254,11 +395,19 @@ describe('DeclinedServiceService', () => {
     it('should mark follow-up as sent', async () => {
       const record = mockDeclinedService();
       prisma.declinedService.findFirst.mockResolvedValue(record);
-      const updated = { ...record, followUpSentAt: new Date(), followUpCount: 1 };
+      const updated = {
+        ...record,
+        followUpSentAt: new Date(),
+        followUpCount: 1,
+        followUpCampaignId: 'camp-001',
+      };
       prisma.declinedService.update.mockResolvedValue(updated);
 
       const result = await service.markFollowUpSent(TENANT_ID, 'ds-uuid-001', 'camp-001');
 
+      expect(prisma.declinedService.findFirst).toHaveBeenCalledWith({
+        where: { id: 'ds-uuid-001', tenantId: TENANT_ID },
+      });
       expect(prisma.declinedService.update).toHaveBeenCalledWith({
         where: { id: 'ds-uuid-001' },
         data: {
@@ -269,6 +418,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(updated);
+      expect(result.followUpCount).toBe(1);
+      expect(result.followUpCampaignId).toBe('camp-001');
     });
 
     it('should keep existing campaignId if not provided', async () => {
@@ -294,6 +445,34 @@ describe('DeclinedServiceService', () => {
         NotFoundException,
       );
     });
+
+    it('should verify tenantId isolation on findFirst', async () => {
+      const record = mockDeclinedService();
+      prisma.declinedService.findFirst.mockResolvedValue(record);
+      prisma.declinedService.update.mockResolvedValue(record);
+
+      await service.markFollowUpSent(TENANT_ID, 'ds-uuid-001');
+
+      expect(prisma.declinedService.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: TENANT_ID }),
+        }),
+      );
+    });
+
+    it('should reject with correct error message', async () => {
+      prisma.declinedService.findFirst.mockResolvedValue(null);
+
+      try {
+        await service.markFollowUpSent(TENANT_ID, 'nonexistent-id');
+        fail('should have thrown NotFoundException');
+      } catch (error) {
+        expect(error).toBeInstanceOf(NotFoundException);
+        const typedError = error as NotFoundException;
+        expect(typedError.message).toContain('Servizio rifiutato');
+        expect(typedError.message).toContain('nonexistent-id');
+      }
+    });
   });
 
   // ─── markConverted ───
@@ -310,6 +489,9 @@ describe('DeclinedServiceService', () => {
 
       const result = await service.markConverted(TENANT_ID, 'ds-uuid-001', 'booking-001');
 
+      expect(prisma.declinedService.findFirst).toHaveBeenCalledWith({
+        where: { id: 'ds-uuid-001', tenantId: TENANT_ID },
+      });
       expect(prisma.declinedService.update).toHaveBeenCalledWith({
         where: { id: 'ds-uuid-001' },
         data: {
@@ -319,6 +501,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(updated);
+      expect(result.convertedBookingId).toBe('booking-001');
+      expect(result.convertedAt).toBeDefined();
     });
 
     it('should throw NotFoundException if record not found', async () => {
@@ -327,6 +511,35 @@ describe('DeclinedServiceService', () => {
       await expect(service.markConverted(TENANT_ID, 'nonexistent', 'booking-001')).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('should verify tenantId isolation on conversion', async () => {
+      const record = mockDeclinedService();
+      prisma.declinedService.findFirst.mockResolvedValue(record);
+      const updated = { ...record, convertedAt: new Date(), convertedBookingId: 'booking-001' };
+      prisma.declinedService.update.mockResolvedValue(updated);
+
+      await service.markConverted(TENANT_ID, 'ds-uuid-001', 'booking-001');
+
+      expect(prisma.declinedService.findFirst).toHaveBeenCalledWith({
+        where: { id: 'ds-uuid-001', tenantId: TENANT_ID },
+      });
+    });
+
+    it('should include customer and estimate in response', async () => {
+      const record = mockDeclinedService();
+      prisma.declinedService.findFirst.mockResolvedValue(record);
+      const updated = { ...record, convertedAt: new Date(), convertedBookingId: 'booking-001' };
+      prisma.declinedService.update.mockResolvedValue(updated);
+
+      const result = await service.markConverted(TENANT_ID, 'ds-uuid-001', 'booking-001');
+
+      expect(prisma.declinedService.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: { customer: true, estimate: true },
+        }),
+      );
+      expect(result).toEqual(updated);
     });
   });
 
@@ -382,6 +595,39 @@ describe('DeclinedServiceService', () => {
       expect(prisma.declinedService.count).toHaveBeenNthCalledWith(3, {
         where: { tenantId: TENANT_ID, convertedAt: { not: null } },
       });
+    });
+
+    it('should calculate conversion rate as percentage with 2 decimals', async () => {
+      prisma.declinedService.count
+        .mockResolvedValueOnce(200) // total
+        .mockResolvedValueOnce(80) // pendingFollowUp
+        .mockResolvedValueOnce(33); // converted
+
+      const result = await service.getStats(TENANT_ID);
+
+      expect(result.conversionRate).toBe(16.5);
+    });
+
+    it('should round conversion rate correctly', async () => {
+      prisma.declinedService.count
+        .mockResolvedValueOnce(300) // total
+        .mockResolvedValueOnce(100) // pendingFollowUp
+        .mockResolvedValueOnce(99); // converted
+
+      const result = await service.getStats(TENANT_ID);
+
+      expect(result.conversionRate).toBe(33);
+    });
+
+    it('should execute all three count queries in parallel', async () => {
+      prisma.declinedService.count
+        .mockResolvedValueOnce(100)
+        .mockResolvedValueOnce(60)
+        .mockResolvedValueOnce(25);
+
+      await service.getStats(TENANT_ID);
+
+      expect(prisma.declinedService.count).toHaveBeenCalledTimes(3);
     });
   });
 });

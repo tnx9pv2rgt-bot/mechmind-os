@@ -38,8 +38,22 @@ bash .claude/scripts/TUTTI.sh       # tutti gli script
 
 ## OUTPUT
 - Vietati: "Sure!", "I'll help", riepiloghi post-task. Usa: ✅ / ❌ / ⚠️.
-- Haiku: grep/find/analisi coverage. Sonnet: scrittura test/codice. Opus: review sicurezza/architettura.
 - Batch paralleli su moduli indipendenti: `isolation: "worktree"`. `/compact` ogni 20 min.
+
+## MODEL ROUTING (obbligatorio nei subagenti)
+Specifica SEMPRE `model:` nei tool call `Agent(...)`. Cascading: cheap first, scala solo se necessario.
+
+| Model | Quando usarlo | Esempi task |
+|-------|--------------|-------------|
+| `haiku` | Retrieve, parsing, ricerca, analisi | grep, find, lettura file, analisi coverage, esplorazione codebase |
+| `sonnet` | Tool use agentico, scrittura codice | test, fix bug, nuove feature, refactor |
+| `opus` | Ragionamento multi-step critico | review sicurezza, architettura, decisioni irreversibili |
+
+**Regola pratica:**
+- Subagent tipo `Explore` → `model: "haiku"`
+- Subagent tipo `general-purpose` per ricerca → `model: "haiku"`
+- Subagent per scrittura test/codice → `model: "sonnet"` (default)
+- Subagent `code-reviewer` / security → `model: "opus"`
 
 ## SPOF CRITICI
 - tenantId mancante → data leak GDPR (OWASP A01)

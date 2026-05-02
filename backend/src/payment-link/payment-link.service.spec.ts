@@ -245,6 +245,34 @@ describe('PaymentLinkService', () => {
 
       expect(result.tenantName).toBe('Officina');
     });
+
+    it('should return null dueDate when invoice has no dueDate (branch coverage)', async () => {
+      const invoiceNoDueDate = mockInvoice({
+        paymentLinkId: 'cs_test_123',
+        dueDate: null,
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoiceNoDueDate);
+      prisma.tenant.findUnique.mockResolvedValue({ id: TENANT_ID, name: 'AutoService Roma' });
+
+      const result = await service.resolvePaymentToken('cs_test_123');
+
+      expect(result.dueDate).toBeNull();
+    });
+
+    it('should return ISO formatted dueDate when invoice has dueDate', async () => {
+      const dueDateObj = new Date('2026-05-31T23:59:59Z');
+      const invoiceWithDueDate = mockInvoice({
+        paymentLinkId: 'cs_test_123',
+        dueDate: dueDateObj,
+      });
+      prisma.invoice.findFirst.mockResolvedValue(invoiceWithDueDate);
+      prisma.tenant.findUnique.mockResolvedValue({ id: TENANT_ID, name: 'AutoService Roma' });
+
+      const result = await service.resolvePaymentToken('cs_test_123');
+
+      expect(result.dueDate).toBe(dueDateObj.toISOString());
+      expect(result.dueDate).toMatch(/\d{4}-\d{2}-\d{2}T/);
+    });
   });
 
   // ─── TIER_1 SECURITY: Stripe Checkout Session Creation & Error Handling ───
@@ -534,10 +562,90 @@ describe('PaymentLinkService', () => {
       // Payment link service doesn't handle webhooks directly, but documents pattern
       expect(service['stripe']).toBeNull();
     });
+
+    it('should initialize Stripe client when STRIPE_SECRET_KEY is provided', async () => {
+      config.get.mockImplementation((key: string, fallback?: string) => {
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_real_key';
+        if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+        return fallback;
+      });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: config },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      expect(svcWithStripe['stripe']).not.toBeNull();
+    });
+
+    it('should set stripe to null when STRIPE_SECRET_KEY is empty string', async () => {
+      config.get.mockImplementation((key: string, fallback?: string) => {
+        if (key === 'STRIPE_SECRET_KEY') return '';
+        if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+        return fallback;
+      });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: config },
+        ],
+      }).compile();
+
+      const svcWithEmptyKey = module.get(PaymentLinkService);
+      expect(svcWithEmptyKey['stripe']).toBeNull();
+    });
   });
 
   // ─── Complete Payment Link Creation Workflow (Stripe + Notification) ───
   describe('[TIER_1] Complete Workflow - createPaymentLink with Notification', () => {
+    it('should handle all channel types: SMS, WHATSAPP, EMAIL', async () => {
+      config.get.mockImplementation((key: string, fallback?: string) => {
+        if (key === 'STRIPE_SECRET_KEY') return 'sk_test_fake';
+        if (key === 'FRONTEND_URL') return 'https://app.mechmind.io';
+        return fallback;
+      });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          PaymentLinkService,
+          { provide: PrismaService, useValue: prisma },
+          { provide: ConfigService, useValue: config },
+        ],
+      }).compile();
+
+      const svcWithStripe = module.get(PaymentLinkService);
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValue(invoice);
+
+      jest.spyOn(svcWithStripe['stripe']!.checkout.sessions, 'create').mockResolvedValue({
+        id: 'cs_test_123',
+        url: 'https://checkout.stripe.com/pay/test',
+      } as any);
+
+      // Test SMS
+      prisma.invoice.update.mockResolvedValueOnce(invoice);
+      await svcWithStripe.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'SMS');
+      expect(prisma.invoice.update).toHaveBeenCalled();
+
+      // Reset for WHATSAPP
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+      prisma.invoice.update.mockResolvedValueOnce(invoice);
+      await svcWithStripe.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'WHATSAPP');
+
+      // Reset for EMAIL
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+      prisma.invoice.update.mockResolvedValueOnce(invoice);
+      await svcWithStripe.createPaymentLink(TENANT_ID, 'inv-uuid-001', 'EMAIL');
+
+      expect(prisma.invoice.update).toHaveBeenCalledTimes(3);
+    });
+
     it('should create Stripe checkout and dispatch notification for SMS channel', async () => {
       config.get.mockImplementation((key: string, fallback?: string) => {
         if (key === 'STRIPE_SECRET_KEY') return 'sk_test_fake';
@@ -1165,6 +1273,65 @@ describe('PaymentLinkService', () => {
         // For test, verify Stripe is imported and no competing imports
         expect(service).toBeDefined();
       }).not.toThrow();
+    });
+  });
+
+  describe('[BRANCH COVERAGE] resolvePaymentToken - Tenant Name Fallback', () => {
+    it('should use "Officina" fallback when tenant is null', async () => {
+      const invoice = mockInvoice({ paymentLinkId: 'cs_test_token' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+      prisma.tenant.findUnique.mockResolvedValueOnce(null);
+
+      const result = await service.resolvePaymentToken('cs_test_token');
+
+      expect(result.tenantName).toBe('Officina');
+      expect(prisma.tenant.findUnique).toHaveBeenCalledWith({ where: { id: TENANT_ID } });
+    });
+
+    it('should use tenant.name when tenant exists', async () => {
+      const invoice = mockInvoice({ paymentLinkId: 'cs_test_token', tenantId: TENANT_ID });
+      const tenant = { id: TENANT_ID, name: 'Officina Rossi' };
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+      prisma.tenant.findUnique.mockResolvedValueOnce(tenant);
+
+      const result = await service.resolvePaymentToken('cs_test_token');
+
+      expect(result.tenantName).toBe('Officina Rossi');
+    });
+  });
+
+  describe('[BRANCH COVERAGE] dispatchNotification - Return Value', () => {
+    it('should return true from dispatchNotification', async () => {
+      const invoice = mockInvoice();
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+      prisma.invoice.update.mockResolvedValueOnce(invoice);
+
+      const result = await service.createPaymentLink(TENANT_ID, 'inv-001', 'SMS');
+
+      expect(result.sent).toBe(true);
+    });
+  });
+
+  describe('[BRANCH COVERAGE] getPaymentStatus - Null paidAt', () => {
+    it('should return null paidAt when invoice not paid', async () => {
+      const invoice = mockInvoice({ paidAt: null, status: 'SENT' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+
+      const result = await service.getPaymentStatus(TENANT_ID, 'inv-001');
+
+      expect(result.paidAt).toBeNull();
+      expect(result.status).toBe('SENT');
+    });
+
+    it('should return paidAt date when invoice is paid', async () => {
+      const paidDate = new Date('2026-04-24T10:30:00Z');
+      const invoice = mockInvoice({ paidAt: paidDate, status: 'PAID' });
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
+
+      const result = await service.getPaymentStatus(TENANT_ID, 'inv-001');
+
+      expect(result.paidAt).toEqual(paidDate);
+      expect(result.status).toBe('PAID');
     });
   });
 });

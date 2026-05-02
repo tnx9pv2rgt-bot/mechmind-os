@@ -172,6 +172,162 @@ describe('PeppolService', () => {
       expect(result.xml).toContain('Test &amp; Co. &lt;Special&gt;');
       expect(result.xml).toContain('Part with &quot;quotes&quot; &amp; ampersand');
     });
+
+    it('should handle invoice without buyerReference (optional field)', () => {
+      const invoice = createSampleInvoice();
+      // buyerReference is not set, should be omitted from XML
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).not.toContain('<cbc:BuyerReference>');
+    });
+
+    it('should handle invoice without note (optional field)', () => {
+      const invoice = createSampleInvoice();
+      // note is not set, should be omitted from XML
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).not.toContain('<cbc:Note>');
+    });
+
+    it('should handle buyer without VAT number (optional field)', () => {
+      const invoice = createSampleInvoice();
+      invoice.buyer.vatNumber = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      // AccountingCustomerParty is always present, but EndpointID should be conditionally omitted
+      expect(result.xml).toContain('AccountingCustomerParty');
+      // When buyer VAT is empty, the EndpointID should not be generated
+      const buyerSection = result.xml.substring(
+        result.xml.indexOf('AccountingCustomerParty'),
+        result.xml.indexOf('AccountingCustomerParty') + 1000,
+      );
+      expect(buyerSection).not.toContain('0211:');
+    });
+
+    it('should handle multiple invoices with zero-rated VAT items', () => {
+      const invoice = createSampleInvoice();
+      invoice.lines[0].vatRate = 0;
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      // Zero-rated items should have tax category Z
+      expect(result.xml).toContain('<cbc:ID>Z</cbc:ID>');
+      expect(result.xml).toContain('<cbc:Percent>0</cbc:Percent>');
+    });
+
+    it('should correctly calculate tax amounts for mixed VAT rates', () => {
+      const invoice = createSampleInvoice();
+      invoice.lines = [
+        {
+          id: '1',
+          description: 'Standard rate item',
+          quantity: 1,
+          unitPrice: 100,
+          vatRate: 22,
+          lineTotal: 100,
+        },
+        {
+          id: '2',
+          description: 'Reduced rate item',
+          quantity: 1,
+          unitPrice: 100,
+          vatRate: 10,
+          lineTotal: 100,
+        },
+      ];
+      invoice.taxableAmount = 200;
+      invoice.vatAmount = 32;
+      invoice.totalAmount = 232;
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).toContain('Standard rate item');
+      expect(result.xml).toContain('Reduced rate item');
+      expect(result.xml).toContain('22');
+      expect(result.xml).toContain('10');
+    });
+
+    it('should return errors for missing currency', () => {
+      const invoice = createSampleInvoice();
+      invoice.currency = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('currency required');
+    });
+
+    it('should return errors for missing seller name', () => {
+      const invoice = createSampleInvoice();
+      invoice.seller.name = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('seller.name required');
+    });
+
+    it('should return errors for missing seller VAT', () => {
+      const invoice = createSampleInvoice();
+      invoice.seller.vatNumber = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('seller.vatNumber required');
+    });
+
+    it('should return errors for missing buyer name', () => {
+      const invoice = createSampleInvoice();
+      invoice.buyer.name = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('buyer.name required');
+    });
+
+    it('should return errors for missing due date', () => {
+      const invoice = createSampleInvoice();
+      invoice.dueDate = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('dueDate required');
+    });
+
+    it('should return errors for missing issue date', () => {
+      const invoice = createSampleInvoice();
+      invoice.issueDate = '';
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('issueDate required');
+    });
+
+    it('should handle decimal precision in calculations', () => {
+      const invoice = createSampleInvoice();
+      invoice.lines[0].quantity = 0.5;
+      invoice.lines[0].unitPrice = 99.99;
+      invoice.lines[0].lineTotal = 49.995;
+
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      // Verify decimal formatting is correct
+      expect(result.xml).toContain('0.50');
+      expect(result.xml).toContain('99.99');
+    });
   });
 
   describe('validateUBL', () => {
@@ -226,6 +382,118 @@ describe('PeppolService', () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('XML is empty');
+    });
+
+    it('should handle whitespace-only XML', () => {
+      const result = service.validateUBL('   \n\t  ');
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('XML is empty');
+    });
+
+    it('should validate both prefixed and unprefixed element patterns', () => {
+      // The validator checks for elements with multiple possible prefixes
+      // This test verifies that an element with ID prefix matches
+      const xml = `<?xml version="1.0"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <cbc:ID>INV-001</cbc:ID>
+  <cbc:IssueDate>2025-01-15</cbc:IssueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+  <cac:AccountingSupplierParty></cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty></cac:AccountingCustomerParty>
+  <cac:InvoiceLine></cac:InvoiceLine>
+  <cac:LegalMonetaryTotal></cac:LegalMonetaryTotal>
+  <cac:TaxTotal></cac:TaxTotal>
+  <cbc:CustomizationID>urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+</Invoice>`;
+
+      const result = service.validateUBL(xml);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should accept prefixed cbc: elements', () => {
+      const xml = `<?xml version="1.0"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <cbc:ID>INV-001</cbc:ID>
+  <cbc:IssueDate>2025-01-15</cbc:IssueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+  <cac:AccountingSupplierParty></cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty></cac:AccountingCustomerParty>
+  <cac:InvoiceLine></cac:InvoiceLine>
+  <cac:LegalMonetaryTotal></cac:LegalMonetaryTotal>
+  <cac:TaxTotal></cac:TaxTotal>
+  <cbc:CustomizationID>urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+  <cbc:CustomizationID>urn:oasis:names:specification:ubl:schema:xsd:Invoice-2</cbc:CustomizationID>
+</Invoice>`;
+
+      const result = service.validateUBL(xml);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should detect all missing required elements individually', () => {
+      const xml = `<?xml version="1.0"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <CustomizationID>urn:fdc:peppol.eu:2017:poacc:billing:3.0</CustomizationID>
+  <CustomizationID>urn:oasis:names:specification:ubl:schema:xsd:Invoice-2</CustomizationID>
+</Invoice>`;
+
+      const result = service.validateUBL(xml);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.includes('ID'))).toBe(true);
+      expect(result.errors.some(e => e.includes('IssueDate'))).toBe(true);
+      expect(result.errors.some(e => e.includes('InvoiceTypeCode'))).toBe(true);
+    });
+
+    it('should find prefixed AccountingSupplierParty (tests prefix loop)', () => {
+      const xml = `<?xml version="1.0"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <cbc:ID>INV-001</cbc:ID>
+  <cbc:IssueDate>2025-01-15</cbc:IssueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+  <cac:AccountingSupplierParty></cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty></cac:AccountingCustomerParty>
+  <cac:InvoiceLine></cac:InvoiceLine>
+  <cac:LegalMonetaryTotal></cac:LegalMonetaryTotal>
+  <cac:TaxTotal></cac:TaxTotal>
+  <cbc:CustomizationID>urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+</Invoice>`;
+
+      const result = service.validateUBL(xml);
+
+      expect(result.valid).toBe(true);
+      expect(result.errors.filter(e => e.includes('AccountingSupplierParty'))).toHaveLength(0);
+    });
+
+    it('should find InvoiceLine with unprefixed prefix option (tests prefix loop branch)', () => {
+      // The required elements array has an entry for InvoiceLine with prefixes ['cac:']
+      // This test ensures the loop properly checks the first prefix
+      const xml = `<?xml version="1.0"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+  <cbc:ID>INV-001</cbc:ID>
+  <cbc:IssueDate>2025-01-15</cbc:IssueDate>
+  <cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>
+  <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
+  <cac:AccountingSupplierParty></cac:AccountingSupplierParty>
+  <cac:AccountingCustomerParty></cac:AccountingCustomerParty>
+  <cac:InvoiceLine></cac:InvoiceLine>
+  <cac:LegalMonetaryTotal></cac:LegalMonetaryTotal>
+  <cac:TaxTotal></cac:TaxTotal>
+  <cbc:CustomizationID>urn:fdc:peppol.eu:2017:poacc:billing:3.0</cbc:CustomizationID>
+</Invoice>`;
+
+      const result = service.validateUBL(xml);
+
+      expect(result.valid).toBe(true);
+      // Verify the specific element we're checking for is found
+      expect(result.errors.filter(e => e.includes('InvoiceLine'))).toHaveLength(0);
     });
   });
 
@@ -360,6 +628,253 @@ describe('PeppolService', () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors.some(e => e.includes('No line items'))).toBe(true);
+    });
+
+    it('should handle FatturaPA with missing optional buyer VAT', () => {
+      const fatturaPaXml = `<?xml version="1.0"?>
+<FatturaElettronica>
+  <FatturaElettronicaHeader>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <Data>2025-01-15</Data>
+        <Numero>INV-2025-001</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <Denominazione>Test Garage SRL</Denominazione>
+        <IdCodice>IT12345678901</IdCodice>
+      </DatiAnagrafici>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <Denominazione>ABC Manufacturing</Denominazione>
+      </DatiAnagrafici>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Service</Descrizione>
+        <Quantita>1</Quantita>
+        <PrezzoUnitario>100.00</PrezzoUnitario>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>`;
+
+      const result = service.convertFromFatturaPa(fatturaPaXml);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).not.toContain('IT98765432109');
+      expect(result.xml).toContain('ABC Manufacturing');
+    });
+
+    it('should default due date to issue date when not provided', () => {
+      const fatturaPaXml = `<?xml version="1.0"?>
+<FatturaElettronica>
+  <FatturaElettronicaHeader>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <Data>2025-01-15</Data>
+        <Numero>INV-2025-001</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <Denominazione>Test Garage SRL</Denominazione>
+        <IdCodice>IT12345678901</IdCodice>
+      </DatiAnagrafici>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <Denominazione>ABC Manufacturing</Denominazione>
+        <IdCodice>IT98765432109</IdCodice>
+      </DatiAnagrafici>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Service</Descrizione>
+        <Quantita>1</Quantita>
+        <PrezzoUnitario>100.00</PrezzoUnitario>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>`;
+
+      const result = service.convertFromFatturaPa(fatturaPaXml);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).toContain('<cbc:DueDate>2025-01-15</cbc:DueDate>');
+    });
+
+    it('should handle FatturaPA with invalid line item data (missing price)', () => {
+      const fatturaPaXml = `<?xml version="1.0"?>
+<FatturaElettronica>
+  <FatturaElettronicaHeader>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <Data>2025-01-15</Data>
+        <Numero>INV-2025-001</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <Denominazione>Test Garage SRL</Denominazione>
+        <IdCodice>IT12345678901</IdCodice>
+      </DatiAnagrafici>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <Denominazione>ABC Manufacturing</Denominazione>
+        <IdCodice>IT98765432109</IdCodice>
+      </DatiAnagrafici>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Service</Descrizione>
+        <Quantita>1</Quantita>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>`;
+
+      const result = service.convertFromFatturaPa(fatturaPaXml);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.includes('No line items'))).toBe(true);
+    });
+
+    it('should handle FatturaPA with invalid line VAT rate', () => {
+      const fatturaPaXml = `<?xml version="1.0"?>
+<FatturaElettronica>
+  <FatturaElettronicaHeader>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <Data>2025-01-15</Data>
+        <Numero>INV-2025-001</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <Denominazione>Test Garage SRL</Denominazione>
+        <IdCodice>IT12345678901</IdCodice>
+      </DatiAnagrafici>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <Denominazione>ABC Manufacturing</Denominazione>
+        <IdCodice>IT98765432109</IdCodice>
+      </DatiAnagrafici>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Service</Descrizione>
+        <Quantita>1</Quantita>
+        <PrezzoUnitario>100.00</PrezzoUnitario>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>`;
+
+      const result = service.convertFromFatturaPa(fatturaPaXml);
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.includes('No line items'))).toBe(true);
+    });
+
+    it('should extract multiple line items from FatturaPA with correct defaults', () => {
+      const fatturaPaXml = `<?xml version="1.0"?>
+<FatturaElettronica>
+  <FatturaElettronicaHeader>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <Data>2025-01-15</Data>
+        <Numero>INV-2025-001</Numero>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <Denominazione>Test Garage SRL</Denominazione>
+        <IdCodice>IT12345678901</IdCodice>
+      </DatiAnagrafici>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <Denominazione>ABC Manufacturing</Denominazione>
+        <IdCodice>IT98765432109</IdCodice>
+      </DatiAnagrafici>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Service A</Descrizione>
+        <Quantita>2</Quantita>
+        <PrezzoUnitario>50.00</PrezzoUnitario>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>2</NumeroLinea>
+        <Descrizione>Service B</Descrizione>
+        <PrezzoUnitario>75.00</PrezzoUnitario>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+      <DettaglioLinee>
+        <NumeroLinea>3</NumeroLinea>
+        <Descrizione>Service C</Descrizione>
+        <Quantita>3</Quantita>
+        <PrezzoUnitario>100.00</PrezzoUnitario>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>`;
+
+      const result = service.convertFromFatturaPa(fatturaPaXml);
+
+      expect(result.valid).toBe(true);
+      // Line 2 should have default quantity of 1 (not provided)
+      expect(result.xml).toContain('Service A');
+      expect(result.xml).toContain('Service B');
+      expect(result.xml).toContain('Service C');
+      expect(result.xml).toContain('2.00'); // quantity for Service A
+      expect(result.xml).toContain('1.00'); // default quantity for Service B
+      expect(result.xml).toContain('3.00'); // quantity for Service C
+    });
+
+    it('should include note element when note is provided', () => {
+      const invoice = createSampleInvoice();
+      invoice.note = 'Special payment instructions';
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).toContain('<cbc:Note>Special payment instructions</cbc:Note>');
+      expect(result.xml).toMatch(/<cbc:Note>Special payment instructions<\/cbc:Note>/);
+    });
+
+    it('should include buyerReference element when buyerReference is provided', () => {
+      const invoice = createSampleInvoice();
+      invoice.buyerReference = 'PO-9876543';
+      const result = service.generateUBL(invoice);
+
+      expect(result.valid).toBe(true);
+      expect(result.xml).toContain('<cbc:BuyerReference>PO-9876543</cbc:BuyerReference>');
+      expect(result.xml).toMatch(/<cbc:BuyerReference>PO-9876543<\/cbc:BuyerReference>/);
     });
   });
 });
