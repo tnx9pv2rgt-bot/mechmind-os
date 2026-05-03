@@ -7,7 +7,7 @@
     "postinstall": "echo 'No prisma generate needed - frontend uses backend API only'",
     "dev": "NODE_OPTIONS=--max-old-space-size=2048 next dev --turbo",
     "dev:turbo": "next dev --turbo",
-    "build": "next build --no-lint",
+    "build": "next build",
     "build:analyze": "ANALYZE=true next build && node scripts/analyze-bundle.js",
     "start": "next start",
     "lint": "next lint",
