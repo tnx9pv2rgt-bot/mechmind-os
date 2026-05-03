@@ -24,12 +24,9 @@ const nextConfig = {
     ],
   },
 
-  // TypeScript and ESLint handling
+  // TypeScript handling
   typescript: {
     ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: true, // TODO: fix frontend lint errors then set to false
   },
 
   // Packages that should not be bundled (run in Node.js runtime only)
@@ -217,19 +214,9 @@ const nextConfig = {
           },
         ],
       },
-      // Static assets - Long cache in production, no cache in dev
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value:
-              process.env.NODE_ENV === 'production'
-                ? 'public, max-age=31536000, immutable'
-                : 'no-store, must-revalidate',
-          },
-        ],
-      },
+      // NOTE: /_next/static Cache-Control intentionally omitted — Vercel manages
+      // immutable caching for static assets automatically (custom header overrides
+      // break Vercel's CDN layer and generate a build warning).
       // Service Worker — MAI cachare, il browser deve sempre verificare
       {
         source: '/sw.js',

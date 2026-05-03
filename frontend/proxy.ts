@@ -63,6 +63,11 @@ export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // =========================================================================
+  // CSP nonce — generated per-request for script-src strict-dynamic
+  // =========================================================================
+  const nonce = btoa(crypto.randomUUID());
+
+  // =========================================================================
   // i18n — Set locale cookie (no URL prefix — pages live at /dashboard, not /it/dashboard)
   // =========================================================================
   const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
@@ -84,6 +89,21 @@ export function middleware(request: NextRequest): NextResponse {
   // =========================================================================
   // Security headers
   // =========================================================================
+  const csp = [
+    "default-src 'self'",
+    `script-src 'nonce-${nonce}' 'strict-dynamic'`,
+    `style-src 'nonce-${nonce}' 'unsafe-inline'`,
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https: wss:",
+    "media-src 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+  response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('x-nonce', nonce);
   response.headers.set('X-DNS-Prefetch-Control', 'on');
   if (process.env.NODE_ENV === 'production') {
     response.headers.set(
