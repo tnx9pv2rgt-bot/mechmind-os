@@ -59,7 +59,7 @@ function isPortalPath(pathname: string): boolean {
 // Main Middleware — Edge-compatible (NO Prisma, NO Node.js APIs)
 // =============================================================================
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // =========================================================================
