@@ -3,16 +3,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
 
-// next-intl configuration (will be activated once npm install next-intl is successful)
-let withNextIntl = (config) => config;
-try {
-  const createNextIntlPlugin = require('next-intl/plugin');
-  withNextIntl = createNextIntlPlugin('./i18n/config.ts');
-} catch (error) {
-  // next-intl not installed yet — plugin will be loaded after npm install
-  console.warn('⚠️  next-intl not installed. Run: npm install next-intl');
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for non-Vercel hosting (Render, Docker)
@@ -42,13 +32,10 @@ const nextConfig = {
     ignoreDuringBuilds: true, // TODO: fix frontend lint errors then set to false
   },
 
-  // Experimental features
-  // SWC minifier — faster and smaller output than Terser
-  swcMinify: true,
+  // Packages that should not be bundled (run in Node.js runtime only)
+  serverExternalPackages: ['@prisma/client', 'prisma'],
 
   experimental: {
-    instrumentationHook: true,
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
@@ -148,7 +135,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com blob:",
-              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
+              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com https://*.sentry.io https://sentry.io http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
               "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
               "media-src 'self'",
               "object-src 'none'",
@@ -202,6 +189,13 @@ const nextConfig = {
               'accelerometer=()',
               'fullscreen=(self)',
             ].join(', '),
+          },
+          // OWASP ASVS 5.0 V14.4 — COOP isolates browsing context from cross-origin windows.
+          // same-origin-allow-popups preserves Google OAuth popup flow (COEP skipped: breaks
+          // third-party iframes — Stripe, Google OAuth — not worth the tradeoff).
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
           },
         ],
       },
@@ -318,7 +312,7 @@ const nextConfig = {
   },
 };
 
-module.exports = withSentryConfig(withBundleAnalyzer(withNextIntl(nextConfig)), {
+module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
   silent: true,
   org: process.env.SENTRY_ORG || '',
   project: process.env.SENTRY_PROJECT || '',
