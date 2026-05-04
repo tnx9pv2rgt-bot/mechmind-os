@@ -80,3 +80,5 @@ backend/.env.bak
 frontend/e2e-screenshots/
 backend/.jest-cache/
 .claude/settings.local.json
+.claude/scans/
+MANIFEST.md
