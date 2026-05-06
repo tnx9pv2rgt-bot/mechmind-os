@@ -65,6 +65,11 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
 
     // Rate limiting with in-memory storage (Upstash doesn't support Lua scripts)
     ThrottlerModule.forRoot({
+      skipIf: (context) => {
+        const req = context.switchToHttp()?.getRequest<{ path?: string }>();
+        const path = req?.path ?? '';
+        return path === '/health' || path === '/liveness' || path === '/readiness';
+      },
       throttlers: [
         { name: 'default', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 100 },
         { name: 'strict', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 5 },
