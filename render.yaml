@@ -44,7 +44,7 @@ services:
         fromService:
           name: nexo-redis
           type: redis
-          property: internalConnectionString
+          property: connectionString
 
   - type: web
     name: nexo-frontend
@@ -131,7 +131,7 @@ services:
         fromService:
           name: nexo-redis-staging
           type: redis
-          property: internalConnectionString
+          property: connectionString
 
   - type: web
     name: mechmind-frontend-staging
