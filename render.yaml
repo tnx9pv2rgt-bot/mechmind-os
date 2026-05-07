@@ -34,7 +34,7 @@ services:
         fromService:
           name: nexo-redis
           type: redis
-          property: internalConnectionString
+          property: connectionString
 
   - type: web
     name: nexo-frontend
