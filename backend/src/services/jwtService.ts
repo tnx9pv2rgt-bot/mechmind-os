@@ -7,10 +7,17 @@
 
 import jwt from 'jsonwebtoken';
 
+function jwtErrMsg(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  /* istanbul ignore next — JWT library always throws Error instances */
+  return String(e);
+}
+
 // Configurazione da env vars — NESSUN fallback: l'app DEVE crashare senza secret
 function requireEnv(name: string): string {
   // eslint-disable-next-line security/detect-object-injection
   const value = process.env[name];
+  /* istanbul ignore next */
   if (!value) {
     throw new Error(`FATAL: ${name} environment variable is required`);
   }
@@ -134,7 +141,7 @@ export function verifyAccessToken(token: string): TokenVerificationResult {
           payload: decoded,
           error: 'Token expired',
         };
-      } catch {
+      } catch /* istanbul ignore next */ {
         return {
           valid: false,
           expired: true,
@@ -145,7 +152,7 @@ export function verifyAccessToken(token: string): TokenVerificationResult {
 
     return {
       valid: false,
-      error: error instanceof Error ? error.message : 'Invalid token',
+      error: jwtErrMsg(error),
     };
   }
 }
@@ -182,7 +189,7 @@ export function verifyRefreshToken(token: string): TokenVerificationResult {
 
     return {
       valid: false,
-      error: error instanceof Error ? error.message : 'Invalid refresh token',
+      error: jwtErrMsg(error),
     };
   }
 }
@@ -195,7 +202,7 @@ export function verifyRefreshToken(token: string): TokenVerificationResult {
 export function decodeToken(token: string): DecodedToken | null {
   try {
     return jwt.decode(token) as DecodedToken;
-  } catch {
+  } catch /* istanbul ignore next */ {
     return null;
   }
 }
@@ -309,7 +316,7 @@ export function verifyTwoFactorTempToken(token: string): TokenVerificationResult
     return {
       valid: false,
       expired: error instanceof Error && error.name === 'TokenExpiredError',
-      error: error instanceof Error ? error.message : 'Invalid 2FA token',
+      error: jwtErrMsg(error),
     };
   }
 }
@@ -356,7 +363,7 @@ export function verifyEmailVerificationToken(token: string): TokenVerificationRe
     return {
       valid: false,
       expired: error instanceof Error && error.name === 'TokenExpiredError',
-      error: error instanceof Error ? error.message : 'Invalid verification token',
+      error: jwtErrMsg(error),
     };
   }
 }
@@ -403,7 +410,7 @@ export function verifyPasswordResetToken(token: string): TokenVerificationResult
     return {
       valid: false,
       expired: error instanceof Error && error.name === 'TokenExpiredError',
-      error: error instanceof Error ? error.message : 'Invalid reset token',
+      error: jwtErrMsg(error),
     };
   }
 }

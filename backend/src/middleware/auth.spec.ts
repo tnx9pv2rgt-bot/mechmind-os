@@ -498,4 +498,130 @@ describe('Auth Middleware', () => {
       expect(next).toHaveBeenCalledWith(err);
     });
   });
+
+  describe('auditLogMiddleware — coverage', () => {
+    it('should attach finish listener to response', () => {
+      const { req, res, next } = createMockReqResNext();
+      req.userId = 'user-123';
+      req.tenantId = 'tenant-abc';
+
+      auditLogMiddleware('CREATE')(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
+    });
+  });
+
+  describe('tenantCorsMiddleware — wildcard and branch coverage', () => {
+    it('should handle empty allowedOrigins array (allow all)', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://untrusted.com' },
+      } as Partial<Request>);
+
+      tenantCorsMiddleware([])(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.header).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://untrusted.com',
+      );
+    });
+
+    it('should reject unauthorized origin when allowedOrigins is non-empty', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://attacker.com' },
+      } as Partial<Request>);
+
+      tenantCorsMiddleware(['https://trusted.io', 'https://app.example.com'])(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should handle wildcard matching with suffix replacement', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://api.example.io' },
+      } as Partial<Request>);
+
+      tenantCorsMiddleware(['*.example.io'])(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.header).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://api.example.io',
+      );
+    });
+
+    it('should set CORS headers on successful origin match', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://app.example.com' },
+      } as Partial<Request>);
+
+      tenantCorsMiddleware(['https://app.example.com', 'https://admin.example.com'])(
+        req,
+        res,
+        next,
+      );
+
+      expect(res.header).toHaveBeenCalledWith(
+        'Access-Control-Allow-Origin',
+        'https://app.example.com',
+      );
+      expect(res.header).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
+      expect(res.header).toHaveBeenCalledWith(
+        'Access-Control-Allow-Methods',
+        expect.stringContaining('GET'),
+      );
+      expect(res.header).toHaveBeenCalledWith(
+        'Access-Control-Allow-Headers',
+        expect.stringContaining('Authorization'),
+      );
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should return 200 for OPTIONS preflight on allowed origin', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://trusted.io' },
+        method: 'OPTIONS',
+      } as Partial<Request>);
+
+      tenantCorsMiddleware(['https://trusted.io'])(req, res, next);
+
+      expect(res.sendStatus).toHaveBeenCalledWith(200);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should reject OPTIONS preflight on disallowed origin', () => {
+      const { req, res, next } = createMockReqResNext({
+        headers: { origin: 'https://evil.com' },
+        method: 'OPTIONS',
+      } as Partial<Request>);
+
+      tenantCorsMiddleware(['https://trusted.io'])(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('extractTokenFromHeader and extractTokenFromCookie — edge cases', () => {
+    it('should handle case-insensitive Bearer scheme', () => {
+      const req = { headers: { authorization: 'bearer token-123' } } as Request;
+      expect(extractTokenFromHeader(req)).toBe('token-123');
+    });
+
+    it('should handle mixed case Bearer', () => {
+      const req = { headers: { authorization: 'BeArEr token-456' } } as Request;
+      expect(extractTokenFromHeader(req)).toBe('token-456');
+    });
+
+    it('should extract from custom cookie when requested', () => {
+      const req = { cookies: { authToken: 'custom-cookie-token' } } as unknown as Request;
+      expect(extractTokenFromCookie(req, 'authToken')).toBe('custom-cookie-token');
+    });
+
+    it('should handle token extraction when accessToken cookie missing but other cookies present', () => {
+      const req = { cookies: { session: 'sid-123' } } as unknown as Request;
+      expect(extractTokenFromCookie(req)).toBeNull();
+    });
+  });
 });

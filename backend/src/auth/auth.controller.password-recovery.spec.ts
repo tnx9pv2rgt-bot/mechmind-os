@@ -42,6 +42,7 @@ describe('AuthController — Password Recovery & Phone Verification', () => {
           useValue: {
             verifyPassword: jest.fn(),
             hashPassword: jest.fn(),
+            checkBreachedPassword: jest.fn(),
             generateTwoFactorTempToken: jest.fn(),
             getUserWithTwoFactorStatus: jest.fn(),
             updateLastLogin: jest.fn(),
@@ -586,6 +587,85 @@ describe('AuthController — Password Recovery & Phone Verification', () => {
         where: { email: 'test@example.com' },
         select: { id: true },
       });
+    });
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3. changePassword() — HIBP (Have I Been Pwned) breach check
+  // ══════════════════════════════════════════════════════════════════════════
+
+  describe('changePassword() — HIBP breach check (NIST SP 800-63B)', () => {
+    it('3.1 should check breached password non-blocking (found in breach)', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: '$2b$10$old-hash',
+        tenantId: 'tenant-001',
+      });
+      authService.verifyPassword.mockResolvedValue(true);
+      authService.checkBreachedPassword.mockResolvedValueOnce(true); // Password is breached
+      authService.hashPassword.mockResolvedValue('$2b$10$new-hash');
+      prismaService.user.update.mockResolvedValue({ id: 'user-001' });
+
+      const result = await controller.changePassword(
+        mockUser as never,
+        {
+          currentPassword: 'OldPass123',
+          newPassword: 'Exposed123', // Hypothetically breached password
+        } as never,
+      );
+
+      // Non-blocking: password change succeeds even if breached
+      expect(result.success).toBe(true);
+      expect(authService.checkBreachedPassword).toHaveBeenCalledWith('Exposed123');
+      expect(prismaService.user.update).toHaveBeenCalled();
+    });
+
+    it('3.2 should allow password change when HIBP check passes (not breached)', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: '$2b$10$old-hash',
+        tenantId: 'tenant-001',
+      });
+      authService.verifyPassword.mockResolvedValue(true);
+      authService.checkBreachedPassword.mockResolvedValueOnce(false); // Password is NOT breached
+      authService.hashPassword.mockResolvedValue('$2b$10$new-hash');
+      prismaService.user.update.mockResolvedValue({ id: 'user-001' });
+
+      const result = await controller.changePassword(
+        mockUser as never,
+        {
+          currentPassword: 'OldPass123',
+          newPassword: 'SecureNewPass456',
+        } as never,
+      );
+
+      expect(result.success).toBe(true);
+      expect(authService.checkBreachedPassword).toHaveBeenCalledWith('SecureNewPass456');
+      expect(prismaService.user.update).toHaveBeenCalled();
+    });
+
+    it('3.3 should handle HIBP timeout gracefully (non-blocking)', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'user-001',
+        passwordHash: '$2b$10$old-hash',
+        tenantId: 'tenant-001',
+      });
+      authService.verifyPassword.mockResolvedValue(true);
+      authService.checkBreachedPassword.mockResolvedValueOnce(false); // Timeout returns false
+      authService.hashPassword.mockResolvedValue('$2b$10$new-hash');
+      prismaService.user.update.mockResolvedValue({ id: 'user-001' });
+
+      const result = await controller.changePassword(
+        mockUser as never,
+        {
+          currentPassword: 'OldPass123',
+          newPassword: 'AnyPassword123',
+        } as never,
+      );
+
+      // Non-blocking: password change succeeds even if HIBP check fails
+      expect(result.success).toBe(true);
+      expect(prismaService.user.update).toHaveBeenCalled();
     });
   });
 });

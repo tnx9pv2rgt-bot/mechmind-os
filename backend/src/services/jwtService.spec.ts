@@ -115,6 +115,17 @@ describe('jwtService', () => {
       expect(result.error).toBeDefined();
     });
 
+    it('should reject token with wrong type signed with same secret', () => {
+      // Token signed with JWT_SECRET but type='refresh' — hits the type check branch
+      const token = jwt.sign({ ...samplePayload, type: 'refresh' }, process.env.JWT_SECRET!, {
+        expiresIn: '15m',
+      });
+      const result = verifyAccessToken(token);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Token type mismatch');
+    });
+
     it('should handle expired token that cannot be decoded', () => {
       // Manually create a token with invalid payload that triggers decode failure in catch
       const token = jwt.sign({ ...samplePayload, type: 'access' }, process.env.JWT_SECRET!, {
@@ -165,6 +176,19 @@ describe('jwtService', () => {
       const result = verifyRefreshToken('garbage');
 
       expect(result.valid).toBe(false);
+    });
+
+    it('should reject token with wrong type signed with refresh secret', () => {
+      // Token signed with JWT_REFRESH_SECRET but type='access' — hits the type check branch
+      const token = jwt.sign(
+        { ...samplePayload, type: 'access' },
+        process.env.JWT_REFRESH_SECRET!,
+        { expiresIn: '7d' },
+      );
+      const result = verifyRefreshToken(token);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Token type mismatch');
     });
   });
 

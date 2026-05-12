@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as argon2 from 'argon2';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import { PrismaService } from '@common/services/prisma.service';
 import { LoggerService } from '@common/services/logger.service';
 import { MetricsService } from '@common/metrics/metrics.service';
@@ -652,6 +652,47 @@ export class AuthService {
       return argon2.verify(hash, password);
     }
     return bcrypt.compare(password, hash);
+  }
+
+  /**
+   * Check password against Have I Been Pwned database (NIST SP 800-63B).
+   * Non-blocking: returns false if check fails or times out.
+   * Uses k-anonymity API: sends only SHA1 prefix (first 5 chars).
+   */
+  async checkBreachedPassword(password: string): Promise<boolean> {
+    try {
+      const sha1Hash = createHash('sha1').update(password).digest('hex').toUpperCase();
+      const prefix = sha1Hash.slice(0, 5);
+      const suffix = sha1Hash.slice(5);
+
+      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+        method: 'GET',
+        headers: { 'Add-Padding': 'true', 'User-Agent': 'MechMind-OS' },
+        signal: AbortSignal.timeout(3000), // 3 second timeout
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`HIBP API returned ${response.status}, non-blocking bypass`);
+        return false; // Non-blocking: HIBP unavailable
+      }
+
+      const text = await response.text();
+      const lines = text.split('\r\n');
+
+      // Check if suffix appears in response
+      const found = lines.some(line => line.startsWith(suffix));
+
+      if (found) {
+        this.logger.warn(`Password found in HIBP breach database for user password change`);
+        return true; // Password is breached
+      }
+
+      return false; // Password not found in breached list
+    } catch (error) {
+      // Non-blocking: network errors, timeouts, etc.
+      this.logger.warn(`HIBP check failed (non-blocking): ${error}`);
+      return false;
+    }
   }
 
   /**

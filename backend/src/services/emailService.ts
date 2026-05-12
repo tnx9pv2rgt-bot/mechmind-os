@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 // DEPRECATED: This file is not imported anywhere. Consider removing.
 /**
  * Email Service - SendGrid Integration

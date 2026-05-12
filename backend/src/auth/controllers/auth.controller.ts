@@ -558,6 +558,14 @@ export class AuthController {
       throw new BadRequestException('La nuova password deve essere diversa dalla precedente');
     }
 
+    // Check if password appears in known breaches (NIST SP 800-63B)
+    // Non-blocking: warns but does not prevent password change
+    const isBreached = await this.authService.checkBreachedPassword(dto.newPassword);
+    if (isBreached) {
+      this.logger.warn(`User ${user.userId} attempted to use breached password`);
+      // Non-blocking: log the event but allow the change (user is informed via PasswordPolicyService)
+    }
+
     // Hash and update
     const newHash = await this.authService.hashPassword(dto.newPassword);
     await this.prisma.user.update({

@@ -375,7 +375,7 @@ describe('pivaService', () => {
           ragioneSociale: 'Old Company',
           indirizzo: 'Via Old',
           cap: '00100',
-          'città': 'Roma',
+          città: 'Roma',
           provincia: 'RM',
         },
         cachedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000), // 40 days ago

@@ -7,6 +7,7 @@
 
 import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -24,9 +25,11 @@ export class AiDiagnosticController {
   constructor(private readonly aiDiagnosticService: AiDiagnosticService) {}
 
   @Post('analyze-dtc')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Analizza codici DTC con IA' })
   @ApiResponse({ status: 201, description: 'Diagnosi DTC completata' })
+  @ApiResponse({ status: 429, description: 'Troppe richieste - rate limit superato' })
   async analyzeDtc(
     @CurrentUser('tenantId') tenantId: string,
     @Body() dto: AnalyzeDtcDto,
@@ -35,9 +38,11 @@ export class AiDiagnosticController {
   }
 
   @Post('analyze-symptoms')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.MECHANIC)
   @ApiOperation({ summary: 'Analizza sintomi in linguaggio naturale con IA' })
   @ApiResponse({ status: 201, description: 'Analisi sintomi completata' })
+  @ApiResponse({ status: 429, description: 'Troppe richieste - rate limit superato' })
   async analyzeSymptoms(
     @CurrentUser('tenantId') tenantId: string,
     @Body() dto: AnalyzeSymptomsDto,
