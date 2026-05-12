@@ -52,6 +52,7 @@ describe('AuthController', () => {
             logout: jest.fn().mockResolvedValue(undefined),
             verifyPassword: jest.fn(),
             hashPassword: jest.fn(),
+            checkBreachedPassword: jest.fn(),
           },
         },
         {
@@ -1307,6 +1308,7 @@ describe('AuthController', () => {
       const prismaService = module.get(PrismaService) as any;
       authService.verifyPassword.mockResolvedValue(true);
       authService.hashPassword.mockResolvedValue('newhash');
+      authService.checkBreachedPassword.mockResolvedValueOnce(false);
 
       prismaService.user.findUnique.mockResolvedValue({
         id: 'user-001',
@@ -1828,6 +1830,7 @@ describe('AuthController', () => {
       const prismaService = module.get(PrismaService) as any;
       authService.verifyPassword.mockResolvedValue(true);
       authService.hashPassword.mockResolvedValue('secure-newhash');
+      authService.checkBreachedPassword.mockResolvedValueOnce(false);
 
       prismaService.user.findUnique.mockResolvedValue({
         id: 'user-001',
@@ -2512,6 +2515,7 @@ describe('AuthController', () => {
       const prismaService = module.get(PrismaService) as any;
       authService.verifyPassword.mockResolvedValue(true);
       authService.hashPassword.mockResolvedValue('newhash');
+      authService.checkBreachedPassword.mockResolvedValueOnce(false);
 
       prismaService.user.findUnique.mockResolvedValue({
         id: 'user-001',
@@ -5592,6 +5596,7 @@ describe('AuthController', () => {
 
       authService.verifyPassword.mockResolvedValue(true);
       authService.hashPassword.mockResolvedValue('$2a$10$newHashedPassword');
+      authService.checkBreachedPassword.mockResolvedValueOnce(false);
       (prisma.user.update as jest.Mock).mockResolvedValue({
         id: 'user-001',
         passwordHash: '$2a$10$newHashedPassword',
