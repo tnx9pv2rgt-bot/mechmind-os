@@ -81,4 +81,5 @@ frontend/e2e-screenshots/
 backend/.jest-cache/
 .claude/settings.local.json
 .claude/scans/
+.claude/worktrees/
 MANIFEST.md
