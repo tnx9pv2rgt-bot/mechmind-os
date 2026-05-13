@@ -490,15 +490,15 @@ export class RentriService {
       data: {
         tenantId,
         action: 'EXPORT_AGENZIA_ENTRATE',
-        resourceType: 'WasteEntry',
-        resourceId: trackingId,
-        details: JSON.stringify({
+        tableName: 'WasteEntry',
+        recordId: trackingId,
+        newValues: JSON.stringify({
           codiceFiscale: payload.codiceFiscaleProduttore,
           quantita: payload.quantita,
           unitaMisura: payload.unitaMisura,
         }),
       },
-    } as any); // AuditLog model may not exist yet
+    });
 
     return { success: true, trackingId };
   }

@@ -319,6 +319,7 @@ describe('FatturaPA XML generation — unit tests (no SDI)', () => {
     // Documenta quali env vars sono necessarie (output su stderr per non inquinare test output)
     process.stderr.write('Variabili env per SDI sandbox:\n');
     envVars.forEach(v => {
+      // eslint-disable-next-line security/detect-object-injection
       const val = process.env[v];
       process.stderr.write(`  ${v}=${val ? '*** (configurato)' : '[NON CONFIGURATO]'}\n`);
     });

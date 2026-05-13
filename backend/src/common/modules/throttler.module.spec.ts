@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModuleOptions } from '@nestjs/throttler';
 import { RateLimitingModule } from './throttler.module';
 
 describe('RateLimitingModule', () => {
@@ -495,12 +495,14 @@ describe('RateLimitingModule', () => {
           {
             name: 'default',
             ttl: 60000,
+            // eslint-disable-next-line sonarjs/different-types-comparison
             limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 60 : 600,
           },
           { name: 'strict', ttl: 60000, limit: loadTest ? 100000 : 10 },
           {
             name: 'lenient',
             ttl: 60000,
+            // eslint-disable-next-line sonarjs/different-types-comparison
             limit: loadTest ? 100000 : process.env.NODE_ENV === 'production' ? 300 : 3000,
           },
         ],
@@ -553,6 +555,7 @@ describe('RateLimitingModule', () => {
 
       it('should evaluate missing LOAD_TEST as falsy', () => {
         delete process.env.LOAD_TEST;
+        // eslint-disable-next-line sonarjs/different-types-comparison
         const loadTest = process.env.LOAD_TEST === 'true';
         expect(loadTest).toBe(false);
       });

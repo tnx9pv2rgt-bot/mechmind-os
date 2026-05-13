@@ -1541,7 +1541,7 @@ describe('AuthService', () => {
       });
 
       // We'll use a password that hashes to a known HIBP response
-      const result = await service.checkBreachedPassword('password123');
+      await service.checkBreachedPassword('password123');
 
       // The test verifies that API was called and response parsed
       expect(mockFetch).toHaveBeenCalledWith(
