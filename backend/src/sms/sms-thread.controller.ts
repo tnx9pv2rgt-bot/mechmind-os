@@ -28,6 +28,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentTenant } from '../auth/decorators/current-user.decorator';
 import { SmsThreadService } from './sms-thread.service';
 import { SendSmsDto, InboundSmsDto } from './dto/sms.dto';
+import { RedisService } from '../common/services/redis.service';
 
 @ApiTags('SMS')
 @ApiBearerAuth()
@@ -106,6 +107,7 @@ export class SmsWebhookController {
   constructor(
     private readonly smsThreadService: SmsThreadService,
     private readonly configService: ConfigService,
+    private readonly redis: RedisService,
   ) {}
 
   @Post('inbound')
@@ -116,6 +118,7 @@ export class SmsWebhookController {
   async receiveInbound(
     @Body() dto: InboundSmsDto,
     @Headers('x-twilio-signature') twilioSignature: string,
+    @Headers('x-twilio-timestamp') twilioTimestamp: string,
     @Headers('x-tenant-id') tenantId: string,
     @Req() req: Request,
   ): Promise<{ success: boolean; data: unknown }> {
@@ -130,6 +133,8 @@ export class SmsWebhookController {
       if (!twilioSignature) {
         throw new UnauthorizedException('Missing X-Twilio-Signature header');
       }
+
+      this.validateTwilioTimestamp(twilioTimestamp);
 
       const url = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
       const params = req.body as Record<string, string>;
@@ -154,6 +159,19 @@ export class SmsWebhookController {
       );
     }
 
+    // Replay attack prevention — RFC best practice: nonce (MessageSid) with TTL
+    if (this.redis.isAvailable && dto.twilioSid) {
+      const nonceKey = `sms:nonce:${dto.twilioSid}`;
+      const already = await this.redis.get(nonceKey);
+      if (already) {
+        this.logger.warn(`Replay attack blocked: duplicate MessageSid ${dto.twilioSid}`);
+        throw new UnauthorizedException('Duplicate request');
+      }
+      await this.redis.set(nonceKey, '1', 86400); // 24h — Twilio SID è globalmente unico
+    } else if (!this.redis.isAvailable) {
+      this.logger.warn('Redis unavailable — replay protection disabled');
+    }
+
     const message = await this.smsThreadService.receiveInbound(
       tenantId,
       dto.phoneHash,
@@ -164,5 +182,17 @@ export class SmsWebhookController {
       success: true,
       data: message,
     };
+  }
+
+  private validateTwilioTimestamp(twilioTimestamp: string): void {
+    if (!twilioTimestamp) {
+      throw new UnauthorizedException('Missing X-Twilio-Timestamp header');
+    }
+    const timestampSeconds = parseInt(twilioTimestamp, 10);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (isNaN(timestampSeconds) || Math.abs(nowSeconds - timestampSeconds) > 300) {
+      this.logger.warn('Twilio webhook timestamp too old or invalid');
+      throw new UnauthorizedException('Webhook timestamp too old or invalid');
+    }
   }
 }

@@ -218,7 +218,11 @@ describe('FleetController', () => {
 
     it('should extract vehicleId from DTO', async () => {
       const dto = { vehicleId: 'vehicle-xyz' };
-      const fleetVehicle = { id: 'fv-xyz', fleetId: 'fleet-001', vehicleId: 'vehicle-xyz' } as never;
+      const fleetVehicle = {
+        id: 'fv-xyz',
+        fleetId: 'fleet-001',
+        vehicleId: 'vehicle-xyz',
+      } as never;
       service.addVehicle.mockResolvedValue(fleetVehicle);
 
       await controller.addVehicle(TENANT_ID, 'fleet-001', dto as never);
@@ -228,7 +232,12 @@ describe('FleetController', () => {
 
   describe('removeVehicle', () => {
     it('should delegate to service with tenantId, fleetId, and vehicleId', async () => {
-      const removed = { id: 'fv-001', fleetId: 'fleet-001', vehicleId: 'veh-001', removedAt: new Date() } as never;
+      const removed = {
+        id: 'fv-001',
+        fleetId: 'fleet-001',
+        vehicleId: 'veh-001',
+        removedAt: new Date(),
+      } as never;
       service.removeVehicle.mockResolvedValue(removed);
 
       const result = await controller.removeVehicle(TENANT_ID, 'fleet-001', 'veh-001');
@@ -239,7 +248,12 @@ describe('FleetController', () => {
     });
 
     it('should pass correct parameters to service', async () => {
-      const removed = { id: 'fv-xyz', fleetId: 'fleet-xyz', vehicleId: 'veh-xyz', removedAt: new Date() } as never;
+      const removed = {
+        id: 'fv-xyz',
+        fleetId: 'fleet-xyz',
+        vehicleId: 'veh-xyz',
+        removedAt: new Date(),
+      } as never;
       service.removeVehicle.mockResolvedValue(removed);
 
       await controller.removeVehicle(TENANT_ID, 'fleet-xyz', 'veh-xyz');

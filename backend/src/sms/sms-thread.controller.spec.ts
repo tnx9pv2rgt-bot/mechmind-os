@@ -2,6 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { SmsThreadController, SmsWebhookController } from './sms-thread.controller';
 import { SmsThreadService } from './sms-thread.service';
+import { RedisService } from '../common/services/redis.service';
+
+const mockRedis = {
+  isAvailable: true,
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(undefined),
+};
 
 describe('SmsThreadController', () => {
   let controller: SmsThreadController;
@@ -155,6 +162,9 @@ describe('SmsWebhookController', () => {
   let service: jest.Mocked<SmsThreadService>;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+    mockRedis.get.mockResolvedValue(null);
+    mockRedis.set.mockResolvedValue(undefined);
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SmsWebhookController],
       providers: [
@@ -172,6 +182,7 @@ describe('SmsWebhookController', () => {
           provide: ConfigService,
           useValue: { get: jest.fn().mockReturnValue(undefined) },
         },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -195,6 +206,7 @@ describe('SmsWebhookController', () => {
           twilioSid: 'SM999',
         },
         '',
+        '',
         'tenant-123',
         {
           protocol: 'http',
@@ -217,6 +229,7 @@ describe('SmsWebhookController', () => {
         },
         '',
         '',
+        '',
         {
           protocol: 'http',
           get: () => 'localhost:3000',
@@ -227,6 +240,55 @@ describe('SmsWebhookController', () => {
 
       await expect(result).rejects.toThrow('Missing X-Tenant-Id header');
     });
+
+    it('should throw UnauthorizedException when duplicate MessageSid detected (replay attack)', async () => {
+      // nonce già presente in Redis → replay attack
+      mockRedis.get.mockResolvedValueOnce('1');
+      service.receiveInbound.mockResolvedValueOnce({ id: 'msg-x' } as never);
+
+      const result = controller.receiveInbound(
+        { phoneHash: 'hash123', body: 'Hey', twilioSid: 'SM_REPLAY' },
+        '',
+        '',
+        'tenant-123',
+        {
+          protocol: 'http',
+          get: () => 'localhost:3000',
+          originalUrl: '/v1/sms/webhook/inbound',
+          body: {},
+        } as unknown as import('express').Request,
+      );
+
+      await expect(result).rejects.toThrow('Duplicate request');
+      expect(service.receiveInbound).not.toHaveBeenCalled();
+    });
+
+    it('should warn and continue when Redis is unavailable', async () => {
+      mockRedis.isAvailable = false;
+      service.receiveInbound.mockResolvedValueOnce({ id: 'msg-y' } as never);
+
+      const result = await controller.receiveInbound(
+        { phoneHash: 'hash456', body: 'Test', twilioSid: 'SM_NORED' },
+        '',
+        '',
+        'tenant-123',
+        {
+          protocol: 'http',
+          get: () => 'localhost:3000',
+          originalUrl: '/v1/sms/webhook/inbound',
+          body: {},
+        } as unknown as import('express').Request,
+      );
+
+      expect(result.success).toBe(true);
+      expect(service.receiveInbound).toHaveBeenCalledWith(
+        'tenant-123',
+        'hash456',
+        'Test',
+        'SM_NORED',
+      );
+      mockRedis.isAvailable = true; // ripristina per test successivi
+    });
   });
 });
 
@@ -235,8 +297,12 @@ describe('SmsWebhookController — Twilio auth branches', () => {
   let service: jest.Mocked<SmsThreadService>;
   let configService: jest.Mocked<ConfigService>;
 
+  const validTs = () => Math.floor(Date.now() / 1000).toString();
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockRedis.get.mockResolvedValue(null);
+    mockRedis.set.mockResolvedValue(undefined);
     const mod: TestingModule = await Test.createTestingModule({
       controllers: [SmsWebhookController],
       providers: [
@@ -250,6 +316,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
           provide: ConfigService,
           useValue: { get: jest.fn() },
         },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 
@@ -271,7 +338,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     } as unknown as import('express').Request;
 
     await expect(
-      controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, '', '', req),
+      controller.receiveInbound({ phoneHash: 'h', body: 'msg', twilioSid: 'SM1' }, '', '', '', req),
     ).rejects.toThrow('Missing X-Tenant-Id header');
     expect(service.receiveInbound).not.toHaveBeenCalled();
   });
@@ -290,6 +357,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       controller.receiveInbound(
         { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
         '',
+        '',
         'tenant-1',
         req,
       ),
@@ -297,11 +365,102 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     expect(service.receiveInbound).not.toHaveBeenCalled();
   });
 
+  it('should throw UnauthorizedException when auth token set but timestamp missing', async () => {
+    configService.get.mockReturnValueOnce('my-auth-token');
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        'some-sig',
+        '',
+        'tenant-1',
+        req,
+      ),
+    ).rejects.toThrow('Missing X-Twilio-Timestamp header');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
+  });
+
+  it('should throw UnauthorizedException when timestamp is not a valid number', async () => {
+    configService.get.mockReturnValueOnce('my-auth-token');
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        'some-sig',
+        'not-a-number',
+        'tenant-1',
+        req,
+      ),
+    ).rejects.toThrow('Webhook timestamp too old or invalid');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
+  });
+
+  it('should throw UnauthorizedException when timestamp is older than 5 minutes', async () => {
+    configService.get.mockReturnValueOnce('my-auth-token');
+
+    const oldTs = (Math.floor(Date.now() / 1000) - 301).toString();
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        'some-sig',
+        oldTs,
+        'tenant-1',
+        req,
+      ),
+    ).rejects.toThrow('Webhook timestamp too old or invalid');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
+  });
+
+  it('should throw UnauthorizedException when timestamp is more than 5 minutes in the future', async () => {
+    configService.get.mockReturnValueOnce('my-auth-token');
+
+    const futureTs = (Math.floor(Date.now() / 1000) + 301).toString();
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        'some-sig',
+        futureTs,
+        'tenant-1',
+        req,
+      ),
+    ).rejects.toThrow('Webhook timestamp too old or invalid');
+    expect(service.receiveInbound).not.toHaveBeenCalled();
+  });
+
   it('should throw when signature does not match (same-length base64)', async () => {
     const authToken = 'my-auth-token';
     configService.get.mockReturnValueOnce(authToken);
 
-    // Compute expected signature length — SHA1 HMAC = 20 bytes = 28 chars base64
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
@@ -318,7 +477,6 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       .createHmac('sha1', authToken)
       .update(Buffer.from(data, 'utf-8'))
       .digest('base64');
-    // Create a wrong signature of the same byte-length
     const wrongSig = Buffer.from('x'.repeat(Buffer.from(realSig, 'base64').length)).toString(
       'base64',
     );
@@ -334,6 +492,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       controller.receiveInbound(
         { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
         wrongSig,
+        validTs(),
         'tenant-1',
         req,
       ),
@@ -354,6 +513,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       '',
+      '',
       'tenant-1',
       req,
     );
@@ -362,7 +522,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     expect(service.receiveInbound).toHaveBeenCalledWith('tenant-1', 'h', 'msg', 'SM1');
   });
 
-  it('should accept valid Twilio signature with tenantId', async () => {
+  it('should accept valid Twilio signature with valid timestamp', async () => {
     const authToken = 'test-auth-token';
     configService.get.mockReturnValueOnce(authToken);
     service.receiveInbound.mockResolvedValueOnce({ id: 'msg-002' });
@@ -370,7 +530,6 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
     const url = 'https://localhost:3002/v1/sms/webhook/inbound';
 
-    // Calculate expected signature the same way the controller does
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const data =
@@ -396,6 +555,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       expectedSig,
+      validTs(),
       'tenant-1',
       req,
     );
@@ -404,7 +564,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     expect(service.receiveInbound).toHaveBeenCalledWith('tenant-1', 'h', 'msg', 'SM1');
   });
 
-  it('should handle inbound SMS without twilioSid', async () => {
+  it('should handle inbound SMS with twilioSid (no auth)', async () => {
     const mockMsg = { id: 'msg-003', direction: 'INBOUND', body: 'No SID' };
     service.receiveInbound.mockResolvedValueOnce(mockMsg);
 
@@ -412,7 +572,9 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       {
         phoneHash: 'hash456',
         body: 'No SID',
+        twilioSid: 'SM-test-sid-003',
       },
+      '',
       '',
       'tenant-456',
       {
@@ -428,17 +590,18 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       'tenant-456',
       'hash456',
       'No SID',
-      undefined,
+      'SM-test-sid-003',
     );
   });
 
-  it('should accept request with all optional parameters (limit and offset)', async () => {
+  it('should accept request with valid signature and timestamp', async () => {
     const authToken = 'test-token';
     configService.get.mockReturnValueOnce(authToken);
 
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
     const url = 'https://localhost:3002/v1/sms/webhook/inbound';
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const data =
       url +
@@ -465,6 +628,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       expectedSig,
+      validTs(),
       'tenant-1',
       req,
     );
@@ -489,11 +653,13 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     await controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       '',
+      '',
       'tenant-1',
       req,
     );
 
     expect(loggerSpy).toHaveBeenCalled();
+    expect(service.receiveInbound).toHaveBeenCalledTimes(1);
   });
 
   it('should log error when X-Tenant-Id header missing', async () => {
@@ -511,6 +677,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       '',
       '',
+      '',
       req,
     );
 
@@ -526,6 +693,7 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const bodyParams = { body: 'msg', phoneHash: 'h', twilioSid: 'SM1' };
     const url = 'https://localhost:3002/v1/sms/webhook/inbound';
 
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const data =
       url +
@@ -539,7 +707,6 @@ describe('SmsWebhookController — Twilio auth branches', () => {
       .createHmac('sha1', authToken)
       .update(Buffer.from(data, 'utf-8'))
       .digest('base64');
-    // Create a wrong signature of the same byte-length
     const wrongSig = Buffer.from('x'.repeat(Buffer.from(realSig, 'base64').length)).toString(
       'base64',
     );
@@ -554,11 +721,37 @@ describe('SmsWebhookController — Twilio auth branches', () => {
     const result = controller.receiveInbound(
       { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
       wrongSig,
+      validTs(),
       'tenant-1',
       req,
     );
 
     await expect(result).rejects.toThrow('Invalid Twilio signature');
+    expect(loggerSpy).toHaveBeenCalled();
+  });
+
+  it('should log warning when timestamp is too old', async () => {
+    const loggerSpy = jest.spyOn(controller['logger'], 'warn');
+    configService.get.mockReturnValueOnce('my-auth-token');
+
+    const oldTs = (Math.floor(Date.now() / 1000) - 600).toString();
+
+    const req = {
+      protocol: 'https',
+      get: () => 'localhost:3002',
+      originalUrl: '/v1/sms/webhook/inbound',
+      body: {},
+    } as unknown as import('express').Request;
+
+    await expect(
+      controller.receiveInbound(
+        { phoneHash: 'h', body: 'msg', twilioSid: 'SM1' },
+        'some-sig',
+        oldTs,
+        'tenant-1',
+        req,
+      ),
+    ).rejects.toThrow('Webhook timestamp too old or invalid');
     expect(loggerSpy).toHaveBeenCalled();
   });
 });

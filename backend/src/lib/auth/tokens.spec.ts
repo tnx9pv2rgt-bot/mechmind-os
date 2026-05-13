@@ -22,7 +22,6 @@ const sampleUser = {
   role: 'admin',
 };
 
-
 describe('lib/auth/tokens', () => {
   describe('generateJWT', () => {
     it('should generate a valid JWT with user data', () => {
@@ -226,7 +225,7 @@ describe('lib/auth/tokens', () => {
       const testToken = jwt.sign(
         { sub: 'user-test', jti: 'test-jti', familyId: 'test-family' },
         refreshSecret,
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
 
       const result = verifyRefreshToken(testToken);

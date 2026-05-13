@@ -138,7 +138,9 @@ describe('FleetService', () => {
         }),
       );
       expect(mockPrisma.fleet.count).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ tenantId: 't1', isActive: true }) }),
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 't1', isActive: true }),
+        }),
       );
     });
 
@@ -501,14 +503,18 @@ describe('FleetService', () => {
       const result = await service.addVehicle('t1', '1', 'v1');
       expect(result).toEqual(expected);
       expect(mockPrisma.fleetVehicle.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ tenantId: 't1', fleetId: '1', vehicleId: 'v1' }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ tenantId: 't1', fleetId: '1', vehicleId: 'v1' }),
+        }),
       );
       expect(mockEventEmitter.emit).toHaveBeenCalledWith('fleet.vehicle.added', expect.any(Object));
     });
 
     it('should throw NotFoundException if fleet not found', async () => {
       mockPrisma.fleet.findFirst.mockResolvedValue(null);
-      await expect(service.addVehicle('t1', 'nonexistent', 'v1')).rejects.toThrow(NotFoundException);
+      await expect(service.addVehicle('t1', 'nonexistent', 'v1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw NotFoundException if vehicle not found', async () => {
@@ -569,7 +575,9 @@ describe('FleetService', () => {
 
     it('should throw NotFoundException if fleet not found', async () => {
       mockPrisma.fleet.findFirst.mockResolvedValue(null);
-      await expect(service.removeVehicle('t1', 'nonexistent', 'v1')).rejects.toThrow(NotFoundException);
+      await expect(service.removeVehicle('t1', 'nonexistent', 'v1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw NotFoundException if vehicle not assigned to fleet', async () => {
