@@ -144,6 +144,22 @@ describe('DpaAcceptanceService', () => {
       expect(acceptedAt.getTime()).toBeGreaterThanOrEqual(nowBefore);
       expect(acceptedAt.getTime()).toBeLessThanOrEqual(nowAfter);
     });
+
+    it('should accept valid non-empty version and complete record', async () => {
+      const input: RecordDpaAcceptanceInput = {
+        tenantId: TENANT_ID,
+        version: '2.5.1',
+        ipAddress: IP_ADDRESS,
+        userAgent: 'TestAgent',
+      };
+      const expected = mockDpaAcceptance({ version: '2.5.1' });
+      prisma.dpaAcceptance.create.mockResolvedValue(expected);
+
+      const result = await service.recordAcceptance(input);
+
+      expect(result.version).toBe('2.5.1');
+      expect(prisma.dpaAcceptance.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('getLatestAcceptance', () => {

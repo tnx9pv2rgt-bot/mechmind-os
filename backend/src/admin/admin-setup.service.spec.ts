@@ -113,5 +113,52 @@ describe('AdminSetupService', () => {
       );
       expect(mockPrisma.location.upsert).toHaveBeenCalledTimes(1);
     });
+
+    it('should handle update branch for existing tenant', async () => {
+      // Even though upsert usually creates, verify the update path is properly configured
+      const result = await service.seedDemoData();
+
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { slug: 'demo' },
+          update: expect.objectContaining({
+            name: 'Demo Officina Roma',
+            isActive: true,
+            settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
+          }),
+        }),
+      );
+      expect(result.tenantId).toBeDefined();
+    });
+
+    it('should handle update branch for existing location', async () => {
+      const result = await service.seedDemoData();
+
+      expect(mockPrisma.location.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            name: 'Sede Principale',
+            isActive: true,
+          }),
+        }),
+      );
+      expect(result.locationId).toBeDefined();
+    });
+
+    it('should handle update branch for existing users', async () => {
+      const result = await service.seedDemoData();
+
+      // Verify that user upserts call update path with proper fields
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({
+            passwordHash: 'hashed-pw',
+            isActive: true,
+            locationId: 'location-001',
+          }),
+        }),
+      );
+      expect(result.users).toHaveLength(3);
+    });
   });
 });
