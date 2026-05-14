@@ -644,6 +644,7 @@ model Invoice {
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
+  @@index([tenantId, status, createdAt])
   @@index([customerId])
   @@index([bookingId])
   @@map("invoices")
