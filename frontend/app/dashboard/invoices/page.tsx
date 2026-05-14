@@ -127,13 +127,13 @@ export default function InvoicesPage() {
     error: invoicesError,
     isLoading: invoicesLoading,
     mutate: mutateInvoices,
-  } = useSWR<{ data?: Invoice[] } | Invoice[]>('/api/invoices', fetcher);
+  } = useSWR<{ data?: Invoice[] } | Invoice[]>('/api/invoices', fetcher, { onErrorRetry: () => {} });
   const {
     data: statsData,
     error: statsError,
     isLoading: statsLoading,
     mutate: mutateStats,
-  } = useSWR<{ data?: InvoiceStats } | InvoiceStats>('/api/invoices/stats', fetcher);
+  } = useSWR<{ data?: InvoiceStats } | InvoiceStats>('/api/invoices/stats', fetcher, { onErrorRetry: () => {} });
 
   const isLoading = invoicesLoading || statsLoading;
 
@@ -242,7 +242,7 @@ export default function InvoicesPage() {
 
       <motion.div
         className='p-8 space-y-6'
-        initial='hidden'
+        initial={false}
         animate='visible'
         variants={containerVariants}
       >
@@ -292,6 +292,7 @@ export default function InvoicesPage() {
                   <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value as InvoiceStatus)}
+                    aria-label='Filtra per stato fattura'
                     className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
@@ -316,7 +317,7 @@ export default function InvoicesPage() {
             </AppleCardHeader>
             <AppleCardContent>
               {invoicesError || statsError ? (
-                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                <div role='alert' className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
                   <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare le fatture

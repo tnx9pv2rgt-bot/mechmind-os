@@ -134,14 +134,14 @@ export default function InspectionDetailPage() {
       const d = json.data || json;
       setInspection({
         id: d.id || id,
-        vehicle: d.vehicleName || (d.vehicle?.make ? `${d.vehicle.make} ${d.vehicle.model}` : 'N/D'),
+        vehicle: d.vehicleName || (d.vehicle?.make ? `${d.vehicle.make} ${d.vehicle.model}` : '—'),
         plate: d.vehiclePlate || d.vehicle?.licensePlate || '',
         customer: d.customerName || (d.customer ? `${d.customer.firstName || ''} ${d.customer.lastName || ''}`.trim() : ''),
         type: d.type || d.inspectionType || '',
         status: d.status || 'pending',
         date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('it-IT') : '',
         score: d.score || d.overallScore || null,
-        inspector: d.inspectorName || d.mechanic?.firstName || 'N/D',
+        inspector: d.inspectorName || d.mechanic?.firstName || '—',
         mileage: d.mileage || 0,
         items: Array.isArray(d.items)
           ? d.items.map((item: Record<string, unknown>) => ({
@@ -284,7 +284,7 @@ export default function InspectionDetailPage() {
               </div>
               <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
                 {inspection.vehicle} | {inspection.plate} | {inspection.date}
-                {inspection.inspector !== 'N/D' && ` | Tecnico: ${inspection.inspector}`}
+                {inspection.inspector !== '—' && ` | Tecnico: ${inspection.inspector}`}
               </p>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -360,7 +360,7 @@ export default function InspectionDetailPage() {
             { label: 'Veicolo', value: inspection.vehicle, icon: Car, color: 'bg-[var(--brand)]' },
             { label: 'Targa', value: inspection.plate, icon: Shield, color: 'bg-[var(--status-success)]' },
             { label: 'Tecnico', value: inspection.inspector, icon: User, color: 'bg-[var(--brand)]' },
-            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : 'N/D', icon: Clock, color: 'bg-[var(--status-warning)]' },
+            { label: 'Km', value: inspection.mileage > 0 ? `${inspection.mileage.toLocaleString()} km` : '—', icon: Clock, color: 'bg-[var(--status-warning)]' },
           ].map(info => (
             <motion.div key={info.label} variants={cardVariants}>
               <AppleCard hover={false}>
@@ -553,7 +553,7 @@ export default function InspectionDetailPage() {
                     </div>
                     <div className='text-body'>
                       <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Km:</span>{' '}
-                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : 'N/D'}</span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{inspection.mileage > 0 ? inspection.mileage.toLocaleString() : '—'}</span>
                     </div>
                     <div className='text-body'>
                       <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Elementi totali:</span>{' '}

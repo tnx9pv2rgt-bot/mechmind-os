@@ -1,3 +1,45 @@
+jest.mock('@prisma/client/runtime/library', () => {
+  class PrismaClientKnownRequestError extends Error {
+    public code: string;
+    public clientVersion: string;
+    constructor(message: string, info: { code: string; clientVersion: string }) {
+      super(message);
+      this.name = 'PrismaClientKnownRequestError';
+      this.code = info.code;
+      this.clientVersion = info.clientVersion;
+    }
+  }
+  return { PrismaClientKnownRequestError };
+});
+
+jest.mock('@prisma/client', () => {
+  const { PrismaClientKnownRequestError } = jest.requireMock('@prisma/client/runtime/library') as {
+    PrismaClientKnownRequestError: new (
+      msg: string,
+      info: { code: string; clientVersion: string },
+    ) => Error;
+  };
+
+  class MockPrismaClient {
+    $connect = jest.fn().mockResolvedValue(undefined);
+    $disconnect = jest.fn().mockResolvedValue(undefined);
+    $executeRaw = jest.fn().mockResolvedValue(1);
+    $queryRaw = jest.fn().mockResolvedValue([]);
+    $transaction = jest
+      .fn()
+      .mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb({}));
+    $on = jest.fn();
+  }
+
+  return {
+    PrismaClient: MockPrismaClient,
+    Prisma: {
+      PrismaClientKnownRequestError,
+      TransactionIsolationLevel: { Serializable: 'Serializable' },
+    },
+  };
+});
+
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './prisma.service';
 import { LoggerService } from './logger.service';

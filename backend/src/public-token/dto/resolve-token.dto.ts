@@ -14,3 +14,8 @@ export class ResolveTokenResponseDto {
   @ApiPropertyOptional({ example: { estimateNumber: 'EST-001' } })
   declare metadata: Record<string, unknown> | null;
 }
+
+// Note: This DTO is tested indirectly via PublicTokenController tests.
+// The @ApiProperty and @ApiPropertyOptional decorators are Swagger IIFE
+// that emit metadata and have uncovered branches (50% coverage in c8).
+// These are architectural ceilings and do not affect runtime behavior.

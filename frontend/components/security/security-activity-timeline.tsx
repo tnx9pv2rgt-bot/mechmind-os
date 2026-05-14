@@ -89,7 +89,7 @@ function getEventConfig(type: string): {
     default:
       return {
         icon: <Shield className="h-4 w-4" />,
-        label: type.replace(/_/g, ' '),
+        label: type ? type.replace(/_/g, ' ') : 'Evento sconosciuto',
         colorClass: 'text-[var(--text-tertiary)] bg-[var(--border-strong)]/50',
       };
   }

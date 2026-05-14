@@ -136,6 +136,15 @@ export default function VehiclesPage(): React.ReactElement {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const PAGE_SIZE = 20;
 
+  // Close delete modal on ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && deleteTarget && !deleteLoading) setDeleteTarget(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [deleteTarget, deleteLoading]);
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -157,6 +166,7 @@ export default function VehiclesPage(): React.ReactElement {
   const { data: rawData, error, isLoading, mutate } = useSWR<VehiclesResponse | Vehicle[]>(
     buildUrl(),
     fetcher,
+    { onErrorRetry: () => {} },
   );
 
   const { data: expiringData } = useSWR<ExpiringResponse>(
@@ -230,7 +240,7 @@ export default function VehiclesPage(): React.ReactElement {
 
       <motion.div
         className="p-4 sm:p-8 space-y-6"
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={containerVariants}
       >
@@ -312,7 +322,7 @@ export default function VehiclesPage(): React.ReactElement {
                   <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : error ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div role="alert" className="flex flex-col items-center justify-center py-12 text-center">
                   <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
                   <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i veicoli

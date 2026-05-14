@@ -122,17 +122,22 @@ describe('CannedResponseService', () => {
           where: { tenantId: 't1' },
         }),
       );
+      expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledTimes(1);
     });
 
-    it('should filter by category when provided', async () => {
+    it('should filter by category when provided (TRUE branch)', async () => {
       const responses = [{ id: 'cr-1', category: 'DVI' }];
       mockPrisma.cannedResponse.findMany.mockResolvedValue(responses);
 
       const result = await service.findAll('t1', { category: 'DVI' });
       expect(result).toEqual(responses);
+      expect(result[0].id).toBe('cr-1');
       expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { tenantId: 't1', category: 'DVI' },
+          where: expect.objectContaining({
+            tenantId: 't1',
+            category: 'DVI',
+          }),
         }),
       );
     });
@@ -142,11 +147,26 @@ describe('CannedResponseService', () => {
 
       const result = await service.findAll('t1', { category: 'NONEXISTENT' });
       expect(result).toEqual([]);
+      expect(result.length).toBe(0);
       expect(mockPrisma.cannedResponse.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { tenantId: 't1', category: 'NONEXISTENT' },
+          where: expect.objectContaining({
+            tenantId: 't1',
+            category: 'NONEXISTENT',
+          }),
         }),
       );
+    });
+
+    it('should NOT add category to where clause when filters.category is undefined', async () => {
+      const responses = [{ id: 'cr-1', category: 'DVI' }];
+      mockPrisma.cannedResponse.findMany.mockResolvedValue(responses);
+
+      const result = await service.findAll('t1', {});
+      expect(result).toEqual(responses);
+      const call = mockPrisma.cannedResponse.findMany.mock.calls[0][0];
+      expect(call.where).toEqual({ tenantId: 't1' });
+      expect(call.where.category).toBeUndefined();
     });
 
     it('should order by createdAt descending', async () => {

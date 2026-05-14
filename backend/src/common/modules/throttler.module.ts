@@ -52,9 +52,7 @@ export function getLenientLimit(): number {
  * Create throttler configuration based on environment variables.
  * Exported for testability - all branch logic measured by c8.
  */
-export function createThrottlerOptions(
-  _config?: ConfigService,
-): ThrottlerModuleOptions {
+export function createThrottlerOptions(_config?: ConfigService): ThrottlerModuleOptions {
   return {
     throttlers: [
       {

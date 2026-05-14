@@ -190,12 +190,21 @@ describe('HealthController', () => {
       prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }] as never);
       redis.set.mockResolvedValue(undefined as never);
       redis.get.mockResolvedValue('pong' as never);
+      const memorySpy = jest.spyOn(process, 'memoryUsage').mockReturnValueOnce({
+        heapUsed: 100 * 1024 * 1024,
+        heapTotal: 200 * 1024 * 1024,
+        rss: 150 * 1024 * 1024,
+        external: 10 * 1024 * 1024,
+        arrayBuffers: 0,
+      });
 
       const res = mockResponse();
       await controller.health(res as never);
 
       const call = res.json.mock.calls[0][0];
       expect(call.memory.status).toBe('ok');
+      expect(memorySpy).toHaveBeenCalled();
+      memorySpy.mockRestore();
     });
 
     it('should identify memory warning status when heap usage between 256MB and 512MB', async () => {

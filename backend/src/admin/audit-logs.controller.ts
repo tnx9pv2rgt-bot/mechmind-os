@@ -10,7 +10,7 @@ interface AuthRequest {
 @ApiTags('Audit Logs')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('audit-logs')
+@Controller({ path: 'audit-logs', version: '1' })
 export class AuditLogsController {
   constructor(private readonly prisma: PrismaService) {}
 

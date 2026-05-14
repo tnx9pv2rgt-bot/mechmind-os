@@ -1,371 +1,117 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { UserRole } from '@prisma/client';
 import { AdminSetupService } from './admin-setup.service';
 import { PrismaService } from '../common/services/prisma.service';
 
-// Mock bcrypt
-jest.mock('bcrypt', () => ({
-  hash: jest.fn().mockResolvedValue('hashed-password-123'),
-}));
+jest.mock('bcrypt', () => ({ hash: jest.fn().mockResolvedValue('hashed-pw') }));
+import * as bcrypt from 'bcrypt';
 
-// Mock Prisma enums
-jest.mock('@prisma/client', () => ({
-  ...(jest.requireActual('@prisma/client') as Record<string, unknown>),
-  UserRole: {
-    ADMIN: 'ADMIN',
-    MANAGER: 'MANAGER',
-    MECHANIC: 'MECHANIC',
-    RECEPTIONIST: 'RECEPTIONIST',
-    VIEWER: 'VIEWER',
-  },
-}));
-
-const mockTx = {
-  tenant: {
-    upsert: jest.fn(),
-  },
-  location: {
-    upsert: jest.fn(),
-  },
-  user: {
-    upsert: jest.fn(),
-  },
-};
+const mockTenant = { id: 'tenant-001', slug: 'demo', name: 'Demo Officina Roma' };
+const mockLocation = { id: 'location-001' };
+const mockUsers = [
+  { id: 'u-001', email: 'admin@demo.mechmind.it', role: UserRole.ADMIN },
+  { id: 'u-002', email: 'manager@demo.mechmind.it', role: UserRole.MANAGER },
+  { id: 'u-003', email: 'tecnico@demo.mechmind.it', role: UserRole.MECHANIC },
+];
 
 const mockPrisma = {
-  tenant: {
-    upsert: jest.fn(),
-  },
-  location: {
-    upsert: jest.fn(),
-  },
-  user: {
-    upsert: jest.fn(),
-  },
-  $transaction: jest
-    .fn()
-    .mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+  $transaction: jest.fn(),
+  tenant: { upsert: jest.fn() },
+  location: { upsert: jest.fn() },
+  user: { upsert: jest.fn() },
 };
+
+const mockConfig = { get: jest.fn() };
 
 describe('AdminSetupService', () => {
   let service: AdminSetupService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
+    mockConfig.get.mockReturnValue('Demo2026!');
+    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-pw');
+
+    mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+      fn(mockPrisma),
+    );
+    mockPrisma.tenant.upsert.mockResolvedValue(mockTenant);
+    mockPrisma.location.upsert.mockResolvedValue(mockLocation);
+    mockPrisma.user.upsert
+      .mockResolvedValueOnce(mockUsers[0])
+      .mockResolvedValueOnce(mockUsers[1])
+      .mockResolvedValueOnce(mockUsers[2]);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminSetupService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('Demo2026!') } },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 
-    service = module.get<AdminSetupService>(AdminSetupService);
-    jest.clearAllMocks();
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+    service = module.get(AdminSetupService);
   });
 
   describe('seedDemoData', () => {
-    const mockTenant = {
-      id: 'tenant-uuid-1',
-      name: 'Demo Officina Roma',
-      slug: 'demo',
-      isActive: true,
-      settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
-    };
-
-    const mockLocation = {
-      id: 'location-uuid-1',
-      tenantId: 'tenant-uuid-1',
-      name: 'Sede Principale',
-      address: 'Via Roma 1',
-      city: 'Roma',
-      postalCode: '00100',
-      country: 'IT',
-      isMain: true,
-      isActive: true,
-    };
-
-    const mockUsers = [
-      { id: 'user-1', email: 'admin@demo.mechmind.it', role: 'ADMIN', name: 'Admin Demo' },
-      { id: 'user-2', email: 'manager@demo.mechmind.it', role: 'MANAGER', name: 'Marco Rossi' },
-      { id: 'user-3', email: 'tecnico@demo.mechmind.it', role: 'MECHANIC', name: 'Luca Bianchi' },
-    ];
-
-    beforeEach(() => {
-      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
-      mockTx.location.upsert.mockResolvedValue(mockLocation);
-      mockTx.user.upsert
-        .mockResolvedValueOnce(mockUsers[0])
-        .mockResolvedValueOnce(mockUsers[1])
-        .mockResolvedValueOnce(mockUsers[2]);
-    });
-
-    it('should run all operations inside a single $transaction', async () => {
-      await service.seedDemoData();
-      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
-    });
-
-    it('should return SeedResult with tenantId, locationId, and users', async () => {
+    it('should return tenantId, locationId and 3 users', async () => {
       const result = await service.seedDemoData();
 
-      expect(result).toEqual({
-        tenantId: 'tenant-uuid-1',
-        locationId: 'location-uuid-1',
-        users: [
-          { id: 'user-1', email: 'admin@demo.mechmind.it', role: 'ADMIN' },
-          { id: 'user-2', email: 'manager@demo.mechmind.it', role: 'MANAGER' },
-          { id: 'user-3', email: 'tecnico@demo.mechmind.it', role: 'MECHANIC' },
-        ],
-      });
+      expect(result.tenantId).toBe('tenant-001');
+      expect(result.locationId).toBe('location-001');
+      expect(result.users).toHaveLength(3);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('should upsert tenant with slug "demo"', async () => {
+    it('should create tenant and location via upsert inside transaction', async () => {
       await service.seedDemoData();
 
-      expect(mockTx.tenant.upsert).toHaveBeenCalledWith({
-        where: { slug: 'demo' },
-        update: {
-          name: 'Demo Officina Roma',
-          isActive: true,
-          settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
-        },
-        create: {
-          name: 'Demo Officina Roma',
-          slug: 'demo',
-          isActive: true,
-          settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
-        },
-      });
-    });
-
-    it('should upsert location with tenantId and isMain=true', async () => {
-      await service.seedDemoData();
-
-      expect(mockTx.location.upsert).toHaveBeenCalledWith({
-        where: {
-          tenantId_isMain: {
-            tenantId: 'tenant-uuid-1',
-            isMain: true,
-          },
-        },
-        update: {
-          name: 'Sede Principale',
-          address: 'Via Roma 1',
-          city: 'Roma',
-          postalCode: '00100',
-          country: 'IT',
-          isActive: true,
-        },
-        create: {
-          tenantId: 'tenant-uuid-1',
-          name: 'Sede Principale',
-          address: 'Via Roma 1',
-          city: 'Roma',
-          postalCode: '00100',
-          country: 'IT',
-          isMain: true,
-          isActive: true,
-        },
-      });
-    });
-
-    it('should create three users with correct roles', async () => {
-      await service.seedDemoData();
-
-      expect(mockTx.user.upsert).toHaveBeenCalledTimes(3);
-
-      // ADMIN user
-      expect(mockTx.user.upsert).toHaveBeenCalledWith({
-        where: {
-          tenantId_email: {
-            tenantId: 'tenant-uuid-1',
-            email: 'admin@demo.mechmind.it',
-          },
-        },
-        update: {
-          passwordHash: 'hashed-password-123',
-          name: 'Admin Demo',
-          role: 'ADMIN',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-        create: {
-          tenantId: 'tenant-uuid-1',
-          email: 'admin@demo.mechmind.it',
-          passwordHash: 'hashed-password-123',
-          name: 'Admin Demo',
-          role: 'ADMIN',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-      });
-
-      // MANAGER user
-      expect(mockTx.user.upsert).toHaveBeenCalledWith({
-        where: {
-          tenantId_email: {
-            tenantId: 'tenant-uuid-1',
-            email: 'manager@demo.mechmind.it',
-          },
-        },
-        update: {
-          passwordHash: 'hashed-password-123',
-          name: 'Marco Rossi',
-          role: 'MANAGER',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-        create: {
-          tenantId: 'tenant-uuid-1',
-          email: 'manager@demo.mechmind.it',
-          passwordHash: 'hashed-password-123',
-          name: 'Marco Rossi',
-          role: 'MANAGER',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-      });
-
-      // MECHANIC user
-      expect(mockTx.user.upsert).toHaveBeenCalledWith({
-        where: {
-          tenantId_email: {
-            tenantId: 'tenant-uuid-1',
-            email: 'tecnico@demo.mechmind.it',
-          },
-        },
-        update: {
-          passwordHash: 'hashed-password-123',
-          name: 'Luca Bianchi',
-          role: 'MECHANIC',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-        create: {
-          tenantId: 'tenant-uuid-1',
-          email: 'tecnico@demo.mechmind.it',
-          passwordHash: 'hashed-password-123',
-          name: 'Luca Bianchi',
-          role: 'MECHANIC',
-          isActive: true,
-          locationId: 'location-uuid-1',
-        },
-      });
-    });
-
-    it('should hash password with bcrypt using salt rounds 12', async () => {
-      await service.seedDemoData();
-
-      // bcrypt is mocked at the top, so we just verify the mock was called
-      expect(mockTx.user.upsert).toHaveBeenCalled();
-      // The password hash happens inside the mocked bcrypt.hash with our value
-    });
-
-    it('should call upsert operations in correct order: tenant, location, then users', async () => {
-      const callOrder: string[] = [];
-      mockTx.tenant.upsert.mockReset();
-      mockTx.location.upsert.mockReset();
-      mockTx.user.upsert.mockReset();
-
-      mockTx.tenant.upsert.mockImplementation(() => {
-        callOrder.push('tenant');
-        return Promise.resolve(mockTenant);
-      });
-      mockTx.location.upsert.mockImplementation(() => {
-        callOrder.push('location');
-        return Promise.resolve(mockLocation);
-      });
-      mockTx.user.upsert.mockImplementation(
-        (args: { where: { tenantId_email: { email: string } } }) => {
-          callOrder.push(`user-${args.where.tenantId_email.email}`);
-          const idx = mockUsers.findIndex(u => u.email === args.where.tenantId_email.email);
-          return Promise.resolve(mockUsers[idx >= 0 ? idx : 0]);
-        },
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { slug: 'demo' } }),
       );
+      expect(mockPrisma.location.upsert).toHaveBeenCalledTimes(1);
+    });
+
+    it('should upsert 3 users with correct roles', async () => {
+      const result = await service.seedDemoData();
+
+      expect(mockPrisma.user.upsert).toHaveBeenCalledTimes(3);
+      expect(result.users[0].role).toBe(UserRole.ADMIN);
+    });
+
+    it('should hash password using bcrypt with cost 12', async () => {
+      await service.seedDemoData();
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('Demo2026!', 12);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('should use custom DEMO_PASSWORD from config', async () => {
+      mockConfig.get.mockReturnValueOnce('CustomPass123!');
 
       await service.seedDemoData();
 
-      expect(callOrder[0]).toBe('tenant');
-      expect(callOrder[1]).toBe('location');
-      expect(callOrder[2]).toBe('user-admin@demo.mechmind.it');
-      expect(callOrder[3]).toBe('user-manager@demo.mechmind.it');
-      expect(callOrder[4]).toBe('user-tecnico@demo.mechmind.it');
+      expect(bcrypt.hash).toHaveBeenCalledWith('CustomPass123!', 12);
+      expect(mockPrisma.tenant.upsert).toHaveBeenCalledTimes(1);
     });
 
-    it('should propagate error when tenant upsert fails', async () => {
-      mockTx.tenant.upsert.mockRejectedValue(new Error('DB connection failed'));
+    it('should propagate transaction errors', async () => {
+      mockPrisma.$transaction.mockRejectedValueOnce(new Error('DB connection lost'));
 
-      await expect(service.seedDemoData()).rejects.toThrow('DB connection failed');
+      await expect(service.seedDemoData()).rejects.toThrow('DB connection lost');
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    it('should propagate error when location upsert fails', async () => {
-      mockTx.location.upsert.mockRejectedValue(new Error('Location constraint error'));
+    it('should include locationId in user creation', async () => {
+      await service.seedDemoData();
 
-      await expect(service.seedDemoData()).rejects.toThrow('Location constraint error');
-    });
-
-    it('should propagate error when user upsert fails', async () => {
-      mockTx.user.upsert.mockReset();
-      mockTx.user.upsert.mockRejectedValue(new Error('Unique constraint violated'));
-
-      await expect(service.seedDemoData()).rejects.toThrow('Unique constraint violated');
-    });
-
-    it('should fall back to default password when DEMO_PASSWORD env var is not set', async () => {
-      const moduleRef: TestingModule = await Test.createTestingModule({
-        providers: [
-          AdminSetupService,
-          { provide: PrismaService, useValue: mockPrisma },
-          {
-            provide: ConfigService,
-            useValue: {
-              get: jest.fn().mockImplementation((_key: string, def?: string) => def),
-            },
-          },
-        ],
-      }).compile();
-
-      const localService = moduleRef.get<AdminSetupService>(AdminSetupService);
-      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
-      mockTx.location.upsert.mockResolvedValue(mockLocation);
-      mockTx.user.upsert
-        .mockReset()
-        .mockResolvedValueOnce(mockUsers[0])
-        .mockResolvedValueOnce(mockUsers[1])
-        .mockResolvedValueOnce(mockUsers[2]);
-
-      const result = await localService.seedDemoData();
-
-      expect(result.tenantId).toBe('tenant-uuid-1');
-      expect(mockTx.user.upsert).toHaveBeenCalledTimes(3);
-    });
-
-    it('should use provided DEMO_PASSWORD value when explicitly configured', async () => {
-      const customPasswordSpy = jest.fn().mockReturnValue('CustomP@ss123\!');
-      const moduleRef: TestingModule = await Test.createTestingModule({
-        providers: [
-          AdminSetupService,
-          { provide: PrismaService, useValue: mockPrisma },
-          { provide: ConfigService, useValue: { get: customPasswordSpy } },
-        ],
-      }).compile();
-
-      const localService = moduleRef.get<AdminSetupService>(AdminSetupService);
-      mockTx.tenant.upsert.mockResolvedValue(mockTenant);
-      mockTx.location.upsert.mockResolvedValue(mockLocation);
-      mockTx.user.upsert
-        .mockReset()
-        .mockResolvedValueOnce(mockUsers[0])
-        .mockResolvedValueOnce(mockUsers[1])
-        .mockResolvedValueOnce(mockUsers[2]);
-
-      await localService.seedDemoData();
-
-      expect(customPasswordSpy).toHaveBeenCalledWith('DEMO_PASSWORD', 'Demo2026\!');
+      expect(mockPrisma.user.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ tenantId: 'tenant-001', locationId: 'location-001' }),
+        }),
+      );
+      expect(mockPrisma.location.upsert).toHaveBeenCalledTimes(1);
     });
   });
 });

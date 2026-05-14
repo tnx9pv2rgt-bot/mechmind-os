@@ -1,0 +1,65 @@
+{
+  "cookies": [
+    {
+      "name": "auth_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbW51d2hxc3YwMDAxbWwydmVwcnlkaWRjOjVjZWYyMzc0LTc4ZjUtNDU5MC05OTExLTgyOTYyZmQ1NmIyMiIsImVtYWlsIjoiYWRtaW5AZGVtby5tZWNobWluZC5pdCIsInJvbGUiOiJBRE1JTiIsInRlbmFudElkIjoiNWNlZjIzNzQtNzhmNS00NTkwLTk5MTEtODI5NjJmZDU2YjIyIiwianRpIjoiY2Y0MzljZjYtNDNjNC00NTQyLWI3NTgtN2Y2ZWY5N2RiZTAzIiwiaWF0IjoxNzc4MzQwMzEzLCJleHAiOjE3NzgzNDEyMTN9.jbJbESQJxrEPs4uooJsCwwx8pDehy0rZ3r79S6koxyQ",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1778341213.991,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "refresh_token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbW51d2hxc3YwMDAxbWwydmVwcnlkaWRjOjVjZWYyMzc0LTc4ZjUtNDU5MC05OTExLTgyOTYyZmQ1NmIyMiIsImVtYWlsIjoiYWRtaW5AZGVtby5tZWNobWluZC5pdCIsInJvbGUiOiJBRE1JTiIsInRlbmFudElkIjoiNWNlZjIzNzQtNzhmNS00NTkwLTk5MTEtODI5NjJmZDU2YjIyIiwianRpIjoiY2ViZDMzYTMtNDliYS00NWUwLTllMzEtM2UyMjI5MWEyZjM1IiwiZmFtaWx5SWQiOiI2ZjgzY2FmYS1lMWI4LTQ4ZDMtYWZlOC03ZjU0YjVlNWVmYjMiLCJpYXQiOjE3NzgzNDAzMTMsImV4cCI6MTc3ODk0NTExM30.cTjRIbqB7hyw1tmPnjkalURZbrdXQLf2LCEK-P0xYi8",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1778945113.991,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "tenant_id",
+      "value": "5cef2374-78f5-4590-9911-82962fd56b22",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "tenant_slug",
+      "value": "demo",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "NEXT_LOCALE",
+      "value": "it",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1809876314.065326,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "csrf-token",
+      "value": "88798773ad9483e51f5f8205b81ea2324cb431cf7e672036f8bb443047fc57fa",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1778343914.065367,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

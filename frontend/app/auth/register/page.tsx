@@ -6,8 +6,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
-import { btnPrimary, btnSecondaryOutline, btnSpinner, inputStyle } from '@/components/auth/auth-styles';
+import {
+  btnPrimary,
+  btnSecondaryOutline,
+  btnSpinner,
+  inputStyle,
+} from '@/components/auth/auth-styles';
 import { PasswordStrength } from '@/components/auth/password-strength';
+import { SkipLink } from '@/components/ui/skip-link';
 
 // =============================================================================
 // Schema
@@ -159,29 +165,23 @@ export default function RegisterPage(): React.ReactElement {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
-          className="text-center space-y-5"
+          className='text-center space-y-5'
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
-            <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10'>
+            <span className='text-2xl text-[var(--text-on-brand)]'>✓</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Officina creata!
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto">
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto'>
             La tua officina sarà raggiungibile su{' '}
-            <strong className="text-[var(--text-on-brand)]">mechmind.it/{createdSlug}</strong>.
+            <strong className='text-[var(--text-on-brand)]'>mechmind.it/{createdSlug}</strong>.
             Controlla la tua email per verificare l&apos;account.
           </p>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className={btnPrimary}
-          >
+          <button onClick={() => router.push('/onboarding')} className={btnPrimary}>
             Configura la tua officina
           </button>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className={btnSecondaryOutline}
-          >
+          <button onClick={() => router.push('/dashboard')} className={btnSecondaryOutline}>
             Vai alla dashboard
           </button>
         </motion.div>
@@ -194,171 +194,207 @@ export default function RegisterPage(): React.ReactElement {
   // ---------------------------------------------------------------------------
   return (
     <AuthSplitLayout showBack onBack={() => router.push('/auth')}>
+      <SkipLink targetId='register-form' />
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="mb-2">
-            <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+        <form id='register-form' onSubmit={handleSubmit} className='space-y-4'>
+          <div className='mb-2'>
+            <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
               Crea il tuo account
             </h1>
-            <p className="mt-1 text-[15px] text-[var(--text-secondary)] leading-relaxed">
+            <p className='mt-1 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
               Registrati gratuitamente in 30 secondi.
             </p>
           </div>
 
           {/* Shop name */}
           <div>
-            <label htmlFor="reg-shop" className="sr-only">Nome officina</label>
+            <label htmlFor='reg-shop' className='sr-only'>
+              Nome officina
+            </label>
             <input
-              id="reg-shop"
-              type="text"
+              id='reg-shop'
+              type='text'
               value={shopName}
               onChange={e => {
                 setShopName(e.target.value);
                 setFieldErrors(p => ({ ...p, shopName: '' }));
                 if (!slugManual) setSlug('');
               }}
-              placeholder="Nome officina"
+              placeholder='Nome officina'
               autoFocus
-              name="shopName"
-              autoComplete="organization"
+              name='shopName'
+              autoComplete='organization'
               aria-describedby={fieldErrors.shopName ? 'err-shop' : undefined}
               className={`${inputStyle} ${fieldErrors.shopName ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {fieldErrors.shopName && (
-              <p id="err-shop" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.shopName}</p>
+              <p
+                id='err-shop'
+                role='alert'
+                className='mt-1 pl-5 text-[12px] text-[var(--text-secondary)]'
+              >
+                {fieldErrors.shopName}
+              </p>
             )}
           </div>
 
           {/* Slug */}
           <div>
-            <div className="relative">
-              <label htmlFor="reg-slug" className="sr-only">Nome breve officina</label>
+            <div className='relative'>
+              <label htmlFor='reg-slug' className='sr-only'>
+                Nome breve officina
+              </label>
               <input
-                id="reg-slug"
-                type="text"
+                id='reg-slug'
+                type='text'
                 value={slugManual ? slug : autoSlug}
                 onChange={e => {
                   setSlugManual(true);
                   setSlug(generateSlug(e.target.value));
                 }}
-                placeholder="Nome breve (es. officina-rossi)"
-                name="slug"
+                placeholder='Nome breve (es. officina-rossi)'
+                name='slug'
                 className={`${inputStyle} pr-12`}
               />
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 text-sm">
-                {slugChecking && (
-                  <span className="text-[var(--text-tertiary)]">...</span>
-                )}
+              <div className='absolute right-5 top-1/2 -translate-y-1/2 text-sm'>
+                {slugChecking && <span className='text-[var(--text-tertiary)]'>...</span>}
                 {!slugChecking && slugAvailable === true && effectiveSlug.length >= 3 && (
-                  <span className="text-[var(--text-on-brand)]">✓</span>
+                  <span className='text-[var(--text-on-brand)]'>✓</span>
                 )}
                 {!slugChecking && slugAvailable === false && (
-                  <span className="text-[var(--text-secondary)]">✕</span>
+                  <span className='text-[var(--text-secondary)]'>✕</span>
                 )}
               </div>
             </div>
             {effectiveSlug && (
-              <p className="mt-1 pl-5 text-[12px] text-[var(--text-tertiary)]">
-                mechmind.it/<span className="font-medium text-[var(--text-secondary)]">{effectiveSlug}</span>
+              <p className='mt-1 pl-5 text-[12px] text-[var(--text-tertiary)]'>
+                mechmind.it/
+                <span className='font-medium text-[var(--text-secondary)]'>{effectiveSlug}</span>
                 {slugAvailable === false && (
-                  <span className="text-[var(--text-secondary)] ml-2">Nome già in uso</span>
+                  <span className='text-[var(--text-secondary)] ml-2'>Nome già in uso</span>
                 )}
               </p>
             )}
           </div>
 
           {/* Name fields */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label htmlFor="reg-first" className="sr-only">Nome</label>
+              <label htmlFor='reg-first' className='sr-only'>
+                Nome
+              </label>
               <input
-                id="reg-first"
-                type="text"
+                id='reg-first'
+                type='text'
                 value={firstName}
                 onChange={e => {
                   setFirstName(e.target.value);
                   setFieldErrors(p => ({ ...p, firstName: '' }));
                 }}
-                placeholder="Nome"
-                name="firstName"
-                autoComplete="given-name"
+                placeholder='Nome'
+                name='firstName'
+                autoComplete='given-name'
                 aria-describedby={fieldErrors.firstName ? 'err-first' : undefined}
                 className={`${inputStyle} ${fieldErrors.firstName ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               {fieldErrors.firstName && (
-                <p id="err-first" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.firstName}</p>
+                <p
+                  id='err-first'
+                  role='alert'
+                  className='mt-1 pl-5 text-[12px] text-[var(--text-secondary)]'
+                >
+                  {fieldErrors.firstName}
+                </p>
               )}
             </div>
             <div>
-              <label htmlFor="reg-last" className="sr-only">Cognome</label>
+              <label htmlFor='reg-last' className='sr-only'>
+                Cognome
+              </label>
               <input
-                id="reg-last"
-                type="text"
+                id='reg-last'
+                type='text'
                 value={lastName}
                 onChange={e => {
                   setLastName(e.target.value);
                   setFieldErrors(p => ({ ...p, lastName: '' }));
                 }}
-                placeholder="Cognome"
-                name="lastName"
-                autoComplete="family-name"
+                placeholder='Cognome'
+                name='lastName'
+                autoComplete='family-name'
                 aria-describedby={fieldErrors.lastName ? 'err-last' : undefined}
                 className={`${inputStyle} ${fieldErrors.lastName ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               {fieldErrors.lastName && (
-                <p id="err-last" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.lastName}</p>
+                <p
+                  id='err-last'
+                  role='alert'
+                  className='mt-1 pl-5 text-[12px] text-[var(--text-secondary)]'
+                >
+                  {fieldErrors.lastName}
+                </p>
               )}
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <label htmlFor="reg-email" className="sr-only">Email aziendale</label>
+            <label htmlFor='reg-email' className='sr-only'>
+              Email aziendale
+            </label>
             <input
-              id="reg-email"
-              type="email"
+              id='reg-email'
+              type='email'
               value={email}
               onChange={e => {
                 setEmail(e.target.value);
                 setFieldErrors(p => ({ ...p, email: '' }));
               }}
-              placeholder="Email aziendale"
-              name="email"
-              autoComplete="email"
+              placeholder='Email aziendale'
+              name='email'
+              autoComplete='email'
               aria-describedby={fieldErrors.email ? 'err-email' : undefined}
               className={`${inputStyle} ${fieldErrors.email ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {fieldErrors.email && (
-              <p id="err-email" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.email}</p>
+              <p
+                id='err-email'
+                role='alert'
+                className='mt-1 pl-5 text-[12px] text-[var(--text-secondary)]'
+              >
+                {fieldErrors.email}
+              </p>
             )}
           </div>
 
           {/* Password */}
           <div>
-            <div className="relative">
-              <label htmlFor="reg-password" className="sr-only">Password</label>
+            <div className='relative'>
+              <label htmlFor='reg-password' className='sr-only'>
+                Password
+              </label>
               <input
-                id="reg-password"
+                id='reg-password'
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={e => {
                   setPassword(e.target.value);
                   setFieldErrors(p => ({ ...p, password: '' }));
                 }}
-                placeholder="Password"
-                name="password"
-                autoComplete="new-password"
+                placeholder='Password'
+                name='password'
+                autoComplete='new-password'
                 aria-describedby={fieldErrors.password ? 'err-password' : undefined}
                 className={`${inputStyle} pr-20 ${fieldErrors.password ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               <button
-                type="button"
+                type='button'
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-on-brand)] min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className='absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-on-brand)] min-w-[44px] min-h-[44px] flex items-center justify-center'
                 tabIndex={-1}
                 aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
               >
@@ -366,7 +402,13 @@ export default function RegisterPage(): React.ReactElement {
               </button>
             </div>
             {fieldErrors.password && (
-              <p id="err-password" role="alert" className="mt-1 pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.password}</p>
+              <p
+                id='err-password'
+                role='alert'
+                className='mt-1 pl-5 text-[12px] text-[var(--text-secondary)]'
+              >
+                {fieldErrors.password}
+              </p>
             )}
           </div>
 
@@ -374,66 +416,81 @@ export default function RegisterPage(): React.ReactElement {
           <PasswordStrength password={password} />
 
           {/* Terms */}
-          <label className="flex items-start gap-3 cursor-pointer min-h-[44px]">
-            <span className="relative flex items-center justify-center min-w-[44px] min-h-[44px]">
+          <label className='flex items-start gap-3 cursor-pointer min-h-[44px]'>
+            <span className='relative flex items-center justify-center min-w-[44px] min-h-[44px]'>
               <input
-                type="checkbox"
+                type='checkbox'
                 checked={acceptTerms}
                 onChange={e => {
                   setAcceptTerms(e.target.checked);
                   setFieldErrors(p => ({ ...p, acceptTerms: '' }));
                 }}
-                aria-label="Accetto i termini e le condizioni"
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 peer"
+                aria-label='Accetto i termini e le condizioni'
+                className='absolute inset-0 h-full w-full cursor-pointer opacity-0 peer'
               />
-              <span className="flex h-5 w-5 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-elevated)] peer-checked:bg-[var(--surface-secondary)] peer-checked:border-[var(--border-default)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-default)]/50 transition-colors pointer-events-none" aria-hidden="true">
+              <span
+                className='flex h-5 w-5 items-center justify-center rounded border border-[var(--border-strong)] bg-[var(--surface-elevated)] peer-checked:bg-[var(--surface-secondary)] peer-checked:border-[var(--border-default)] peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--border-default)]/50 transition-colors pointer-events-none'
+                aria-hidden='true'
+              >
                 {acceptTerms && (
-                  <svg className="h-3.5 w-3.5 text-[var(--text-primary)]" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
+                  <svg
+                    className='h-3.5 w-3.5 text-[var(--text-primary)]'
+                    viewBox='0 0 16 16'
+                    fill='currentColor'
+                    aria-hidden='true'
+                  >
+                    <path d='M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z' />
                   </svg>
                 )}
               </span>
             </span>
-            <span className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+            <span className='text-[13px] text-[var(--text-secondary)] leading-relaxed'>
               Accetto i{' '}
-              <Link href="/terms" className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
+              <Link
+                href='/terms'
+                className='font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center'
+              >
                 Termini e Condizioni
               </Link>{' '}
               e l&apos;
-              <Link href="/privacy" className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center">
+              <Link
+                href='/privacy'
+                className='font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] inline-flex items-center'
+              >
                 Informativa sulla Privacy
               </Link>
             </span>
           </label>
           {fieldErrors.acceptTerms && (
-            <p role="alert" className="pl-5 text-[12px] text-[var(--text-secondary)]">{fieldErrors.acceptTerms}</p>
+            <p role='alert' className='pl-5 text-[12px] text-[var(--text-secondary)]'>
+              {fieldErrors.acceptTerms}
+            </p>
           )}
 
           {/* Error */}
           {error && (
             <motion.p
-              role="alert"
+              role='alert'
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[13px] text-[var(--text-secondary)] pl-5"
+              className='text-[13px] text-[var(--text-secondary)] pl-5'
             >
               {error}
             </motion.p>
           )}
 
           {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={btnPrimary}
-          >
+          <button type='submit' disabled={isLoading} className={btnPrimary}>
             {isLoading ? <span className={btnSpinner} /> : 'Crea account gratis'}
           </button>
 
           {/* Login link */}
-          <p className="text-center text-[13px] text-[var(--text-tertiary)]">
+          <p className='text-center text-[13px] text-[var(--text-tertiary)]'>
             Hai già un account?{' '}
-            <Link href="/auth" className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] justify-center inline-flex items-center">
+            <Link
+              href='/auth'
+              className='font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] justify-center inline-flex items-center'
+            >
               Accedi
             </Link>
           </p>

@@ -238,7 +238,7 @@ describe('PayrollService', () => {
         effectiveFrom: '2026-03-01',
       });
 
-      expect(result.payType).toBe(PayType.FLAT_RATE);
+      expect((result as Record<string, unknown>).payType).toBe(PayType.FLAT_RATE);
     });
 
     it('dovrebbe lanciare se FLAT_RATE senza flatRatePerJobCents (second check fails)', async () => {
@@ -278,7 +278,7 @@ describe('PayrollService', () => {
         effectiveFrom: '2026-03-01',
       });
 
-      expect(result.payType).toBe(PayType.HOURLY);
+      expect((result as Record<string, unknown>).payType).toBe(PayType.HOURLY);
     });
 
     it('dovrebbe passare se MIXED con entrambe le tariffe (line 80 both OR branches true)', async () => {
@@ -296,7 +296,7 @@ describe('PayrollService', () => {
         effectiveFrom: '2026-03-01',
       });
 
-      expect(result.payType).toBe(PayType.MIXED);
+      expect((result as Record<string, unknown>).payType).toBe(PayType.MIXED);
     });
 
     it('dovrebbe creare configurazione con tutti i parametri opzionali (lines 105-113)', async () => {
@@ -317,7 +317,7 @@ describe('PayrollService', () => {
         effectiveTo: '2026-12-31', // Optional end date (line 113 true branch)
       });
 
-      expect(result.payType).toBe(PayType.HOURLY);
+      expect((result as Record<string, unknown>).payType).toBe(PayType.HOURLY);
       expect(prisma.technicianPayConfig.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

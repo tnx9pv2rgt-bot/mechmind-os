@@ -2,23 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class QuickBooksExportRecord {
   @ApiProperty({ description: 'Invoice date (YYYY-MM-DD)' })
-  date: string;
+  date!: string;
 
   @ApiProperty({ description: 'Invoice number' })
-  invoiceNumber: string;
+  invoiceNumber!: string;
 
   @ApiProperty({ description: 'Customer ID' })
-  customer: string;
+  customer!: string;
 
   @ApiProperty({ description: 'Subtotal amount' })
-  amount: string;
+  amount!: string;
 
   @ApiProperty({ description: 'Tax amount' })
-  tax: string;
+  tax!: string;
 
   @ApiProperty({ description: 'Total amount including tax' })
-  total: string;
+  total!: string;
 
   @ApiProperty({ description: 'Invoice status' })
-  status: string;
+  status!: string;
 }

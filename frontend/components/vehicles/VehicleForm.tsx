@@ -279,7 +279,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                 name='licensePlate'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Targa *</FormLabel>
+                    <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
+                      Targa *
+                    </FormLabel>
                     <FormControl>
                       <div className='relative'>
                         <Hash className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
@@ -311,7 +313,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='make'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Marca *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
+                        Marca *
+                      </FormLabel>
                       <FormControl>
                         <div className='relative'>
                           <Car className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
@@ -338,7 +342,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='model'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Modello *</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
+                        Modello *
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -365,7 +371,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='year'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Anno</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
+                        Anno
+                      </FormLabel>
                       <FormControl>
                         <div className='relative'>
                           <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
@@ -397,7 +405,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                   name='color'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>Colore</FormLabel>
+                      <FormLabel className='text-sm font-medium text-[var(--text-secondary)]'>
+                        Colore
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -587,7 +597,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
               >
                 <div className='flex items-center gap-2'>
                   <FileText className='h-4 w-4 text-[var(--text-tertiary)]' />
-                  <span className='text-sm font-medium text-[var(--text-secondary)]'>Dati Tecnici Avanzati</span>
+                  <span className='text-sm font-medium text-[var(--text-secondary)]'>
+                    Dati Tecnici Avanzati
+                  </span>
                 </div>
                 {showAdvanced ? (
                   <ChevronUp className='h-4 w-4 text-[var(--text-tertiary)]' />
@@ -614,7 +626,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='engineSize'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Cilindrata (L)</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
+                              Cilindrata (L)
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -639,7 +653,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='powerKw'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Potenza (kW)</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
+                              Potenza (kW)
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -665,7 +681,9 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
                         name='lastServiceDate'
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className='text-sm text-[var(--text-secondary)]'>Ultimo Service</FormLabel>
+                            <FormLabel className='text-sm text-[var(--text-secondary)]'>
+                              Ultimo Service
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
@@ -850,7 +868,10 @@ export function VehicleForm({ onSubmit, onCancel, initialData, customers = [] }:
               )}
               <AppleButton
                 type='submit'
-                disabled={status === 'loading' || status === 'success'}
+                disabled={
+                  status === 'loading' || status === 'success' || form.formState.isSubmitting
+                }
+                aria-busy={form.formState.isSubmitting || status === 'loading'}
                 className='flex-1 h-12 rounded-2xl bg-gradient-to-r from-[var(--status-success)] to-[var(--status-success)] hover:from-[var(--status-success)] hover:to-[var(--status-success)] text-[var(--text-on-brand)] font-medium shadow-lg shadow-emerald-500/25'
               >
                 {status === 'loading' ? (

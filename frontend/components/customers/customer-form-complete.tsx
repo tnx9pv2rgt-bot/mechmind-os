@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useId } from 'react';
 import {
   useForm,
   Controller,
@@ -664,7 +664,9 @@ export function CustomerFormComplete() {
                 <h1 className='text-3xl font-semibold text-[var(--text-primary)] tracking-tight'>
                   Nuovo Cliente
                 </h1>
-                <p className='text-[var(--text-secondary)] mt-1'>Registra un nuovo cliente nel sistema</p>
+                <p className='text-[var(--text-secondary)] mt-1'>
+                  Registra un nuovo cliente nel sistema
+                </p>
               </div>
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-[var(--text-tertiary)]'>Step</span>
@@ -832,7 +834,9 @@ function Step0CustomerType(props: Record<string, unknown>) {
         </div>
         <div>
           <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Tipo di Cliente</h2>
-          <p className='text-[var(--text-secondary)] text-sm'>Seleziona la tipologia di account da creare</p>
+          <p className='text-[var(--text-secondary)] text-sm'>
+            Seleziona la tipologia di account da creare
+          </p>
         </div>
       </div>
 
@@ -1017,7 +1021,9 @@ function Step1Credentials({
           <LockKeyhole className='w-6 h-6 text-[var(--text-on-brand)]' />
         </div>
         <div>
-          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Credenziali di Accesso</h2>
+          <h2 className='text-xl font-semibold text-[var(--text-primary)]'>
+            Credenziali di Accesso
+          </h2>
           <p className='text-[var(--text-tertiary)] text-sm'>Inserisci i dati per l&apos;account</p>
         </div>
       </div>
@@ -1029,13 +1035,19 @@ function Step1Credentials({
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+              <Label
+                htmlFor='customer-email'
+                className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'
+              >
                 Email *{' '}
-                <span className='text-[var(--text-tertiary)] font-normal'>(Ti invieremo link di verifica)</span>
+                <span className='text-[var(--text-tertiary)] font-normal'>
+                  (Ti invieremo link di verifica)
+                </span>
               </Label>
               <div className='relative'>
                 <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
+                  id='customer-email'
                   {...field}
                   type='email'
                   onChange={e => handleEmailChange(e.target.value, field.onChange)}
@@ -1056,7 +1068,9 @@ function Step1Credentials({
                   {emailStatus === 'available' && (
                     <CheckCircle2 className='w-5 h-5 text-[var(--status-success)]' />
                   )}
-                  {emailStatus === 'taken' && <XCircle className='w-5 h-5 text-[var(--status-error)]' />}
+                  {emailStatus === 'taken' && (
+                    <XCircle className='w-5 h-5 text-[var(--status-error)]' />
+                  )}
                 </div>
               </div>
               <AnimatePresence>
@@ -1087,7 +1101,9 @@ function Step1Credentials({
                 )}
               </AnimatePresence>
               {errors.email && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.email.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.email.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1101,7 +1117,9 @@ function Step1Credentials({
           control={control}
           render={({ field }) => (
             <div>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Password *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                Password *
+              </Label>
               <div className='relative'>
                 <Lock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
@@ -1129,7 +1147,9 @@ function Step1Credentials({
                   >
                     <div>
                       <div className='flex items-center justify-between mb-1'>
-                        <span className='text-xs text-[var(--text-tertiary)]'>Sicurezza password:</span>
+                        <span className='text-xs text-[var(--text-tertiary)]'>
+                          Sicurezza password:
+                        </span>
                         <span
                           className={`text-xs font-medium ${
                             passwordStrength.score <= 1
@@ -1204,7 +1224,9 @@ function Step1Credentials({
                 )}
               </AnimatePresence>
               {errors.password && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.password.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.password.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1262,7 +1284,10 @@ function Step1Credentials({
           render={({ field }) => (
             <div>
               <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
-                Telefono * <span className='text-[var(--text-tertiary)] font-normal'>(Per notifiche e 2FA)</span>
+                Telefono *{' '}
+                <span className='text-[var(--text-tertiary)] font-normal'>
+                  (Per notifiche e 2FA)
+                </span>
               </Label>
               <div className='flex gap-2'>
                 <Select
@@ -1282,7 +1307,9 @@ function Step1Credentials({
                         <span className='flex items-center gap-2'>
                           <span className='text-lg'>{country.flag}</span>
                           <span className='text-sm'>{country.name}</span>
-                          <span className='text-sm text-[var(--text-tertiary)]'>{country.dialCode}</span>
+                          <span className='text-sm text-[var(--text-tertiary)]'>
+                            {country.dialCode}
+                          </span>
                         </span>
                       </SelectItem>
                     ))}
@@ -1299,7 +1326,9 @@ function Step1Credentials({
                 </div>
               </div>
               {errors.phone && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.phone.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.phone.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1318,7 +1347,9 @@ function Step1Credentials({
             control={control}
             render={({ field }) => (
               <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Nome *</Label>
+                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                  Nome *
+                </Label>
                 <div className='relative'>
                   <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                   <Input
@@ -1328,7 +1359,9 @@ function Step1Credentials({
                   />
                 </div>
                 {errors.firstName && (
-                  <p className='text-[var(--status-error)] text-sm mt-2'>{errors.firstName.message as string}</p>
+                  <p className='text-[var(--status-error)] text-sm mt-2'>
+                    {errors.firstName.message as string}
+                  </p>
                 )}
               </div>
             )}
@@ -1338,7 +1371,9 @@ function Step1Credentials({
             control={control}
             render={({ field }) => (
               <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Cognome *</Label>
+                <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                  Cognome *
+                </Label>
                 <div className='relative'>
                   <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                   <Input
@@ -1348,7 +1383,9 @@ function Step1Credentials({
                   />
                 </div>
                 {errors.lastName && (
-                  <p className='text-[var(--status-error)] text-sm mt-2'>{errors.lastName.message as string}</p>
+                  <p className='text-[var(--status-error)] text-sm mt-2'>
+                    {errors.lastName.message as string}
+                  </p>
                 )}
               </div>
             )}
@@ -1375,7 +1412,11 @@ function RequirementCheck({
       ) : (
         <div className='w-4 h-4 rounded-full border border-[var(--border-default)]' />
       )}
-      <span className={`text-xs ${met ? 'text-[var(--status-success)]' : 'text-[var(--text-tertiary)]'}`}>{label}</span>
+      <span
+        className={`text-xs ${met ? 'text-[var(--status-success)]' : 'text-[var(--text-tertiary)]'}`}
+      >
+        {label}
+      </span>
     </div>
   );
 }
@@ -1454,7 +1495,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               />
             </div>
             {errors.businessName && (
-              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.businessName.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>
+                {errors.businessName.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1466,7 +1509,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         control={control}
         render={({ field }) => (
           <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Tipo Azienda *</Label>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+              Tipo Azienda *
+            </Label>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <SelectTrigger className='h-14 rounded-xl bg-[var(--surface-secondary)] border-[var(--border-default)]'>
                 <SelectValue placeholder='Seleziona tipo' />
@@ -1480,7 +1525,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               </SelectContent>
             </Select>
             {errors.businessType && (
-              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.businessType.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>
+                {errors.businessType.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1493,7 +1540,8 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         render={({ field }) => (
           <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
             <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
-              Partita IVA * <span className='text-xs text-[var(--text-tertiary)]'>(Formato: IT12345678901)</span>
+              Partita IVA *{' '}
+              <span className='text-xs text-[var(--text-tertiary)]'>(Formato: IT12345678901)</span>
             </Label>
             <div className='flex gap-3'>
               <div className='relative flex-1'>
@@ -1560,7 +1608,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
             </AnimatePresence>
 
             {errors.vatNumber && !vatError && (
-              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.vatNumber.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>
+                {errors.vatNumber.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1572,7 +1622,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         control={control}
         render={({ field }) => (
           <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Indirizzo *</Label>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+              Indirizzo *
+            </Label>
             <div className='relative'>
               <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
               <Input
@@ -1582,7 +1634,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               />
             </div>
             {errors.address && (
-              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.address.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>
+                {errors.address.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1595,7 +1649,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           control={control}
           render={({ field }) => (
             <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>CAP *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                CAP *
+              </Label>
               <Input
                 {...field}
                 className='h-14 rounded-xl text-center font-mono border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
@@ -1603,7 +1659,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                 maxLength={5}
               />
               {errors.postalCode && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.postalCode.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.postalCode.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1613,14 +1671,18 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           control={control}
           render={({ field }) => (
             <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)] sm:col-span-2'>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Città *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                Città *
+              </Label>
               <Input
                 {...field}
                 className='h-14 rounded-xl border-[var(--border-default)] focus:border-[var(--status-info)] focus:ring-[var(--status-info)]/20'
                 placeholder='Milano'
               />
               {errors.city && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.city.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.city.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1633,7 +1695,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
         control={control}
         render={({ field }) => (
           <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Provincia *</Label>
+            <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+              Provincia *
+            </Label>
             <Select onValueChange={field.onChange} defaultValue={field.value}>
               <SelectTrigger className='h-14 rounded-xl bg-[var(--surface-secondary)] border-[var(--border-default)]'>
                 <SelectValue placeholder='Seleziona provincia' />
@@ -1647,7 +1711,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
               </SelectContent>
             </Select>
             {errors.province && (
-              <p className='text-[var(--status-error)] text-sm mt-2'>{errors.province.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2'>
+                {errors.province.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1660,7 +1726,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           control={control}
           render={({ field }) => (
             <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Email PEC *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                Email PEC *
+              </Label>
               <div className='relative'>
                 <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
@@ -1671,7 +1739,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                 />
               </div>
               {errors.pecEmail && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.pecEmail.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.pecEmail.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1681,7 +1751,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
           control={control}
           render={({ field }) => (
             <div className='bg-[var(--surface-secondary)] backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-[var(--border-default)]'>
-              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>Codice SDI *</Label>
+              <Label className='text-sm font-medium text-[var(--text-secondary)] mb-2 block'>
+                Codice SDI *
+              </Label>
               <div className='relative'>
                 <Briefcase className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
@@ -1692,7 +1764,9 @@ function Step2Business({ control, errors, watch, setValue, trigger }: CustomerSt
                 />
               </div>
               {errors.sdiCode && (
-                <p className='text-[var(--status-error)] text-sm mt-2'>{errors.sdiCode.message as string}</p>
+                <p className='text-[var(--status-error)] text-sm mt-2'>
+                  {errors.sdiCode.message as string}
+                </p>
               )}
             </div>
           )}
@@ -1720,7 +1794,9 @@ function Step2PrivateExtra() {
         </div>
         <div>
           <h2 className='text-xl font-semibold text-[var(--text-primary)]'>Dati Aggiuntivi</h2>
-          <p className='text-[var(--text-tertiary)] text-sm'>Informazioni opzionali per cliente privato</p>
+          <p className='text-[var(--text-tertiary)] text-sm'>
+            Informazioni opzionali per cliente privato
+          </p>
         </div>
       </div>
 
@@ -1741,15 +1817,24 @@ function Step2PrivateExtra() {
           per completare la registrazione.
         </p>
         <div className='flex flex-wrap items-center justify-center gap-3'>
-          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
+          <Badge
+            variant='secondary'
+            className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'
+          >
             <Check className='w-3 h-3 mr-1' />
             Email verificata
           </Badge>
-          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
+          <Badge
+            variant='secondary'
+            className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'
+          >
             <Check className='w-3 h-3 mr-1' />
             Password sicura
           </Badge>
-          <Badge variant='secondary' className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'>
+          <Badge
+            variant='secondary'
+            className='bg-[var(--surface-secondary)] text-[var(--status-success)] border-[var(--status-success)]/30'
+          >
             <Check className='w-3 h-3 mr-1' />
             Telefono valido
           </Badge>
@@ -1854,14 +1939,19 @@ function Step3Privacy({
                 <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Autorizzo il trattamento dei miei dati personali per la gestione del mio account e
                   dei servizi richiesti.
-                  <a href='/gdpr' className='text-[var(--status-info)] hover:underline ml-1 font-medium'>
+                  <a
+                    href='/gdpr'
+                    className='text-[var(--status-info)] hover:underline ml-1 font-medium'
+                  >
                     Leggi l&apos;informativa completa
                   </a>
                 </p>
               </div>
             </div>
             {errors.gdpr && (
-              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>{errors.gdpr.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>
+                {errors.gdpr.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1888,18 +1978,26 @@ function Step3Privacy({
                 </Label>
                 <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Ho letto e accetto i
-                  <a href='/termini' className='text-[var(--status-info)] hover:underline mx-1 font-medium'>
+                  <a
+                    href='/termini'
+                    className='text-[var(--status-info)] hover:underline mx-1 font-medium'
+                  >
                     Termini di Servizio
                   </a>
                   e la
-                  <a href='/privacy' className='text-[var(--status-info)] hover:underline ml-1 font-medium'>
+                  <a
+                    href='/privacy'
+                    className='text-[var(--status-info)] hover:underline ml-1 font-medium'
+                  >
                     Privacy Policy
                   </a>
                 </p>
               </div>
             </div>
             {errors.privacy && (
-              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>{errors.privacy.message as string}</p>
+              <p className='text-[var(--status-error)] text-sm mt-2 ml-8'>
+                {errors.privacy.message as string}
+              </p>
             )}
           </div>
         )}
@@ -1925,7 +2023,9 @@ function Step3Privacy({
                 <p className='text-sm text-[var(--text-secondary)] mt-1'>
                   Ricevi tips, promozioni esclusive, aggiornamenti servizi. Puoi disiscriverti
                   sempre.{' '}
-                  <span className='text-[var(--status-success)] font-medium'>10,000+ clienti iscritti</span>
+                  <span className='text-[var(--status-success)] font-medium'>
+                    10,000+ clienti iscritti
+                  </span>
                 </p>
               </div>
             </div>
@@ -2095,7 +2195,9 @@ function Step4Review({
           )}
           <div className='flex items-center gap-2 p-3 bg-[var(--status-success-subtle)] rounded-xl'>
             <LockKeyhole className='w-4 h-4 text-[var(--status-success)]' />
-            <span className='text-sm text-[var(--status-success)]'>Password impostata e verificata</span>
+            <span className='text-sm text-[var(--status-success)]'>
+              Password impostata e verificata
+            </span>
           </div>
         </div>
       </ReviewSection>
@@ -2117,7 +2219,10 @@ function Step4Review({
             <div className='flex items-center gap-2'>
               <span className='text-lg'>🇮🇹</span>
               <span className='text-sm text-[var(--text-tertiary)]'>P.IVA:</span>
-              <Badge variant='secondary' className='bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30'>
+              <Badge
+                variant='secondary'
+                className='bg-[var(--status-success-subtle)] text-[var(--status-success)] border-[var(--status-success)]/30'
+              >
                 <BadgeCheck className='w-3 h-3 mr-1' />
                 {vatNumber}
               </Badge>

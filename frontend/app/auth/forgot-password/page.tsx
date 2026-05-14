@@ -7,12 +7,10 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { btnPrimary, btnSpinner, inputStyle } from '@/components/auth/auth-styles';
+import { SkipLink } from '@/components/ui/skip-link';
 
 const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Inserisci la tua email')
-    .email("Inserisci un'email valida"),
+  email: z.string().min(1, 'Inserisci la tua email').email("Inserisci un'email valida"),
 });
 
 export default function ForgotPasswordPage(): React.ReactElement {
@@ -60,24 +58,25 @@ export default function ForgotPasswordPage(): React.ReactElement {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="text-center space-y-5"
+          className='text-center space-y-5'
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
-            <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10'>
+            <span className='text-2xl text-[var(--text-on-brand)]'>✓</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Controlla la tua email
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto">
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto'>
             Se esiste un account con l&apos;email{' '}
-            <strong className="text-[var(--text-on-brand)]">{email}</strong>, riceverai un link di reset.
+            <strong className='text-[var(--text-on-brand)]'>{email}</strong>, riceverai un link di
+            reset.
           </p>
-          <p className="text-[13px] text-[var(--text-tertiary)]">
+          <p className='text-[13px] text-[var(--text-tertiary)]'>
             Se non trovi l&apos;email, controlla anche nella cartella spam.
           </p>
           <Link
-            href="/auth"
-            className="inline-block text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px] leading-[44px]"
+            href='/auth'
+            className='inline-block text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px] leading-[44px]'
           >
             Torna al login
           </Link>
@@ -88,64 +87,63 @@ export default function ForgotPasswordPage(): React.ReactElement {
 
   return (
     <AuthSplitLayout showBack onBack={() => router.push('/auth')}>
+      <SkipLink targetId='forgot-form' />
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="space-y-5"
+        className='space-y-5'
       >
-        <div className="mb-4">
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+        <div className='mb-4'>
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Password dimenticata?
           </h1>
-          <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
+          <p className='mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             Inserisci la tua email e ti invieremo un link per reimpostare la password.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form id='forgot-form' onSubmit={handleSubmit} className='space-y-5'>
           <div>
-            <label htmlFor="forgot-email" className="sr-only">Email aziendale</label>
+            <label htmlFor='forgot-email' className='sr-only'>
+              Email aziendale
+            </label>
             <input
-              id="forgot-email"
-              type="email"
-              name="email"
-              autoComplete="email"
+              id='forgot-email'
+              type='email'
+              name='email'
+              autoComplete='email'
               value={email}
               onChange={e => setEmail(e.target.value)}
               autoFocus
-              placeholder="Email aziendale"
+              placeholder='Email aziendale'
               aria-describedby={error ? 'forgot-error' : undefined}
               className={`${inputStyle} ${error ? 'border-[var(--text-tertiary)]' : ''}`}
             />
             {error && (
               <motion.p
-                id="forgot-error"
-                role="alert"
+                id='forgot-error'
+                role='alert'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-2 pl-5 text-[13px] text-[var(--text-secondary)]"
+                className='mt-2 pl-5 text-[13px] text-[var(--text-secondary)]'
               >
                 {error}
               </motion.p>
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || !email}
-            className={btnPrimary}
-          >
+          <button type='submit' disabled={isLoading || !email} className={btnPrimary}>
             {isLoading ? <span className={btnSpinner} /> : 'Invia link di reset'}
           </button>
         </form>
 
-        <div className="text-center">
-          <p className="text-[13px] text-[var(--text-tertiary)]">
+        <div className='text-center'>
+          <p className='text-[13px] text-[var(--text-tertiary)]'>
             Ricordi la password?{' '}
             <Link
-              href="/auth"
-              className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+              href='/auth'
+              className='font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white min-h-[44px] min-w-[44px] inline-flex items-center justify-center'
             >
               Accedi
             </Link>

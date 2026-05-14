@@ -478,9 +478,7 @@ describe('MudService', () => {
   // =========================================================================
   describe('exportCsv edge cases', () => {
     it('should handle toFixed(3) decimal formatting correctly', async () => {
-      prisma.wasteEntry.findMany.mockResolvedValue([
-        mockEntry({ quantityKg: 10.1234 }),
-      ]);
+      prisma.wasteEntry.findMany.mockResolvedValue([mockEntry({ quantityKg: 10.1234 })]);
       prisma.wasteFir.count.mockResolvedValue(0);
 
       const csv = await service.exportCsv(TENANT_ID, YEAR);

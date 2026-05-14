@@ -12,7 +12,9 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
@@ -299,6 +301,26 @@ export class GdprController {
     @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.exportService.exportPortableData(customerId, tenantId);
+  }
+
+  /**
+   * Full tenant data export as ZIP (EU Data Act Art. 20)
+   * @param tenantId Tenant ID from JWT
+   * @param res Express response (streamed ZIP)
+   */
+  @Get('export-full')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Esporta tutti i dati tenant in ZIP (EU Data Act Art. 20)' })
+  @ApiResponse({ status: 200, description: 'ZIP scaricato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async exportFull(@CurrentUser('tenantId') tenantId: string, @Res() res: Response): Promise<void> {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="nexo-export-${tenantId}-${Date.now()}.zip"`,
+    );
+    await this.exportService.streamFullTenantExport(tenantId, res);
   }
 
   /**

@@ -48,7 +48,7 @@ const schema = z.object({
   firstName: z.string().optional().or(z.literal('')),
   lastName: z.string().optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
-  email: z.string().optional().or(z.literal('')),
+  email: z.union([z.string().email('Inserisci un indirizzo email valido'), z.literal('')]).optional(),
   companyName: z.string().optional().or(z.literal('')),
 
   // Dati anagrafici estesi
@@ -577,10 +577,17 @@ export default function Step1Page() {
                   type='email'
                   {...register('email')}
                   autoComplete='email'
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                   className='pl-12 h-[52px] rounded-full border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-primary)] text-[var(--text-primary)] dark:text-[var(--text-primary)] placeholder-apple-gray dark:placeholder-[var(--text-tertiary)] outline-none'
                   placeholder='mario.rossi@email.it'
                 />
               </div>
+              {errors.email && (
+                <p id='email-error' role='alert' className='text-sm text-red-500 mt-1 px-1'>
+                  {errors.email.message}
+                </p>
+              )}
             </div>
           </div>
         </div>

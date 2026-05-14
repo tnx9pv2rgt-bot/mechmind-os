@@ -749,7 +749,7 @@ describe('VehicleService', () => {
         color: null,
       });
 
-      await service.update(TENANT_ID, VEHICLE_ID, { color: null });
+      await service.update(TENANT_ID, VEHICLE_ID, { color: null as unknown as string | undefined });
 
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },
@@ -779,7 +779,9 @@ describe('VehicleService', () => {
         fuelType: null,
       });
 
-      await service.update(TENANT_ID, VEHICLE_ID, { fuelType: null });
+      await service.update(TENANT_ID, VEHICLE_ID, {
+        fuelType: null as unknown as import('@prisma/client').FuelType | undefined,
+      });
 
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },
@@ -810,7 +812,9 @@ describe('VehicleService', () => {
         insuranceExpiry: null,
       });
 
-      await service.update(TENANT_ID, VEHICLE_ID, { insuranceExpiry: null });
+      await service.update(TENANT_ID, VEHICLE_ID, {
+        insuranceExpiry: null as unknown as string | undefined,
+      });
 
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },
@@ -841,7 +845,9 @@ describe('VehicleService', () => {
         taxExpiry: null,
       });
 
-      await service.update(TENANT_ID, VEHICLE_ID, { taxExpiry: null });
+      await service.update(TENANT_ID, VEHICLE_ID, {
+        taxExpiry: null as unknown as string | undefined,
+      });
 
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },
@@ -872,7 +878,9 @@ describe('VehicleService', () => {
         revisionExpiry: null,
       });
 
-      await service.update(TENANT_ID, VEHICLE_ID, { revisionExpiry: null });
+      await service.update(TENANT_ID, VEHICLE_ID, {
+        revisionExpiry: null as unknown as string | undefined,
+      });
 
       expect((prisma.vehicle as Record<string, jest.Mock>).update).toHaveBeenCalledWith({
         where: { id: VEHICLE_ID },

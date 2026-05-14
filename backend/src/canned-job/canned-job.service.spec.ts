@@ -165,7 +165,7 @@ describe('CannedJobService', () => {
   });
 
   describe('update', () => {
-    it('should update canned job without lines', async () => {
+    it('should update canned job without lines (dto.lines undefined)', async () => {
       const existing = { id: 'cj-1', name: 'Old', lines: [] };
       mockPrisma.cannedJob.findFirst.mockResolvedValue(existing);
       const updated = { ...existing, name: 'New' };
@@ -173,6 +173,13 @@ describe('CannedJobService', () => {
 
       const result = await service.update('t1', 'cj-1', { name: 'New' });
       expect(result).toEqual(updated);
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+      expect(mockPrisma.cannedJob.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'cj-1' },
+          data: expect.objectContaining({ name: 'New' }),
+        }),
+      );
     });
 
     it('should update canned job with new lines (delete old + create new)', async () => {
@@ -224,6 +231,45 @@ describe('CannedJobService', () => {
           lines: [{ type: 'PART', description: 'Filtro', quantity: 1, unitPrice: 1500 }],
         }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should update all fields (name, description, category, isActive) when lines not provided', async () => {
+      const existing = {
+        id: 'cj-1',
+        name: 'Old',
+        description: 'Old desc',
+        category: 'Old cat',
+        isActive: true,
+        lines: [],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(existing);
+      const updated = {
+        ...existing,
+        name: 'New',
+        description: 'New desc',
+        category: 'New cat',
+        isActive: false,
+      };
+      mockPrisma.cannedJob.update.mockResolvedValue(updated);
+
+      const result = await service.update('t1', 'cj-1', {
+        name: 'New',
+        description: 'New desc',
+        category: 'New cat',
+        isActive: false,
+      });
+
+      expect(result).toEqual(updated);
+      expect(mockPrisma.cannedJob.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: 'New',
+            description: 'New desc',
+            category: 'New cat',
+            isActive: false,
+          }),
+        }),
+      );
     });
   });
 
@@ -313,6 +359,33 @@ describe('CannedJobService', () => {
       const result = await service.applyToEstimate('t1', 'cj-1', 'est-1');
 
       expect(result).toEqual({ created: 1 });
+    });
+
+    it('should create estimateLines with correct vatRate (22%) and totalCents calculation', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          {
+            type: 'PART',
+            description: 'Filtro olio',
+            quantity: 3,
+            unitPrice: 1500,
+            partId: 'part-123',
+            position: 0,
+          },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.estimate.findFirst.mockResolvedValue({ id: 'est-1', tenantId: 't1' });
+      mockPrisma.$transaction.mockResolvedValue([{ id: 'el-1' }]);
+
+      const result = await service.applyToEstimate('t1', 'cj-1', 'est-1');
+
+      expect(result).toEqual({ created: 1 });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      const txCalls = mockPrisma.$transaction.mock.calls[0][0];
+      expect(Array.isArray(txCalls)).toBe(true);
+      expect(txCalls.length).toBeGreaterThan(0);
     });
   });
 
@@ -464,6 +537,155 @@ describe('CannedJobService', () => {
           }),
         }),
       );
+    });
+
+    it('should filter only LABOR type lines into laborItems', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          {
+            type: 'LABOR',
+            description: 'Labor 1',
+            quantity: 1,
+            unitPrice: 1000,
+            laborHours: 0.5,
+            partId: null,
+          },
+          {
+            type: 'PART',
+            description: 'Part 1',
+            quantity: 2,
+            unitPrice: 500,
+            laborHours: null,
+            partId: 'p1',
+          },
+          {
+            type: 'LABOR',
+            description: 'Labor 2',
+            quantity: 1,
+            unitPrice: 2000,
+            laborHours: 1,
+            partId: null,
+          },
+          {
+            type: 'OTHER',
+            description: 'Other',
+            quantity: 1,
+            unitPrice: 300,
+            laborHours: null,
+            partId: null,
+          },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.workOrder.findFirst.mockResolvedValue({
+        id: 'wo-1',
+        tenantId: 't1',
+        laborItems: [],
+        partsUsed: [],
+      });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
+
+      const callArgs = mockPrisma.workOrder.updateMany.mock.calls[0][0];
+      const laborItems = JSON.parse(JSON.stringify(callArgs.data.laborItems));
+
+      expect(laborItems).toHaveLength(2);
+      expect(laborItems[0].description).toBe('Labor 1');
+      expect(laborItems[1].description).toBe('Labor 2');
+    });
+
+    it('should filter only PART type lines into partsUsed', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          {
+            type: 'LABOR',
+            description: 'Labor',
+            quantity: 1,
+            unitPrice: 1000,
+            laborHours: 1,
+            partId: null,
+          },
+          {
+            type: 'PART',
+            description: 'Part 1',
+            quantity: 2,
+            unitPrice: 500,
+            laborHours: null,
+            partId: 'p1',
+          },
+          {
+            type: 'PART',
+            description: 'Part 2',
+            quantity: 1,
+            unitPrice: 300,
+            laborHours: null,
+            partId: 'p2',
+          },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.workOrder.findFirst.mockResolvedValue({
+        id: 'wo-1',
+        tenantId: 't1',
+        laborItems: [],
+        partsUsed: [],
+      });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
+
+      const callArgs = mockPrisma.workOrder.updateMany.mock.calls[0][0];
+      const partsUsed = JSON.parse(JSON.stringify(callArgs.data.partsUsed));
+
+      expect(partsUsed).toHaveLength(2);
+      expect(partsUsed[0].description).toBe('Part 1');
+      expect(partsUsed[1].description).toBe('Part 2');
+    });
+
+    it('should correctly merge arrays with existing items', async () => {
+      const cannedJob = {
+        id: 'cj-1',
+        lines: [
+          {
+            type: 'LABOR',
+            description: 'New labor',
+            quantity: 1,
+            unitPrice: 1500,
+            laborHours: 0.5,
+            partId: null,
+          },
+        ],
+      };
+      mockPrisma.cannedJob.findFirst.mockResolvedValue(cannedJob);
+      mockPrisma.workOrder.findFirst.mockResolvedValue({
+        id: 'wo-1',
+        tenantId: 't1',
+        laborItems: [{ description: 'Old' }],
+        partsUsed: [{ description: 'Old part' }],
+      });
+      mockPrisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.applyToWorkOrder('t1', 'cj-1', 'wo-1');
+
+      expect(result).toEqual({ updated: true });
+      expect(mockPrisma.workOrder.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'wo-1', tenantId: 't1' },
+          data: expect.objectContaining({
+            laborItems: expect.any(Array),
+            partsUsed: expect.any(Array),
+          }),
+        }),
+      );
+
+      const callArgs = mockPrisma.workOrder.updateMany.mock.calls[0][0];
+      expect(callArgs.data.laborItems).toHaveLength(2);
+      expect(callArgs.data.laborItems[0].description).toBe('Old');
+      expect(callArgs.data.laborItems[1].description).toBe('New labor');
+      expect(callArgs.data.partsUsed).toHaveLength(1);
     });
   });
 });

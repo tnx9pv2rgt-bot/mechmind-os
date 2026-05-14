@@ -598,13 +598,23 @@ export class WebhookController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Post('segment')
+  private validateTenantId(tenantId: string): void {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!tenantId || !UUID_REGEX.test(tenantId)) {
+      throw new BadRequestException('Invalid tenantId');
+    }
+  }
+
+  @Post(':tenantId/segment')
   async handleSegment(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SegmentEvent,
     @Headers('x-signature') signature: string,
     @Req() req: Request,
   ): Promise<WebhookResponse> {
-    // Verify signature if configured
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing segment webhook`);
+
     const secret = this.configService.get('SEGMENT_WEBHOOK_SECRET');
     if (secret && signature) {
       const body = JSON.stringify(req.body);
@@ -617,11 +627,15 @@ export class WebhookController {
     return this.segmentService.handleEvent(payload);
   }
 
-  @Post('zapier')
+  @Post(':tenantId/zapier')
   async handleZapier(
+    @Param('tenantId') tenantId: string,
     @Body() payload: ZapierPayload,
     @Headers('x-zapier-secret') secret: string,
   ): Promise<WebhookResponse> {
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing zapier webhook`);
+
     const expectedSecret = this.configService.get('ZAPIER_WEBHOOK_SECRET');
     if (expectedSecret) {
       try {
@@ -642,14 +656,17 @@ export class WebhookController {
     return this.zapierService.handleIncoming(payload);
   }
 
-  @Post('slack/events')
+  @Post(':tenantId/slack/events')
   async handleSlackEvents(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SlackEvent,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
     @Req() req: RequestWithRawBody,
   ): Promise<{ challenge?: string; ok?: boolean }> {
-    // Verify Slack signature
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing slack event`);
+
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
       const body = req.rawBody || JSON.stringify(req.body);
@@ -669,14 +686,17 @@ export class WebhookController {
     return this.slackService.handleEvent(payload);
   }
 
-  @Post('slack/commands')
+  @Post(':tenantId/slack/commands')
   async handleSlackCommands(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SlackSlashCommand,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
     @Req() req: RequestWithRawBody,
   ): Promise<SlackResponse> {
-    // Verify signature
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing slack command`);
+
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
       const body = req.rawBody || JSON.stringify(req.body);
@@ -688,20 +708,23 @@ export class WebhookController {
     return this.slackService.handleSlashCommand(payload);
   }
 
-  @Post('crm/:provider')
+  @Post(':tenantId/crm/:provider')
   async handleCRM(
+    @Param('tenantId') tenantId: string,
     @Body() payload: CRMProviderPayload,
     @Param('provider') provider: string,
     @Headers('x-crm-signature') signature: string,
     @Req() req: Request,
   ): Promise<WebhookResponse> {
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing crm/${provider} webhook`);
+
     if (!VALID_CRM_PROVIDERS.includes(provider as CRMProvider)) {
       throw new HttpException('Invalid provider', HttpStatus.BAD_REQUEST);
     }
 
     const validProvider = provider as CRMProvider;
 
-    // Verify CRM webhook signature
     const secretKey = `${validProvider.toUpperCase()}_WEBHOOK_SECRET`;
     const secret = this.configService.get<string>(secretKey);
     if (secret && signature) {
@@ -711,7 +734,6 @@ export class WebhookController {
       }
     }
 
-    // Normalize payload based on provider
     const event: CRMEvent = this.normalizeCRMEvent(validProvider, payload);
 
     return this.crmService.handleEvent(event);

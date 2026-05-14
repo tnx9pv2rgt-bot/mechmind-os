@@ -1,6 +1,6 @@
 // @ts-nocheck
 module.exports = {
-  moduleFileExtensions: ['js', 'json', 'ts'],
+  moduleFileExtensions: ['ts', 'js', 'json'],
   setupFiles: ['<rootDir>/../jest.setup.js'],
   setupFilesAfterEnv: ['<rootDir>/common/__tests__/setup.ts'],
   rootDir: 'src',
@@ -9,6 +9,7 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': ['ts-jest', {
       tsconfig: {
+        target: 'ES2021',
         allowSyntheticDefaultImports: true,
         esModuleInterop: true,
         experimentalDecorators: true,

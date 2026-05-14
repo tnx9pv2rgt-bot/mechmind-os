@@ -1051,11 +1051,11 @@ describe('InspectionForm Integration Tests', () => {
         mockInspectors[0].id
       )
 
-      // Rapid navigation
+      // Rapid navigation — back-btn only appears after async handleNext resolves
       await user.click(screen.getByTestId('next-btn'))
-      await user.click(screen.getByTestId('back-btn'))
+      await user.click(await screen.findByTestId('back-btn'))
       await user.click(screen.getByTestId('next-btn'))
-      await user.click(screen.getByTestId('back-btn'))
+      await user.click(await screen.findByTestId('back-btn'))
 
       // Should still have data
       expect(screen.getByTestId('vehicle-select')).toHaveValue(mockVehicles[0].id)

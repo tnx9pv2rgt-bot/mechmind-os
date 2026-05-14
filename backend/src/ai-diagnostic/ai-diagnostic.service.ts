@@ -238,6 +238,20 @@ export class AiDiagnosticService {
   }
 
   /**
+   * Sanitize user input to prevent prompt injection attacks.
+   * Removes dangerous patterns and limits length.
+   */
+  private sanitizePromptInput(input: string, maxLength = 500): string {
+    return input
+      .substring(0, maxLength)
+      .replace(/[<>{}[\]`\\]/g, '')
+      .replace(/ignore\s+(previous|all|above)\s+instructions?/gi, '[REDACTED]')
+      .replace(/system\s+prompt/gi, '[REDACTED]')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /**
    * Call the configured AI provider (mock in dev, real in production).
    */
   private async callAiProvider(prompt: string, _tenantId: string): Promise<AiProviderResponse> {
@@ -368,19 +382,31 @@ export class AiDiagnosticService {
   }
 
   private buildDtcPrompt(codes: string[], vehicleInfo: VehicleInfoDto): string {
-    // eslint-disable-next-line sonarjs/no-nested-template-literals
-    return `Analizza i seguenti codici DTC per un ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}${vehicleInfo.mileage ? ` con ${vehicleInfo.mileage} km` : ''}:
+    // Sanitize vehicle info to prevent prompt injection
+    const safeMake = this.sanitizePromptInput(vehicleInfo.make, 50);
+    const safeModel = this.sanitizePromptInput(vehicleInfo.model, 50);
 
-Codici DTC: ${codes.join(', ')}
+    // Validate DTC codes format (2-7 alphanumeric characters)
+    const safeCodes = codes.filter(c => /^[A-Z0-9]{2,7}$/.test(c));
+
+    // eslint-disable-next-line sonarjs/no-nested-template-literals
+    return `Analizza i seguenti codici DTC per un ${safeMake} ${safeModel} ${vehicleInfo.year}${vehicleInfo.mileage ? ` con ${vehicleInfo.mileage} km` : ''}:
+
+Codici DTC: ${safeCodes.join(', ')}
 
 Rispondi in JSON con: diagnosis, severity (CRITICAL/HIGH/MEDIUM/LOW), probableCause, recommendedRepairs (array con description, estimatedPartsCents, estimatedLaborHours, priority), additionalTests (array di stringhe), confidence (0-1).`;
   }
 
   private buildSymptomsPrompt(symptoms: string, vehicleInfo: VehicleInfoDto): string {
-    // eslint-disable-next-line sonarjs/no-nested-template-literals
-    return `Analizza i seguenti sintomi per un ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year}${vehicleInfo.mileage ? ` con ${vehicleInfo.mileage} km` : ''}:
+    // Sanitize inputs to prevent prompt injection
+    const safeSymptoms = this.sanitizePromptInput(symptoms, 500);
+    const safeMake = this.sanitizePromptInput(vehicleInfo.make, 50);
+    const safeModel = this.sanitizePromptInput(vehicleInfo.model, 50);
 
-Sintomi riportati dal cliente: "${symptoms}"
+    // eslint-disable-next-line sonarjs/no-nested-template-literals
+    return `Analizza i seguenti sintomi per un ${safeMake} ${safeModel} ${vehicleInfo.year}${vehicleInfo.mileage ? ` con ${vehicleInfo.mileage} km` : ''}:
+
+Sintomi riportati dal cliente: "${safeSymptoms}"
 
 Rispondi in JSON con: diagnosis, severity (CRITICAL/HIGH/MEDIUM/LOW), probableCauses (array), suggestedDtcCodes (array), recommendedActions (array), confidence (0-1).`;
   }

@@ -1305,10 +1305,15 @@ describe('PaymentLinkService', () => {
       const invoice = mockInvoice();
       prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
       prisma.invoice.update.mockResolvedValueOnce(invoice);
+      jest.spyOn(service, 'createStripeCheckoutSession').mockResolvedValueOnce({
+        url: 'https://checkout.stripe.com/pay/test',
+        sessionId: 'cs_test_123',
+      });
 
       const result = await service.createPaymentLink(TENANT_ID, 'inv-001', 'SMS');
 
       expect(result.sent).toBe(true);
+      expect(service.createStripeCheckoutSession).toHaveBeenCalledWith(TENANT_ID, 'inv-001');
     });
   });
 

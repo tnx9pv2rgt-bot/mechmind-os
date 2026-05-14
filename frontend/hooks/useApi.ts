@@ -197,7 +197,7 @@ export function useDashboardStats() {
     refetchInterval: false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
-    retry: 3,
+    retry: 0,
   });
 }
 
@@ -231,6 +231,7 @@ export function useBookings(params?: {
       return raw as PaginatedResponse<Booking>;
     },
     staleTime: 30_000,
+    retry: 0,
   });
 }
 
@@ -364,6 +365,7 @@ export function useCustomers(params?: { page?: number; limit?: number; search?: 
       return raw as PaginatedResponse<Customer>;
     },
     staleTime: 30_000,
+    retry: 0,
   });
 }
 
@@ -809,6 +811,7 @@ export function useWorkOrders(params?: {
       return raw as PaginatedResponse<WorkOrder>;
     },
     staleTime: 30_000,
+    retry: 0,
   });
 }
 

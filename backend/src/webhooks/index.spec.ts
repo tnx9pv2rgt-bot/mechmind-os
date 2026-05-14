@@ -354,6 +354,17 @@ describe('SlackWebhookService', () => {
 
       expect(result.ok).toBe(true);
     });
+
+    it('returns ok for url_verification without challenge', async () => {
+      const event: SlackEvent = {
+        type: 'url_verification',
+      };
+
+      const result = await service.handleEvent(event);
+
+      expect(result.ok).toBe(true);
+      expect(result.challenge).toBeUndefined();
+    });
   });
 
   describe('handleSlashCommand', () => {
@@ -397,6 +408,27 @@ describe('SlackWebhookService', () => {
 
       expect(result.response_type).toBe('ephemeral');
       expect(result.text).toContain('Available commands');
+    });
+
+    it('handles mechmind unknown subcommand', async () => {
+      const command: SlackSlashCommand = {
+        token: 'verification_token',
+        team_id: 'T123',
+        team_domain: 'test-team',
+        channel_id: 'C123',
+        channel_name: 'general',
+        user_id: 'U123',
+        user_name: 'testuser',
+        command: '/mechmind',
+        text: 'unknown-subcommand',
+        response_url: 'https://hooks.slack.com/commands',
+        trigger_id: 'trigger_id',
+      };
+
+      const result = await service.handleSlashCommand(command);
+
+      expect(result.response_type).toBe('ephemeral');
+      expect(result.text).toContain('help');
     });
 
     it('handles booking command', async () => {
@@ -729,6 +761,7 @@ describe('CRMWebhookService', () => {
 describe('WebhookController', () => {
   let controller: WebhookController;
   let crmService: CRMWebhookService;
+  const VALID_TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -772,7 +805,12 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleSegment(payload, signature, mockRequest);
+      const result = await controller.handleSegment(
+        VALID_TENANT_ID,
+        payload,
+        signature,
+        mockRequest,
+      );
 
       expect(result.success).toBe(true);
       expect(segmentService.handleEvent).toHaveBeenCalledWith(payload);
@@ -806,9 +844,9 @@ describe('WebhookController', () => {
 
       const mockRequest = { body: payload } as any;
 
-      await expect(controller.handleSegment(payload, 'invalid-sig', mockRequest)).rejects.toThrow(
-        HttpException,
-      );
+      await expect(
+        controller.handleSegment(VALID_TENANT_ID, payload, 'invalid-sig', mockRequest),
+      ).rejects.toThrow(HttpException);
     });
 
     it('allows Segment webhook without secret configured', async () => {
@@ -841,7 +879,7 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleSegment(payload, '', mockRequest);
+      const result = await controller.handleSegment(VALID_TENANT_ID, payload, '', mockRequest);
 
       expect(result.success).toBe(true);
     });
@@ -876,7 +914,7 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleZapier(payload, 'zapier-secret');
+      const result = await controller.handleZapier(VALID_TENANT_ID, payload, 'zapier-secret');
 
       expect(result.success).toBe(true);
     });
@@ -907,9 +945,9 @@ describe('WebhookController', () => {
         data: {},
       };
 
-      await expect(controller.handleZapier(payload, 'invalid-secret')).rejects.toThrow(
-        HttpException,
-      );
+      await expect(
+        controller.handleZapier(VALID_TENANT_ID, payload, 'invalid-secret'),
+      ).rejects.toThrow(HttpException);
     });
 
     it('allows Zapier webhook without secret configured', async () => {
@@ -940,7 +978,7 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleZapier(payload, '');
+      const result = await controller.handleZapier(VALID_TENANT_ID, payload, '');
 
       expect(result.success).toBe(true);
     });
@@ -978,7 +1016,13 @@ describe('WebhookController', () => {
         rawBody: body,
       } as any;
 
-      const result = await controller.handleSlackEvents(payload, signature, timestamp, mockRequest);
+      const result = await controller.handleSlackEvents(
+        VALID_TENANT_ID,
+        payload,
+        signature,
+        timestamp,
+        mockRequest,
+      );
 
       expect(result.challenge).toBe('challenge-123');
     });
@@ -1012,7 +1056,7 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackEvents(payload, 'v0=any', oldTimestamp, mockRequest),
+        controller.handleSlackEvents(VALID_TENANT_ID, payload, 'v0=any', oldTimestamp, mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
@@ -1045,7 +1089,13 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackEvents(payload, 'v0=invalid', timestamp, mockRequest),
+        controller.handleSlackEvents(
+          VALID_TENANT_ID,
+          payload,
+          'v0=invalid',
+          timestamp,
+          mockRequest,
+        ),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -1092,6 +1142,7 @@ describe('WebhookController', () => {
       } as any;
 
       const result = await controller.handleSlackCommands(
+        VALID_TENANT_ID,
         payload,
         signature,
         timestamp,
@@ -1143,7 +1194,13 @@ describe('WebhookController', () => {
       } as any;
 
       await expect(
-        controller.handleSlackCommands(payload, 'v0=invalid', timestamp, mockRequest),
+        controller.handleSlackCommands(
+          VALID_TENANT_ID,
+          payload,
+          'v0=invalid',
+          timestamp,
+          mockRequest,
+        ),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -1183,7 +1240,13 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleCRM(payload, 'salesforce', signature, mockRequest);
+      const result = await controller.handleCRM(
+        VALID_TENANT_ID,
+        payload,
+        'salesforce',
+        signature,
+        mockRequest,
+      );
 
       expect(result.success).toBe(true);
     });
@@ -1207,7 +1270,7 @@ describe('WebhookController', () => {
       const mockRequest = { body: payload } as any;
 
       await expect(
-        controller.handleCRM(payload, 'invalid-crm', 'sig', mockRequest),
+        controller.handleCRM(VALID_TENANT_ID, payload, 'invalid-crm', 'sig', mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
@@ -1239,7 +1302,7 @@ describe('WebhookController', () => {
       const mockRequest = { body: payload } as any;
 
       await expect(
-        controller.handleCRM(payload, 'salesforce', 'invalid-sig', mockRequest),
+        controller.handleCRM(VALID_TENANT_ID, payload, 'salesforce', 'invalid-sig', mockRequest),
       ).rejects.toThrow(HttpException);
     });
 
@@ -1277,7 +1340,13 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleCRM(payload, 'hubspot', signature, mockRequest);
+      const result = await controller.handleCRM(
+        VALID_TENANT_ID,
+        payload,
+        'hubspot',
+        signature,
+        mockRequest,
+      );
 
       expect(result.success).toBe(true);
     });
@@ -1315,7 +1384,13 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleCRM(payload, 'pipedrive', signature, mockRequest);
+      const result = await controller.handleCRM(
+        VALID_TENANT_ID,
+        payload,
+        'pipedrive',
+        signature,
+        mockRequest,
+      );
 
       expect(result.success).toBe(true);
     });
@@ -1350,9 +1425,105 @@ describe('WebhookController', () => {
         processedAt: new Date(),
       });
 
-      const result = await controller.handleCRM(payload, 'salesforce', '', mockRequest);
+      const result = await controller.handleCRM(
+        VALID_TENANT_ID,
+        payload,
+        'salesforce',
+        '',
+        mockRequest,
+      );
 
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('validateTenantId (BUG-001 fix — OWASP A01)', () => {
+    it('throws BadRequestException when tenantId is empty string', async () => {
+      const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
+      const module = await Test.createTestingModule({
+        controllers: [WebhookController],
+        providers: [
+          SegmentWebhookService,
+          ZapierWebhookService,
+          SlackWebhookService,
+          CRMWebhookService,
+          { provide: ConfigService, useValue: mockConfig },
+        ],
+      }).compile();
+
+      controller = module.get<WebhookController>(WebhookController);
+
+      const payload: ZapierPayload = {
+        hookUrl: 'https://hooks.zapier.com/test',
+        event: 'create_booking',
+        data: {},
+      };
+
+      await expect(controller.handleZapier('', payload, '')).rejects.toThrow(BadRequestException);
+      await expect(controller.handleZapier('', payload, '')).rejects.toThrow('Invalid tenantId');
+    });
+
+    it('throws BadRequestException when tenantId is not a valid UUID', async () => {
+      const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
+      const module = await Test.createTestingModule({
+        controllers: [WebhookController],
+        providers: [
+          SegmentWebhookService,
+          ZapierWebhookService,
+          SlackWebhookService,
+          CRMWebhookService,
+          { provide: ConfigService, useValue: mockConfig },
+        ],
+      }).compile();
+
+      controller = module.get<WebhookController>(WebhookController);
+
+      const payload: ZapierPayload = {
+        hookUrl: 'https://hooks.zapier.com/test',
+        event: 'create_booking',
+        data: {},
+      };
+
+      await expect(controller.handleZapier('not-a-uuid', payload, '')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.handleZapier('../admin', payload, '')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('accepts valid UUID tenantId', async () => {
+      const mockConfig = { get: jest.fn().mockReturnValueOnce(undefined) };
+      const module = await Test.createTestingModule({
+        controllers: [WebhookController],
+        providers: [
+          SegmentWebhookService,
+          ZapierWebhookService,
+          SlackWebhookService,
+          CRMWebhookService,
+          { provide: ConfigService, useValue: mockConfig },
+        ],
+      }).compile();
+
+      controller = module.get<WebhookController>(WebhookController);
+      const zapierService = module.get<ZapierWebhookService>(ZapierWebhookService);
+
+      const payload: ZapierPayload = {
+        hookUrl: 'https://hooks.zapier.com/test',
+        event: 'create_booking',
+        data: {},
+      };
+
+      jest.spyOn(zapierService, 'handleIncoming').mockResolvedValueOnce({
+        success: true,
+        message: 'Automation executed',
+        processedAt: new Date(),
+      });
+
+      const result = await controller.handleZapier(VALID_TENANT_ID, payload, '');
+
+      expect(result.success).toBe(true);
+      expect(zapierService.handleIncoming).toHaveBeenCalledWith(payload);
     });
   });
 });

@@ -4,11 +4,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateWorkOrderDto {
   @ApiProperty({ description: 'ID del veicolo', example: '550e8400-e29b-41d4-a716-446655440000' })
   @IsUUID()
-  vehicleId: string;
+  vehicleId: string = undefined!;
 
   @ApiProperty({ description: 'ID del cliente', example: '550e8400-e29b-41d4-a716-446655440001' })
   @IsUUID()
-  customerId: string;
+  customerId: string = undefined!;
 
   @ApiPropertyOptional({
     description: 'ID del tecnico assegnato (cuid)',

@@ -8,7 +8,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AiSchedulingService } from './ai-scheduling.service';
 import { PrismaService } from '../common/services/prisma.service';
-import { Prisma } from '@prisma/client';
 import fc from 'fast-check';
 
 describe('AiSchedulingService (Property-Based Tests)', () => {
@@ -85,9 +84,7 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
               isActive: true,
             }));
 
-            const bays = [
-              { id: 'bay-1', name: 'Bay 1', status: 'AVAILABLE' },
-            ];
+            const bays = [{ id: 'bay-1', name: 'Bay 1', status: 'AVAILABLE' }];
 
             const bookings = Array.from({ length: numBookings }, (_, i) => ({
               technicianId: i < numTechs ? `tech-${i % numTechs}` : null,
@@ -132,7 +129,7 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.integer({ min: 480, max: 1440 }), // 8+ hours
-          async (longDuration) => {
+          async longDuration => {
             const techs = [
               {
                 id: 'tech-1',
@@ -212,55 +209,52 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
       const baseDate = new Date('2026-03-30T00:00:00Z');
 
       await fc.assert(
-        fc.asyncProperty(
-          fc.integer({ min: 1, max: 8 }),
-          async (numBookings) => {
-            const techs = [
-              { id: 'tech-1', tenantId: TENANT_ID, name: 'Tech 1', isActive: true },
-              { id: 'tech-2', tenantId: TENANT_ID, name: 'Tech 2', isActive: true },
-            ];
+        fc.asyncProperty(fc.integer({ min: 1, max: 8 }), async numBookings => {
+          const techs = [
+            { id: 'tech-1', tenantId: TENANT_ID, name: 'Tech 1', isActive: true },
+            { id: 'tech-2', tenantId: TENANT_ID, name: 'Tech 2', isActive: true },
+          ];
 
-            const bookings = Array.from({ length: numBookings }, (_, i) => {
-              const hour = 9 + i; // 9-17 hours
-              const startTime = new Date(baseDate);
-              startTime.setHours(hour, 0, 0, 0);
-              const endTime = new Date(baseDate);
-              endTime.setHours(hour + 1, 0, 0, 0);
+          const bookings = Array.from({ length: numBookings }, (_, i) => {
+            const hour = 9 + i; // 9-17 hours
+            const startTime = new Date(baseDate);
+            startTime.setHours(hour, 0, 0, 0);
+            const endTime = new Date(baseDate);
+            endTime.setHours(hour + 1, 0, 0, 0);
 
-              return {
-                id: `b-${i}`,
-                tenantId: TENANT_ID,
-                technicianId: i % 2 === 0 ? 'tech-1' : 'tech-2',
-                scheduledDate: new Date('2026-03-30T09:00:00Z'),
-                durationMinutes: 60,
-                liftPosition: 'bay-1',
-                slot: {
-                  startTime,
-                  endTime,
-                },
-                services: [{ service: { name: 'Service' } }],
-              };
-            });
+            return {
+              id: `b-${i}`,
+              tenantId: TENANT_ID,
+              technicianId: i % 2 === 0 ? 'tech-1' : 'tech-2',
+              scheduledDate: new Date('2026-03-30T09:00:00Z'),
+              durationMinutes: 60,
+              liftPosition: 'bay-1',
+              slot: {
+                startTime,
+                endTime,
+              },
+              services: [{ service: { name: 'Service' } }],
+            };
+          });
 
-            prisma.booking.findMany.mockResolvedValueOnce(bookings);
-            prisma.technician.findMany.mockResolvedValueOnce(techs);
-            prisma.aiDecisionLog.create.mockResolvedValueOnce({ id: 'log-1' });
+          prisma.booking.findMany.mockResolvedValueOnce(bookings);
+          prisma.technician.findMany.mockResolvedValueOnce(techs);
+          prisma.aiDecisionLog.create.mockResolvedValueOnce({ id: 'log-1' });
 
-            const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
+          const result = await service.optimizeDaySchedule(TENANT_ID, '2026-03-30');
 
-            // Invariant: all bookings preserved
-            expect(result.currentOrder).toHaveLength(numBookings);
-            expect(result.optimizedOrder).toHaveLength(numBookings);
+          // Invariant: all bookings preserved
+          expect(result.currentOrder).toHaveLength(numBookings);
+          expect(result.optimizedOrder).toHaveLength(numBookings);
 
-            // Invariant: same booking IDs in both orders
-            const currentIds = new Set(result.currentOrder.map((e) => e.bookingId));
-            const optimizedIds = new Set(result.optimizedOrder.map((e) => e.bookingId));
-            expect(currentIds).toEqual(optimizedIds);
+          // Invariant: same booking IDs in both orders
+          const currentIds = new Set(result.currentOrder.map(e => e.bookingId));
+          const optimizedIds = new Set(result.optimizedOrder.map(e => e.bookingId));
+          expect(currentIds).toEqual(optimizedIds);
 
-            // Invariant: time saved is non-negative
-            expect(result.estimatedTimeSavedMinutes).toBeGreaterThanOrEqual(0);
-          },
-        ),
+          // Invariant: time saved is non-negative
+          expect(result.estimatedTimeSavedMinutes).toBeGreaterThanOrEqual(0);
+        }),
         { numRuns: 30, timeout: 10000 },
       );
     });
@@ -305,8 +299,8 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
 
       const calculateSpan = (entries: any[]) => {
         if (entries.length === 0) return 0;
-        const startTimes = entries.map((e) => new Date(e.startTime).getTime());
-        const endTimes = entries.map((e) => new Date(e.endTime).getTime());
+        const startTimes = entries.map(e => new Date(e.startTime).getTime());
+        const endTimes = entries.map(e => new Date(e.endTime).getTime());
         return Math.max(...endTimes) - Math.min(...startTimes);
       };
 
@@ -328,7 +322,7 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
           async (numBookings, numTechs, numBays) => {
             // Generate bookings distributed across the forecast period (5 days)
             const bookings = Array.from({ length: numBookings }, (_, i) => {
-              const day = i % 5; // Distribute across 5 days
+              const _day = i % 5; // Distribute across 5 days
               return {
                 scheduledDate: new Date(`2026-03-30T${9 + (i % 4)}:00:00Z`),
                 tenantId: TENANT_ID,
@@ -376,7 +370,7 @@ describe('AiSchedulingService (Property-Based Tests)', () => {
       const result = await service.getCapacityForecast(TENANT_ID, '2026-03-28', '2026-03-30');
 
       // Invariant: no Saturday or Sunday in result
-      const daysOfWeek = result.map((day) => {
+      const daysOfWeek = result.map(day => {
         const date = new Date(day.date);
         return date.getDay();
       });

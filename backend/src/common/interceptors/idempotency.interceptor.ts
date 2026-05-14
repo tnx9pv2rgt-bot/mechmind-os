@@ -31,7 +31,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     // Check Redis availability before attempting cache hit
     if (!this.redis.isAvailable) {
       return next.handle().pipe(
-        tap(async response => {
+        tap(async _response => {
           // Skip caching if Redis unavailable
         }),
       );

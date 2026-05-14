@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -90,6 +90,18 @@ export default function TeamPage() {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [editRole, setEditRole] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  // Close dialogs on ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !processing) {
+        if (showInviteDialog) setShowInviteDialog(false);
+        else if (showEditDialog) setShowEditDialog(false);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showInviteDialog, showEditDialog, processing]);
 
   const form = useForm<InviteForm>({
     resolver: zodResolver(inviteSchema),
@@ -301,6 +313,7 @@ export default function TeamPage() {
                               variant='ghost'
                               size='sm'
                               className='min-w-[44px] min-h-[44px]'
+                              aria-label={`Opzioni per ${member.name}`}
                               onClick={() => {
                                 setSelectedMember(member);
                                 setEditRole(member.role);

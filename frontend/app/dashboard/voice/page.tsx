@@ -146,7 +146,7 @@ export default function VoicePage() {
     },
     {
       label: 'Tasso risoluzione',
-      value: stats ? `${stats.resolutionRate.toFixed(0)}%` : '0%',
+      value: stats?.resolutionRate != null ? `${stats.resolutionRate.toFixed(0)}%` : '0%',
       icon: BarChart3,
       color: 'bg-[var(--status-success)]',
     },

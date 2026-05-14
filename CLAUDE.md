@@ -1,73 +1,62 @@
 ## PROGETTO
-ERP multi-tenant automotive (officine, fleet, gommisti). Stack: NestJS + Next.js + Prisma + PostgreSQL + Redis + BullMQ. Moduli: booking, invoice, GDPR, FatturaPa/PEPPOL, RENTRI, fleet, OBD, kiosk, AI.
 
-## COMANDI
-```bash
-cd backend && npm run start:dev     # porta 3002
-cd backend && npx tsc --noEmit      # type check
-cd backend && npm run lint          # lint
-cd backend && npx jest --forceExit  # test
-cd frontend && npm run dev          # porta 3000
-docker compose up -d postgres redis
-bash .claude/scripts/TUTTI.sh       # tutti gli script
-```
+ERP multi-tenant automotive (officine, fleet, gommisti). Stack: NestJS + Next.js
+14 + Prisma + PostgreSQL 15 + Redis 7 + BullMQ. Backend :3002, Frontend :3000.
 
 ## REGOLE NON NEGOZIABILI
-- tenantId: OGNI query Prisma → `where: { tenantId }`. MAI senza.
-- PII: SOLO EncryptionService (AES-256-CBC). MAI in chiaro.
-- Booking: advisory lock + SERIALIZABLE. No race condition.
-- Webhook: verifica firma HMAC. MAI fidarsi del payload.
-- State machine: `validateTransition()` per ogni cambio status.
-- JWT: `jti` per revocabilità. MAI secret hardcoded.
-- Errori 500/404/warning = BUG → fixa subito.
 
-## LIMITE RISORSE (Mac mini 8GB RAM)
-- MAX 4 processi paralleli: subagenti (Agent), bash background, Task concorrenti.
-- Mai lanciare > 4 tool call paralleli che spawnano processi pesanti (jest, tsc, agent).
-- Lettura/grep/find paralleli OK (leggeri). Build/test/agent → batch da 4 max.
-- Se serve di più, esegui in serie. NO swap/OOM.
-
-## ANTI-MOCK
-`app/api/*/route.ts` → SOLO `proxyToNestJS({ backendPath: 'v1/[resource]' })`. Mai mock/demo/fake data.
+- tenantId in OGNI query Prisma (`where: { tenantId }`). Mancante → data leak
+  GDPR/OWASP A01.
+- PII solo via EncryptionService (AES-256-CBC). Mai in chiaro nei
+  log/DB/risposte.
+- Booking: `acquireAdvisoryLock` + `withSerializableTransaction`. Mai senza.
+- State change: `validateTransition(currentStatus, newStatus, transitions)`. Mai
+  stati arbitrari.
+- Webhook esterni: verifica HMAC-SHA256 prima di toccare il payload.
+- JWT: `jti` obbligatorio, secret da env. Mai hardcoded.
+- Frontend `app/api/*/route.ts`: solo `proxyToNestJS({ backendPath })`. Mai
+  mock/demo/fake.
+- TS strict: zero `any`, zero `@ts-ignore`, return type espliciti.
+- 500/404/warning visibili = bug → fixare prima di chiudere il task.
 
 ## TEST
-- Target: Statements ≥90% AND Branches ≥90% su tutti i moduli.
-- Misura SEMPRE con terminale reale: `npx jest src/<modulo> --coverage --forceExit`. Mai fidarti di numeri agent.
-- Log completamento: `MODULI_NEXO.md` → `| YYYY-MM-DD HH:MM | backend | <modulo> | audit-modulo | X% / Y% | ✅ |`
-- Skill unica per qualità: `/audit-modulo {NOME_MODULO} [--frontend] [--e2e]`. Assorbe fix-coverage (Fase 2.1). NON chiamare `tools/fix-coverage` né la skill deprecata `/fix-coverage`.
+
+- Soglia: Statements ≥90% AND Branches ≥90% (misurata con
+  `npx jest src/<modulo> --coverage --forceExit`, mai numeri stimati).
+- Skill unica: `/audit-modulo <NOME>` (assorbe fix-coverage, deprecato).
+- Log su `MODULI_NEXO.md`:
+  `| YYYY-MM-DD HH:MM | backend | <mod> | audit-modulo | X% / Y% | ✅ |`.
+
+## RISORSE
+
+Mac mini 8GB → max 4 processi pesanti paralleli (Agent/jest/tsc/build).
+Read/Grep paralleli illimitati.
 
 ## OUTPUT
-- Vietati: "Sure!", "I'll help", riepiloghi post-task. Usa: ✅ / ❌ / ⚠️.
-- Batch paralleli su moduli indipendenti: `isolation: "worktree"`. `/compact` ogni 20 min.
 
-## MODEL ROUTING (obbligatorio nei subagenti)
-Specifica SEMPRE `model:` nei tool call `Agent(...)`. Cascading: cheap first, scala solo se necessario.
+Italiano, diretto. Vietato "Sure!"/"I'll help"/riepiloghi. Usa ✅/❌/⚠️. Fine
+task ≤6 righe.
 
-| Model | Quando usarlo | Esempi task |
-|-------|--------------|-------------|
-| `haiku` | Retrieve, parsing, ricerca, analisi | grep, find, lettura file, analisi coverage, esplorazione codebase |
-| `sonnet` | Tool use agentico, scrittura codice | test, fix bug, nuove feature, refactor |
-| `opus` | Ragionamento multi-step critico | review sicurezza, architettura, decisioni irreversibili |
+## SUBAGENT
 
-**Regola pratica:**
-- Subagent tipo `Explore` → `model: "haiku"`
-- Subagent tipo `general-purpose` per ricerca → `model: "haiku"`
-- Subagent per scrittura test/codice → `model: "sonnet"` (default)
-- Subagent `code-reviewer` / security → `model: "opus"`
+Specifica sempre `model:`. Default: `haiku` (ricerca/grep), `sonnet`
+(codice/test), `opus` (security/arch). Worktree isolation per batch
+indipendenti.
 
-## SPOF CRITICI
-- tenantId mancante → data leak GDPR (OWASP A01)
-- RLS errato → cross-tenant data leak
-- ENCRYPTION_KEY cambiato → PII illeggibili
-- Redis down → BullMQ/auth/rate-limit broken
-- Advisory lock mancante → booking race condition
-- HMAC webhook non verificato → payment loss (PCI)
-- Errori unhandled → stack trace esposto (OWASP A10)
+## MEMORIA PROGETTO
 
-## COMPACT: preserva tenantId, ANTI-MOCK, SPOF, state machine, GDPR/PCI. Scarta: output test, log ricerca file.
-## REFS: @docs/README.md | @docs/09-ERROR-CATALOG.md | @docs/11-DEPENDENCY-MAP.md | @docs/05-DOMAIN-GLOSSARY.md
+- **Stato completo + roadmap + bug aperti**: `.claude/teams/PROJECT-MEMORY.md`
+  (leggere a inizio sessione)
+- **Coverage frontend E2E reale**: `frontend/e2e/COVERAGE-REAL.md`
+- **Coverage backend (fonte di verità)**: `MODULI_NEXO.md`
 
-## REGOLE OPERATIVE (dettaglio in .claude/rules/)
-- Ramdisk + c8: → @.claude/rules/ramdisk-c8.md
-- SILENZIO: ZERO output intermedi. Fine task: ≤6 righe (modulo, score, coverage, bloccanti, report, tempo).
-- ROUTINE NOTTURNA: `bash .claude/scripts/full-scan.sh` ogni notte → `.claude/scans/`. Se CRITICAL>0: `/full-fix`.
+## ON-DEMAND (leggi solo se rilevante al task)
+
+- State machines & errori per modulo: `docs/09-ERROR-CATALOG.md`
+- Domain enums: `prisma/schema.prisma` o `docs/05-DOMAIN-GLOSSARY.md`
+- Caller graph dei service core (PrismaService, EncryptionService, RedisService,
+  QueueService): `docs/11-DEPENDENCY-MAP.md`
+- Ramdisk + c8 per `/audit-modulo`: `.claude/rules/ramdisk-c8.md`
+- Path-scoped: `backend/CLAUDE.md`, `frontend/CLAUDE.md` (se esistenti)
+- Audit storici: `docs/audit-reports/<modulo>-YYYY-MM-DD.md`
+- Indice docs completo: `docs/README.md` (NON auto-importare, è 300 righe)

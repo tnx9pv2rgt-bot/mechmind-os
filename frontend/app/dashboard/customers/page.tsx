@@ -171,7 +171,7 @@ export default function CustomersPage(): React.ReactElement {
 
       <motion.div
         className="p-4 sm:p-8 space-y-6"
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={containerVariants}
       >
@@ -227,7 +227,7 @@ export default function CustomersPage(): React.ReactElement {
                   <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
                 </div>
               ) : error ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div role="alert" className="flex flex-col items-center justify-center py-12 text-center">
                   <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
                   <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     Impossibile caricare i clienti
@@ -320,13 +320,13 @@ export default function CustomersPage(): React.ReactElement {
                               <td className="px-4 sm:px-6 py-4 hidden md:table-cell">
                                 <div className="flex items-center gap-2 truncate text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                   <Mail className="h-4 w-4 flex-shrink-0" />
-                                  <span className="truncate">{customer.email || 'N/D'}</span>
+                                  <span className="truncate">{customer.email || '—'}</span>
                                 </div>
                               </td>
                               <td className="px-4 sm:px-6 py-4 hidden lg:table-cell">
                                 <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                                   <Phone className="h-4 w-4 flex-shrink-0" />
-                                  <span>{customer.phone ? formatPhone(customer.phone) : 'N/D'}</span>
+                                  <span>{customer.phone ? formatPhone(customer.phone) : '—'}</span>
                                 </div>
                               </td>
                               <td

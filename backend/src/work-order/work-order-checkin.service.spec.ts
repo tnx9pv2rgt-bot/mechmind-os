@@ -48,8 +48,8 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
       const existing = { id: WO_ID, tenantId: TENANT_ID, status: 'PENDING', vehicleId: 'v1' };
       const checkedIn = { ...existing, status: 'CHECKED_IN' };
       prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedIn);
-      prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+      prisma.vehicle.update.mockResolvedValueOnce({});
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.checkIn(TENANT_ID, WO_ID, {
         vehicleId: 'v1',
@@ -68,8 +68,8 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
       const existing = { id: WO_ID, tenantId: TENANT_ID, status: 'OPEN', vehicleId: 'v1' };
       const checkedIn = { ...existing, status: 'CHECKED_IN' };
       prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedIn);
-      prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+      prisma.vehicle.update.mockResolvedValueOnce({});
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.checkIn(TENANT_ID, WO_ID, {
         vehicleId: 'v1',
@@ -82,7 +82,7 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
     });
 
     it('should throw on invalid status for check-in', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({
+      prisma.workOrder.findFirst.mockResolvedValueOnce({
         id: WO_ID,
         tenantId: TENANT_ID,
         status: 'IN_PROGRESS',
@@ -125,8 +125,8 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
       };
       const checkedOut = { ...existing, status: 'READY', mileageOut: 50050 };
       prisma.workOrder.findFirst.mockResolvedValueOnce(existing).mockResolvedValueOnce(checkedOut);
-      prisma.vehicle.update.mockResolvedValue({});
-      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+      prisma.vehicle.update.mockResolvedValueOnce({});
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.checkOut(TENANT_ID, WO_ID, {
         mileageOut: 50050,
@@ -137,7 +137,7 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
     });
 
     it('should throw when mileageOut < mileageIn', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({
+      prisma.workOrder.findFirst.mockResolvedValueOnce({
         id: WO_ID,
         tenantId: TENANT_ID,
         status: 'COMPLETED',
@@ -154,7 +154,7 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
     });
 
     it('should throw on non-completed WO', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({
+      prisma.workOrder.findFirst.mockResolvedValueOnce({
         id: WO_ID,
         tenantId: TENANT_ID,
         status: 'IN_PROGRESS',
@@ -174,9 +174,9 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
 
   describe('startTimer', () => {
     it('should start a timer for a technician', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({ id: WO_ID, tenantId: TENANT_ID });
-      prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
-      prisma.technicianTimeLog.create.mockResolvedValue({
+      prisma.workOrder.findFirst.mockResolvedValueOnce({ id: WO_ID, tenantId: TENANT_ID });
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(null);
+      prisma.technicianTimeLog.create.mockResolvedValueOnce({
         id: 'log-1',
         workOrderId: WO_ID,
         technicianId: TECH_ID,
@@ -189,8 +189,8 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
     });
 
     it('should throw if timer already running', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({ id: WO_ID, tenantId: TENANT_ID });
-      prisma.technicianTimeLog.findFirst.mockResolvedValue({ id: 'existing', stoppedAt: null });
+      prisma.workOrder.findFirst.mockResolvedValueOnce({ id: WO_ID, tenantId: TENANT_ID });
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce({ id: 'existing', stoppedAt: null });
 
       await expect(service.startTimer(TENANT_ID, WO_ID, TECH_ID)).rejects.toThrow(
         BadRequestException,
@@ -201,23 +201,23 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
   describe('stopTimer', () => {
     it('should stop the active timer and update labor hours', async () => {
       const startedAt = new Date(Date.now() - 30 * 60000); // 30 min ago
-      prisma.technicianTimeLog.findFirst.mockResolvedValue({
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce({
         id: 'log-1',
         workOrderId: WO_ID,
         technicianId: TECH_ID,
         startedAt,
         stoppedAt: null,
       });
-      prisma.technicianTimeLog.update.mockResolvedValue({
+      prisma.technicianTimeLog.update.mockResolvedValueOnce({
         id: 'log-1',
         stoppedAt: new Date(),
         durationMinutes: 30,
       });
-      prisma.technicianTimeLog.findMany.mockResolvedValue([
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce([
         { durationMinutes: 30 },
         { durationMinutes: 60 },
       ]);
-      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
+      prisma.workOrder.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.stopTimer(TENANT_ID, WO_ID, TECH_ID);
 
@@ -231,7 +231,7 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
     });
 
     it('should throw if no active timer', async () => {
-      prisma.technicianTimeLog.findFirst.mockResolvedValue(null);
+      prisma.technicianTimeLog.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.stopTimer(TENANT_ID, WO_ID, TECH_ID)).rejects.toThrow(
         BadRequestException,
@@ -241,8 +241,8 @@ describe('WorkOrderService — Check-in / Check-out / Timer', () => {
 
   describe('getTimer', () => {
     it('should return timer status with accumulated time', async () => {
-      prisma.workOrder.findFirst.mockResolvedValue({ id: WO_ID, tenantId: TENANT_ID });
-      prisma.technicianTimeLog.findMany.mockResolvedValue([
+      prisma.workOrder.findFirst.mockResolvedValueOnce({ id: WO_ID, tenantId: TENANT_ID });
+      prisma.technicianTimeLog.findMany.mockResolvedValueOnce([
         { id: 'log-1', stoppedAt: null, durationMinutes: null },
         { id: 'log-2', stoppedAt: new Date(), durationMinutes: 45 },
       ]);

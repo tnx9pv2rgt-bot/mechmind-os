@@ -197,6 +197,7 @@ export default function WorkOrdersPage(): React.ReactElement {
   const { data: rawData, error, isLoading, mutate } = useSWR<WorkOrdersResponse | WorkOrder[]>(
     buildUrl(),
     fetcher,
+    { onErrorRetry: () => {} },
   );
 
   const workOrders: WorkOrder[] = (() => {
@@ -290,7 +291,7 @@ export default function WorkOrdersPage(): React.ReactElement {
 
       <motion.div
         className='p-8 space-y-6'
-        initial='hidden'
+        initial={false}
         animate='visible'
         variants={containerVariants}
       >
@@ -340,6 +341,7 @@ export default function WorkOrdersPage(): React.ReactElement {
                   <select
                     value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value as WorkOrderStatus); setPage(1); }}
+                    aria-label='Filtra per stato ordine di lavoro'
                     className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
@@ -364,7 +366,7 @@ export default function WorkOrdersPage(): React.ReactElement {
             </AppleCardHeader>
             <AppleCardContent>
               {error ? (
-                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                <div role='alert' className='flex flex-col items-center justify-center py-12 text-center'>
                   <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
                   <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Impossibile caricare gli ordini di lavoro

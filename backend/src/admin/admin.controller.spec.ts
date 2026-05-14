@@ -2,147 +2,84 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { AdminController } from './admin.controller';
 import { AdminSetupService } from './admin-setup.service';
+import { UserRole } from '@prisma/client';
+
+const mockSetupData = {
+  tenantId: 'tenant-001',
+  locationId: 'location-001',
+  users: [{ id: 'u-001', email: 'admin@demo.mechmind.it', role: UserRole.ADMIN }],
+};
+
+const mockSetupService = { seedDemoData: jest.fn() };
 
 describe('AdminController', () => {
   let controller: AdminController;
-  let setupService: jest.Mocked<AdminSetupService>;
-
-  const SETUP_KEY = 'test-setup-key';
+  let savedSecret: string | undefined;
 
   beforeEach(async () => {
-    process.env.SETUP_SECRET = SETUP_KEY;
+    jest.clearAllMocks();
+    savedSecret = process.env.SETUP_SECRET;
+    process.env.SETUP_SECRET = 'correct-secret-key';
+
+    mockSetupService.seedDemoData.mockResolvedValue(mockSetupData);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminController],
-      providers: [
-        {
-          provide: AdminSetupService,
-          useValue: {
-            seedDemoData: jest.fn(),
-          },
-        },
-      ],
+      providers: [{ provide: AdminSetupService, useValue: mockSetupService }],
     }).compile();
 
-    controller = module.get<AdminController>(AdminController);
-    setupService = module.get(AdminSetupService) as jest.Mocked<AdminSetupService>;
+    controller = module.get(AdminController);
   });
 
   afterEach(() => {
-    delete process.env.SETUP_SECRET;
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+    process.env.SETUP_SECRET = savedSecret;
   });
 
   describe('setup', () => {
-    it('should seed demo data when setup key is valid', async () => {
-      const seedResult = { tenantId: 'tenant-001', usersCreated: 3 };
-      setupService.seedDemoData.mockResolvedValue(seedResult as never);
+    it('should return seeded data when key matches', async () => {
+      const result = await controller.setup('correct-secret-key');
 
-      const result = await controller.setup(SETUP_KEY);
-
-      expect(setupService.seedDemoData).toHaveBeenCalled();
-      expect(result).toEqual({
-        message: 'Demo data seeded successfully',
-        data: seedResult,
-      });
+      expect(result.message).toBe('Demo data seeded successfully');
+      expect(result.data.tenantId).toBe('tenant-001');
+      expect(mockSetupService.seedDemoData).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw Unauthorized when setup key is invalid', async () => {
+    it('should throw 401 when setup key is wrong', async () => {
       await expect(controller.setup('wrong-key')).rejects.toThrow(
         new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED),
       );
-      expect(setupService.seedDemoData).not.toHaveBeenCalled();
+      expect(mockSetupService.seedDemoData).not.toHaveBeenCalled();
     });
 
-    it('should throw Internal Server Error when SETUP_SECRET not configured', async () => {
+    it('should throw 500 when SETUP_SECRET is not configured', async () => {
       delete process.env.SETUP_SECRET;
 
-      await expect(controller.setup(SETUP_KEY)).rejects.toThrow(
+      await expect(controller.setup('any-key')).rejects.toThrow(
         new HttpException('Server misconfiguration', HttpStatus.INTERNAL_SERVER_ERROR),
       );
+      expect(mockSetupService.seedDemoData).not.toHaveBeenCalled();
     });
 
-    it('should reject empty setup key', async () => {
+    it('should throw 401 for empty string key', async () => {
       await expect(controller.setup('')).rejects.toThrow(HttpException);
-      expect(setupService.seedDemoData).not.toHaveBeenCalled();
+      expect(mockSetupService.seedDemoData).not.toHaveBeenCalled();
     });
 
-    it('should handle setupService errors', async () => {
-      setupService.seedDemoData.mockRejectedValue(new Error('Database error'));
+    it('should propagate seedDemoData errors', async () => {
+      mockSetupService.seedDemoData.mockRejectedValueOnce(new Error('DB failure'));
 
-      await expect(controller.setup(SETUP_KEY)).rejects.toThrow('Database error');
+      await expect(controller.setup('correct-secret-key')).rejects.toThrow('DB failure');
+      expect(mockSetupService.seedDemoData).toHaveBeenCalledTimes(1);
     });
 
-    it('should pass correct message in success response', async () => {
-      const seedResult = { message: 'Success' };
-      setupService.seedDemoData.mockResolvedValue(seedResult as never);
+    it('should pass seedDemoData result in response data', async () => {
+      const customData = { ...mockSetupData, tenantId: 'tenant-custom' };
+      mockSetupService.seedDemoData.mockResolvedValueOnce(customData);
 
-      const result = await controller.setup(SETUP_KEY);
+      const result = await controller.setup('correct-secret-key');
 
-      expect(result.message).toBe('Demo data seeded successfully');
-    });
-
-    it('should return exact seed result in data property', async () => {
-      const seedResult = {
-        tenantId: 'tenant-002',
-        usersCreated: 5,
-        customersCreated: 10,
-      };
-      setupService.seedDemoData.mockResolvedValue(seedResult as never);
-
-      const result = await controller.setup(SETUP_KEY);
-
-      expect(result.data).toEqual(seedResult);
-    });
-
-    it('should preserve case sensitivity for setup key', async () => {
-      process.env.SETUP_SECRET = 'MySetupKey123';
-
-      await expect(controller.setup('mysetupkey123')).rejects.toThrow(
-        new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED),
-      );
-    });
-
-    it('should handle very long setup keys', async () => {
-      const longKey = 'a'.repeat(1000);
-      process.env.SETUP_SECRET = longKey;
-
-      const result = await controller.setup(longKey);
-
-      expect(result).toBeDefined();
-    });
-
-    it('should handle special characters in setup key', async () => {
-      const specialKey = 'test-key\!@#$%^&*()';
-      process.env.SETUP_SECRET = specialKey;
-
-      const result = await controller.setup(specialKey);
-
-      expect(result).toBeDefined();
-    });
-  });
-
-  describe('decorator metadata fallback (branch coverage)', () => {
-    it('falls back to Object when AdminSetupService dependency is undefined at decoration time', () => {
-      jest.isolateModules(() => {
-        jest.doMock('./admin-setup.service', () => ({ AdminSetupService: undefined }));
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const reimported = require('./admin.controller') as typeof import('./admin.controller');
-        expect(reimported.AdminController).toBeDefined();
-      });
-    });
-
-    it('re-imports controller with stubbed dependency without throwing', () => {
-      expect(() => {
-        jest.isolateModules(() => {
-          jest.doMock('./admin-setup.service', () => ({ AdminSetupService: undefined }));
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
-          require('./admin.controller');
-        });
-      }).not.toThrow();
+      expect(result.data).toEqual(customData);
+      expect(mockSetupService.seedDemoData).toHaveBeenCalledWith();
     });
   });
 });

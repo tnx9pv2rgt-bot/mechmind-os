@@ -1,0 +1,490 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PrismaService } from '../../../common/services/prisma.service';
+import { LoggerService } from '../../../common/services/logger.service';
+import { AccountingService } from './accounting.service';
+import { AccountingProvider, AccountingSyncStatus } from '@prisma/client';
+
+describe('AccountingService', () => {
+  let service: AccountingService;
+  let mockPrisma: Record<string, any>;
+  let mockLogger: Record<string, any>;
+  let mockEventEmitter: Record<string, any>;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+
+    // Default mocks
+    mockPrisma = {
+      accountingSync: {
+        create: jest.fn(),
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+
+    mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    };
+
+    mockEventEmitter = {
+      emit: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AccountingService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: LoggerService, useValue: mockLogger },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
+      ],
+    }).compile();
+
+    service = module.get<AccountingService>(AccountingService);
+  });
+
+  describe('syncInvoice', () => {
+    it('creates sync record and queues for processing', async () => {
+      const mockSync = {
+        id: 'sync-001',
+        tenantId: 'tenant-1',
+        provider: AccountingProvider.QUICKBOOKS,
+        entityType: 'INVOICE',
+        entityId: 'inv-123',
+        status: AccountingSyncStatus.SYNCING,
+        direction: 'OUTBOUND' as const,
+        externalId: null,
+        syncedAt: null,
+        error: null,
+        response: null,
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.accountingSync.create.mockResolvedValueOnce({ ...mockSync, status: AccountingSyncStatus.PENDING });
+      mockPrisma.accountingSync.update.mockResolvedValueOnce(mockSync);
+
+      const result = await service.syncInvoice('tenant-1', 'inv-123', AccountingProvider.QUICKBOOKS);
+
+      expect(result.id).toBe('sync-001');
+      expect(result.entityType).toBe('INVOICE');
+      expect(result.status).toBe(AccountingSyncStatus.SYNCING);
+      expect(mockPrisma.accountingSync.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            tenantId: 'tenant-1',
+            entityId: 'inv-123',
+            provider: AccountingProvider.QUICKBOOKS,
+          }),
+        }),
+      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'accounting.sync.queued',
+        expect.objectContaining({ tenantId: 'tenant-1' }),
+      );
+    });
+
+    it('throws error for invalid provider without queuing', async () => {
+      mockPrisma.accountingSync.create.mockResolvedValueOnce({
+        id: 'sync-bad',
+        status: AccountingSyncStatus.PENDING,
+        entityType: 'INVOICE',
+        entityId: 'inv-123',
+        provider: 'INVALID_PROVIDER' as any,
+      });
+      mockPrisma.accountingSync.update.mockResolvedValueOnce({
+        status: AccountingSyncStatus.FAILED,
+        error: 'Unknown provider: INVALID_PROVIDER',
+      });
+
+      const result = await service.syncInvoice('tenant-1', 'inv-123', 'INVALID_PROVIDER' as any);
+
+      expect(result.status).toBe(AccountingSyncStatus.FAILED);
+      expect(result.error).toContain('Unknown provider');
+      expect(mockPrisma.accountingSync.update).toHaveBeenCalled();
+    });
+
+    it('isolates by tenantId in all queries', async () => {
+      const mockSync = {
+        id: 'sync-tenant-2',
+        tenantId: 'tenant-2',
+        status: AccountingSyncStatus.SYNCING,
+        entityType: 'INVOICE',
+        entityId: 'inv-456',
+        provider: AccountingProvider.XERO,
+      };
+
+      mockPrisma.accountingSync.create.mockResolvedValueOnce({ ...mockSync, status: AccountingSyncStatus.PENDING });
+      mockPrisma.accountingSync.update.mockResolvedValueOnce(mockSync);
+
+      await service.syncInvoice('tenant-2', 'inv-456', AccountingProvider.XERO);
+
+      expect(mockPrisma.accountingSync.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ tenantId: 'tenant-2' }),
+        }),
+      );
+      expect(mockLogger.log).toHaveBeenCalled();
+    });
+  });
+
+  describe('syncCustomer', () => {
+    it('creates customer sync record with proper tenantId', async () => {
+      const mockSync = {
+        id: 'sync-cust-001',
+        tenantId: 'tenant-1',
+        provider: AccountingProvider.FATTUREINCLOUD,
+        entityType: 'CUSTOMER',
+        entityId: 'cust-789',
+        status: AccountingSyncStatus.SYNCING,
+        direction: 'OUTBOUND' as const,
+        externalId: null,
+        error: null,
+        response: null,
+        syncedAt: null,
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.accountingSync.create.mockResolvedValueOnce({ ...mockSync, status: AccountingSyncStatus.PENDING });
+      mockPrisma.accountingSync.update.mockResolvedValueOnce(mockSync);
+
+      const result = await service.syncCustomer('tenant-1', 'cust-789', AccountingProvider.FATTUREINCLOUD);
+
+      expect(result.entityType).toBe('CUSTOMER');
+      expect(result.entityId).toBe('cust-789');
+      expect(mockPrisma.accountingSync.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ entityType: 'CUSTOMER' }),
+        }),
+      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('accounting.sync.queued', expect.any(Object));
+    });
+
+    it('emits sync.queued event with correct metadata', async () => {
+      const mockSync = {
+        id: 'sync-cust-002',
+        tenantId: 'tenant-1',
+        provider: AccountingProvider.XERO,
+        entityType: 'CUSTOMER',
+        entityId: 'cust-555',
+        status: AccountingSyncStatus.SYNCING,
+        direction: 'OUTBOUND' as const,
+        externalId: null,
+        error: null,
+        response: null,
+        syncedAt: null,
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.accountingSync.create.mockResolvedValueOnce({ ...mockSync, status: AccountingSyncStatus.PENDING });
+      mockPrisma.accountingSync.update.mockResolvedValueOnce(mockSync);
+
+      await service.syncCustomer('tenant-1', 'cust-555', AccountingProvider.XERO);
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('accounting.sync.queued', {
+        tenantId: 'tenant-1',
+        syncId: 'sync-cust-002',
+        entityType: 'CUSTOMER',
+        entityId: 'cust-555',
+        provider: AccountingProvider.XERO,
+      });
+      expect(mockEventEmitter.emit).toHaveBeenCalledTimes(2); // queued + sync attempt
+    });
+  });
+
+  describe('findAll', () => {
+    it('returns paginated records with default limits', async () => {
+      const mockRecords = [
+        {
+          id: 'sync-001',
+          tenantId: 'tenant-1',
+          status: AccountingSyncStatus.SYNCED,
+          provider: AccountingProvider.QUICKBOOKS,
+          entityType: 'INVOICE',
+          entityId: 'inv-1',
+          direction: 'OUTBOUND',
+          externalId: 'qb-123',
+          error: null,
+          response: null,
+          syncedAt: new Date(),
+          retryCount: 0,
+          lastRetryAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.accountingSync.findMany.mockResolvedValueOnce(mockRecords);
+      mockPrisma.accountingSync.count.mockResolvedValueOnce(1);
+
+      const result = await service.findAll('tenant-1', {});
+
+      expect(result.records).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(mockPrisma.accountingSync.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 'tenant-1' }),
+          take: 50,
+          skip: 0,
+        }),
+      );
+    });
+
+    it('applies provider filter', async () => {
+      mockPrisma.accountingSync.findMany.mockResolvedValueOnce([]);
+      mockPrisma.accountingSync.count.mockResolvedValueOnce(0);
+
+      await service.findAll('tenant-1', { provider: AccountingProvider.XERO });
+
+      expect(mockPrisma.accountingSync.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ provider: AccountingProvider.XERO }),
+        }),
+      );
+      expect(mockPrisma.accountingSync.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ provider: AccountingProvider.XERO }),
+        }),
+      );
+    });
+
+    it('applies status and entityType filters together', async () => {
+      mockPrisma.accountingSync.findMany.mockResolvedValueOnce([]);
+      mockPrisma.accountingSync.count.mockResolvedValueOnce(0);
+
+      await service.findAll('tenant-1', {
+        status: AccountingSyncStatus.FAILED,
+        entityType: 'CUSTOMER',
+        limit: 25,
+        offset: 10,
+      });
+
+      expect(mockPrisma.accountingSync.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: AccountingSyncStatus.FAILED,
+            entityType: 'CUSTOMER',
+          }),
+          take: 25,
+          skip: 10,
+        }),
+      );
+      expect(mockPrisma.accountingSync.count).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findById', () => {
+    it('returns sync record for valid id and tenant', async () => {
+      const mockSync = {
+        id: 'sync-find-001',
+        tenantId: 'tenant-1',
+        status: AccountingSyncStatus.SYNCED,
+        provider: AccountingProvider.QUICKBOOKS,
+        entityType: 'INVOICE',
+        entityId: 'inv-123',
+        direction: 'OUTBOUND',
+        externalId: 'ext-qb-001',
+        error: null,
+        response: null,
+        syncedAt: new Date(),
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(mockSync);
+
+      const result = await service.findById('tenant-1', 'sync-find-001');
+
+      expect(result.id).toBe('sync-find-001');
+      expect(result.externalId).toBe('ext-qb-001');
+      expect(mockPrisma.accountingSync.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'sync-find-001', tenantId: 'tenant-1' }),
+        }),
+      );
+    });
+
+    it('throws NotFoundException when record not found for tenant', async () => {
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(null);
+
+      await expect(service.findById('tenant-1', 'sync-nonexistent')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.accountingSync.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 'tenant-1' }),
+        }),
+      );
+    });
+
+    it('enforces tenant isolation in findById', async () => {
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(null);
+
+      const promise = service.findById('tenant-other', 'sync-001');
+
+      await expect(promise).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.accountingSync.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ tenantId: 'tenant-other' }),
+        }),
+      );
+    });
+  });
+
+  describe('retry', () => {
+    it('retries failed sync record and increments retryCount', async () => {
+      const failedSync = {
+        id: 'sync-failed-001',
+        tenantId: 'tenant-1',
+        status: AccountingSyncStatus.FAILED,
+        provider: AccountingProvider.QUICKBOOKS,
+        entityType: 'INVOICE',
+        entityId: 'inv-100',
+        direction: 'OUTBOUND',
+        externalId: null,
+        error: 'API down',
+        response: null,
+        syncedAt: null,
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const retriedSync = {
+        ...failedSync,
+        status: AccountingSyncStatus.SYNCING,
+        retryCount: 1,
+        lastRetryAt: new Date(),
+        error: null,
+      };
+
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(failedSync);
+      mockPrisma.accountingSync.update.mockResolvedValueOnce(retriedSync);
+
+      const result = await service.retry('tenant-1', 'sync-failed-001');
+
+      expect(result.retryCount).toBe(1);
+      expect(result.status).toBe(AccountingSyncStatus.SYNCING);
+      expect(mockPrisma.accountingSync.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ retryCount: { increment: 1 } }),
+        }),
+      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('accounting.sync.retried', expect.any(Object));
+    });
+
+    it('throws BadRequestException for non-FAILED status', async () => {
+      const pendingSync = {
+        id: 'sync-pending-001',
+        tenantId: 'tenant-1',
+        status: AccountingSyncStatus.PENDING,
+        provider: AccountingProvider.XERO,
+        entityType: 'CUSTOMER',
+        entityId: 'cust-200',
+        direction: 'OUTBOUND',
+        externalId: null,
+        error: null,
+        response: null,
+        syncedAt: null,
+        retryCount: 0,
+        lastRetryAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(pendingSync);
+
+      await expect(service.retry('tenant-1', 'sync-pending-001')).rejects.toThrow(BadRequestException);
+      expect(mockEventEmitter.emit).not.toHaveBeenCalledWith('accounting.sync.retried', expect.any(Object));
+    });
+
+    it('throws NotFoundException for invalid sync id', async () => {
+      mockPrisma.accountingSync.findFirst.mockResolvedValueOnce(null);
+
+      await expect(service.retry('tenant-1', 'sync-invalid')).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.accountingSync.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getStatus', () => {
+    it('returns all sync records for entity', async () => {
+      const mockRecords = [
+        {
+          id: 'sync-status-001',
+          tenantId: 'tenant-1',
+          provider: AccountingProvider.QUICKBOOKS,
+          status: AccountingSyncStatus.SYNCED,
+          entityType: 'INVOICE',
+          entityId: 'inv-status-1',
+          direction: 'OUTBOUND',
+          externalId: 'qb-ext-1',
+          error: null,
+          response: null,
+          syncedAt: new Date(),
+          retryCount: 0,
+          lastRetryAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'sync-status-002',
+          tenantId: 'tenant-1',
+          provider: AccountingProvider.XERO,
+          status: AccountingSyncStatus.FAILED,
+          entityType: 'INVOICE',
+          entityId: 'inv-status-1',
+          direction: 'OUTBOUND',
+          externalId: null,
+          error: 'Auth failed',
+          response: null,
+          syncedAt: null,
+          retryCount: 1,
+          lastRetryAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.accountingSync.findMany.mockResolvedValueOnce(mockRecords);
+
+      const result = await service.getStatus('tenant-1', 'INVOICE', 'inv-status-1');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].provider).toBe(AccountingProvider.QUICKBOOKS);
+      expect(result[1].status).toBe(AccountingSyncStatus.FAILED);
+      expect(mockPrisma.accountingSync.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+            entityType: 'INVOICE',
+            entityId: 'inv-status-1',
+          }),
+        }),
+      );
+    });
+
+    it('returns empty list when no syncs for entity', async () => {
+      mockPrisma.accountingSync.findMany.mockResolvedValueOnce([]);
+
+      const result = await service.getStatus('tenant-1', 'PAYMENT', 'pay-nonexistent');
+
+      expect(result).toHaveLength(0);
+      expect(mockPrisma.accountingSync.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+});

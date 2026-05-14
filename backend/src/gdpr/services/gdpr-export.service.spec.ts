@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { GdprExportService, ExportFormat } from './gdpr-export.service';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
@@ -123,6 +124,10 @@ describe('GdprExportService', () => {
             error: jest.fn(),
             debug: jest.fn(),
           },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue(undefined) },
         },
       ],
     }).compile();

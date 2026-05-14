@@ -54,8 +54,8 @@ describe('DeclinedServiceController', () => {
         10,
       );
       expect(result).toEqual(expected);
-      expect(result.page).toBe(2);
-      expect(result.limit).toBe(10);
+      expect((result as typeof expected).page).toBe(2);
+      expect((result as typeof expected).limit).toBe(10);
     });
 
     it('should use default page/limit when not provided', async () => {
@@ -77,8 +77,8 @@ describe('DeclinedServiceController', () => {
         1,
         20,
       );
-      expect(response.page).toBe(1);
-      expect(response.limit).toBe(20);
+      expect((response as typeof result).page).toBe(1);
+      expect((response as typeof result).limit).toBe(20);
     });
   });
 
@@ -123,8 +123,8 @@ describe('DeclinedServiceController', () => {
 
       expect(service.getStats).toHaveBeenCalledWith(TENANT_ID);
       expect(result).toEqual(stats);
-      expect(result.total).toBe(50);
-      expect(result.conversionRate).toBe(30);
+      expect((result as typeof stats).total).toBe(50);
+      expect((result as typeof stats).conversionRate).toBe(30);
     });
   });
 
@@ -139,7 +139,7 @@ describe('DeclinedServiceController', () => {
 
       expect(service.markFollowUpSent).toHaveBeenCalledWith(TENANT_ID, 'ds-001', 'camp-001');
       expect(result).toEqual(response);
-      expect(result.id).toBe('ds-001');
+      expect((result as typeof response).id).toBe('ds-001');
     });
 
     it('should handle missing campaignId', async () => {
@@ -149,7 +149,7 @@ describe('DeclinedServiceController', () => {
       const result = await controller.markFollowUpSent(TENANT_ID, 'ds-001', {} as never);
 
       expect(service.markFollowUpSent).toHaveBeenCalledWith(TENANT_ID, 'ds-001', undefined);
-      expect(result.id).toBe('ds-001');
+      expect((result as typeof response).id).toBe('ds-001');
     });
   });
 
@@ -164,7 +164,7 @@ describe('DeclinedServiceController', () => {
 
       expect(service.markConverted).toHaveBeenCalledWith(TENANT_ID, 'ds-001', 'book-001');
       expect(result).toEqual(response);
-      expect(result.convertedBookingId).toBe('book-001');
+      expect((result as typeof response).convertedBookingId).toBe('book-001');
     });
   });
 });

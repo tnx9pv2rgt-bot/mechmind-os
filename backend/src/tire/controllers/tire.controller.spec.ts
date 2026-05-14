@@ -70,7 +70,7 @@ describe('TireController', () => {
   describe('findAll', () => {
     it('should delegate to service with tenantId and query filters', async () => {
       const paginated = { data: [mockTireSet], total: 1, page: 1, limit: 20, pages: 1 };
-      service.findAll.mockResolvedValue(paginated as never);
+      service.findAll.mockResolvedValueOnce(paginated as never);
       const query = { vehicleId: 'veh-001', season: 'SUMMER', isStored: false };
 
       const result = await controller.findAll(TENANT_ID, query as never);
@@ -85,7 +85,7 @@ describe('TireController', () => {
       expect(result).toEqual(paginated);
     });
 
-    it('should parse page and limit parameters', async () => {
+    it('should parse page and limit parameters when provided as strings', async () => {
       const paginated = { data: [mockTireSet], total: 1, page: 2, limit: 50, pages: 1 };
       service.findAll.mockResolvedValueOnce(paginated as never);
       const query = {};
@@ -100,6 +100,49 @@ describe('TireController', () => {
         limit: 50,
       });
       expect(result.page).toBe(2);
+      expect(result.limit).toBe(50);
+    });
+
+    it('should pass undefined when page parameter is not provided', async () => {
+      const paginated = { data: [mockTireSet], total: 1, page: 1, limit: 20, pages: 1 };
+      service.findAll.mockResolvedValueOnce(paginated as never);
+      const query = {};
+
+      await controller.findAll(TENANT_ID, query as never);
+
+      expect(service.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        vehicleId: undefined,
+        season: undefined,
+        isStored: undefined,
+        page: undefined,
+        limit: undefined,
+      });
+    });
+
+    it('should handle large page numbers', async () => {
+      const paginated = { data: [], total: 10, page: 100, limit: 20, pages: 1 };
+      service.findAll.mockResolvedValueOnce(paginated as never);
+      const query = {};
+
+      await controller.findAll(TENANT_ID, query as never, '100', '20');
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ page: 100, limit: 20 }),
+      );
+    });
+
+    it('should filter by season only', async () => {
+      const paginated = { data: [mockTireSet], total: 1, page: 1, limit: 20, pages: 1 };
+      service.findAll.mockResolvedValueOnce(paginated as never);
+      const query = { season: 'WINTER' };
+
+      await controller.findAll(TENANT_ID, query as never);
+
+      expect(service.findAll).toHaveBeenCalledWith(
+        TENANT_ID,
+        expect.objectContaining({ season: 'WINTER' }),
+      );
     });
   });
 

@@ -353,7 +353,7 @@ describe('LaborGuideService', () => {
         yearTo: 2030,
       });
 
-      const result = await service.updateEntry('t1', 'e1', { yearTo: 2030 } as never);
+      await service.updateEntry('t1', 'e1', { yearTo: 2030 } as never);
 
       // Verify the merge logic: yearFrom should remain 2015 (existing)
       expect(mockPrisma.laborGuideEntry.update).toHaveBeenCalledWith(

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { WebhookSubscriptionService } from './webhook-subscription.service';
 import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { WEBHOOK_EVENTS } from './dto/webhook-subscription.dto';
 
 type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
@@ -34,6 +35,10 @@ describe('WebhookSubscriptionService', () => {
       count: jest.Mock;
     };
   };
+  let encryption: {
+    encrypt: jest.Mock;
+    decrypt: jest.Mock;
+  };
 
   beforeEach(async () => {
     prisma = {
@@ -46,8 +51,17 @@ describe('WebhookSubscriptionService', () => {
       },
     };
 
+    encryption = {
+      encrypt: jest.fn((data: string) => `encrypted:${data}`),
+      decrypt: jest.fn((data: string) => data.replace('encrypted:', '')),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WebhookSubscriptionService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        WebhookSubscriptionService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: EncryptionService, useValue: encryption },
+      ],
     }).compile();
 
     service = module.get(WebhookSubscriptionService);
@@ -68,16 +82,36 @@ describe('WebhookSubscriptionService', () => {
       const result = await service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]);
 
       expect(result).toEqual(expected);
+      expect(encryption.encrypt).toHaveBeenCalledWith(dto.secret);
       expect(prisma.webhookSubscription.create).toHaveBeenCalledWith({
         data: {
           tenantId: TENANT_ID,
           url: dto.url,
           events: dto.events,
-          secret: dto.secret,
+          secret: `encrypted:${dto.secret}`,
           isActive: true,
           failCount: 0,
         },
       });
+    });
+
+    it('should encrypt secret before storing in database', async () => {
+      const dto = {
+        url: 'https://client.example.com/webhooks',
+        events: ['booking.created'],
+        secret: 'plaintext_secret_123456',
+      };
+      const expected = mockSubscription({ secret: 'encrypted:plaintext_secret_123456' });
+      prisma.webhookSubscription.create.mockResolvedValue(expected);
+
+      await service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]);
+
+      // Verify encryption was called
+      expect(encryption.encrypt).toHaveBeenCalledWith('plaintext_secret_123456');
+      // Verify encrypted value was sent to DB, not plaintext
+      const createCall = (prisma.webhookSubscription.create as jest.Mock).mock.calls[0];
+      expect(createCall[0].data.secret).not.toBe('plaintext_secret_123456');
+      expect(createCall[0].data.secret).toBe('encrypted:plaintext_secret_123456');
     });
 
     it('should reject non-HTTPS URLs', async () => {
@@ -244,6 +278,23 @@ describe('WebhookSubscriptionService', () => {
       });
     });
 
+    it('should encrypt new secret when updating', async () => {
+      const original = mockSubscription();
+      prisma.webhookSubscription.findUnique.mockResolvedValue(original);
+      const updated = mockSubscription({
+        secret: 'encrypted:newsecret1234567890',
+      });
+      prisma.webhookSubscription.update.mockResolvedValue(updated);
+
+      const dto = { secret: 'newsecret1234567890' };
+
+      await service.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      expect(encryption.encrypt).toHaveBeenCalledWith('newsecret1234567890');
+      const updateCall = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(updateCall[0].data.secret).toBe('encrypted:newsecret1234567890');
+    });
+
     it('should reject non-HTTPS URLs on update', async () => {
       prisma.webhookSubscription.findUnique.mockResolvedValue(mockSubscription());
 
@@ -402,6 +453,93 @@ describe('WebhookSubscriptionService', () => {
     });
   });
 
+  // ─── tenantId in payload (C1 fix) ───
+
+  describe('dispatch - tenantId isolation in payload', () => {
+    it('should include tenantId in _meta field of webhook payload', async () => {
+      const subscription = mockSubscription({
+        id: 'webhook-001',
+        events: ['booking.created'],
+      });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+
+      const payload = { bookingId: 'booking-123', amount: 5000 };
+      await service.dispatch(TENANT_ID, 'booking.created', payload);
+
+      // Verify fetch was called and extract the body
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callArgs = (fetchMock as jest.Mock).mock.calls[0];
+      const body = callArgs[1].body as string;
+      const parsedBody = JSON.parse(body);
+
+      // Verify tenantId is in _meta
+      expect(parsedBody._meta).toBeDefined();
+      expect(parsedBody._meta.tenantId).toBe(TENANT_ID);
+      expect(parsedBody.data).toEqual(payload);
+      expect(parsedBody.event).toBe('booking.created');
+
+      global.fetch = originalFetch;
+    });
+
+    it('should send different payloads for different tenants', async () => {
+      const TENANT_ID_2 = 'tenant-uuid-002';
+      const subscription1 = mockSubscription({
+        id: 'webhook-001',
+        tenantId: TENANT_ID,
+        events: ['booking.created'],
+      });
+      const subscription2 = mockSubscription({
+        id: 'webhook-002',
+        tenantId: TENANT_ID_2,
+        events: ['booking.created'],
+      });
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+
+      // Dispatch for tenant 1
+      prisma.webhookSubscription.findMany.mockResolvedValueOnce([subscription1]);
+      await service.dispatch(TENANT_ID, 'booking.created', { test: 'data1' });
+
+      // Extract first call's body
+      const call1Args = (fetchMock as jest.Mock).mock.calls[0];
+      const body1 = call1Args[1].body as string;
+      const parsed1 = JSON.parse(body1);
+
+      // Dispatch for tenant 2
+      prisma.webhookSubscription.findMany.mockResolvedValueOnce([subscription2]);
+      fetchMock.mockClear();
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+      } as Response);
+      await service.dispatch(TENANT_ID_2, 'booking.created', { test: 'data2' });
+
+      // Extract second call's body
+      const call2Args = (fetchMock as jest.Mock).mock.calls[0];
+      const body2 = call2Args[1].body as string;
+      const parsed2 = JSON.parse(body2);
+
+      // Verify tenants are different in payload
+      expect(parsed1._meta.tenantId).toBe(TENANT_ID);
+      expect(parsed2._meta.tenantId).toBe(TENANT_ID_2);
+      expect(parsed1._meta.tenantId).not.toBe(parsed2._meta.tenantId);
+
+      global.fetch = originalFetch;
+    });
+  });
+
   // ─── sendTest ───
 
   describe('sendTest', () => {
@@ -531,7 +669,7 @@ describe('WebhookSubscriptionService', () => {
         id: 'webhook-001',
         isActive: true,
       });
-      const inactiveSubscription = mockSubscription({
+      const _inactiveSubscription = mockSubscription({
         id: 'webhook-002',
         isActive: false,
       });
@@ -612,7 +750,9 @@ describe('WebhookSubscriptionService', () => {
       for (let i = 0; i < 5; i++) {
         const updatedSub = mockSubscription({ failCount: i + 1 });
         prisma.webhookSubscription.update.mockResolvedValueOnce(updatedSub);
-        prisma.webhookSubscription.findMany.mockResolvedValueOnce([{ ...subscription, failCount: i }]);
+        prisma.webhookSubscription.findMany.mockResolvedValueOnce([
+          { ...subscription, failCount: i },
+        ]);
 
         await service.dispatch(TENANT_ID, 'booking.created', {});
 
@@ -673,7 +813,7 @@ describe('WebhookSubscriptionService', () => {
       await service.update(TENANT_ID, 'webhook-uuid-001', dto);
 
       const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
-      expect(callArgs[0].data).toEqual({ secret: 'newsecret1234567890' });
+      expect(callArgs[0].data).toEqual({ secret: 'encrypted:newsecret1234567890' });
       expect(callArgs[0].data).not.toHaveProperty('url');
     });
 
@@ -813,9 +953,9 @@ describe('WebhookSubscriptionService', () => {
         secret: 'supersecretkey1234567890',
       };
 
-      await expect(service.create(TENANT_ID, dto as Parameters<typeof service.create>[1])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should validate events array is array type', async () => {
@@ -825,9 +965,9 @@ describe('WebhookSubscriptionService', () => {
         secret: 'supersecretkey1234567890',
       };
 
-      await expect(service.create(TENANT_ID, dto as Parameters<typeof service.create>[1])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject webhook with undefined secret', async () => {
@@ -837,9 +977,9 @@ describe('WebhookSubscriptionService', () => {
         secret: '' as never,
       };
 
-      await expect(service.create(TENANT_ID, dto as Parameters<typeof service.create>[1])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject webhook with exactly 15 char secret (below 16 minimum)', async () => {
@@ -849,9 +989,9 @@ describe('WebhookSubscriptionService', () => {
         secret: '12345678901234', // 14 chars
       };
 
-      await expect(service.create(TENANT_ID, dto as Parameters<typeof service.create>[1])).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should accept webhook with exactly 16 char secret', async () => {
@@ -877,7 +1017,9 @@ describe('WebhookSubscriptionService', () => {
         secret: undefined as unknown as string,
       };
 
-      await expect(service.create(TENANT_ID, dto as Parameters<typeof service.create>[1])).rejects.toThrow();
+      await expect(
+        service.create(TENANT_ID, dto as Parameters<typeof service.create>[1]),
+      ).rejects.toThrow();
     });
   });
 
@@ -902,10 +1044,7 @@ describe('WebhookSubscriptionService', () => {
           events: ['invoice.paid'], // Does NOT listen to booking.created
         }),
       ];
-      prisma.webhookSubscription.findMany.mockResolvedValue([
-        subscriptions[0],
-        subscriptions[1],
-      ]);
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscriptions[0], subscriptions[1]]);
 
       const originalFetch = global.fetch;
       const fetchMock = jest.fn().mockResolvedValue({
@@ -1029,6 +1168,16 @@ describe('WebhookSubscriptionService', () => {
       await expect(service.sendTest(TENANT_ID, 'non-existent', 'booking.created')).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('should return false if subscription is null after findOne validation', async () => {
+      prisma.webhookSubscription.findUnique.mockResolvedValueOnce(null);
+
+      const result = await expect(
+        service.sendTest(TENANT_ID, 'webhook-uuid-001', 'booking.created'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(result).toBeUndefined();
     });
 
     it('should handle sendTest timeout gracefully', async () => {
@@ -1394,9 +1543,9 @@ describe('WebhookSubscriptionService', () => {
     it('should throw BadRequestException for unsupported event', async () => {
       const invalidEvent = 'invalid.event' as any;
 
-      await expect(
-        service.dispatch(TENANT_ID, invalidEvent, {}),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.dispatch(TENANT_ID, invalidEvent, {})).rejects.toThrow(
+        BadRequestException,
+      );
 
       expect(prisma.webhookSubscription.findMany).not.toHaveBeenCalled();
     });
@@ -1437,9 +1586,7 @@ describe('WebhookSubscriptionService', () => {
       for (const event of validEvents) {
         prisma.webhookSubscription.findMany.mockResolvedValue([]);
 
-        await expect(
-          service.dispatch(TENANT_ID, event as any, {}),
-        ).resolves.not.toThrow();
+        await expect(service.dispatch(TENANT_ID, event as any, {})).resolves.not.toThrow();
       }
 
       expect(prisma.webhookSubscription.findMany).toHaveBeenCalledTimes(7);
@@ -1535,9 +1682,7 @@ describe('WebhookSubscriptionService', () => {
 
       await service.dispatch(TENANT_ID, 'booking.created', {});
 
-      expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to send webhook'),
-      );
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to send webhook'));
 
       loggerSpy.mockRestore();
       global.fetch = originalFetch;
@@ -1638,6 +1783,196 @@ describe('WebhookSubscriptionService', () => {
       expect(result.failed).toBe(1);
 
       global.fetch = originalFetch;
+    });
+  });
+
+  // ─── Branch coverage edge cases (isActive determination logic) ───
+
+  describe('dispatch - isActive state transitions', () => {
+    it('should keep isActive=true when failCount is 1 (< MAX_FAIL_COUNT of 5)', async () => {
+      const subscription = mockSubscription({ failCount: 0 });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+      prisma.webhookSubscription.update.mockResolvedValueOnce(subscription);
+
+      await service.dispatch(TENANT_ID, 'booking.created', {});
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data.failCount).toBe(1);
+      expect(callArgs[0].data.isActive).toBe(true); // Should remain active
+
+      global.fetch = originalFetch;
+    });
+
+    it('should keep isActive=true when failCount becomes 2 (< 5)', async () => {
+      const subscription = mockSubscription({ failCount: 1 });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+      prisma.webhookSubscription.update.mockResolvedValueOnce(subscription);
+
+      await service.dispatch(TENANT_ID, 'booking.created', {});
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data.failCount).toBe(2);
+      expect(callArgs[0].data.isActive).toBe(true);
+
+      global.fetch = originalFetch;
+    });
+
+    it('should keep isActive=true when failCount becomes 3 (< 5)', async () => {
+      const subscription = mockSubscription({ failCount: 2 });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+      prisma.webhookSubscription.update.mockResolvedValueOnce(subscription);
+
+      await service.dispatch(TENANT_ID, 'booking.created', {});
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data.failCount).toBe(3);
+      expect(callArgs[0].data.isActive).toBe(true);
+
+      global.fetch = originalFetch;
+    });
+
+    it('should disable (isActive=false) when failCount reaches exactly 5 (MAX_FAIL_COUNT)', async () => {
+      const subscription = mockSubscription({ failCount: 4 });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+      prisma.webhookSubscription.update.mockResolvedValueOnce(subscription);
+
+      await service.dispatch(TENANT_ID, 'booking.created', {});
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data.failCount).toBe(5);
+      expect(callArgs[0].data.isActive).toBe(false); // Disabled!
+
+      global.fetch = originalFetch;
+    });
+
+    it('should NOT increment failCount nor update when success', async () => {
+      const subscription = mockSubscription({ failCount: 3 });
+      prisma.webhookSubscription.findMany.mockResolvedValue([subscription]);
+
+      const originalFetch = global.fetch;
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      } as Response);
+      (global.fetch as jest.Mock) = fetchMock;
+
+      await service.dispatch(TENANT_ID, 'booking.created', {});
+
+      // Should NOT call update for successful dispatch
+      expect(prisma.webhookSubscription.update).not.toHaveBeenCalled();
+
+      global.fetch = originalFetch;
+    });
+  });
+
+  // ─── Update partial field branch coverage ───
+
+  describe('update - field combinations branch coverage', () => {
+    it('should handle update with url and secret but NOT events', async () => {
+      const original = mockSubscription();
+      prisma.webhookSubscription.findUnique.mockResolvedValue(original);
+      const updated = mockSubscription({
+        url: 'https://newurl.example.com/webhook',
+        secret: 'newsecret1234567890',
+      });
+      prisma.webhookSubscription.update.mockResolvedValue(updated);
+
+      const dto = {
+        url: 'https://newurl.example.com/webhook',
+        secret: 'newsecret1234567890',
+      };
+
+      await service.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data).toEqual({
+        url: 'https://newurl.example.com/webhook',
+        secret: 'encrypted:newsecret1234567890',
+      });
+      expect(callArgs[0].data).not.toHaveProperty('events');
+      expect(callArgs[0].data).not.toHaveProperty('isActive');
+    });
+
+    it('should handle update with events and isActive but NOT url/secret', async () => {
+      const original = mockSubscription();
+      prisma.webhookSubscription.findUnique.mockResolvedValue(original);
+      const updated = mockSubscription({
+        events: ['invoice.paid'],
+        isActive: true,
+      });
+      prisma.webhookSubscription.update.mockResolvedValue(updated);
+
+      const dto = {
+        events: ['invoice.paid' as const],
+        isActive: true,
+      };
+
+      await service.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data).toEqual({
+        events: ['invoice.paid'],
+        isActive: true,
+      });
+      expect(callArgs[0].data).not.toHaveProperty('url');
+      expect(callArgs[0].data).not.toHaveProperty('secret');
+    });
+
+    it('should handle update with all four fields', async () => {
+      const original = mockSubscription();
+      prisma.webhookSubscription.findUnique.mockResolvedValue(original);
+      const updated = mockSubscription({
+        url: 'https://allnew.example.com/webhook',
+        events: ['booking.cancelled'],
+        secret: 'completelyneusecret1234',
+        isActive: false,
+      });
+      prisma.webhookSubscription.update.mockResolvedValue(updated);
+
+      const dto = {
+        url: 'https://allnew.example.com/webhook',
+        events: ['booking.cancelled' as const],
+        secret: 'completelyneusecret1234',
+        isActive: false,
+      };
+
+      await service.update(TENANT_ID, 'webhook-uuid-001', dto);
+
+      const callArgs = (prisma.webhookSubscription.update as jest.Mock).mock.calls[0];
+      expect(callArgs[0].data).toEqual({
+        url: 'https://allnew.example.com/webhook',
+        events: ['booking.cancelled'],
+        secret: 'encrypted:completelyneusecret1234',
+        isActive: false,
+      });
     });
   });
 });

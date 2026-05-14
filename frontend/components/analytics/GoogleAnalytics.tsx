@@ -14,7 +14,7 @@ const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
  * Il CookieConsent component si occupa di chiamare gtag('consent', 'update', ...)
  * quando l'utente accetta o rifiuta i cookie analitici.
  */
-export function GoogleAnalytics(): React.ReactElement | null {
+export function GoogleAnalytics({ nonce }: { nonce?: string }): React.ReactElement | null {
   if (!GA_MEASUREMENT_ID) return null;
 
   return (
@@ -23,6 +23,7 @@ export function GoogleAnalytics(): React.ReactElement | null {
       <Script
         id="gtag-consent-default"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];
@@ -42,12 +43,14 @@ export function GoogleAnalytics(): React.ReactElement | null {
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
         strategy="lazyOnload"
+        nonce={nonce}
       />
 
       {/* 3 — Configure GA4 */}
       <Script
         id="gtag-init"
         strategy="lazyOnload"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             window.dataLayer = window.dataLayer || [];

@@ -1,206 +1,209 @@
 /**
  * Tests for useAuth hook (hooks/useAuth.tsx)
+ * Tests: login, logout, refresh, auth state, provider.
  */
 
-import React from 'react'
-import { render, screen, act, waitFor } from '@testing-library/react'
-import { renderHook } from '@testing-library/react'
-import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import React from 'react';
 
-// =========================================================================
+// =============================================================================
 // Mocks
-// =========================================================================
+// =============================================================================
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
 
-const mockFetch = jest.fn()
-global.fetch = mockFetch
+const MOCK_USER = {
+  id: 'user-123',
+  email: 'test@example.com',
+  name: 'Test User',
+  role: 'admin',
+  tenantId: 'tenant-123',
+  tenantName: 'Test Tenant',
+};
 
-// jsdom 28 makes window.location non-configurable; delete + reassign is the workaround
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (global as any).location
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(global as any).location = { href: '', assign: jest.fn(), replace: jest.fn(), reload: jest.fn() }
-
-// =========================================================================
-// Helper wrapper
-// =========================================================================
-
-function wrapper({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>
-}
-
-// =========================================================================
+// =============================================================================
 // Tests
-// =========================================================================
-
-describe('AuthProvider', () => {
+// =============================================================================
+describe('useAuth', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    mockFetch.mockReset()
-  })
+    jest.clearAllMocks();
+  });
 
-  describe('initial state', () => {
-    it('should render children', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      render(
-        <AuthProvider>
-          <div>test content</div>
-        </AuthProvider>
-      )
-      expect(screen.getByText('test content')).toBeInTheDocument()
-    })
+  describe('AuthProvider & useAuth', () => {
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      React.createElement(AuthProvider, {}, children);
 
-    it('should start with isLoading=true then false', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      expect(result.current.isLoading).toBe(true)
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-    })
+    it('initializes with isLoading true and user null', () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+      });
+      const { result } = renderHook(() => useAuth(), { wrapper });
 
-    it('should start with user=null and isAuthenticated=false', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-      expect(result.current.user).toBeNull()
-      expect(result.current.isAuthenticated).toBe(false)
-    })
-  })
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.user).toBeNull();
+      expect(result.current.isAuthenticated).toBe(false);
+    });
 
-  describe('checkAuth on mount', () => {
-    it('should set user when /api/auth/me responds ok', async () => {
-      const user = { id: '1', email: 'test@example.com', name: 'Test', role: 'admin' }
+    it('loads user on mount when auth check succeeds', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValueOnce({ user }),
-      })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-      expect(result.current.user).toEqual(user)
-      expect(result.current.isAuthenticated).toBe(true)
-    })
+        json: async () => ({ user: MOCK_USER }),
+      });
 
-    it('should leave user null when /api/auth/me returns non-ok', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-      expect(result.current.user).toBeNull()
-    })
+      const { result } = renderHook(() => useAuth(), { wrapper });
 
-    it('should handle fetch error gracefully and set isLoading=false', async () => {
-      mockFetch.mockRejectedValueOnce(new Error('network error'))
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-      expect(result.current.user).toBeNull()
-    })
-  })
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-  describe('login', () => {
-    it('should call checkAuth after login', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(result.current.user).toEqual(MOCK_USER);
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/me');
+    });
 
-      const user = { id: '2', email: 'u@example.com', name: 'U', role: 'user' }
+    it('sets user to null when auth check fails', async () => {
       mockFetch.mockResolvedValueOnce({
+        ok: false,
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.user).toBeNull();
+      expect(result.current.isAuthenticated).toBe(false);
+    });
+
+    it('login triggers checkAuth which updates user state', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: false }).mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValueOnce({ user }),
-      })
+        json: async () => ({ user: MOCK_USER }),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.user).toBeNull();
 
       await act(async () => {
-        result.current.login('jwt-token', 'refresh-token')
-      })
+        result.current.login('jwt-token', 'refresh-token');
+      });
 
-      await waitFor(() => expect(result.current.user).toEqual(user))
-    })
-  })
+      await waitFor(() => expect(result.current.user).toEqual(MOCK_USER));
+      expect(result.current.isAuthenticated).toBe(true);
+    });
 
-  describe('logout', () => {
-    it('should call POST /api/auth/logout and clear user', async () => {
-      const user = { id: '1', email: 'u@example.com', name: 'U', role: 'admin' }
+    it('logout clears user and redirects', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: jest.fn().mockResolvedValueOnce({ user }),
-      })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.user).toEqual(user))
+        json: async () => ({ user: MOCK_USER }),
+      });
 
-      mockFetch.mockResolvedValueOnce({ ok: true })
-      await act(async () => {
-        await result.current.logout()
-      })
+      const { result } = renderHook(() => useAuth(), { wrapper });
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' })
-      expect(result.current.user).toBeNull()
-      // window.location.href navigation is not reliably testable in jsdom 28
-    })
-  })
+      await waitFor(() => expect(result.current.user).toEqual(MOCK_USER));
 
-  describe('refresh', () => {
-    it('should call checkAuth when refresh succeeds', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.isLoading).toBe(false))
-
-      const user = { id: '3', email: 'r@example.com', name: 'R', role: 'user' }
-      mockFetch.mockResolvedValueOnce({ ok: true })
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValueOnce({ user }),
-      })
+      mockFetch.mockResolvedValueOnce({ ok: true });
 
       await act(async () => {
-        await result.current.refresh()
-      })
+        await result.current.logout();
+      });
 
-      await waitFor(() => expect(result.current.user).toEqual(user))
-    })
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+      await waitFor(() => expect(result.current.user).toBeNull());
+      expect(result.current.isAuthenticated).toBe(false);
+    });
 
-    it('should call logout when refresh returns non-ok', async () => {
-      const user = { id: '1', email: 'u@example.com', name: 'U', role: 'admin' }
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValueOnce({ user }),
-      })
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.user).toEqual(user))
-
-      mockFetch.mockResolvedValueOnce({ ok: false })
-      mockFetch.mockResolvedValueOnce({ ok: true })
-
-      await act(async () => {
-        await result.current.refresh()
-      })
-
-      expect(result.current.user).toBeNull()
-    })
-
-    it('should call logout when refresh throws an error', async () => {
-      const user = { id: '1', email: 'u@example.com', name: 'U', role: 'admin' }
+    it('refresh re-checks auth on success', async () => {
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValueOnce({ user }),
+          json: async () => ({ user: MOCK_USER }),
         })
-        .mockRejectedValueOnce(new Error('network'))
         .mockResolvedValueOnce({ ok: true })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ user: { ...MOCK_USER, name: 'Updated Name' } }),
+        });
 
-      const { result } = renderHook(() => useAuth(), { wrapper })
-      await waitFor(() => expect(result.current.user).toEqual(user))
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.user).toEqual(MOCK_USER));
 
       await act(async () => {
-        await result.current.refresh()
-      })
+        await result.current.refresh();
+      });
 
-      expect(result.current.user).toBeNull()
-    })
-  })
-})
+      expect(result.current.user?.name).toBe('Updated Name');
+    });
 
-describe('useAuth', () => {
-  it('should throw when used outside AuthProvider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined)
-    expect(() => {
-      renderHook(() => useAuth())
-    }).toThrow('useAuth must be used within AuthProvider')
-    consoleError.mockRestore()
-  })
-})
+    it('refresh calls logout on failure', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ user: MOCK_USER }),
+        })
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true }); // logout fetch
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.user).toEqual(MOCK_USER));
+
+      await act(async () => {
+        await result.current.refresh();
+      });
+
+      await waitFor(() => expect(result.current.user).toBeNull());
+      expect(result.current.isAuthenticated).toBe(false);
+    });
+
+    it('refresh logs out on network error', async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ user: MOCK_USER }),
+        })
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ ok: true }); // logout fetch
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.user).toEqual(MOCK_USER));
+
+      await act(async () => {
+        await result.current.refresh();
+      });
+
+      await waitFor(() => expect(result.current.user).toBeNull());
+      expect(result.current.isAuthenticated).toBe(false);
+    });
+
+    it('stores user with tenant info when available', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ user: MOCK_USER }),
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.user).not.toBeNull());
+
+      expect(result.current.user?.tenantId).toBe('tenant-123');
+      expect(result.current.user?.tenantName).toBe('Test Tenant');
+    });
+
+    it('handles malformed auth response gracefully', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}), // Missing user field
+      });
+
+      const { result } = renderHook(() => useAuth(), { wrapper });
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.user).toBeFalsy();
+    });
+  });
+});

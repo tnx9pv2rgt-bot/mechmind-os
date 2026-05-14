@@ -235,13 +235,13 @@ export default function ProductionBoardPage() {
     );
   }
 
-  const { bays, unassignedJobs, kpis } = data;
+  const { bays = [], unassignedJobs = [], kpis } = data;
 
   const statCards = [
-    { label: 'Completati oggi', value: kpis.completed.toString(), icon: CheckCircle2, color: 'bg-[var(--status-success)]' },
-    { label: 'In corso', value: kpis.inProgress.toString(), icon: Play, color: 'bg-[var(--brand)]' },
-    { label: 'In attesa', value: kpis.queued.toString(), icon: Clock, color: 'bg-[var(--status-warning)]' },
-    { label: 'Revenue oggi', value: formatCurrency(kpis.revenueToday), icon: Euro, color: 'bg-[var(--status-success)]' },
+    { label: 'Completati oggi', value: (kpis?.completed ?? 0).toString(), icon: CheckCircle2, color: 'bg-[var(--status-success)]' },
+    { label: 'In corso', value: (kpis?.inProgress ?? 0).toString(), icon: Play, color: 'bg-[var(--brand)]' },
+    { label: 'In attesa', value: (kpis?.queued ?? 0).toString(), icon: Clock, color: 'bg-[var(--status-warning)]' },
+    { label: 'Revenue oggi', value: formatCurrency(kpis?.revenueToday ?? 0), icon: Euro, color: 'bg-[var(--status-success)]' },
   ];
 
   // ---------------------------------------------------------------------------

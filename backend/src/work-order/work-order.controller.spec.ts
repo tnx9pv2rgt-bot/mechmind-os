@@ -63,7 +63,7 @@ describe('WorkOrderController', () => {
   describe('findAll', () => {
     it('should delegate to service with filters and return wrapped response', async () => {
       const expected = { workOrders: [mockWorkOrder], total: 1, page: 1, limit: 20, pages: 1 };
-      service.findAll.mockResolvedValue(expected);
+      service.findAll.mockResolvedValueOnce(expected);
 
       const result = await controller.findAll(TENANT_ID, 'OPEN', 'veh-001', 'cust-001');
 
@@ -82,7 +82,13 @@ describe('WorkOrderController', () => {
     });
 
     it('should pass undefined filters when not provided', async () => {
-      service.findAll.mockResolvedValue({ workOrders: [], total: 0, page: 1, limit: 20, pages: 0 });
+      service.findAll.mockResolvedValueOnce({
+        workOrders: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        pages: 0,
+      });
 
       await controller.findAll(TENANT_ID);
 
@@ -96,7 +102,7 @@ describe('WorkOrderController', () => {
     });
 
     it('should parse page and limit query params', async () => {
-      service.findAll.mockResolvedValue({
+      service.findAll.mockResolvedValueOnce({
         workOrders: [],
         total: 50,
         page: 2,
@@ -132,7 +138,7 @@ describe('WorkOrderController', () => {
 
   describe('create', () => {
     it('should delegate to service with tenantId and dto', async () => {
-      service.create.mockResolvedValue(mockWorkOrder as never);
+      service.create.mockResolvedValueOnce(mockWorkOrder as never);
       const dto = { vehicleId: 'veh-001', customerId: 'cust-001', description: 'Brake repair' };
 
       const result = await controller.create(TENANT_ID, dto as never);
@@ -144,7 +150,7 @@ describe('WorkOrderController', () => {
 
   describe('findOne', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.findOne.mockResolvedValue(mockWorkOrder as never);
+      service.findOne.mockResolvedValueOnce(mockWorkOrder as never);
 
       const result = await controller.findOne(TENANT_ID, 'wo-001');
 
@@ -156,7 +162,7 @@ describe('WorkOrderController', () => {
   describe('update', () => {
     it('should delegate to service with tenantId, id, and dto', async () => {
       const updated = { ...mockWorkOrder, description: 'Updated' };
-      service.update.mockResolvedValue(updated as never);
+      service.update.mockResolvedValueOnce(updated as never);
       const dto = { description: 'Updated' };
 
       const result = await controller.update(TENANT_ID, 'wo-001', dto as never);
@@ -169,7 +175,7 @@ describe('WorkOrderController', () => {
   describe('start', () => {
     it('should delegate to service with tenantId and id', async () => {
       const started = { ...mockWorkOrder, status: 'IN_PROGRESS' };
-      service.start.mockResolvedValue(started as never);
+      service.start.mockResolvedValueOnce(started as never);
 
       const result = await controller.start(TENANT_ID, 'wo-001');
 
@@ -181,7 +187,7 @@ describe('WorkOrderController', () => {
   describe('complete', () => {
     it('should delegate to service with tenantId and id', async () => {
       const completed = { ...mockWorkOrder, status: 'COMPLETED' };
-      service.complete.mockResolvedValue(completed as never);
+      service.complete.mockResolvedValueOnce(completed as never);
 
       const result = await controller.complete(TENANT_ID, 'wo-001');
 
@@ -193,7 +199,7 @@ describe('WorkOrderController', () => {
   describe('createInvoice', () => {
     it('should delegate to service with tenantId and id', async () => {
       const invoice = { id: 'inv-001', invoiceNumber: 'INV-2026-0001' };
-      service.createInvoiceFromWo.mockResolvedValue(invoice as never);
+      service.createInvoiceFromWo.mockResolvedValueOnce(invoice as never);
 
       const result = await controller.createInvoice(TENANT_ID, 'wo-001');
 
@@ -205,7 +211,7 @@ describe('WorkOrderController', () => {
   describe('checkIn', () => {
     it('should delegate to service with tenantId, id, and dto', async () => {
       const checkedIn = { ...mockWorkOrder, status: 'CHECKED_IN' };
-      service.checkIn.mockResolvedValue(checkedIn as never);
+      service.checkIn.mockResolvedValueOnce(checkedIn as never);
       const dto = { mileage: 50000, fuelLevel: 'HALF', notes: 'Minor scratches on door' };
 
       const result = await controller.checkIn(TENANT_ID, 'wo-001', dto as never);
@@ -218,7 +224,7 @@ describe('WorkOrderController', () => {
   describe('checkOut', () => {
     it('should delegate to service with tenantId, id, and dto', async () => {
       const checkedOut = { ...mockWorkOrder, status: 'CHECKED_OUT' };
-      service.checkOut.mockResolvedValue(checkedOut as never);
+      service.checkOut.mockResolvedValueOnce(checkedOut as never);
       const dto = { mileage: 50010, fuelLevel: 'FULL', notes: 'All repairs completed' };
 
       const result = await controller.checkOut(TENANT_ID, 'wo-001', dto as never);
@@ -236,7 +242,7 @@ describe('WorkOrderController', () => {
         technicianId: 'tech-001',
         startedAt: new Date(),
       };
-      service.startTimer.mockResolvedValue(timerLog as never);
+      service.startTimer.mockResolvedValueOnce(timerLog as never);
 
       const result = await controller.startTimer(TENANT_ID, 'wo-001', 'tech-001');
 
@@ -254,7 +260,7 @@ describe('WorkOrderController', () => {
         startedAt: new Date(),
         stoppedAt: new Date(),
       };
-      service.stopTimer.mockResolvedValue(timerLog as never);
+      service.stopTimer.mockResolvedValueOnce(timerLog as never);
 
       const result = await controller.stopTimer(TENANT_ID, 'wo-001', 'tech-001');
 
@@ -266,7 +272,7 @@ describe('WorkOrderController', () => {
   describe('getTimer', () => {
     it('should delegate to service with tenantId and id', async () => {
       const timerStatus = { running: true, elapsed: 3600, technicianId: 'tech-001' };
-      service.getTimer.mockResolvedValue(timerStatus as never);
+      service.getTimer.mockResolvedValueOnce(timerStatus as never);
 
       const result = await controller.getTimer(TENANT_ID, 'wo-001');
 
@@ -278,7 +284,7 @@ describe('WorkOrderController', () => {
   describe('downloadPdf', () => {
     it('should generate PDF and send buffer as response', async () => {
       const buf = Buffer.from('<html>work order</html>');
-      pdfService.generateWorkOrderPdf.mockResolvedValue(buf);
+      pdfService.generateWorkOrderPdf.mockResolvedValueOnce(buf);
 
       const res = {
         set: jest.fn(),

@@ -14,6 +14,7 @@ import {
   AdminSubscriptionController,
   StripeWebhookController,
 } from './controllers/subscription.controller';
+import { BillingController } from './controllers/billing.controller';
 import { FeatureGuard } from './guards/feature.guard';
 import { LimitGuard, ApiUsageMiddleware } from './guards/limit.guard';
 import { CommonModule } from '../common/common.module';
@@ -21,7 +22,12 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [ConfigModule, CommonModule, AuthModule],
-  controllers: [SubscriptionController, AdminSubscriptionController, StripeWebhookController],
+  controllers: [
+    SubscriptionController,
+    AdminSubscriptionController,
+    StripeWebhookController,
+    BillingController,
+  ],
   providers: [
     SubscriptionService,
     FeatureAccessService,

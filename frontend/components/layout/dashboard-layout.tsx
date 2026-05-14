@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { useSidebarStore } from '@/stores/sidebar-store';
 import { useThemeStore } from '@/stores/theme-store';
 import { Sidebar } from './sidebar';
-import { BottomNav } from './bottom-nav';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,7 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps): React.React
   const isCollapsedMode = sidebarBehavior === 'collapsed';
 
   return (
-    <div className="min-h-screen bg-[var(--surface-tertiary)]">
+    <div className='min-h-screen bg-[var(--surface-tertiary)]'>
       {/* Sidebar */}
       <Sidebar />
 
@@ -38,28 +37,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps): React.React
         )}
       >
         {/* Mobile-only hamburger button */}
-        <div className="sticky top-0 z-20 flex items-center h-12 px-4 lg:hidden bg-[var(--surface-primary)]">
+        <div className='sticky top-0 z-20 flex items-center h-12 px-4 lg:hidden bg-[var(--surface-primary)]'>
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 -ml-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
-            aria-label="Apri menu"
+            className='p-2 -ml-2 rounded-xl text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+            aria-label='Apri menu'
           >
-            <Menu className="h-5 w-5" />
+            <Menu className='h-5 w-5' />
           </button>
         </div>
 
         {/* Main content */}
         <main
-          id="main-content"
-          className="flex-1 p-[var(--density-page-padding)] max-w-full overflow-y-auto pb-20 lg:pb-6"
+          id='main-content'
+          className='flex-1 p-[var(--density-page-padding)] max-w-full overflow-y-auto pb-20 lg:pb-6'
           style={{ maxWidth: 'var(--content-max-width)' }}
         >
           {children}
         </main>
       </div>
-
-      {/* Mobile bottom navigation */}
-      <BottomNav />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { fetchWithTimeout } from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -97,7 +98,7 @@ export default function LocationDetailPage() {
   const fetchLocation = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/locations/${id}`);
+      const res = await fetchWithTimeout(`/api/locations/${id}`);
       if (!res.ok) throw new Error('Sede non trovata');
       const json = await res.json();
       setLocation(json.data ?? json);
@@ -203,16 +204,26 @@ export default function LocationDetailPage() {
           />
           <div className='flex items-center justify-between'>
             <div>
-              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{location.name}</h1>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                {location.name}
+              </h1>
               <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
                 {location.address}, {location.postalCode} {location.city} ({location.province})
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <AppleButton variant='secondary' icon={<Edit2 className='h-4 w-4' />} onClick={openEditDialog}>
+              <AppleButton
+                variant='secondary'
+                icon={<Edit2 className='h-4 w-4' />}
+                onClick={openEditDialog}
+              >
                 Modifica
               </AppleButton>
-              <AppleButton variant='ghost' icon={<Trash2 className='h-4 w-4 text-[var(--status-error)]' />} onClick={() => setDeleteConfirmOpen(true)} />
+              <AppleButton
+                variant='ghost'
+                icon={<Trash2 className='h-4 w-4 text-[var(--status-error)]' />}
+                onClick={() => setDeleteConfirmOpen(true)}
+              />
             </div>
           </div>
         </div>
@@ -245,7 +256,8 @@ export default function LocationDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <MapPin className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' /> Indirizzo
+                    <MapPin className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />{' '}
+                    Indirizzo
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent className='space-y-2'>
@@ -253,10 +265,14 @@ export default function LocationDetailPage() {
                     {location.address}, {location.postalCode} {location.city} ({location.province})
                   </p>
                   {location.phone && (
-                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tel: {location.phone}</p>
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Tel: {location.phone}
+                    </p>
                   )}
                   {location.email && (
-                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Email: {location.email}</p>
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Email: {location.email}
+                    </p>
                   )}
                 </AppleCardContent>
               </AppleCard>
@@ -264,7 +280,8 @@ export default function LocationDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Clock className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' /> Orari
+                    <Clock className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />{' '}
+                    Orari
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
@@ -272,7 +289,9 @@ export default function LocationDetailPage() {
                     <div className='space-y-2'>
                       {Object.entries(location.openingHours).map(([day, hours]) => (
                         <div key={day} className='flex justify-between'>
-                          <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] capitalize'>{day}</span>
+                          <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] capitalize'>
+                            {day}
+                          </span>
                           <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {hours}
                           </span>
@@ -280,7 +299,9 @@ export default function LocationDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Orari non configurati</p>
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Orari non configurati
+                    </p>
                   )}
                 </AppleCardContent>
               </AppleCard>
@@ -292,13 +313,15 @@ export default function LocationDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Warehouse className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' /> Bay/Ponti (
-                    {(location.bays || []).length})
+                    <Warehouse className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />{' '}
+                    Bay/Ponti ({(location.bays || []).length})
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {(location.bays || []).length === 0 ? (
-                    <p className='text-center py-8 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun bay configurato.</p>
+                    <p className='text-center py-8 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Nessun bay configurato.
+                    </p>
                   ) : (
                     <div className='space-y-3'>
                       {location.bays.map(bay => (
@@ -310,7 +333,9 @@ export default function LocationDetailPage() {
                             <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {bay.name}
                             </p>
-                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{bay.type}</p>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                              {bay.type}
+                            </p>
                           </div>
                           <span
                             className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${
@@ -335,13 +360,15 @@ export default function LocationDetailPage() {
               <AppleCard hover={false}>
                 <AppleCardHeader>
                   <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
-                    <Users className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' /> Tecnici (
-                    {(location.technicians || []).length})
+                    <Users className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />{' '}
+                    Tecnici ({(location.technicians || []).length})
                   </h2>
                 </AppleCardHeader>
                 <AppleCardContent>
                   {(location.technicians || []).length === 0 ? (
-                    <p className='text-center py-8 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun tecnico assegnato.</p>
+                    <p className='text-center py-8 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Nessun tecnico assegnato.
+                    </p>
                   ) : (
                     <div className='space-y-3'>
                       {location.technicians.map(tech => (
@@ -359,7 +386,9 @@ export default function LocationDetailPage() {
                             <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                               {tech.firstName} {tech.lastName}
                             </p>
-                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{tech.role}</p>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                              {tech.role}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -376,7 +405,9 @@ export default function LocationDetailPage() {
                 <div className='grid grid-cols-1 sm:grid-cols-3 gap-6'>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ordini di Lavoro</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Ordini di Lavoro
+                      </p>
                       <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {location.stats.totalWo}
                       </p>
@@ -384,7 +415,9 @@ export default function LocationDetailPage() {
                   </AppleCard>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tempo medio (ore)</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Tempo medio (ore)
+                      </p>
                       <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {location.stats.avgCompletionTime.toFixed(1)}
                       </p>
@@ -392,7 +425,9 @@ export default function LocationDetailPage() {
                   </AppleCard>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Fatturato</p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Fatturato
+                      </p>
                       <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {formatCurrency(location.stats.revenue)}
                       </p>
@@ -404,7 +439,9 @@ export default function LocationDetailPage() {
                   <AppleCardContent>
                     <div className='text-center py-8'>
                       <BarChart3 className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
-                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Statistiche non disponibili.</p>
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Statistiche non disponibili.
+                      </p>
                     </div>
                   </AppleCardContent>
                 </AppleCard>
@@ -426,41 +463,73 @@ export default function LocationDetailPage() {
               <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Modifica Sede
               </h2>
-              <AppleButton variant='ghost' size='sm' onClick={() => setEditDialogOpen(false)} aria-label='Chiudi'>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                onClick={() => setEditDialogOpen(false)}
+                aria-label='Chiudi'
+              >
                 <X className='h-5 w-5 text-[var(--text-tertiary)]' />
               </AppleButton>
             </div>
             <form onSubmit={handleSubmit(handleSave)} className='space-y-4'>
               <div>
-                <label htmlFor='edit-name' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                <label
+                  htmlFor='edit-name'
+                  className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                >
                   Nome sede *
                 </label>
                 <Input id='edit-name' {...register('name')} />
-                {formErrors.name && <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.name.message}</p>}
+                {formErrors.name && (
+                  <p className='text-footnote text-[var(--status-error)] mt-1'>
+                    {formErrors.name.message}
+                  </p>
+                )}
               </div>
               <div>
-                <label htmlFor='edit-address' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                <label
+                  htmlFor='edit-address'
+                  className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                >
                   Indirizzo *
                 </label>
                 <Input id='edit-address' {...register('address')} />
-                {formErrors.address && <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.address.message}</p>}
+                {formErrors.address && (
+                  <p className='text-footnote text-[var(--status-error)] mt-1'>
+                    {formErrors.address.message}
+                  </p>
+                )}
               </div>
               <div className='grid grid-cols-3 gap-4'>
                 <div>
-                  <label htmlFor='edit-city' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                  <label
+                    htmlFor='edit-city'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                  >
                     Città *
                   </label>
                   <Input id='edit-city' {...register('city')} />
-                  {formErrors.city && <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.city.message}</p>}
+                  {formErrors.city && (
+                    <p className='text-footnote text-[var(--status-error)] mt-1'>
+                      {formErrors.city.message}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label htmlFor='edit-province' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                  <label
+                    htmlFor='edit-province'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                  >
                     Provincia
                   </label>
                   <Input id='edit-province' {...register('province')} />
                 </div>
                 <div>
-                  <label htmlFor='edit-postalCode' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                  <label
+                    htmlFor='edit-postalCode'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                  >
                     CAP
                   </label>
                   <Input id='edit-postalCode' {...register('postalCode')} />
@@ -468,21 +537,35 @@ export default function LocationDetailPage() {
               </div>
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label htmlFor='edit-phone' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                  <label
+                    htmlFor='edit-phone'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                  >
                     Telefono
                   </label>
                   <Input id='edit-phone' {...register('phone')} />
                 </div>
                 <div>
-                  <label htmlFor='edit-email' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'>
+                  <label
+                    htmlFor='edit-email'
+                    className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block'
+                  >
                     Email
                   </label>
                   <Input id='edit-email' type='email' {...register('email')} />
-                  {formErrors.email && <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.email.message}</p>}
+                  {formErrors.email && (
+                    <p className='text-footnote text-[var(--status-error)] mt-1'>
+                      {formErrors.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className='flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
-                <AppleButton variant='secondary' type='button' onClick={() => setEditDialogOpen(false)}>
+                <AppleButton
+                  variant='secondary'
+                  type='button'
+                  onClick={() => setEditDialogOpen(false)}
+                >
                   Annulla
                 </AppleButton>
                 <AppleButton loading={isSaving} type='submit'>

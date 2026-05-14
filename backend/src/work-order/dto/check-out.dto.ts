@@ -6,7 +6,7 @@ export class VehicleCheckOutDto {
   @ApiProperty({ description: 'Chilometraggio alla riconsegna', example: 125050 })
   @IsInt()
   @Min(0)
-  mileageOut: number;
+  mileageOut: number = undefined!;
 
   @ApiProperty({
     description: 'Livello carburante alla riconsegna',
@@ -14,7 +14,7 @@ export class VehicleCheckOutDto {
     example: 'THREE_QUARTERS',
   })
   @IsEnum(FuelLevel)
-  fuelLevel: FuelLevel;
+  fuelLevel: FuelLevel = undefined!;
 
   @ApiPropertyOptional({
     description: 'URL foto del veicolo alla riconsegna',

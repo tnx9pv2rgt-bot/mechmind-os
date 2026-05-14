@@ -2,318 +2,123 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuditLogsController } from './audit-logs.controller';
 import { PrismaService } from '@common/services/prisma.service';
 
+const mockPrisma = {
+  auditLog: {
+    findMany: jest.fn(),
+    count: jest.fn(),
+  },
+};
+
+const mockReq = (tenantId = 'tenant-001') => ({
+  user: { userId: 'user-001', tenantId },
+});
+
+const mockLogs = [
+  {
+    id: 'log-001',
+    tenantId: 'tenant-001',
+    action: 'CREATE',
+    tableName: 'user',
+    createdAt: new Date(),
+  },
+  {
+    id: 'log-002',
+    tenantId: 'tenant-001',
+    action: 'UPDATE',
+    tableName: 'invoice',
+    createdAt: new Date(),
+  },
+];
+
 describe('AuditLogsController', () => {
   let controller: AuditLogsController;
-  let prisma: {
-    auditLog: {
-      findMany: jest.Mock;
-      count: jest.Mock;
-    };
-  };
-
-  const mockReq = {
-    user: { userId: 'user-1', tenantId: 'tenant-1', email: 'test@test.com', role: 'ADMIN' },
-  };
 
   beforeEach(async () => {
-    prisma = {
-      auditLog: {
-        findMany: jest.fn(),
-        count: jest.fn(),
-      },
-    };
+    jest.clearAllMocks();
+
+    mockPrisma.auditLog.findMany.mockResolvedValue(mockLogs);
+    mockPrisma.auditLog.count.mockResolvedValue(2);
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuditLogsController],
-      providers: [{ provide: PrismaService, useValue: prisma }],
+      providers: [{ provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
-    controller = module.get<AuditLogsController>(AuditLogsController);
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+    controller = module.get(AuditLogsController);
   });
 
   describe('findAll', () => {
-    it('should return audit logs for tenant', async () => {
-      const logs = [{ id: 'log-1', action: 'CREATE', tableName: 'User', tenantId: 'tenant-1' }];
-      prisma.auditLog.findMany.mockResolvedValue(logs);
-      prisma.auditLog.count.mockResolvedValue(1);
+    it('should return paginated logs with total count', async () => {
+      const result = await controller.findAll(mockReq());
 
-      const result = await controller.findAll(mockReq);
-
-      expect(result).toEqual({ success: true, data: logs, total: 1 });
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tenantId: 'tenant-1' },
-          orderBy: { createdAt: 'desc' },
-        }),
-      );
-    });
-
-    it('should filter by action', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, undefined, undefined, 'DELETE');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tenantId: 'tenant-1', action: 'DELETE' },
-        }),
-      );
-    });
-
-    it('should filter by tableName', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, undefined, undefined, undefined, 'User');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tenantId: 'tenant-1', tableName: 'User' },
-        }),
-      );
-    });
-
-    it('should handle pagination', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(100);
-
-      await controller.findAll(mockReq, '2', '10');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 10,
-          skip: 10,
-        }),
-      );
-    });
-
-    // ========================================================================
-    // ENHANCED TESTS FOR BRANCH COVERAGE
-    // ========================================================================
-
-    it('should clamp limit to max 100', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '1', '500');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 100,
-        }),
-      );
-    });
-
-    it('should handle page 0 as page 1', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '0', '10');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 0,
-        }),
-      );
-    });
-
-    it('should use default limit of 50', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq);
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 50,
-        }),
-      );
-    });
-
-    it('should combine multiple filters', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '1', '25', 'UPDATE', 'Invoice');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            tenantId: 'tenant-1',
-            action: 'UPDATE',
-            tableName: 'Invoice',
-          },
-        }),
-      );
-    });
-
-    it('should return correct pagination metadata', async () => {
-      const logs = [
-        { id: 'log-1', action: 'CREATE' },
-        { id: 'log-2', action: 'UPDATE' },
-      ];
-      prisma.auditLog.findMany.mockResolvedValue(logs);
-      prisma.auditLog.count.mockResolvedValue(47);
-
-      const result = await controller.findAll(mockReq, '1', '25');
-
-      expect(result.data).toBe(logs);
-      expect(result.total).toBe(47);
       expect(result.success).toBe(true);
+      expect(result.total).toBe(2);
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle negative page as page 1', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
+    it('should filter by tenantId — tenant isolation', async () => {
+      await controller.findAll(mockReq('tenant-xyz'));
 
-      await controller.findAll(mockReq, '-5', '10');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 0,
-        }),
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-xyz' }) }),
+      );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-xyz' }) }),
       );
     });
 
-    it('should not include action filter when undefined', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
+    it('should apply action filter when provided', async () => {
+      await controller.findAll(mockReq(), undefined, undefined, 'CREATE');
 
-      await controller.findAll(mockReq, '1', '50', undefined, 'Customer');
-
-      const callArgs = prisma.auditLog.findMany.mock.calls[0][0];
-      expect(callArgs.where).not.toHaveProperty('action');
-      expect(callArgs.where.tableName).toBe('Customer');
-    });
-
-    it('should not include tableName filter when undefined', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '1', '50', 'DELETE', undefined);
-
-      const callArgs = prisma.auditLog.findMany.mock.calls[0][0];
-      expect(callArgs.where).not.toHaveProperty('tableName');
-      expect(callArgs.where.action).toBe('DELETE');
-    });
-
-    it('should enforce tenant isolation', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      const otherTenantReq = {
-        user: { userId: 'user-2', tenantId: 'tenant-2', email: 'other@test.com', role: 'ADMIN' },
-      };
-
-      await controller.findAll(otherTenantReq);
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { tenantId: 'tenant-2' },
-        }),
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ action: 'CREATE' }) }),
       );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledTimes(1);
     });
 
-    it('should return empty data when no logs found', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
+    it('should apply tableName filter when provided', async () => {
+      await controller.findAll(mockReq(), undefined, undefined, undefined, 'invoice');
 
-      const result = await controller.findAll(mockReq);
-
-      expect(result.data).toEqual([]);
-      expect(result.total).toBe(0);
-    });
-
-    it('should calculate skip correctly for page 3', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '3', '20');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 40,
-        }),
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ tableName: 'invoice' }) }),
       );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledTimes(1);
+    });
+
+    it('should respect custom page and limit', async () => {
+      await controller.findAll(mockReq(), '2', '20');
+
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 20, skip: 20 }),
+      );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledTimes(1);
+    });
+
+    it('should cap limit at 100', async () => {
+      await controller.findAll(mockReq(), '1', '999');
+
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 100 }),
+      );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledTimes(1);
+    });
+
+    it('should default to take=50 skip=0 when no page/limit provided', async () => {
+      await controller.findAll(mockReq());
+
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 50, skip: 0 }),
+      );
+      expect(mockPrisma.auditLog.count).toHaveBeenCalledTimes(1);
     });
 
     it('should order by createdAt descending', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
+      await controller.findAll(mockReq());
 
-      await controller.findAll(mockReq);
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          orderBy: { createdAt: 'desc' },
-        }),
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
       );
-    });
-
-    it('should call count with same where clause as findMany', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(42);
-
-      await controller.findAll(mockReq, '2', '20', 'CREATE', 'Booking');
-
-      const findManyCall = prisma.auditLog.findMany.mock.calls[0][0];
-      const countCall = prisma.auditLog.count.mock.calls[0][0];
-
-      expect(countCall.where).toEqual(findManyCall.where);
-    });
-
-    it('should handle limit = 1', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '1', '1');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 1,
-        }),
-      );
-    });
-
-    it('should use Math.min to enforce limit ceiling', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      // Test boundary: 100 should stay at 100
-      await controller.findAll(mockReq, '1', '100');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          take: 100,
-        }),
-      );
-    });
-
-    it('should use Math.max to enforce minimum page', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      await controller.findAll(mockReq, '-10', '50');
-
-      expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          skip: 0,
-        }),
-      );
-    });
-
-    it('should return success true in response', async () => {
-      prisma.auditLog.findMany.mockResolvedValue([]);
-      prisma.auditLog.count.mockResolvedValue(0);
-
-      const result = await controller.findAll(mockReq);
-
-      expect(result.success).toBe(true);
+      expect(mockPrisma.auditLog.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });

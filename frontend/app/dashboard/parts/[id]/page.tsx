@@ -2,12 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { fetchWithTimeout } from '@/lib/api-client';
 import { motion } from 'framer-motion';
-import {
-  AppleCard,
-  AppleCardContent,
-  AppleCardHeader,
-} from '@/components/ui/apple-card';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
@@ -83,9 +80,20 @@ function formatCurrency(value: number): string {
 }
 
 function getStockBadge(current: number, min: number): { label: string; cls: string } {
-  if (current <= 0) return { label: 'Esaurito', cls: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]' };
-  if (current <= min) return { label: 'Scorta Bassa', cls: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning-subtle)] dark:text-[var(--status-warning)]' };
-  return { label: 'In Stock', cls: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]' };
+  if (current <= 0)
+    return {
+      label: 'Esaurito',
+      cls: 'bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)]',
+    };
+  if (current <= min)
+    return {
+      label: 'Scorta Bassa',
+      cls: 'bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:bg-[var(--status-warning-subtle)] dark:text-[var(--status-warning)]',
+    };
+  return {
+    label: 'In Stock',
+    cls: 'bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:bg-[var(--status-success-subtle)] dark:text-[var(--status-success)]',
+  };
 }
 
 export default function PartDetailPage() {
@@ -110,7 +118,7 @@ export default function PartDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/parts/${id}`);
+      const res = await fetchWithTimeout(`/api/parts/${id}`);
       if (!res.ok) throw new Error('Ricambio non trovato');
       const json = await res.json();
       const d = json.data ?? json;
@@ -246,19 +254,29 @@ export default function PartDetailPage() {
                 <Package className='h-6 w-6 text-[var(--brand)]' />
               </div>
               <div>
-                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{part.name}</h1>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {part.name}
+                </h1>
                 <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
-                  SKU: {part.sku} {part.partNumber && `| OE: ${part.partNumber}`} | {part.supplierName}
+                  SKU: {part.sku} {part.partNumber && `| OE: ${part.partNumber}`} |{' '}
+                  {part.supplierName}
                 </p>
               </div>
-              <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${stockBadge.cls}`}>
+              <span
+                className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${stockBadge.cls}`}
+              >
                 {stockBadge.label}
               </span>
             </div>
             <div className='flex gap-2'>
               {!editing && (
                 <>
-                  <AppleButton variant='ghost' size='sm' icon={<Edit2 className='h-4 w-4' />} onClick={handleEdit}>
+                  <AppleButton
+                    variant='ghost'
+                    size='sm'
+                    icon={<Edit2 className='h-4 w-4' />}
+                    onClick={handleEdit}
+                  >
                     Modifica
                   </AppleButton>
                   <AppleButton
@@ -274,10 +292,20 @@ export default function PartDetailPage() {
               )}
               {editing && (
                 <>
-                  <AppleButton variant='ghost' size='sm' icon={<X className='h-4 w-4' />} onClick={() => setEditing(false)}>
+                  <AppleButton
+                    variant='ghost'
+                    size='sm'
+                    icon={<X className='h-4 w-4' />}
+                    onClick={() => setEditing(false)}
+                  >
                     Annulla
                   </AppleButton>
-                  <AppleButton size='sm' icon={<Save className='h-4 w-4' />} loading={saving} onClick={handleSave}>
+                  <AppleButton
+                    size='sm'
+                    icon={<Save className='h-4 w-4' />}
+                    loading={saving}
+                    onClick={handleSave}
+                  >
                     Salva
                   </AppleButton>
                 </>
@@ -291,15 +319,36 @@ export default function PartDetailPage() {
       <div className='px-8 pt-6'>
         <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
           {[
-            { label: 'Stock Attuale', value: String(part.currentStock), color: part.currentStock <= part.minStockLevel ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]' },
-            { label: 'Scorta Minima', value: String(part.minStockLevel), color: 'text-[var(--text-tertiary)]' },
-            { label: 'Prezzo Acquisto', value: formatCurrency(part.costPrice), color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]' },
-            { label: 'Prezzo Vendita', value: formatCurrency(part.retailPrice), color: 'text-[var(--brand)]' },
+            {
+              label: 'Stock Attuale',
+              value: String(part.currentStock),
+              color:
+                part.currentStock <= part.minStockLevel
+                  ? 'text-[var(--status-error)]'
+                  : 'text-[var(--status-success)]',
+            },
+            {
+              label: 'Scorta Minima',
+              value: String(part.minStockLevel),
+              color: 'text-[var(--text-tertiary)]',
+            },
+            {
+              label: 'Prezzo Acquisto',
+              value: formatCurrency(part.costPrice),
+              color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+            },
+            {
+              label: 'Prezzo Vendita',
+              value: formatCurrency(part.retailPrice),
+              color: 'text-[var(--brand)]',
+            },
           ].map(s => (
             <AppleCard key={s.label} hover={false}>
               <AppleCardContent className='text-center py-4'>
                 <p className={`text-title-1 font-bold ${s.color}`}>{s.value}</p>
-                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{s.label}</p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  {s.label}
+                </p>
               </AppleCardContent>
             </AppleCard>
           ))}
@@ -344,29 +393,35 @@ export default function PartDetailPage() {
               <AppleCardContent>
                 {editing ? (
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    {([
-                      { key: 'name', label: 'Nome' },
-                      { key: 'sku', label: 'SKU' },
-                      { key: 'partNumber', label: 'Codice OE' },
-                      { key: 'brand', label: 'Marca' },
-                      { key: 'category', label: 'Categoria' },
-                      { key: 'location', label: 'Posizione Magazzino' },
-                    ] as const).map(f => (
+                    {(
+                      [
+                        { key: 'name', label: 'Nome' },
+                        { key: 'sku', label: 'SKU' },
+                        { key: 'partNumber', label: 'Codice OE' },
+                        { key: 'brand', label: 'Marca' },
+                        { key: 'category', label: 'Categoria' },
+                        { key: 'location', label: 'Posizione Magazzino' },
+                      ] as const
+                    ).map(f => (
                       <div key={f.key}>
                         <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block'>
                           {f.label}
                         </label>
                         <Input
                           value={(editData[f.key] as string) || ''}
-                          onChange={e => setEditData(prev => ({ ...prev, [f.key]: e.target.value }))}
+                          onChange={e =>
+                            setEditData(prev => ({ ...prev, [f.key]: e.target.value }))
+                          }
                         />
                       </div>
                     ))}
-                    {([
-                      { key: 'costPrice', label: 'Prezzo Acquisto' },
-                      { key: 'retailPrice', label: 'Prezzo Vendita' },
-                      { key: 'minStockLevel', label: 'Scorta Minima' },
-                    ] as const).map(f => (
+                    {(
+                      [
+                        { key: 'costPrice', label: 'Prezzo Acquisto' },
+                        { key: 'retailPrice', label: 'Prezzo Vendita' },
+                        { key: 'minStockLevel', label: 'Scorta Minima' },
+                      ] as const
+                    ).map(f => (
                       <div key={f.key}>
                         <label className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1 block'>
                           {f.label}
@@ -374,7 +429,9 @@ export default function PartDetailPage() {
                         <Input
                           type='number'
                           value={(editData[f.key] as number) || 0}
-                          onChange={e => setEditData(prev => ({ ...prev, [f.key]: Number(e.target.value) }))}
+                          onChange={e =>
+                            setEditData(prev => ({ ...prev, [f.key]: Number(e.target.value) }))
+                          }
                           min={0}
                           step={f.key === 'minStockLevel' ? 1 : 0.01}
                         />
@@ -408,15 +465,26 @@ export default function PartDetailPage() {
                       { label: 'Stock Attuale', value: String(part.currentStock) },
                       { label: 'Scorta Minima', value: String(part.minStockLevel) },
                     ].map(row => (
-                      <div key={row.label} className='flex justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'>
-                        <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{row.label}</span>
-                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{row.value}</span>
+                      <div
+                        key={row.label}
+                        className='flex justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
+                      >
+                        <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                          {row.label}
+                        </span>
+                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                          {row.value}
+                        </span>
                       </div>
                     ))}
                     {part.notes && (
                       <div className='md:col-span-2 pt-2'>
-                        <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Note</span>
-                        <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1 whitespace-pre-wrap'>{part.notes}</p>
+                        <span className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                          Note
+                        </span>
+                        <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1 whitespace-pre-wrap'>
+                          {part.notes}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -446,35 +514,53 @@ export default function PartDetailPage() {
                 ) : (
                   <>
                     <div className='space-y-3'>
-                      {movements.slice((movementsPage - 1) * MOVEMENTS_PAGE_SIZE, movementsPage * MOVEMENTS_PAGE_SIZE).map(m => (
-                        <div
-                          key={m.id}
-                          className='flex items-center justify-between p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
-                        >
-                          <div className='flex items-center gap-3'>
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                              m.type === 'IN' ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]' : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
-                            }`}>
-                              {m.type === 'IN' ? (
-                                <TrendingUp className='h-4 w-4 text-[var(--status-success)] dark:text-[var(--status-success)]' />
-                              ) : (
-                                <TrendingDown className='h-4 w-4 text-[var(--status-error)] dark:text-[var(--status-error)]' />
-                              )}
+                      {movements
+                        .slice(
+                          (movementsPage - 1) * MOVEMENTS_PAGE_SIZE,
+                          movementsPage * MOVEMENTS_PAGE_SIZE
+                        )
+                        .map(m => (
+                          <div
+                            key={m.id}
+                            className='flex items-center justify-between p-3 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
+                          >
+                            <div className='flex items-center gap-3'>
+                              <div
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                  m.type === 'IN'
+                                    ? 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]'
+                                    : 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
+                                }`}
+                              >
+                                {m.type === 'IN' ? (
+                                  <TrendingUp className='h-4 w-4 text-[var(--status-success)] dark:text-[var(--status-success)]' />
+                                ) : (
+                                  <TrendingDown className='h-4 w-4 text-[var(--status-error)] dark:text-[var(--status-error)]' />
+                                )}
+                              </div>
+                              <div>
+                                <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                  {m.type === 'IN' ? 'Carico' : 'Scarico'}: {m.reason}
+                                </p>
+                                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                  {new Date(m.date).toLocaleDateString('it-IT', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                                {m.type === 'IN' ? 'Carico' : 'Scarico'}: {m.reason}
-                              </p>
-                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
-                                {new Date(m.date).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </div>
+                            <span
+                              className={`text-body font-bold ${m.type === 'IN' ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}
+                            >
+                              {m.type === 'IN' ? '+' : '-'}
+                              {m.quantity}
+                            </span>
                           </div>
-                          <span className={`text-body font-bold ${m.type === 'IN' ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}>
-                            {m.type === 'IN' ? '+' : '-'}{m.quantity}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                     <div className='mt-4'>
                       <Pagination
@@ -516,7 +602,9 @@ export default function PartDetailPage() {
                         onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
                         role='button'
                         tabIndex={0}
-                        onKeyDown={e => { if (e.key === 'Enter') router.push(`/dashboard/work-orders/${wo.id}`); }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') router.push(`/dashboard/work-orders/${wo.id}`);
+                        }}
                       >
                         <div className='flex items-center gap-3'>
                           <div className='w-10 h-10 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center'>

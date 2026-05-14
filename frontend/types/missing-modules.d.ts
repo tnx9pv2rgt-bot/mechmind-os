@@ -33,3 +33,16 @@ declare module '@react-email/components' {
 declare module 'framer/react' {
   export { motion, AnimatePresence } from 'framer-motion';
 }
+
+declare module 'next-intl/server' {
+  interface RequestConfigParams {
+    locale?: string;
+  }
+  interface RequestConfig {
+    locale: string;
+    messages: Record<string, unknown>;
+  }
+  export function getRequestConfig(
+    fn: (params: RequestConfigParams) => Promise<RequestConfig>
+  ): unknown;
+}

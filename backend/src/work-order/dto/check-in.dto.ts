@@ -23,16 +23,16 @@ export class VehicleCheckInDto {
 
   @ApiProperty({ description: 'ID del veicolo', example: '550e8400-e29b-41d4-a716-446655440001' })
   @IsUUID()
-  vehicleId: string;
+  vehicleId: string = undefined!;
 
   @ApiProperty({ description: 'ID del cliente', example: '550e8400-e29b-41d4-a716-446655440002' })
   @IsUUID()
-  customerId: string;
+  customerId: string = undefined!;
 
   @ApiProperty({ description: 'Chilometraggio in ingresso', example: 125000 })
   @IsInt()
   @Min(0)
-  mileageIn: number;
+  mileageIn: number = undefined!;
 
   @ApiPropertyOptional({
     description: 'Livello carburante in ingresso',

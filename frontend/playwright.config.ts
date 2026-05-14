@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const DEPLOY_URL = process.env.DEPLOY_URL;
+const isDeploySmoke = !!DEPLOY_URL;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -9,7 +12,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 4,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: DEPLOY_URL || 'http://localhost:3001',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -18,23 +21,47 @@ export default defineConfig({
     testIdAttribute: 'data-testid',
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'mobile',
-      use: { ...devices['iPhone 14'] },
-    },
-    {
-      name: 'tablet',
-      use: { ...devices['iPad Pro 11'] },
-    },
+    // Progetto smoke per deploy Vercel — attivato solo se DEPLOY_URL è impostato
+    ...(isDeploySmoke
+      ? [
+          {
+            name: 'deploy-smoke',
+            testMatch: '**/smoke/deploy-validation.spec.ts',
+            use: {
+              ...devices['Desktop Chrome'],
+              baseURL: DEPLOY_URL,
+              extraHTTPHeaders: process.env.PLAYWRIGHT_BYPASS_TOKEN
+                ? { 'x-vercel-protection-bypass': process.env.PLAYWRIGHT_BYPASS_TOKEN }
+                : {},
+            },
+          },
+        ]
+      : []),
+    // Progetti standard (locale)
+    ...(!isDeploySmoke
+      ? [
+          {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+          },
+          {
+            name: 'mobile',
+            use: { ...devices['iPhone 14'] },
+          },
+          {
+            name: 'tablet',
+            use: { ...devices['iPad Pro 11'] },
+          },
+        ]
+      : []),
   ],
-  webServer: {
-    command: 'npm run dev -- -p 3001',
-    port: 3001,
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // webServer solo in modalità locale (non smoke su deploy remoto)
+  webServer: isDeploySmoke
+    ? undefined
+    : {
+        command: 'npm run dev -- -p 3001',
+        port: 3001,
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
 });

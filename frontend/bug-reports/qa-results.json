@@ -1,0 +1,315 @@
+{
+  "config": {
+    "configFile": "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/frontend/playwright-qa-deep.config.ts",
+    "rootDir": "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/frontend/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/qa-nexo-deep.spec.ts",
+          "**/timeout-verify.spec.ts"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "bug-reports/qa-results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "outputFile": "bug-reports/qa-report.html",
+          "open": "never"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "timeout-verify.spec.ts",
+      "file": "timeout-verify.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "/dashboard/locations — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18655,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/locations: 18280ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:15:37.059Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-d8d12e5d5ae85f250a9a",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        },
+        {
+          "title": "/dashboard/locations/test-id — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18314,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/locations/test-id: 18184ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:15:56.343Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-ed1841ea33affb6b1661",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        },
+        {
+          "title": "/dashboard/warranty/test-id — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18299,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/warranty/test-id: 18177ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:16:14.665Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-50f109fde1e4ba45e835",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        },
+        {
+          "title": "/dashboard/warranty/claims/test-id — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18255,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/warranty/claims/test-id: 18137ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:16:32.973Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-594890e60cdf23671156",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        },
+        {
+          "title": "/dashboard/parts/test-id — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18265,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/parts/test-id: 18138ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:16:51.236Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-1c04337b73cc2caac404",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        },
+        {
+          "title": "/dashboard/work-orders/test-id — fail fast (no hang)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 18307,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "/dashboard/work-orders/test-id: 18176ms, spinner_visible=false\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-10T17:17:09.512Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "55a5d2ab3ec8790881fd-2b0c6dfa136e8c1ecfd3",
+          "file": "timeout-verify.spec.ts",
+          "line": 20,
+          "column": 7
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-05-10T17:15:36.772Z",
+    "duration": 111103.467,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

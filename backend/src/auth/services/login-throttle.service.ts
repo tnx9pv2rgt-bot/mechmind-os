@@ -58,7 +58,8 @@ export class LoginThrottleService {
     const newCount = (current ? parseInt(current, 10) : 0) + 1;
     await this.redis.set(key, newCount.toString(), LoginThrottleService.WINDOW_SECONDS);
 
-    this.logger.warn(`Login failure #${newCount} for ${email} from ${ip}`);
+    const maskedEmail = email.substring(0, 3) + '***@' + email.split('@')[1];
+    this.logger.warn(`Login failure #${newCount} for ${maskedEmail} from ${ip}`);
 
     return newCount;
   }

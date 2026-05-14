@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class SendSmsDto {
   @ApiProperty({ description: 'SMS message body' })
@@ -19,10 +19,10 @@ export class InboundSmsDto {
   @IsNotEmpty()
   body!: string;
 
-  @ApiPropertyOptional({ description: 'Twilio message SID' })
+  @ApiProperty({ description: 'Twilio message SID' })
   @IsString()
-  @IsOptional()
-  twilioSid?: string;
+  @IsNotEmpty()
+  twilioSid!: string;
 }
 
 export class SmsThreadResponseDto {

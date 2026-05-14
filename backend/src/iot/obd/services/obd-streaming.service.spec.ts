@@ -888,4 +888,264 @@ describe('ObdStreamingService', () => {
       );
     });
   });
+
+  // ==================== Freeze Frame Assembly - Missing PID Handling ====================
+  describe('captureFreezeFrame - Completeness', () => {
+    it('should assemble freeze frame with partial PID data', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-ff-1',
+        vehicle: { id: 'v-ff', make: 'Fiat', model: '500' },
+      });
+
+      const result = await service.captureFreezeFrame(TENANT_ID, 'device-ff-1', 'P0500');
+
+      expect(result.data).toBeDefined();
+      expect(result.dtcCode).toBe('P0500');
+      // All PID fields should be present or null
+      expect(Object.keys(result.data).length).toBeGreaterThan(0);
+    });
+
+    it('should handle freeze frame with all NULL PID values', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-ff-2',
+        vehicle: { id: 'v-ff2' },
+      });
+
+      // Mock queryPid to return null for all calls
+      jest.spyOn(service as never, 'queryPid' as never).mockResolvedValue(null as never);
+
+      const result = await service.captureFreezeFrame(TENANT_ID, 'device-ff-2', 'P0156');
+
+      expect(result).toBeDefined();
+      expect(result.deviceId).toBe('device-ff-2');
+      expect(prisma.obdFreezeFrame.create).toHaveBeenCalled();
+    });
+  });
+
+  // ==================== Mode $06 Bitwise Logic Edge Cases ====================
+  describe('getMode06Tests - Test Enumeration Edge Cases', () => {
+    it('should handle all 256 test IDs when all bits are set', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-m6-1',
+      });
+
+      // Mock queryPid to return a value with all bits set
+      jest
+        .spyOn(service as never, 'queryPid' as never)
+        .mockResolvedValue('ffffffffffffffff' as never);
+
+      const mockResult: Mode06TestResult = {
+        testId: 0,
+        componentId: 1,
+        testName: 'Generic Test',
+        value: 0.5,
+        minValue: 0,
+        maxValue: 1.0,
+        status: 'PASS',
+        unit: 'V',
+      };
+      jest
+        .spyOn(service as never, 'queryMode06Test' as never)
+        .mockResolvedValue(mockResult as never);
+
+      const result = await service.getMode06Tests(TENANT_ID, 'device-m6-1');
+
+      // At least some tests should be returned when bits are set
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should handle empty bit mask (no tests supported)', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-m6-2',
+      });
+
+      // queryPid returns null = no tests supported
+      jest.spyOn(service as never, 'queryPid' as never).mockResolvedValue(null as never);
+
+      const result = await service.getMode06Tests(TENANT_ID, 'device-m6-2');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle sparse bit mask (only specific tests supported)', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-m6-3',
+      });
+
+      // "05" = 0b00000101 => tests 0 and 2 are supported
+      jest.spyOn(service as never, 'queryPid' as never).mockResolvedValue('05' as never);
+
+      const mockResult: Mode06TestResult = {
+        testId: 0,
+        componentId: 1,
+        testName: 'Test 0',
+        value: 0.5,
+        minValue: 0,
+        maxValue: 1.0,
+        status: 'PASS',
+        unit: 'V',
+      };
+      jest
+        .spyOn(service as never, 'queryMode06Test' as never)
+        .mockResolvedValue(mockResult as never);
+
+      const result = await service.getMode06Tests(TENANT_ID, 'device-m6-3');
+
+      // Should call queryMode06Test multiple times for supported tests
+      expect(result.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ==================== Critical Value Detection - Boundary Conditions ====================
+  describe('processSensorData - Critical Value Boundaries', () => {
+    it('should trigger notification at coolant temp boundary (110°C)', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-1',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-1',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'BMW', model: 'X5' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-1', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Exactly at boundary
+      await service.processSensorData(stream.id, {
+        coolantTemp: 110,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).not.toHaveBeenCalled(); // 110 is not > 110
+    });
+
+    it('should trigger notification above coolant temp threshold', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-2',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-2',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'Audi', model: 'A4' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-2', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Above threshold
+      await service.processSensorData(stream.id, {
+        coolantTemp: 111,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).toHaveBeenCalled();
+    });
+
+    it('should trigger notification at voltage boundary (11.0V)', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-3',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-3',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'Renault', model: 'Megane' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-3', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Exactly at boundary
+      await service.processSensorData(stream.id, {
+        voltage: 11.0,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).not.toHaveBeenCalled(); // 11.0 is not < 11.0
+    });
+
+    it('should trigger notification below voltage threshold', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-4',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-4',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'Volkswagen', model: 'Golf' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-4', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Below threshold
+      await service.processSensorData(stream.id, {
+        voltage: 10.9,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).toHaveBeenCalled();
+    });
+
+    it('should trigger notification at RPM boundary (6000)', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-5',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-5',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'Nissan', model: 'Juke' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-5', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Exactly at boundary
+      await service.processSensorData(stream.id, {
+        rpm: 6000,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).not.toHaveBeenCalled(); // 6000 is not > 6000
+    });
+
+    it('should trigger notification above RPM threshold', async () => {
+      (prisma.obdDevice.findFirst as jest.Mock).mockResolvedValueOnce({
+        id: 'device-crit-6',
+        tenantId: TENANT_ID,
+      });
+      (prisma.obdDevice.findUnique as jest.Mock).mockResolvedValue({
+        id: 'device-crit-6',
+        tenantId: TENANT_ID,
+        vehicle: { make: 'Hyundai', model: 'i30' },
+        tenant: { id: TENANT_ID },
+      });
+
+      const stream = await service.startStreaming(TENANT_ID, 'device-crit-6', {
+        adapterType: AdapterType.ELM327_BLUETOOTH,
+      });
+
+      // Above threshold
+      await service.processSensorData(stream.id, {
+        rpm: 6001,
+        timestamp: new Date(),
+      });
+
+      expect(notifications.sendToTenant).toHaveBeenCalled();
+    });
+  });
 });

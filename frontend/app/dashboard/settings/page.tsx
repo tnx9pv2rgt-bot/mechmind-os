@@ -159,6 +159,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-4'>
             <Link
               href='/dashboard'
+              aria-label='Torna alla dashboard'
               className='flex items-center justify-center w-10 h-10 rounded-xl transition-colors hover:bg-[var(--surface-primary)]/5 dark:hover:bg-[var(--surface-secondary)]/5'
             >
               <ArrowLeft className='h-5 w-5 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]' />

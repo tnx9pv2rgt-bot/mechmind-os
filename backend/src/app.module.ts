@@ -48,6 +48,7 @@ import { VehicleHistoryModule } from './vehicle-history/vehicle-history.module';
 import { PredictiveMaintenanceModule } from './predictive-maintenance/predictive-maintenance.module';
 import { PortalModule } from './portal/portal.module';
 import { WebhookSubscriptionModule } from './webhook-subscription/webhook-subscription.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { PeppolModule } from './peppol/peppol.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -65,7 +66,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
 
     // Rate limiting with in-memory storage (Upstash doesn't support Lua scripts)
     ThrottlerModule.forRoot({
-      skipIf: (context) => {
+      skipIf: context => {
         const req = context.switchToHttp()?.getRequest<{ path?: string }>();
         const path = req?.path ?? '';
         return path === '/health' || path === '/liveness' || path === '/readiness';
@@ -132,6 +133,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     PredictiveMaintenanceModule,
     PortalModule,
     WebhookSubscriptionModule,
+    WebhooksModule,
     PeppolModule,
   ],
   providers: [

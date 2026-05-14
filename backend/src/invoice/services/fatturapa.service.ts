@@ -107,6 +107,10 @@ export class FatturapaService {
     private readonly s3: S3Service,
   ) {}
 
+  /**
+   * Genera XML FatturaPA conforme al formato Agenzia Entrate.
+   * XXE-safe: genera XML tramite string template con escapeXml(), non effettua parsing.
+   */
   async generateXml(invoiceId: string, tenantId: string): Promise<string> {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id: invoiceId, tenantId },

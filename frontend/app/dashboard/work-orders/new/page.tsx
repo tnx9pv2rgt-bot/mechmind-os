@@ -794,7 +794,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 {/* Marketing Source */}
                 <div>
                   <label className={labelClass}>Come ci ha trovato il cliente</label>
-                  <select {...register('marketingSource')} className={selectClass}>
+                  <select {...register('marketingSource')} aria-label="Come ci ha trovato il cliente" className={selectClass}>
                     {MARKETING_SOURCES.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
                     ))}
@@ -872,6 +872,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                 <div>
                   <label className={labelClass}>Veicolo *</label>
                   <select
+                    aria-label="Veicolo"
                     value={watch('vehicleId')}
                     onChange={(e) => handleVehicleChange(e.target.value)}
                     disabled={!customerId || vehiclesLoading}
@@ -1082,7 +1083,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   {/* Service Advisor */}
                   <div>
                     <label className={labelClass}>Accettatore</label>
-                    <select {...register('serviceAdvisorId')} disabled={techniciansLoading} className={selectClass}>
+                    <select {...register('serviceAdvisorId')} aria-label="Accettatore" disabled={techniciansLoading} className={selectClass}>
                       <option value="">Seleziona accettatore</option>
                       {technicians.map((t) => (
                         <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
@@ -1093,7 +1094,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   {/* Technician */}
                   <div>
                     <label className={labelClass}>Tecnico principale</label>
-                    <select {...register('technicianId')} disabled={techniciansLoading} className={selectClass}>
+                    <select {...register('technicianId')} aria-label="Tecnico principale" disabled={techniciansLoading} className={selectClass}>
                       <option value="">{techniciansLoading ? 'Caricamento...' : 'Nessun tecnico assegnato'}</option>
                       {technicians.map((t) => (
                         <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
@@ -1104,7 +1105,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                   {/* Bay */}
                   <div>
                     <label className={labelClass}>Postazione / Ponte</label>
-                    <select {...register('assignedBayId')} className={selectClass}>
+                    <select {...register('assignedBayId')} aria-label="Postazione / Ponte" className={selectClass}>
                       <option value="">Nessuna postazione</option>
                       {bays.filter((b) => b.status === 'AVAILABLE').map((b) => (
                         <option key={b.id} value={b.id}>{b.name}</option>
@@ -1307,7 +1308,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                   </div>
                                   <div className="w-28">
                                     <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tipo tariffa</label>
-                                    <select {...register(`lineItems.${index}.laborType`)} className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                                    <select {...register(`lineItems.${index}.laborType`)} aria-label="Tipo tariffa" className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                       {LABOR_TYPES.map((lt) => (
                                         <option key={lt.value} value={lt.value}>{lt.label}</option>
                                       ))}
@@ -1315,7 +1316,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                                   </div>
                                   <div className="w-28">
                                     <label className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">Tecnico</label>
-                                    <select {...register(`lineItems.${index}.technicianId`)} className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                                    <select {...register(`lineItems.${index}.technicianId`)} aria-label="Tecnico" className="w-full h-8 px-2 rounded-lg border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-footnote text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                                       <option value="">—</option>
                                       {technicians.map((t) => (
                                         <option key={t.id} value={t.id}>{t.firstName} {t.lastName[0]}.</option>
@@ -1421,7 +1422,7 @@ export default function NewWorkOrderPage(): React.ReactElement {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                                 <div>
                                   <label className="text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1 block">Garanzia</label>
-                                  <select {...register(`lineItems.${index}.warrantyType`)} className={selectClass}>
+                                  <select {...register(`lineItems.${index}.warrantyType`)} aria-label="Garanzia" className={selectClass}>
                                     {WARRANTY_TYPES.map((wt) => (
                                       <option key={wt.value} value={wt.value}>{wt.label}</option>
                                     ))}

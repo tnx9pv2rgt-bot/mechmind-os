@@ -3,7 +3,7 @@
  */
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, ValidateNested, MinLength } from 'class-validator';
+import { IsString, ValidateNested, MinLength, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { VehicleInfoDto } from './analyze-dtc.dto';
 
@@ -14,6 +14,7 @@ export class AnalyzeSymptomsDto {
   })
   @IsString()
   @MinLength(10)
+  @MaxLength(500)
   symptoms: string;
 
   @ApiProperty({ description: 'Informazioni veicolo', type: VehicleInfoDto })

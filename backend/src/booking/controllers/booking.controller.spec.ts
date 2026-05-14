@@ -44,6 +44,7 @@ describe('BookingController', () => {
             rescheduleBooking: jest.fn(),
             cancelBooking: jest.fn(),
             getStats: jest.fn(),
+            bulkConfirm: jest.fn(),
           },
         },
         {
@@ -158,6 +159,30 @@ describe('BookingController', () => {
       });
       expect(result.meta).toEqual({ total: 0, limit: 50, offset: 0 });
     });
+
+    it('should fall back to defaults when limit/offset are non-numeric', async () => {
+      bookingService.findAll.mockResolvedValueOnce({ bookings: [], total: 0 } as never);
+
+      const result = await controller.getBookings(
+        TENANT_ID,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'abc',
+        'xyz',
+      );
+
+      expect(bookingService.findAll).toHaveBeenCalledWith(TENANT_ID, {
+        status: undefined,
+        customerId: undefined,
+        fromDate: undefined,
+        toDate: undefined,
+        limit: 50,
+        offset: 0,
+      });
+      expect(result.meta).toEqual({ total: 0, limit: 50, offset: 0 });
+    });
   });
 
   describe('getBooking', () => {
@@ -201,6 +226,16 @@ describe('BookingController', () => {
         data: cancelled,
         message: 'Booking cancelled successfully',
       });
+    });
+
+    it('should delegate to service without reason', async () => {
+      const cancelled = { ...mockBooking, status: 'CANCELLED' };
+      bookingService.cancelBooking.mockResolvedValueOnce(cancelled as never);
+
+      const result = await controller.cancelBooking(TENANT_ID, 'book-001');
+
+      expect(bookingService.cancelBooking).toHaveBeenCalledWith(TENANT_ID, 'book-001', undefined);
+      expect(result.success).toBe(true);
     });
   });
 
@@ -347,6 +382,125 @@ describe('BookingController', () => {
       expect(result.data[0].bayId).toBeNull();
       expect(result.data[0].customerId).toBeNull();
     });
+
+    it('should use vehicleInfo as title when vehicle has make/model but no licensePlate', async () => {
+      bookingService.findAll.mockResolvedValueOnce({
+        bookings: [
+          {
+            id: 'book-010',
+            customerId: 'cust-010',
+            status: 'CONFIRMED',
+            scheduledDate: new Date('2026-04-05T09:00:00Z'),
+            durationMinutes: 30,
+            liftPosition: null,
+            customer: { id: 'cust-010' },
+            vehicle: { licensePlate: null, make: 'BMW', model: 'Serie 3' },
+          },
+        ],
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(result.data[0].title).toBe('BMW Serie 3');
+    });
+
+    it('should use licensePlate as title when vehicle has plate but no make/model', async () => {
+      bookingService.findAll.mockResolvedValueOnce({
+        bookings: [
+          {
+            id: 'book-011',
+            customerId: 'cust-011',
+            status: 'PENDING',
+            scheduledDate: new Date('2026-04-05T10:00:00Z'),
+            durationMinutes: 60,
+            liftPosition: null,
+            customer: { id: 'cust-011' },
+            vehicle: { licensePlate: 'ZZ999ZZ', make: null, model: null },
+          },
+        ],
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(result.data[0].title).toBe('ZZ999ZZ');
+    });
+
+    it('should use fallback color for unknown booking status', async () => {
+      bookingService.findAll.mockResolvedValueOnce({
+        bookings: [
+          {
+            id: 'book-012',
+            customerId: 'cust-012',
+            status: 'UNKNOWN_STATUS',
+            scheduledDate: new Date('2026-04-05T11:00:00Z'),
+            durationMinutes: 30,
+            liftPosition: null,
+            customer: null,
+            vehicle: null,
+          },
+        ],
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(result.data[0].color).toBe('#6b7280');
+    });
+
+    it('should handle vehicle with null make field using empty string fallback', async () => {
+      bookingService.findAll.mockResolvedValueOnce({
+        bookings: [
+          {
+            id: 'book-013',
+            customerId: 'cust-013',
+            status: 'IN_PROGRESS',
+            scheduledDate: new Date('2026-04-05T12:00:00Z'),
+            durationMinutes: 90,
+            liftPosition: 'Ponte C',
+            customer: { id: 'cust-013' },
+            vehicle: { licensePlate: 'XX000XX', make: null, model: 'Giulia' },
+          },
+        ],
+        total: 1,
+      } as never);
+
+      const result = await controller.getCalendarBookings(TENANT_ID, {
+        from: '2026-04-01',
+        to: '2026-04-30',
+      });
+
+      expect(result.data[0].title).toBe('XX000XX - Giulia');
+      expect(result.data[0].color).toBe('#f97316');
+    });
+  });
+
+  describe('bulkConfirm', () => {
+    it('should delegate to service and return bulk confirmation result', async () => {
+      const bulkResult = { confirmed: 3, failed: 0 };
+      bookingService.bulkConfirm.mockResolvedValueOnce(bulkResult as never);
+
+      const result = await controller.bulkConfirm(TENANT_ID, {
+        ids: ['book-001', 'book-002', 'book-003'],
+      } as never);
+
+      expect(bookingService.bulkConfirm).toHaveBeenCalledWith(TENANT_ID, [
+        'book-001',
+        'book-002',
+        'book-003',
+      ]);
+      expect(result).toEqual({ success: true, data: bulkResult });
+    });
   });
 
   describe('rescheduleBooking', () => {
@@ -430,6 +584,16 @@ describe('BookingController', () => {
         data: blocked,
         message: 'Slot blocked successfully',
       });
+    });
+
+    it('should delegate to slotService without reason', async () => {
+      const blocked = { ...mockSlot, available: false };
+      slotService.blockSlot.mockResolvedValueOnce(blocked as never);
+
+      const result = await controller.blockSlot(TENANT_ID, 'slot-001');
+
+      expect(slotService.blockSlot).toHaveBeenCalledWith(TENANT_ID, 'slot-001', undefined);
+      expect(result.success).toBe(true);
     });
   });
 

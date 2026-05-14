@@ -8,6 +8,7 @@ import { RolesController } from './roles.controller';
 import { AuditLogsController } from './audit-logs.controller';
 import { AdminTenantsController } from './admin-tenants.controller';
 import { WebhookConfigController } from './webhook-config.controller';
+import { TenantController } from './tenant.controller';
 
 @Module({
   controllers: [
@@ -18,6 +19,7 @@ import { WebhookConfigController } from './webhook-config.controller';
     AuditLogsController,
     AdminTenantsController,
     WebhookConfigController,
+    TenantController,
   ],
   providers: [AdminSetupService, TenantSettingsService],
   exports: [TenantSettingsService],

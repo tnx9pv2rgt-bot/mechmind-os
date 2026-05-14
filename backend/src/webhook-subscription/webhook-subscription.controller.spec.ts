@@ -154,18 +154,16 @@ describe('WebhookSubscriptionController', () => {
     it('should propagate service exceptions on findOne', async () => {
       service.findOne.mockRejectedValue(new Error('Not found'));
 
-      await expect(controller.findOne(TENANT_ID, 'webhook-uuid-001')).rejects.toThrow(
-        'Not found',
-      );
+      await expect(controller.findOne(TENANT_ID, 'webhook-uuid-001')).rejects.toThrow('Not found');
     });
 
     it('should propagate service exceptions on update', async () => {
       const dto = { url: 'https://new-endpoint.com/webhooks' };
       service.update.mockRejectedValue(new Error('Invalid URL'));
 
-      await expect(
-        controller.update(TENANT_ID, 'webhook-uuid-001', dto),
-      ).rejects.toThrow('Invalid URL');
+      await expect(controller.update(TENANT_ID, 'webhook-uuid-001', dto)).rejects.toThrow(
+        'Invalid URL',
+      );
     });
 
     it('should propagate service exceptions on remove', async () => {

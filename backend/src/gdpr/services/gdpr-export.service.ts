@@ -1,9 +1,12 @@
 import * as crypto from 'crypto';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { LoggerService } from '@common/services/logger.service';
 import { Vehicle, Booking } from '@prisma/client';
+import { Response } from 'express';
+import archiver from 'archiver';
 
 /**
  * Consent Audit Log entry
@@ -197,6 +200,7 @@ export class GdprExportService {
     private readonly prisma: PrismaService,
     private readonly encryption: EncryptionService,
     private readonly loggerService: LoggerService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -582,6 +586,80 @@ export class GdprExportService {
     }
 
     return rows.join('\n');
+  }
+
+  /**
+   * Stream full tenant data export as ZIP (EU Data Act Art. 20 / GDPR Art. 20)
+   *
+   * @param tenantId - Tenant ID
+   * @param res - Express response to pipe ZIP into
+   */
+  async streamFullTenantExport(tenantId: string, res: Response): Promise<void> {
+    const archive = archiver('zip', { zlib: { level: 6 } });
+    archive.pipe(res);
+
+    const [customers, vehicles, invoices, bookings] = await Promise.all([
+      this.prisma.customerEncrypted.findMany({
+        where: { tenantId, deletedAt: null },
+        select: {
+          id: true,
+          createdAt: true,
+          gdprConsent: true,
+          gdprConsentDate: true,
+          marketingConsent: true,
+          phoneEncrypted: true,
+          emailEncrypted: true,
+          nameEncrypted: true,
+        },
+      }),
+      this.prisma.vehicle.findMany({ where: { tenantId } }),
+      this.prisma.invoice.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } }),
+      this.prisma.booking.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } }),
+    ]);
+
+    const decryptedCustomers = customers.map(c => ({
+      id: c.id,
+      createdAt: c.createdAt,
+      gdprConsent: c.gdprConsent,
+      gdprConsentDate: c.gdprConsentDate,
+      marketingConsent: c.marketingConsent,
+      phone: c.phoneEncrypted ? this.encryption.decrypt(c.phoneEncrypted.toString()) : null,
+      email: c.emailEncrypted ? this.encryption.decrypt(c.emailEncrypted.toString()) : null,
+      name: c.nameEncrypted ? this.encryption.decrypt(c.nameEncrypted.toString()) : null,
+    }));
+
+    const manifest = {
+      schemaVersion: '1.0',
+      exportDate: new Date().toISOString(),
+      tenantId,
+      regulation: 'EU Data Act (Art. 20) + GDPR (Art. 20)',
+      dataController: { name: 'MechMind Technologies S.r.l.', contact: 'dpo@mechmind.io' },
+      counts: {
+        customers: decryptedCustomers.length,
+        vehicles: vehicles.length,
+        invoices: invoices.length,
+        bookings: bookings.length,
+      },
+    };
+
+    const secret = this.configService.get<string>('GDPR_WEBHOOK_SECRET') ?? '';
+    const signature = crypto
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(manifest))
+      .digest('hex');
+
+    archive.append(JSON.stringify({ ...manifest, signature }, null, 2), { name: 'manifest.json' });
+    archive.append(JSON.stringify(decryptedCustomers, null, 2), { name: 'customers.json' });
+    archive.append(JSON.stringify(vehicles, null, 2), { name: 'vehicles.json' });
+    archive.append(JSON.stringify(invoices, null, 2), { name: 'invoices.json' });
+    archive.append(JSON.stringify(bookings, null, 2), { name: 'bookings.json' });
+
+    await archive.finalize();
+
+    this.loggerService.log(
+      `Full tenant export streamed for tenant ${tenantId}`,
+      'GdprExportService',
+    );
   }
 
   /**

@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import {
-  AppleCard,
-  AppleCardContent,
-  AppleCardHeader,
-} from '@/components/ui/apple-card';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
@@ -27,7 +23,10 @@ function validateItalianPlate(plate: string): boolean {
 }
 
 const schema = z.object({
-  targa: z.string().min(1, 'La targa è obbligatoria').refine(validateItalianPlate, 'Formato targa non valido (es. AB123CD)'),
+  targa: z
+    .string()
+    .min(1, 'La targa è obbligatoria')
+    .refine(validateItalianPlate, 'Formato targa non valido (es. AB123CD)'),
   marca: z.string().min(1, 'La marca è obbligatoria'),
   modello: z.string().min(1, 'Il modello è obbligatorio'),
   anno: z.coerce.number().min(1900, 'Anno non valido').max(2030, 'Anno non valido'),
@@ -66,6 +65,7 @@ export default function NewVehiclePage(): React.ReactElement {
   const [searchLoading, setSearchLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const submittingRef = useRef(false);
 
   const {
     register,
@@ -122,6 +122,8 @@ export default function NewVehiclePage(): React.ReactElement {
   };
 
   const onSubmit = async (data: FormValues): Promise<void> => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       const res = await fetch('/api/dashboard/vehicles', {
         method: 'POST',
@@ -154,6 +156,8 @@ export default function NewVehiclePage(): React.ReactElement {
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Errore durante la creazione');
+    } finally {
+      submittingRef.current = false;
     }
   };
 
@@ -162,17 +166,21 @@ export default function NewVehiclePage(): React.ReactElement {
       {/* Header */}
       <header>
         <div className='px-8 py-5'>
-          <Breadcrumb items={[
-            { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Veicoli', href: '/dashboard/vehicles' },
-            { label: 'Nuovo Veicolo' },
-          ]} />
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Veicoli', href: '/dashboard/vehicles' },
+              { label: 'Nuovo Veicolo' },
+            ]}
+          />
           <div className='flex items-center justify-between mt-2'>
             <div className='flex items-center gap-3'>
               <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
                 <Car className='h-5 w-5 text-[var(--brand)]' />
               </div>
-              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nuovo Veicolo</h1>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Nuovo Veicolo
+              </h1>
             </div>
             <AppleButton
               variant='ghost'
@@ -196,62 +204,138 @@ export default function NewVehiclePage(): React.ReactElement {
           <motion.div variants={cardVariants}>
             <AppleCard hover={false}>
               <AppleCardHeader>
-                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Dati Veicolo</h2>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  Dati Veicolo
+                </h2>
               </AppleCardHeader>
               <AppleCardContent>
                 <div className='space-y-4'>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label htmlFor='targa' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Targa *</label>
+                      <label
+                        htmlFor='targa'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Targa *
+                      </label>
                       <Input id='targa' {...register('targa')} placeholder='AB123CD' />
-                      {errors.targa && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.targa.message}</p>}
+                      {errors.targa && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.targa.message}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor='vin' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>VIN</label>
+                      <label
+                        htmlFor='vin'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        VIN
+                      </label>
                       <Input id='vin' {...register('vin')} placeholder='17 caratteri' />
-                      {errors.vin && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.vin.message}</p>}
+                      {errors.vin && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.vin.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label htmlFor='marca' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Marca *</label>
+                      <label
+                        htmlFor='marca'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Marca *
+                      </label>
                       <Input id='marca' {...register('marca')} placeholder='es. Fiat' />
-                      {errors.marca && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.marca.message}</p>}
+                      {errors.marca && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.marca.message}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor='modello' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Modello *</label>
+                      <label
+                        htmlFor='modello'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Modello *
+                      </label>
                       <Input id='modello' {...register('modello')} placeholder='es. Panda' />
-                      {errors.modello && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.modello.message}</p>}
+                      {errors.modello && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.modello.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
                     <div>
-                      <label htmlFor='anno' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Anno *</label>
+                      <label
+                        htmlFor='anno'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Anno *
+                      </label>
                       <Input id='anno' type='number' {...register('anno')} />
-                      {errors.anno && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.anno.message}</p>}
+                      {errors.anno && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.anno.message}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor='colore' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Colore</label>
+                      <label
+                        htmlFor='colore'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Colore
+                      </label>
                       <Input id='colore' {...register('colore')} placeholder='es. Bianco' />
                     </div>
                     <div>
-                      <label htmlFor='carburante' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Carburante *</label>
-                      <select id='carburante' {...register('carburante')} className='h-10 w-full rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'>
+                      <label
+                        htmlFor='carburante'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
+                        Carburante *
+                      </label>
+                      <select
+                        id='carburante'
+                        {...register('carburante')}
+                        className='h-10 w-full rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'
+                      >
                         <option value=''>Seleziona...</option>
-                        {FUEL_OPTIONS.map((f) => (
-                          <option key={f} value={f}>{f}</option>
+                        {FUEL_OPTIONS.map(f => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
                         ))}
                       </select>
-                      {errors.carburante && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.carburante.message}</p>}
+                      {errors.carburante && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>
+                          {errors.carburante.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor='km' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Chilometraggio</label>
+                    <label
+                      htmlFor='km'
+                      className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                    >
+                      Chilometraggio
+                    </label>
                     <Input id='km' type='number' {...register('km')} placeholder='es. 85000' />
-                    {errors.km && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.km.message}</p>}
+                    {errors.km && (
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>
+                        {errors.km.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </AppleCardContent>
@@ -273,7 +357,7 @@ export default function NewVehiclePage(): React.ReactElement {
                   <input
                     type='text'
                     value={customerSearch}
-                    onChange={(e) => {
+                    onChange={e => {
                       setCustomerSearch(e.target.value);
                       setShowDropdown(true);
                       if (selectedCustomer) {
@@ -293,7 +377,7 @@ export default function NewVehiclePage(): React.ReactElement {
                   {/* Dropdown */}
                   {showDropdown && customerResults.length > 0 && !selectedCustomer && (
                     <div className='absolute z-50 w-full mt-1 bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)] rounded-2xl shadow-apple max-h-48 overflow-y-auto'>
-                      {customerResults.map((c) => (
+                      {customerResults.map(c => (
                         <button
                           key={c.id}
                           type='button'
@@ -301,9 +385,14 @@ export default function NewVehiclePage(): React.ReactElement {
                           className='w-full text-left px-4 py-3 hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)] transition-colors min-h-[44px]'
                         >
                           <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                            {[c.firstName, c.lastName].filter(Boolean).join(' ') || 'Cliente senza nome'}
+                            {[c.firstName, c.lastName].filter(Boolean).join(' ') ||
+                              'Cliente senza nome'}
                           </p>
-                          {c.email && <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{c.email}</p>}
+                          {c.email && (
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                              {c.email}
+                            </p>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -311,10 +400,17 @@ export default function NewVehiclePage(): React.ReactElement {
                 </div>
                 {selectedCustomer && (
                   <p className='text-footnote text-[var(--status-success)] mt-2'>
-                    Proprietario selezionato: {[selectedCustomer.firstName, selectedCustomer.lastName].filter(Boolean).join(' ')}
+                    Proprietario selezionato:{' '}
+                    {[selectedCustomer.firstName, selectedCustomer.lastName]
+                      .filter(Boolean)
+                      .join(' ')}
                   </p>
                 )}
-                {errors.customerId && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.customerId.message}</p>}
+                {errors.customerId && (
+                  <p className='text-footnote text-[var(--status-error)] mt-1'>
+                    {errors.customerId.message}
+                  </p>
+                )}
               </AppleCardContent>
             </AppleCard>
           </motion.div>

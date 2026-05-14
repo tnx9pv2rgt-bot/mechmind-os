@@ -92,8 +92,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(expected);
-      expect(result.id).toBe('ds-uuid-001');
-      expect(result.tenantId).toBe(TENANT_ID);
+      expect((result as Record<string, unknown>).id).toBe('ds-uuid-001');
+      expect((result as Record<string, unknown>).tenantId).toBe(TENANT_ID);
     });
 
     it('should create without optional vehicleId and severity', async () => {
@@ -323,8 +323,8 @@ describe('DeclinedServiceService', () => {
       const result = await service.getFollowUpCandidates(TENANT_ID, 30);
 
       expect(result).toEqual(candidates);
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('ds-uuid-001');
+      expect((result as unknown[]).length).toBe(1);
+      expect(((result as unknown[])[0] as Record<string, unknown>).id).toBe('ds-uuid-001');
       expect(prisma.declinedService.findMany).toHaveBeenCalledWith({
         where: {
           tenantId: TENANT_ID,
@@ -418,8 +418,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(updated);
-      expect(result.followUpCount).toBe(1);
-      expect(result.followUpCampaignId).toBe('camp-001');
+      expect((result as Record<string, unknown>).followUpCount).toBe(1);
+      expect((result as Record<string, unknown>).followUpCampaignId).toBe('camp-001');
     });
 
     it('should keep existing campaignId if not provided', async () => {
@@ -501,8 +501,8 @@ describe('DeclinedServiceService', () => {
         include: { customer: true, estimate: true },
       });
       expect(result).toEqual(updated);
-      expect(result.convertedBookingId).toBe('booking-001');
-      expect(result.convertedAt).toBeDefined();
+      expect((result as Record<string, unknown>).convertedBookingId).toBe('booking-001');
+      expect((result as Record<string, unknown>).convertedAt).toBeDefined();
     });
 
     it('should throw NotFoundException if record not found', async () => {

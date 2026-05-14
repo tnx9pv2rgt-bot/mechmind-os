@@ -1,0 +1,48 @@
+name: DORA Metrics
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dora:
+    name: Measure DORA Metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Measure DORA metrics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          bash .claude/scripts/dora-measure.sh "$REPO" > dora-report.json
+          cat dora-report.json
+
+      - name: Upload DORA report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dora-metrics-${{ github.run_number }}
+          path: dora-report.json
+          retention-days: 90
+
+      - name: Post summary
+        run: |
+          cat dora-report.json | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          print('## DORA Metrics')
+          print(f\"- **Deployment Frequency:** {d['deployment_frequency_per_day']:.2f}/day ({d['deployments_last_30d']} in 30d)\")
+          print(f\"- **Lead Time (median):** {d['lead_time_median_hours']:.1f}h\")
+          print(f\"- **MTTR (median):** {d['mttr_median_hours']:.1f}h\")
+          print(f\"- **Change Failure Rate:** {d['change_failure_rate_pct']:.1f}%\")
+          print(f\"- **Elite thresholds:** freq≥1/day lead≤24h mttr≤1h cfr≤5%\")
+          " >> $GITHUB_STEP_SUMMARY

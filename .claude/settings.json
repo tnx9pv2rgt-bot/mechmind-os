@@ -7,29 +7,24 @@
       "Bash(git push -f*)",
       "Bash(git reset --hard*)",
       "Bash(npx prisma migrate reset*)",
+      "Bash(npx prisma migrate reset --force*)",
       "Bash(DROP TABLE*)",
       "Bash(DELETE FROM*)",
+      "Bash(TRUNCATE *)",
       "Bash(chmod 777*)",
-      "Read(.env)",
-      "Read(.env.*)",
-      "Read(backend/.env*)",
+      "Bash(curl * | bash*)",
+      "Bash(curl * | sh*)",
+      "Bash(wget * | bash*)",
+      "Bash(wget * | sh*)",
       "Read(**/.env)",
       "Read(**/.env.*)",
-      "Read(~/.ssh/*)",
-      "Read(~/.aws/*)",
-      "Read(~/.gnupg/*)",
-      "Edit(.env)",
-      "Edit(.env.*)",
-      "Edit(backend/.env*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
       "Edit(**/.env)",
+      "Edit(**/.env.*)",
       "Edit(~/.bashrc)",
-      "Edit(~/.zshrc)",
-      "Bash(TRUNCATE *)",
-      "Bash(npx prisma migrate reset --force*)",
-      "Bash(curl * | bash*)",
-      "Bash(wget * | bash*)",
-      "Bash(curl * | sh*)",
-      "Bash(wget * | sh*)"
+      "Edit(~/.zshrc)"
     ],
     "allow": [
       "Bash(npm run *)",
@@ -39,7 +34,10 @@
       "Bash(npx prisma migrate dev*)",
       "Bash(npx prisma migrate deploy*)",
       "Bash(npx prisma db seed*)",
+      "Bash(npx prisma format*)",
+      "Bash(npx prisma validate*)",
       "Bash(npx prettier *)",
+      "Bash(npx playwright test *)",
       "Bash(curl *)",
       "Bash(grep *)",
       "Bash(rg *)",
@@ -48,6 +46,14 @@
       "Bash(head *)",
       "Bash(tail *)",
       "Bash(wc *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(xargs *)",
+      "Bash(jq *)",
+      "Bash(node *)",
+      "Bash(bash -n *)",
       "Bash(docker *)",
       "Bash(git add *)",
       "Bash(git commit *)",
@@ -59,34 +65,23 @@
       "Bash(git checkout *)",
       "Bash(git branch *)",
       "Bash(git stash*)",
-      "Bash(node *)",
       "Bash(cd *)",
       "Bash(ls *)",
       "Bash(mkdir *)",
       "Bash(cp *)",
       "Bash(mv *)",
-      "Bash(jq *)",
-      "Bash(npx prisma format*)",
-      "Bash(npx prisma validate*)",
       "Bash(echo *)",
-      "Bash(sort *)",
-      "Bash(uniq *)",
-      "Bash(sed *)",
-      "Bash(awk *)",
-      "Bash(xargs *)",
       "Bash(date *)",
       "Bash(realpath *)",
       "Bash(dirname *)",
       "Bash(basename *)",
-      "Bash(npx playwright test *)",
-      "Bash(chmod +x *)",
-      "Bash(bash -n *)"
+      "Bash(chmod +x *)"
     ]
   },
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup",
+        "matcher": "startup|resume|clear",
         "hooks": [
           {
             "type": "command",
@@ -106,7 +101,7 @@
             "timeout": 10
           }
         ],
-        "description": "Re-inietta regole core dopo compaction del contesto"
+        "description": "Re-inietta regole core dopo compaction"
       }
     ],
     "Notification": [
@@ -118,8 +113,7 @@
             "timeout": 5,
             "async": true
           }
-        ],
-        "description": "Notifica macOS quando Claude completa un task"
+        ]
       }
     ],
     "Stop": [
@@ -131,7 +125,20 @@
             "timeout": 30
           }
         ],
-        "description": "BLOCCA se TypeScript, ESLint o spec mancanti"
+        "description": "BLOCCA su errori TS, ESLint, spec mancanti"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/subagent-stop.sh'",
+            "timeout": 5,
+            "async": true
+          }
+        ],
+        "description": "Rilascia lock cost-ceiling al termine subagent"
       }
     ],
     "PreToolUse": [
@@ -140,31 +147,33 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\nCONTENT=$(echo \"$INPUT\" | jq -r '.tool_input.content // .tool_input.new_str // empty' 2>/dev/null)\n\n# Guard 1: Block mock/demo data in API routes\nif echo \"$FILE\" | grep -qE 'app/api/.*route\\.ts'; then\n  if echo \"$CONTENT\" | grep -qiE 'DEMO_DATA|demoData|mockData|isDemoMode|demo.mode|getDemoData|fakeDat'; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: mock/demo data nelle route API. Usa SOLO proxy diretto al backend NestJS reale.\"}}'\n    exit 0\n  fi\nfi\n\n# Guard 2: Block @ts-ignore / @ts-expect-error\nif echo \"$CONTENT\" | grep -qE '@ts-ignore|@ts-expect-error'; then\n  jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: @ts-ignore/@ts-expect-error. Fixa il tipo correttamente.\"}}'\n  exit 0\nfi\n\n# Guard 3: Block console.log in production code\nif echo \"$FILE\" | grep -qvE '\\.(spec|test)\\.(ts|tsx)'; then\n  if echo \"$CONTENT\" | grep -qE 'console\\.log\\('; then\n    jq -n '{hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"VIETATO: console.log in production. Usa Logger del framework (this.logger.log/warn/error).\"}}'\n    exit 0\n  fi\nfi\n\nexit 0"
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/guard-write.sh'",
+            "timeout": 5
           }
         ],
-        "description": "BLOCCA scrittura di mock data, @ts-ignore, console.log in produzione"
-      },
-      {
-        "matcher": "Bash",
-        "if": "Bash(git push*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\nif echo \"$COMMAND\" | grep -qE 'git\\s+push.*\\s+(main|master)'; then\n  echo \"BLOCCATO: push diretto a main/master vietato. Usa un feature branch.\" >&2\n  exit 2\nfi\nexit 0"
-          }
-        ],
-        "description": "BLOCCA push diretto a main/master (solo su git push)"
+        "description": "Blocca mock/demo, @ts-ignore, console.log in produzione"
       },
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nCOMMAND=$(jq -r '.tool_input.command')\n\n# Block .env reads via cat/less/more/head/tail\nif echo \"$COMMAND\" | grep -qE '(cat|less|more|head|tail|vi|vim|nano|bat|code)\\s+.*\\.env'; then\n  echo \"BLOCCATO: lettura .env vietata via CLI. Usa process.env nel codice.\" >&2\n  exit 2\nfi\n\n# Block pipe-to-shell patterns\nif echo \"$COMMAND\" | grep -qE '(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)'; then\n  echo \"BLOCCATO: download-and-execute vietato.\" >&2\n  exit 2\nfi\n\nexit 0"
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/guard-bash.sh'",
+            "timeout": 5
           }
         ],
-        "description": "BLOCCA lettura .env via CLI e download-and-execute"
+        "description": "Blocca push main/master, .env via CLI, curl|bash"
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/cost-ceiling.sh'",
+            "timeout": 5
+          }
+        ],
+        "description": "Cap subagent paralleli (max 4 — Mac mini 8GB)"
       }
     ],
     "PostToolUse": [
@@ -173,34 +182,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "#!/bin/bash\nINPUT=$(cat)\nFILE=$(echo \"$INPUT\" | jq -r '.tool_input.file_path // .tool_input.filePath // empty' 2>/dev/null)\n[ -z \"$FILE\" ] && exit 0\n[ ! -f \"$FILE\" ] && exit 0\n\n# Auto-format with Prettier if applicable\nEXT=\"${FILE##*.}\"\ncase \"$EXT\" in\n  ts|tsx|js|jsx|json|css|md)\n    npx prettier --write \"$FILE\" 2>/dev/null || true\n    ;;\nesac\n\n# Log file change\nmkdir -p .claude/logs 2>/dev/null\necho \"[$(date -Iseconds)] EDIT: $FILE\" >> .claude/logs/file-changes.log\nexit 0",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/post-edit.sh'",
+            "timeout": 10,
             "async": true
-          }
-        ],
-        "description": "Auto-format Prettier + log ogni file modificato"
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
+          },
           {
             "type": "command",
             "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/check-tenant-id.sh'",
             "timeout": 10
           }
         ],
-        "description": "Avvisa se query Prisma in service.ts potrebbero mancare di tenantId"
-      }
-    ],
-    "TaskCompleted": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/task-completed.sh'",
-            "timeout": 10
-          }
-        ],
-        "description": "Ricorda quality gate dopo completion di task backend"
+        "description": "Prettier + log + tenantId check"
       }
     ]
   }

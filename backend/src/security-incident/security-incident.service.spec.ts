@@ -978,7 +978,6 @@ describe('SecurityIncidentService', () => {
       expect(result.incidentResponsePlanActive).toBe(false);
     });
 
-
     it('should handle empty incidents list in getDashboard gracefully', async () => {
       prisma.securityIncident.findMany.mockResolvedValue([]);
 

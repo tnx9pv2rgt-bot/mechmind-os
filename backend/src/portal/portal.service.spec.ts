@@ -87,6 +87,7 @@ describe('PortalService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    expect(service).toBeInstanceOf(PortalService);
   });
 
   // ===========================================================================
@@ -94,7 +95,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('decryptCustomer via getProfile', () => {
     it('should decrypt all encrypted fields', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -111,7 +112,7 @@ describe('PortalService', () => {
     });
 
     it('should handle null encrypted fields', async () => {
-      prisma.customer.findFirst.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce({
         ...mockCustomer,
         encryptedEmail: null,
         encryptedFirstName: null,
@@ -125,6 +126,7 @@ describe('PortalService', () => {
         firstName: null,
         lastName: null,
       });
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -132,21 +134,16 @@ describe('PortalService', () => {
   // getDashboard
   // ===========================================================================
   describe('getDashboard', () => {
-    beforeEach(() => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.booking.findFirst.mockResolvedValue(null);
-      prisma.vehicle.findMany.mockResolvedValue([]);
-      prisma.inspection.findFirst.mockResolvedValue(null);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.notification.count.mockResolvedValue(0);
-      prisma.invoice.aggregate.mockResolvedValue({
-        _count: { id: 0 },
-        _sum: { total: null },
-      });
-      prisma.booking.count.mockResolvedValue(0);
-    });
-
     it('should return complete dashboard data', async () => {
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.booking.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findFirst.mockResolvedValueOnce(null);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.notification.count.mockResolvedValueOnce(0);
+      prisma.invoice.aggregate.mockResolvedValueOnce({ _count: { id: 0 }, _sum: { total: null } });
+      prisma.booking.count.mockResolvedValueOnce(0);
+
       const result = await service.getDashboard(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toHaveProperty('customer');
@@ -157,26 +154,42 @@ describe('PortalService', () => {
       expect(result.data).toHaveProperty('unreadNotifications');
       expect(result.data).toHaveProperty('unpaidInvoices');
       expect(result.data).toHaveProperty('activeRepairs');
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when customer not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getDashboard(CUSTOMER_ID, TENANT_ID)).rejects.toThrow(NotFoundException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should handle null unpaid invoice sum', async () => {
-      prisma.invoice.aggregate.mockResolvedValue({
-        _count: { id: 0 },
-        _sum: { total: null },
-      });
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.booking.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findFirst.mockResolvedValueOnce(null);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.notification.count.mockResolvedValueOnce(0);
+      prisma.invoice.aggregate.mockResolvedValueOnce({ _count: { id: 0 }, _sum: { total: null } });
+      prisma.booking.count.mockResolvedValueOnce(0);
 
       const result = await service.getDashboard(CUSTOMER_ID, TENANT_ID);
 
       expect((result.data.unpaidInvoices as Record<string, unknown>).total).toBe(0);
+      expect(prisma.invoice.aggregate).toHaveBeenCalledTimes(1);
     });
 
     it('should query with correct tenant isolation', async () => {
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.booking.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findFirst.mockResolvedValueOnce(null);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.notification.count.mockResolvedValueOnce(0);
+      prisma.invoice.aggregate.mockResolvedValueOnce({ _count: { id: 0 }, _sum: { total: null } });
+      prisma.booking.count.mockResolvedValueOnce(0);
+
       await service.getDashboard(CUSTOMER_ID, TENANT_ID);
 
       expect(prisma.customer.findFirst).toHaveBeenCalledWith(
@@ -184,6 +197,7 @@ describe('PortalService', () => {
           where: { id: CUSTOMER_ID, tenantId: TENANT_ID, deletedAt: null },
         }),
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -192,7 +206,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getProfile', () => {
     it('should return profile with decrypted fields and metadata', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -200,16 +214,18 @@ describe('PortalService', () => {
       expect(result.data).toHaveProperty('codiceFiscale', 'RSSMRA80A01H501U');
       expect(result.data).toHaveProperty('vehicles');
       expect(result.data).toHaveProperty('gdprConsent', true);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when customer not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getProfile(CUSTOMER_ID, TENANT_ID)).rejects.toThrow(NotFoundException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should include vehicles with deletedAt: null filter', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
 
       await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -218,6 +234,7 @@ describe('PortalService', () => {
           include: { vehicles: { where: { deletedAt: null } } },
         }),
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -226,9 +243,9 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('updateProfile', () => {
     it('should update firstName only', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, { firstName: 'Luigi' });
 
@@ -241,9 +258,9 @@ describe('PortalService', () => {
     });
 
     it('should update lastName only', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       await service.updateProfile(CUSTOMER_ID, TENANT_ID, { lastName: 'Bianchi' });
 
@@ -256,19 +273,20 @@ describe('PortalService', () => {
     });
 
     it('should update phone only', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       await service.updateProfile(CUSTOMER_ID, TENANT_ID, { phone: '+39999' });
 
       expect(encryption.encrypt).toHaveBeenCalledWith('+39999');
+      expect(prisma.customer.updateMany).toHaveBeenCalledTimes(1);
     });
 
     it('should update all fields at once', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       await service.updateProfile(CUSTOMER_ID, TENANT_ID, {
         firstName: 'A',
@@ -284,12 +302,13 @@ describe('PortalService', () => {
           encryptedPhone: 'enc-C',
         },
       });
+      expect(encryption.encrypt).toHaveBeenCalledTimes(3);
     });
 
     it('should not encrypt undefined fields', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       await service.updateProfile(CUSTOMER_ID, TENANT_ID, {});
 
@@ -297,14 +316,16 @@ describe('PortalService', () => {
         where: { id: CUSTOMER_ID, tenantId: TENANT_ID },
         data: {},
       });
+      expect(encryption.encrypt).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when customer not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         service.updateProfile(CUSTOMER_ID, TENANT_ID, { firstName: 'X' }),
       ).rejects.toThrow(NotFoundException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -314,7 +335,7 @@ describe('PortalService', () => {
   describe('getVehicles', () => {
     it('should return vehicles for customer', async () => {
       const vehicles = [{ id: 'veh-001', make: 'Fiat' }];
-      prisma.vehicle.findMany.mockResolvedValue(vehicles);
+      prisma.vehicle.findMany.mockResolvedValueOnce(vehicles);
 
       const result = await service.getVehicles(CUSTOMER_ID, TENANT_ID);
 
@@ -326,11 +347,12 @@ describe('PortalService', () => {
     });
 
     it('should return empty array when no vehicles', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([]);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getVehicles(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -340,7 +362,7 @@ describe('PortalService', () => {
   describe('getBookings', () => {
     it('should return bookings with vehicle, services and slot', async () => {
       const bookings = [{ id: 'bk-001', vehicle: {}, services: [], slot: {} }];
-      prisma.booking.findMany.mockResolvedValue(bookings);
+      prisma.booking.findMany.mockResolvedValueOnce(bookings);
 
       const result = await service.getBookings(CUSTOMER_ID, TENANT_ID);
 
@@ -353,11 +375,12 @@ describe('PortalService', () => {
     });
 
     it('should return empty array when no bookings', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getBookings(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.booking.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -367,31 +390,35 @@ describe('PortalService', () => {
   describe('getAvailableSlots', () => {
     it('should return available slots for a date', async () => {
       const slots = [{ id: 'slot-001', startTime: new Date(), status: 'AVAILABLE' }];
-      prisma.bookingSlot.findMany.mockResolvedValue(slots);
+      prisma.bookingSlot.findMany.mockResolvedValueOnce(slots);
 
       const result = await service.getAvailableSlots(TENANT_ID, '2026-04-01');
 
       expect(result.data).toEqual(slots);
+      expect(prisma.bookingSlot.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException when date is empty', async () => {
       await expect(service.getAvailableSlots(TENANT_ID, '')).rejects.toThrow(BadRequestException);
+      expect(prisma.bookingSlot.findMany).not.toHaveBeenCalled();
     });
 
     it('should accept optional serviceType parameter', async () => {
-      prisma.bookingSlot.findMany.mockResolvedValue([]);
+      prisma.bookingSlot.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getAvailableSlots(TENANT_ID, '2026-04-01', 'OIL_CHANGE');
 
       expect(result.data).toEqual([]);
+      expect(prisma.bookingSlot.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should work without serviceType', async () => {
-      prisma.bookingSlot.findMany.mockResolvedValue([]);
+      prisma.bookingSlot.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getAvailableSlots(TENANT_ID, '2026-04-01');
 
       expect(result.data).toEqual([]);
+      expect(prisma.bookingSlot.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -415,15 +442,15 @@ describe('PortalService', () => {
     };
 
     it('should create booking in transaction', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findFirst.mockResolvedValue({ id: 'veh-001' });
-      prisma.bookingSlot.findFirst.mockResolvedValue(mockSlot);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findFirst.mockResolvedValueOnce({ id: 'veh-001' });
+      prisma.bookingSlot.findFirst.mockResolvedValueOnce(mockSlot);
 
       const createdBooking = { id: 'bk-new', vehicle: {}, slot: {} };
       prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           bookingSlot: { update: jest.fn() },
-          booking: { create: jest.fn().mockResolvedValue(createdBooking) },
+          booking: { create: jest.fn().mockResolvedValueOnce(createdBooking) },
         };
         return fn(tx);
       });
@@ -431,41 +458,45 @@ describe('PortalService', () => {
       const result = await service.createBooking(CUSTOMER_ID, TENANT_ID, bookingData);
 
       expect(result.data).toEqual(createdBooking);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when customer not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.createBooking(CUSTOMER_ID, TENANT_ID, bookingData)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when vehicle not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.createBooking(CUSTOMER_ID, TENANT_ID, bookingData)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.vehicle.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException when slot not available', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findFirst.mockResolvedValue({ id: 'veh-001' });
-      prisma.bookingSlot.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findFirst.mockResolvedValueOnce({ id: 'veh-001' });
+      prisma.bookingSlot.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.createBooking(CUSTOMER_ID, TENANT_ID, bookingData)).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.bookingSlot.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should calculate durationMinutes from slot times', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findFirst.mockResolvedValue({ id: 'veh-001' });
-      prisma.bookingSlot.findFirst.mockResolvedValue(mockSlot);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findFirst.mockResolvedValueOnce({ id: 'veh-001' });
+      prisma.bookingSlot.findFirst.mockResolvedValueOnce(mockSlot);
 
-      const mockCreate = jest.fn().mockResolvedValue({ id: 'bk-new' });
+      const mockCreate = jest.fn().mockResolvedValueOnce({ id: 'bk-new' });
       prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         return fn({
           bookingSlot: { update: jest.fn() },
@@ -485,14 +516,15 @@ describe('PortalService', () => {
           }),
         }),
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should set notes to null when not provided', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findFirst.mockResolvedValue({ id: 'veh-001' });
-      prisma.bookingSlot.findFirst.mockResolvedValue(mockSlot);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findFirst.mockResolvedValueOnce({ id: 'veh-001' });
+      prisma.bookingSlot.findFirst.mockResolvedValueOnce(mockSlot);
 
-      const mockCreate = jest.fn().mockResolvedValue({ id: 'bk-new' });
+      const mockCreate = jest.fn().mockResolvedValueOnce({ id: 'bk-new' });
       prisma.$transaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         return fn({
           bookingSlot: { update: jest.fn() },
@@ -510,6 +542,7 @@ describe('PortalService', () => {
           data: expect.objectContaining({ notes: null }),
         }),
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -519,7 +552,7 @@ describe('PortalService', () => {
   describe('getInspections', () => {
     it('should return inspections with vehicle, findings, photos', async () => {
       const inspections = [{ id: 'insp-001' }];
-      prisma.inspection.findMany.mockResolvedValue(inspections);
+      prisma.inspection.findMany.mockResolvedValueOnce(inspections);
 
       const result = await service.getInspections(CUSTOMER_ID, TENANT_ID);
 
@@ -540,7 +573,7 @@ describe('PortalService', () => {
     const _thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     it('should return vehicles with no alerts when all dates are far in the future', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
@@ -556,10 +589,11 @@ describe('PortalService', () => {
 
       expect(schedule[0].alerts).toEqual([]);
       expect(schedule[0].needsAttention).toBe(false);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add REVISION_EXPIRED when revision is past', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: new Date(now.getTime() - 24 * 60 * 60 * 1000),
@@ -574,10 +608,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('REVISION_EXPIRED');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add REVISION_EXPIRING_SOON when revision is within 30 days', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
@@ -592,10 +627,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('REVISION_EXPIRING_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add INSURANCE_EXPIRED when insurance is past', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -610,10 +646,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('INSURANCE_EXPIRED');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add INSURANCE_EXPIRING_SOON when insurance is within 30 days', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -628,10 +665,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('INSURANCE_EXPIRING_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add TAX_EXPIRED when tax is past', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -646,10 +684,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('TAX_EXPIRED');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add TAX_EXPIRING_SOON when tax is within 30 days', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -664,10 +703,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('TAX_EXPIRING_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should add SERVICE_DUE_SOON when mileage is within 1000km of nextServiceDueKm', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -682,10 +722,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).toContain('SERVICE_DUE_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should not add SERVICE_DUE_SOON when mileage is null', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -700,10 +741,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).not.toContain('SERVICE_DUE_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should not add SERVICE_DUE_SOON when nextServiceDueKm is null', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -718,10 +760,11 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts).not.toContain('SERVICE_DUE_SOON');
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should set needsAttention true when any alert exists', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: new Date(now.getTime() - 24 * 60 * 60 * 1000),
@@ -736,18 +779,20 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ needsAttention: boolean }>;
 
       expect(schedule[0].needsAttention).toBe(true);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should handle empty vehicles array', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([]);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should accumulate multiple alerts', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: new Date(now.getTime() - 24 * 60 * 60 * 1000),
@@ -762,6 +807,7 @@ describe('PortalService', () => {
       const schedule = result.data as Array<{ alerts: string[] }>;
 
       expect(schedule[0].alerts.length).toBeGreaterThanOrEqual(4);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -771,19 +817,21 @@ describe('PortalService', () => {
   describe('getInvoice', () => {
     it('should return invoice with items', async () => {
       const invoice = { id: 'inv-001', invoiceItems: [] };
-      prisma.invoice.findFirst.mockResolvedValue(invoice);
+      prisma.invoice.findFirst.mockResolvedValueOnce(invoice);
 
       const result = await service.getInvoice('inv-001', CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(invoice);
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when invoice not found', async () => {
-      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getInvoice('inv-xxx', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -793,17 +841,18 @@ describe('PortalService', () => {
   describe('getNotifications', () => {
     it('should return notifications', async () => {
       const notifs = [{ id: 'n1' }, { id: 'n2' }];
-      prisma.notification.findMany.mockResolvedValue(notifs);
+      prisma.notification.findMany.mockResolvedValueOnce(notifs);
 
       const result = await service.getNotifications(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(notifs);
+      expect(prisma.notification.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('markNotificationsRead', () => {
     it('should mark specified notifications as read', async () => {
-      prisma.notification.updateMany.mockResolvedValue({ count: 2 });
+      prisma.notification.updateMany.mockResolvedValueOnce({ count: 2 });
 
       const result = await service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, ['n1', 'n2']);
 
@@ -823,12 +872,14 @@ describe('PortalService', () => {
       await expect(service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, [])).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.notification.updateMany).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when ids is null-like', async () => {
       await expect(
         service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, null as unknown as string[]),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.notification.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -837,7 +888,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getDocuments', () => {
     it('should combine invoices and inspections sorted by date', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -847,7 +898,7 @@ describe('PortalService', () => {
           pdfUrl: 'http://pdf.com/inv1',
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           startedAt: new Date('2026-03-15'),
@@ -863,10 +914,11 @@ describe('PortalService', () => {
       // Sorted by date desc: inspection (Mar 15) first, then invoice (Mar 1)
       expect(docs[0].type).toBe('INSPECTION_REPORT');
       expect(docs[1].type).toBe('INVOICE');
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should filter by type when provided', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -876,7 +928,7 @@ describe('PortalService', () => {
           pdfUrl: null,
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           startedAt: new Date('2026-03-15'),
@@ -890,20 +942,22 @@ describe('PortalService', () => {
 
       expect(docs).toHaveLength(1);
       expect(docs[0].type).toBe('INVOICE');
+      expect(prisma.inspection.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should return all docs when type is undefined', async () => {
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.inspection.findMany.mockResolvedValue([]);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getDocuments(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should handle inspection with null vehicle', async () => {
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           startedAt: new Date('2026-03-15'),
@@ -916,6 +970,7 @@ describe('PortalService', () => {
       const docs = result.data as Array<{ title: string }>;
 
       expect(docs[0].title).toBe('Ispezione');
+      expect(prisma.inspection.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -927,6 +982,8 @@ describe('PortalService', () => {
       const result = await service.getWarranties(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(Array.isArray(result.data)).toBe(true);
+      expect(prisma.invoice.findMany).not.toHaveBeenCalled();
     });
   });
 
@@ -935,7 +992,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getPayments', () => {
     it('should return paid invoices mapped as payments', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -955,10 +1012,11 @@ describe('PortalService', () => {
         status: 'SUCCESS',
         method: 'CARTA',
       });
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should handle null paymentMethod', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -973,12 +1031,13 @@ describe('PortalService', () => {
       const payments = result.data as Array<Record<string, unknown>>;
 
       expect(payments[0].method).toBeNull();
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getPayment', () => {
     it('should return payment details for PAID invoice', async () => {
-      prisma.invoice.findFirst.mockResolvedValue({
+      prisma.invoice.findFirst.mockResolvedValueOnce({
         id: 'inv-1',
         invoiceNumber: 'INV-001',
         status: 'PAID',
@@ -997,10 +1056,11 @@ describe('PortalService', () => {
         amount: 150,
         currency: 'EUR',
       });
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should map OVERDUE status to FAILED', async () => {
-      prisma.invoice.findFirst.mockResolvedValue({
+      prisma.invoice.findFirst.mockResolvedValueOnce({
         id: 'inv-1',
         invoiceNumber: 'INV-001',
         status: 'OVERDUE',
@@ -1015,10 +1075,11 @@ describe('PortalService', () => {
       const result = await service.getPayment('inv-1', CUSTOMER_ID, TENANT_ID);
 
       expect(result.data.status).toBe('FAILED');
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should map other statuses to PENDING', async () => {
-      prisma.invoice.findFirst.mockResolvedValue({
+      prisma.invoice.findFirst.mockResolvedValueOnce({
         id: 'inv-1',
         invoiceNumber: 'INV-001',
         status: 'SENT',
@@ -1033,14 +1094,16 @@ describe('PortalService', () => {
       const result = await service.getPayment('inv-1', CUSTOMER_ID, TENANT_ID);
 
       expect(result.data.status).toBe('PENDING');
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when payment not found', async () => {
-      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getPayment('inv-xxx', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1049,7 +1112,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getAccount', () => {
     it('should delegate to getProfile', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
 
       const result = await service.getAccount(CUSTOMER_ID, TENANT_ID);
 
@@ -1060,13 +1123,14 @@ describe('PortalService', () => {
 
   describe('updateAccount', () => {
     it('should delegate to updateProfile', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
-      prisma.customer.findFirstOrThrow.mockResolvedValue(mockCustomer);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(mockCustomer);
 
       const result = await service.updateAccount(CUSTOMER_ID, TENANT_ID, { firstName: 'Test' });
 
       expect(result.data).toBeDefined();
+      expect(prisma.customer.updateMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1076,30 +1140,33 @@ describe('PortalService', () => {
   describe('getEstimates', () => {
     it('should return estimates with lines', async () => {
       const estimates = [{ id: 'est-001', lines: [] }];
-      prisma.estimate.findMany.mockResolvedValue(estimates);
+      prisma.estimate.findMany.mockResolvedValueOnce(estimates);
 
       const result = await service.getEstimates(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(estimates);
+      expect(prisma.estimate.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getEstimate', () => {
     it('should return single estimate', async () => {
       const estimate = { id: 'est-001', lines: [] };
-      prisma.estimate.findFirst.mockResolvedValue(estimate);
+      prisma.estimate.findFirst.mockResolvedValueOnce(estimate);
 
       const result = await service.getEstimate('est-001', CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(estimate);
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when estimate not found', async () => {
-      prisma.estimate.findFirst.mockResolvedValue(null);
+      prisma.estimate.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getEstimate('est-xxx', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1108,7 +1175,7 @@ describe('PortalService', () => {
       prisma.estimate.findFirst
         .mockResolvedValueOnce({ id: 'est-001' })
         .mockResolvedValueOnce({ id: 'est-001', status: 'ACCEPTED', lines: [] });
-      prisma.estimate.updateMany.mockResolvedValue({ count: 1 });
+      prisma.estimate.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.acceptEstimate('est-001', CUSTOMER_ID, TENANT_ID);
 
@@ -1120,11 +1187,12 @@ describe('PortalService', () => {
     });
 
     it('should throw NotFoundException when estimate not found', async () => {
-      prisma.estimate.findFirst.mockResolvedValue(null);
+      prisma.estimate.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.acceptEstimate('est-xxx', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1133,7 +1201,7 @@ describe('PortalService', () => {
       prisma.estimate.findFirst
         .mockResolvedValueOnce({ id: 'est-001', notes: 'Original notes' })
         .mockResolvedValueOnce({ id: 'est-001', status: 'REJECTED', lines: [] });
-      prisma.estimate.updateMany.mockResolvedValue({ count: 1 });
+      prisma.estimate.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.rejectEstimate(
         'est-001',
@@ -1157,7 +1225,7 @@ describe('PortalService', () => {
       prisma.estimate.findFirst
         .mockResolvedValueOnce({ id: 'est-001', notes: 'Original notes' })
         .mockResolvedValueOnce({ id: 'est-001', status: 'REJECTED', lines: [] });
-      prisma.estimate.updateMany.mockResolvedValue({ count: 1 });
+      prisma.estimate.updateMany.mockResolvedValueOnce({ count: 1 });
 
       await service.rejectEstimate('est-001', CUSTOMER_ID, TENANT_ID);
 
@@ -1172,7 +1240,7 @@ describe('PortalService', () => {
       prisma.estimate.findFirst
         .mockResolvedValueOnce({ id: 'est-001', notes: 'Original' })
         .mockResolvedValueOnce({ id: 'est-001', status: 'REJECTED', lines: [] });
-      prisma.estimate.updateMany.mockResolvedValue({ count: 1 });
+      prisma.estimate.updateMany.mockResolvedValueOnce({ count: 1 });
 
       await service.rejectEstimate('est-001', CUSTOMER_ID, TENANT_ID, '');
 
@@ -1184,11 +1252,12 @@ describe('PortalService', () => {
     });
 
     it('should throw NotFoundException when estimate not found', async () => {
-      prisma.estimate.findFirst.mockResolvedValue(null);
+      prisma.estimate.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.rejectEstimate('est-xxx', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1198,7 +1267,7 @@ describe('PortalService', () => {
   describe('getTracking', () => {
     it('should return active work orders', async () => {
       const workOrders = [{ id: 'wo-001', status: 'IN_PROGRESS' }];
-      prisma.workOrder.findMany.mockResolvedValue(workOrders);
+      prisma.workOrder.findMany.mockResolvedValueOnce(workOrders);
 
       const result = await service.getTracking(CUSTOMER_ID, TENANT_ID);
 
@@ -1219,17 +1288,18 @@ describe('PortalService', () => {
   describe('getNotificationPreferences', () => {
     it('should return notification preferences', async () => {
       const prefs = [{ channel: 'SMS', enabled: true }];
-      prisma.customerNotificationPreference.findMany.mockResolvedValue(prefs);
+      prisma.customerNotificationPreference.findMany.mockResolvedValueOnce(prefs);
 
       const result = await service.getNotificationPreferences(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(prefs);
+      expect(prisma.customerNotificationPreference.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('updateNotificationPreferences', () => {
     it('should upsert preferences for each channel', async () => {
-      prisma.customerNotificationPreference.upsert.mockResolvedValue({});
+      prisma.customerNotificationPreference.upsert.mockResolvedValueOnce({});
 
       const result = await service.updateNotificationPreferences(CUSTOMER_ID, TENANT_ID, {
         SMS: true,
@@ -1254,20 +1324,21 @@ describe('PortalService', () => {
   describe('getMessages', () => {
     it('should return threads with messages', async () => {
       const threads = [{ id: 'thread-1', messages: [] }];
-      prisma.smsThread.findMany.mockResolvedValue(threads);
+      prisma.smsThread.findMany.mockResolvedValueOnce(threads);
 
       const result = await service.getMessages(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual(threads);
+      expect(prisma.smsThread.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('sendMessage', () => {
     it('should send message to existing thread', async () => {
       const thread = { id: 'thread-1' };
-      prisma.smsThread.findFirst.mockResolvedValue(thread);
-      prisma.smsMessage.create.mockResolvedValue({ id: 'msg-1', body: 'Hello' });
-      prisma.smsThread.update.mockResolvedValue(thread);
+      prisma.smsThread.findFirst.mockResolvedValueOnce(thread);
+      prisma.smsMessage.create.mockResolvedValueOnce({ id: 'msg-1', body: 'Hello' });
+      prisma.smsThread.update.mockResolvedValueOnce(thread);
 
       const result = await service.sendMessage(CUSTOMER_ID, TENANT_ID, 'Hello');
 
@@ -1283,12 +1354,12 @@ describe('PortalService', () => {
     });
 
     it('should create new thread when none exists', async () => {
-      prisma.smsThread.findFirst.mockResolvedValue(null);
-      prisma.customer.findFirst.mockResolvedValue({ phoneHash: 'hash-123' });
+      prisma.smsThread.findFirst.mockResolvedValueOnce(null);
+      prisma.customer.findFirst.mockResolvedValueOnce({ phoneHash: 'hash-123' });
       const newThread = { id: 'thread-new' };
-      prisma.smsThread.create.mockResolvedValue(newThread);
-      prisma.smsMessage.create.mockResolvedValue({ id: 'msg-1' });
-      prisma.smsThread.update.mockResolvedValue(newThread);
+      prisma.smsThread.create.mockResolvedValueOnce(newThread);
+      prisma.smsMessage.create.mockResolvedValueOnce({ id: 'msg-1' });
+      prisma.smsThread.update.mockResolvedValueOnce(newThread);
 
       const result = await service.sendMessage(CUSTOMER_ID, TENANT_ID, 'Hello');
 
@@ -1303,31 +1374,34 @@ describe('PortalService', () => {
     });
 
     it('should throw NotFoundException when customer not found for new thread', async () => {
-      prisma.smsThread.findFirst.mockResolvedValue(null);
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.smsThread.findFirst.mockResolvedValueOnce(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.sendMessage(CUSTOMER_ID, TENANT_ID, 'Hello')).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException for empty message', async () => {
       await expect(service.sendMessage(CUSTOMER_ID, TENANT_ID, '')).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.smsThread.findFirst).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for whitespace-only message', async () => {
       await expect(service.sendMessage(CUSTOMER_ID, TENANT_ID, '   ')).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.smsThread.findFirst).not.toHaveBeenCalled();
     });
 
     it('should trim the message body', async () => {
       const thread = { id: 'thread-1' };
-      prisma.smsThread.findFirst.mockResolvedValue(thread);
-      prisma.smsMessage.create.mockResolvedValue({ id: 'msg-1' });
-      prisma.smsThread.update.mockResolvedValue(thread);
+      prisma.smsThread.findFirst.mockResolvedValueOnce(thread);
+      prisma.smsMessage.create.mockResolvedValueOnce({ id: 'msg-1' });
+      prisma.smsThread.update.mockResolvedValueOnce(thread);
 
       await service.sendMessage(CUSTOMER_ID, TENANT_ID, '  Hello  ');
 
@@ -1344,7 +1418,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('markNotificationsRead', () => {
     it('should mark notifications as read', async () => {
-      prisma.notification.updateMany.mockResolvedValue({ count: 2 });
+      prisma.notification.updateMany.mockResolvedValueOnce({ count: 2 });
 
       const result = await service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, [
         'notif-1',
@@ -1367,12 +1441,14 @@ describe('PortalService', () => {
       await expect(service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, [])).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.notification.updateMany).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException for undefined ids', async () => {
       await expect(
         service.markNotificationsRead(CUSTOMER_ID, TENANT_ID, undefined as unknown as string[]),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.notification.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -1381,7 +1457,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getInvoicePdf', () => {
     it('should generate PDF for invoice', async () => {
-      prisma.invoice.findFirst.mockResolvedValue({
+      prisma.invoice.findFirst.mockResolvedValueOnce({
         id: 'inv-1',
         invoiceNumber: 'INV-2026-001',
         total: 150,
@@ -1404,7 +1480,7 @@ describe('PortalService', () => {
           },
         ],
       });
-      prisma.tenant.findUnique.mockResolvedValue({
+      prisma.tenant.findUnique.mockResolvedValueOnce({
         name: 'Test Garage',
         settings: { address: 'Via Roma 1', city: 'Roma', phone: '+3906123456' },
       });
@@ -1413,14 +1489,16 @@ describe('PortalService', () => {
 
       expect(result.buffer).toBeDefined();
       expect(result.filename).toBe('fattura-INV-2026-001.pdf');
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException for missing invoice', async () => {
-      prisma.invoice.findFirst.mockResolvedValue(null);
+      prisma.invoice.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getInvoicePdf('inv-1', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.invoice.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1431,11 +1509,11 @@ describe('PortalService', () => {
     it('should change password successfully', async () => {
       const { hash } = await import('argon2');
       const currentHash = await hash('OldPass123');
-      prisma.customer.findFirst.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce({
         id: CUSTOMER_ID,
         passwordHash: currentHash,
       });
-      prisma.customer.update.mockResolvedValue({});
+      prisma.customer.update.mockResolvedValueOnce({});
 
       const result = await service.changePassword(
         CUSTOMER_ID,
@@ -1449,15 +1527,16 @@ describe('PortalService', () => {
     });
 
     it('should throw NotFoundException if customer not found', async () => {
-      prisma.customer.findFirst.mockResolvedValue(null);
+      prisma.customer.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         service.changePassword(CUSTOMER_ID, TENANT_ID, 'OldPass', 'NewPass'),
       ).rejects.toThrow(NotFoundException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException if no password set', async () => {
-      prisma.customer.findFirst.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce({
         id: CUSTOMER_ID,
         passwordHash: null,
       });
@@ -1465,12 +1544,13 @@ describe('PortalService', () => {
       await expect(
         service.changePassword(CUSTOMER_ID, TENANT_ID, 'OldPass', 'NewPass'),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw UnauthorizedException if current password is wrong', async () => {
       const { hash } = await import('argon2');
       const currentHash = await hash('OldPass123');
-      prisma.customer.findFirst.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce({
         id: CUSTOMER_ID,
         passwordHash: currentHash,
       });
@@ -1479,12 +1559,13 @@ describe('PortalService', () => {
       await expect(
         service.changePassword(CUSTOMER_ID, TENANT_ID, 'WrongPass', 'NewPass'),
       ).rejects.toThrow(UnauthorizedException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw BadRequestException if new password same as old', async () => {
       const { hash } = await import('argon2');
       const currentHash = await hash('SamePass123');
-      prisma.customer.findFirst.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce({
         id: CUSTOMER_ID,
         passwordHash: currentHash,
       });
@@ -1492,6 +1573,7 @@ describe('PortalService', () => {
       await expect(
         service.changePassword(CUSTOMER_ID, TENANT_ID, 'SamePass123', 'SamePass123'),
       ).rejects.toThrow(BadRequestException);
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1500,7 +1582,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getVehicleHistory', () => {
     it('should aggregate vehicle timeline from multiple sources', async () => {
-      prisma.vehicle.findFirst.mockResolvedValue({
+      prisma.vehicle.findFirst.mockResolvedValueOnce({
         id: 'veh-001',
         licensePlate: 'AB123CD',
         make: 'Fiat',
@@ -1510,7 +1592,7 @@ describe('PortalService', () => {
         insuranceExpiry: new Date('2026-12-31'),
         lastServiceDate: new Date('2026-01-01'),
       });
-      prisma.workOrder.findMany.mockResolvedValue([
+      prisma.workOrder.findMany.mockResolvedValueOnce([
         {
           id: 'wo-1',
           createdAt: new Date('2026-03-01'),
@@ -1519,7 +1601,7 @@ describe('PortalService', () => {
           totalCost: 100,
         },
       ]);
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           createdAt: new Date('2026-03-01'),
@@ -1528,10 +1610,10 @@ describe('PortalService', () => {
           status: 'PAID',
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.inspection.findMany.mockResolvedValueOnce([
         { id: 'insp-1', startedAt: new Date('2026-03-01'), status: 'COMPLETED' },
       ]);
-      prisma.booking.findMany.mockResolvedValue([
+      prisma.booking.findMany.mockResolvedValueOnce([
         { id: 'bk-1', scheduledDate: new Date('2026-03-01'), status: 'COMPLETED', notes: null },
       ]);
 
@@ -1540,36 +1622,40 @@ describe('PortalService', () => {
       expect(result.data.vehicle.id).toBe('veh-001');
       expect(result.data.timeline.length).toBeGreaterThan(0);
       expect(result.data.timeline[0].type).toMatch(/maintenance|invoice|inspection|booking/);
+      expect(prisma.vehicle.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException if vehicle not found', async () => {
-      prisma.vehicle.findFirst.mockResolvedValue(null);
+      prisma.vehicle.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.getVehicleHistory('veh-999', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.vehicle.findFirst).toHaveBeenCalledTimes(1);
     });
 
     it('should sort timeline by date descending', async () => {
-      prisma.vehicle.findFirst.mockResolvedValue({
+      prisma.vehicle.findFirst.mockResolvedValueOnce({
         id: 'veh-001',
         licensePlate: 'AB123CD',
         make: 'Fiat',
         model: 'Panda',
         year: 2020,
       });
-      prisma.workOrder.findMany.mockResolvedValue([
+      prisma.workOrder.findMany.mockResolvedValueOnce([
         { id: 'wo-2', createdAt: new Date('2026-01-01'), status: 'COMPLETED', totalCost: 0 },
         { id: 'wo-1', createdAt: new Date('2026-03-01'), status: 'COMPLETED', totalCost: 0 },
       ]);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.inspection.findMany.mockResolvedValue([]);
-      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([]);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getVehicleHistory('veh-001', CUSTOMER_ID, TENANT_ID);
 
       const timeline = result.data.timeline as Array<Record<string, unknown>>;
       expect((timeline[0].date as Date) > (timeline[1].date as Date)).toBe(true);
+      expect(result.data.vehicle).toBeDefined();
+      expect(prisma.vehicle.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1578,11 +1664,11 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('acceptEstimate', () => {
     it('should accept estimate and set acceptedAt timestamp', async () => {
-      prisma.estimate.findFirst.mockResolvedValue({
+      prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'PENDING',
       });
-      prisma.estimate.updateMany.mockResolvedValue({});
+      prisma.estimate.updateMany.mockResolvedValueOnce({});
       prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'ACCEPTED',
@@ -1600,22 +1686,23 @@ describe('PortalService', () => {
     });
 
     it('should throw NotFoundException if estimate not found', async () => {
-      prisma.estimate.findFirst.mockResolvedValue(null);
+      prisma.estimate.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.acceptEstimate('est-999', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('rejectEstimate', () => {
     it('should reject estimate with reason', async () => {
-      prisma.estimate.findFirst.mockResolvedValue({
+      prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'PENDING',
         notes: 'Original notes',
       });
-      prisma.estimate.updateMany.mockResolvedValue({});
+      prisma.estimate.updateMany.mockResolvedValueOnce({});
       prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'REJECTED',
@@ -1637,12 +1724,12 @@ describe('PortalService', () => {
     });
 
     it('should reject estimate without reason', async () => {
-      prisma.estimate.findFirst.mockResolvedValue({
+      prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'PENDING',
         notes: 'Original notes',
       });
-      prisma.estimate.updateMany.mockResolvedValue({});
+      prisma.estimate.updateMany.mockResolvedValueOnce({});
       prisma.estimate.findFirst.mockResolvedValueOnce({
         id: 'est-1',
         status: 'REJECTED',
@@ -1657,14 +1744,16 @@ describe('PortalService', () => {
         where: { id: 'est-1', customerId: CUSTOMER_ID, tenantId: TENANT_ID },
         data: expect.objectContaining({ status: 'REJECTED' }),
       });
+      expect(prisma.estimate.updateMany).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException if estimate not found', async () => {
-      prisma.estimate.findFirst.mockResolvedValue(null);
+      prisma.estimate.findFirst.mockResolvedValueOnce(null);
 
       await expect(service.rejectEstimate('est-999', CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
         NotFoundException,
       );
+      expect(prisma.estimate.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1676,8 +1765,8 @@ describe('PortalService', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: pastDate,
@@ -1692,14 +1781,15 @@ describe('PortalService', () => {
 
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('REVISION_EXPIRED');
       expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should detect REVISION_EXPIRING_SOON (date between now and 30 days)', async () => {
       const now = new Date();
       const soonDate = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: soonDate,
@@ -1716,14 +1806,15 @@ describe('PortalService', () => {
         'REVISION_EXPIRING_SOON',
       );
       expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should detect INSURANCE_EXPIRED', async () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -1737,14 +1828,16 @@ describe('PortalService', () => {
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('INSURANCE_EXPIRED');
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should detect TAX_EXPIRED', async () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -1758,11 +1851,13 @@ describe('PortalService', () => {
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('TAX_EXPIRED');
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should detect SERVICE_DUE_SOON when mileage >= nextServiceDueKm - 1000', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -1776,14 +1871,15 @@ describe('PortalService', () => {
       const result = await service.getMaintenanceSchedule(CUSTOMER_ID, TENANT_ID);
 
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).toContain('SERVICE_DUE_SOON');
+      expect((result.data as Array<{ needsAttention: boolean }>)[0].needsAttention).toBe(true);
     });
 
     it('should detect multiple alerts on same vehicle', async () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: pastDate,
@@ -1808,8 +1904,8 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getInvoices - branch coverage', () => {
     it('should filter invoices by year', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -1818,7 +1914,7 @@ describe('PortalService', () => {
           createdAt: new Date('2026-03-01'),
         },
       ]);
-      prisma.invoice.count.mockResolvedValue(1);
+      prisma.invoice.count.mockResolvedValueOnce(1);
 
       const result = await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -1831,9 +1927,9 @@ describe('PortalService', () => {
     });
 
     it('should filter invoices by date range (from/to)', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(0);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(0);
 
       await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -1843,14 +1939,15 @@ describe('PortalService', () => {
       });
 
       expect(prisma.invoice.findMany).toHaveBeenCalled();
+      expect(prisma.invoice.count).toHaveBeenCalled();
     });
 
     it('should filter invoices by status', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([
         { id: 'inv-1', invoiceNumber: 'INV-001', total: 100, status: 'PAID' },
       ]);
-      prisma.invoice.count.mockResolvedValue(1);
+      prisma.invoice.count.mockResolvedValueOnce(1);
 
       const result = await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -1863,9 +1960,9 @@ describe('PortalService', () => {
     });
 
     it('should apply pagination correctly', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(50);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(50);
 
       const result = await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 2,
@@ -1884,9 +1981,9 @@ describe('PortalService', () => {
   describe('updateProfile - branch coverage', () => {
     it('should update only firstName when provided', async () => {
       const customerWithPhone = { ...mockCustomer, encryptedPhone: 'enc-+39123456789' };
-      prisma.customer.findFirst.mockResolvedValue(customerWithPhone);
-      prisma.customer.findFirstOrThrow.mockResolvedValue(customerWithPhone);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
+      prisma.customer.findFirst.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, { firstName: 'Luigi' });
 
@@ -1896,9 +1993,9 @@ describe('PortalService', () => {
 
     it('should update only lastName when provided', async () => {
       const customerWithPhone = { ...mockCustomer, encryptedPhone: 'enc-+39123456789' };
-      prisma.customer.findFirst.mockResolvedValue(customerWithPhone);
-      prisma.customer.findFirstOrThrow.mockResolvedValue(customerWithPhone);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
+      prisma.customer.findFirst.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, { lastName: 'Verdi' });
 
@@ -1908,9 +2005,9 @@ describe('PortalService', () => {
 
     it('should update only phone when provided', async () => {
       const customerWithPhone = { ...mockCustomer, encryptedPhone: 'enc-+39123456789' };
-      prisma.customer.findFirst.mockResolvedValue(customerWithPhone);
-      prisma.customer.findFirstOrThrow.mockResolvedValue(customerWithPhone);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
+      prisma.customer.findFirst.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, { phone: '+39987654321' });
 
@@ -1920,9 +2017,9 @@ describe('PortalService', () => {
 
     it('should update multiple fields simultaneously', async () => {
       const customerWithPhone = { ...mockCustomer, encryptedPhone: 'enc-+39123456789' };
-      prisma.customer.findFirst.mockResolvedValue(customerWithPhone);
-      prisma.customer.findFirstOrThrow.mockResolvedValue(customerWithPhone);
-      prisma.customer.updateMany.mockResolvedValue({ count: 1 });
+      prisma.customer.findFirst.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, {
         firstName: 'Luigi',
@@ -1938,13 +2035,14 @@ describe('PortalService', () => {
 
     it('should not update fields when empty data object provided', async () => {
       const customerWithPhone = { ...mockCustomer, encryptedPhone: 'enc-+39123456789' };
-      prisma.customer.findFirst.mockResolvedValue(customerWithPhone);
-      prisma.customer.findFirstOrThrow.mockResolvedValue(customerWithPhone);
-      prisma.customer.updateMany.mockResolvedValue({ count: 0 });
+      prisma.customer.findFirst.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.findFirstOrThrow.mockResolvedValueOnce(customerWithPhone);
+      prisma.customer.updateMany.mockResolvedValueOnce({ count: 0 });
 
       const result = await service.updateProfile(CUSTOMER_ID, TENANT_ID, {});
 
       expect(result.data).toBeDefined();
+      expect(prisma.customer.updateMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1956,10 +2054,11 @@ describe('PortalService', () => {
       await expect(service.getAvailableSlots(TENANT_ID, null as unknown as string)).rejects.toThrow(
         BadRequestException,
       );
+      expect(prisma.bookingSlot.findMany).not.toHaveBeenCalled();
     });
 
     it('should log debug message when serviceType is provided', async () => {
-      prisma.bookingSlot.findMany.mockResolvedValue([
+      prisma.bookingSlot.findMany.mockResolvedValueOnce([
         { id: 'slot-1', startTime: new Date('2026-06-01T09:00:00Z'), status: 'AVAILABLE' },
       ]);
 
@@ -1970,7 +2069,7 @@ describe('PortalService', () => {
     });
 
     it('should return slots when no serviceType filter provided', async () => {
-      prisma.bookingSlot.findMany.mockResolvedValue([
+      prisma.bookingSlot.findMany.mockResolvedValueOnce([
         { id: 'slot-1', startTime: new Date('2026-06-01T09:00:00Z'), status: 'AVAILABLE' },
       ]);
 
@@ -1981,7 +2080,7 @@ describe('PortalService', () => {
     });
 
     it('should filter slots by date range correctly', async () => {
-      prisma.bookingSlot.findMany.mockResolvedValue([
+      prisma.bookingSlot.findMany.mockResolvedValueOnce([
         { id: 'slot-1', startTime: new Date('2026-06-15T09:00:00Z'), status: 'AVAILABLE' },
       ]);
 
@@ -2004,39 +2103,41 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getDashboard - branch coverage for nulls', () => {
     it('should handle null upcomingBooking', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.booking.findFirst.mockResolvedValue(null);
-      prisma.vehicle.findMany.mockResolvedValue([]);
-      prisma.inspection.findFirst.mockResolvedValue(null);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.notification.count.mockResolvedValue(0);
-      prisma.invoice.aggregate.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.booking.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findFirst.mockResolvedValueOnce(null);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.notification.count.mockResolvedValueOnce(0);
+      prisma.invoice.aggregate.mockResolvedValueOnce({
         _count: { id: 0 },
         _sum: { total: null },
       });
-      prisma.booking.count.mockResolvedValue(0);
+      prisma.booking.count.mockResolvedValueOnce(0);
 
       const result = await service.getDashboard(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data.upcomingBooking).toBeNull();
+      expect(result.data).toBeDefined();
     });
 
     it('should handle null maintenanceDueVehicles', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.booking.findFirst.mockResolvedValue(null);
-      prisma.vehicle.findMany.mockResolvedValue(null);
-      prisma.inspection.findFirst.mockResolvedValue(null);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.notification.count.mockResolvedValue(0);
-      prisma.invoice.aggregate.mockResolvedValue({
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.booking.findFirst.mockResolvedValueOnce(null);
+      prisma.vehicle.findMany.mockResolvedValueOnce(null);
+      prisma.inspection.findFirst.mockResolvedValueOnce(null);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.notification.count.mockResolvedValueOnce(0);
+      prisma.invoice.aggregate.mockResolvedValueOnce({
         _count: { id: 0 },
         _sum: { total: null },
       });
-      prisma.booking.count.mockResolvedValue(0);
+      prisma.booking.count.mockResolvedValueOnce(0);
 
       const result = await service.getDashboard(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toBeDefined();
+      expect(prisma.customer.findFirst).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2045,9 +2146,9 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getInvoices - filter combinations', () => {
     it('should apply both year and from/to filters (from/to should override)', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(0);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(0);
 
       await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -2062,9 +2163,9 @@ describe('PortalService', () => {
     });
 
     it('should apply only from date without to', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(0);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(0);
 
       await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -2073,12 +2174,13 @@ describe('PortalService', () => {
       });
 
       expect(prisma.invoice.findMany).toHaveBeenCalled();
+      expect(prisma.invoice.count).toHaveBeenCalled();
     });
 
     it('should apply only to date without from', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(0);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(0);
 
       await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -2087,12 +2189,13 @@ describe('PortalService', () => {
       });
 
       expect(prisma.invoice.findMany).toHaveBeenCalled();
+      expect(prisma.invoice.count).toHaveBeenCalled();
     });
 
     it('should uppercase status filter', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.invoice.count.mockResolvedValue(0);
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.invoice.count.mockResolvedValueOnce(0);
 
       await service.getInvoices(CUSTOMER_ID, TENANT_ID, {
         page: 1,
@@ -2116,8 +2219,8 @@ describe('PortalService', () => {
       const now = new Date();
       const soonDate = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -2142,8 +2245,8 @@ describe('PortalService', () => {
       const now = new Date();
       const soonDate = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -2164,8 +2267,8 @@ describe('PortalService', () => {
       const now = new Date();
       const futureDate = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
 
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: futureDate,
@@ -2183,8 +2286,8 @@ describe('PortalService', () => {
     });
 
     it('should not trigger SERVICE_DUE_SOON when mileage below threshold', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -2200,11 +2303,12 @@ describe('PortalService', () => {
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
         'SERVICE_DUE_SOON',
       );
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should not trigger SERVICE_DUE_SOON when nextServiceDueKm is null', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -2220,11 +2324,12 @@ describe('PortalService', () => {
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
         'SERVICE_DUE_SOON',
       );
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should not trigger SERVICE_DUE_SOON when mileage is null', async () => {
-      prisma.customer.findFirst.mockResolvedValue(mockCustomer);
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.customer.findFirst.mockResolvedValueOnce(mockCustomer);
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         {
           id: 'veh-001',
           revisionExpiry: null,
@@ -2240,6 +2345,7 @@ describe('PortalService', () => {
       expect((result.data as Array<{ alerts: string[] }>)[0].alerts).not.toContain(
         'SERVICE_DUE_SOON',
       );
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2248,7 +2354,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getDocuments - branch coverage', () => {
     it('should filter documents by INSPECTION_REPORT type', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -2258,7 +2364,7 @@ describe('PortalService', () => {
           pdfUrl: null,
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           startedAt: new Date(),
@@ -2275,7 +2381,7 @@ describe('PortalService', () => {
     });
 
     it('should return empty array when type filter matches nothing', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -2285,16 +2391,17 @@ describe('PortalService', () => {
           pdfUrl: null,
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getDocuments(CUSTOMER_ID, TENANT_ID, 'INSPECTION_REPORT');
 
       expect(result.data).toEqual([]);
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should use nullish coalescing for vehicle make when null', async () => {
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([
         { id: 'insp-1', startedAt: new Date(), status: 'COMPLETED', vehicle: null },
       ]);
 
@@ -2305,8 +2412,8 @@ describe('PortalService', () => {
     });
 
     it('should use nullish coalescing for vehicle model when present', async () => {
-      prisma.invoice.findMany.mockResolvedValue([]);
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           startedAt: new Date(),
@@ -2322,7 +2429,7 @@ describe('PortalService', () => {
     });
 
     it('should preserve nullish coalescing for paymentMethod in invoice', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -2332,12 +2439,13 @@ describe('PortalService', () => {
           pdfUrl: null,
         },
       ]);
-      prisma.inspection.findMany.mockResolvedValue([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getDocuments(CUSTOMER_ID, TENANT_ID);
       const docs = result.data as Array<{ type: string }>;
 
       expect(docs.length).toBeGreaterThanOrEqual(0);
+      expect(prisma.invoice.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2346,7 +2454,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getPayments - branch coverage', () => {
     it('should map paymentMethod to null when not provided', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -2364,7 +2472,7 @@ describe('PortalService', () => {
     });
 
     it('should preserve paymentMethod when provided', async () => {
-      prisma.invoice.findMany.mockResolvedValue([
+      prisma.invoice.findMany.mockResolvedValueOnce([
         {
           id: 'inv-1',
           invoiceNumber: 'INV-001',
@@ -2387,7 +2495,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getBookings - branch coverage', () => {
     it('should return bookings with all relations', async () => {
-      prisma.booking.findMany.mockResolvedValue([
+      prisma.booking.findMany.mockResolvedValueOnce([
         {
           id: 'bk-1',
           scheduledDate: new Date(),
@@ -2407,11 +2515,12 @@ describe('PortalService', () => {
     });
 
     it('should return empty array when no bookings', async () => {
-      prisma.booking.findMany.mockResolvedValue([]);
+      prisma.booking.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getBookings(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.booking.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2420,7 +2529,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getInspections - branch coverage', () => {
     it('should retrieve inspections with vehicle info', async () => {
-      prisma.inspection.findMany.mockResolvedValue([
+      prisma.inspection.findMany.mockResolvedValueOnce([
         {
           id: 'insp-1',
           status: 'COMPLETED',
@@ -2432,14 +2541,16 @@ describe('PortalService', () => {
       const result = await service.getInspections(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toHaveLength(1);
+      expect(prisma.inspection.findMany).toHaveBeenCalledTimes(1);
     });
 
     it('should return empty inspections', async () => {
-      prisma.inspection.findMany.mockResolvedValue([]);
+      prisma.inspection.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getInspections(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.inspection.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2448,7 +2559,7 @@ describe('PortalService', () => {
   // ===========================================================================
   describe('getVehicles - branch coverage', () => {
     it('should return vehicles ordered by createdAt descending', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([
+      prisma.vehicle.findMany.mockResolvedValueOnce([
         { id: 'veh-2', make: 'Audi', createdAt: new Date('2026-03-01') },
         { id: 'veh-1', make: 'BMW', createdAt: new Date('2026-02-01') },
       ]);
@@ -2460,11 +2571,12 @@ describe('PortalService', () => {
     });
 
     it('should return empty vehicle list', async () => {
-      prisma.vehicle.findMany.mockResolvedValue([]);
+      prisma.vehicle.findMany.mockResolvedValueOnce([]);
 
       const result = await service.getVehicles(CUSTOMER_ID, TENANT_ID);
 
       expect(result.data).toEqual([]);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2482,7 +2594,7 @@ describe('PortalService', () => {
         customerType: 'PERSONA',
         vehicles: [],
       };
-      prisma.customer.findFirst.mockResolvedValue(customer);
+      prisma.customer.findFirst.mockResolvedValueOnce(customer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -2500,7 +2612,7 @@ describe('PortalService', () => {
         customerType: 'PERSONA',
         vehicles: [],
       };
-      prisma.customer.findFirst.mockResolvedValue(customer);
+      prisma.customer.findFirst.mockResolvedValueOnce(customer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -2518,7 +2630,7 @@ describe('PortalService', () => {
         customerType: 'PERSONA',
         vehicles: [],
       };
-      prisma.customer.findFirst.mockResolvedValue(customer);
+      prisma.customer.findFirst.mockResolvedValueOnce(customer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 
@@ -2536,7 +2648,7 @@ describe('PortalService', () => {
         customerType: 'PERSONA',
         vehicles: [],
       };
-      prisma.customer.findFirst.mockResolvedValue(customer);
+      prisma.customer.findFirst.mockResolvedValueOnce(customer);
 
       const result = await service.getProfile(CUSTOMER_ID, TENANT_ID);
 

@@ -11,16 +11,19 @@ import {
   ArrayMinSize,
   ValidateNested,
   Min,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class VehicleInfoDto {
   @ApiProperty({ description: 'Marca veicolo', example: 'Fiat' })
   @IsString()
+  @MaxLength(50)
   make: string;
 
   @ApiProperty({ description: 'Modello veicolo', example: 'Punto' })
   @IsString()
+  @MaxLength(50)
   model: string;
 
   @ApiProperty({ description: 'Anno immatricolazione', example: 2020 })

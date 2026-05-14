@@ -57,12 +57,13 @@ describe('PortalController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+    expect(service).toBeDefined();
   });
 
   describe('getDashboard', () => {
     it('should delegate to service with customerId and tenantId', async () => {
       const dashboard = { data: { stats: {} } };
-      service.getDashboard.mockResolvedValue(dashboard as never);
+      service.getDashboard.mockResolvedValueOnce(dashboard as never);
 
       const result = await controller.getDashboard(mockReq);
 
@@ -74,7 +75,7 @@ describe('PortalController', () => {
   describe('getProfile', () => {
     it('should delegate to service', async () => {
       const profile = { data: { firstName: 'Mario' } };
-      service.getProfile.mockResolvedValue(profile as never);
+      service.getProfile.mockResolvedValueOnce(profile as never);
 
       const result = await controller.getProfile(mockReq);
 
@@ -86,7 +87,7 @@ describe('PortalController', () => {
   describe('updateProfile', () => {
     it('should delegate to service with body', async () => {
       const updated = { data: { firstName: 'Luigi' } };
-      service.updateProfile.mockResolvedValue(updated as never);
+      service.updateProfile.mockResolvedValueOnce(updated as never);
       const body = { firstName: 'Luigi' };
 
       const result = await controller.updateProfile(mockReq, body);
@@ -99,7 +100,7 @@ describe('PortalController', () => {
   describe('getVehicles', () => {
     it('should delegate to service', async () => {
       const vehicles = { data: [{ id: 'veh-001' }] };
-      service.getVehicles.mockResolvedValue(vehicles as never);
+      service.getVehicles.mockResolvedValueOnce(vehicles as never);
 
       const result = await controller.getVehicles(mockReq);
 
@@ -111,7 +112,7 @@ describe('PortalController', () => {
   describe('getBookings', () => {
     it('should delegate to service', async () => {
       const bookings = { data: [] };
-      service.getBookings.mockResolvedValue(bookings as never);
+      service.getBookings.mockResolvedValueOnce(bookings as never);
 
       const result = await controller.getBookings(mockReq);
 
@@ -123,7 +124,7 @@ describe('PortalController', () => {
   describe('getAvailableSlots', () => {
     it('should delegate to service with date and serviceType', async () => {
       const slots = { data: [{ time: '09:00' }] };
-      service.getAvailableSlots.mockResolvedValue(slots as never);
+      service.getAvailableSlots.mockResolvedValueOnce(slots as never);
 
       const result = await controller.getAvailableSlots(mockReq, '2026-04-01', 'OIL_CHANGE');
 
@@ -139,7 +140,7 @@ describe('PortalController', () => {
   describe('createBooking', () => {
     it('should delegate to service with booking data', async () => {
       const booking = { data: { id: 'book-001' } };
-      service.createBooking.mockResolvedValue(booking as never);
+      service.createBooking.mockResolvedValueOnce(booking as never);
       const body = { vehicleId: 'veh-001', slotId: 'slot-001', notes: 'Test' };
 
       const result = await controller.createBooking(mockReq, body);
@@ -152,154 +153,184 @@ describe('PortalController', () => {
   describe('getInspections', () => {
     it('should delegate to service', async () => {
       const inspections = { data: [] };
-      service.getInspections.mockResolvedValue(inspections as never);
+      service.getInspections.mockResolvedValueOnce(inspections as never);
 
-      const _result = await controller.getInspections(mockReq);
+      const result = await controller.getInspections(mockReq);
 
       expect(service.getInspections).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getMaintenanceSchedule', () => {
     it('should delegate to service', async () => {
-      service.getMaintenanceSchedule.mockResolvedValue({ data: [] } as never);
+      const schedule = { data: [] };
+      service.getMaintenanceSchedule.mockResolvedValueOnce(schedule as never);
 
-      await controller.getMaintenanceSchedule(mockReq);
+      const result = await controller.getMaintenanceSchedule(mockReq);
 
       expect(service.getMaintenanceSchedule).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getInvoice', () => {
     it('should delegate to service with invoiceId', async () => {
-      service.getInvoice.mockResolvedValue({ data: { id: 'inv-001' } } as never);
+      const invoice = { data: { id: 'inv-001' } };
+      service.getInvoice.mockResolvedValueOnce(invoice as never);
 
-      await controller.getInvoice(mockReq, 'inv-001');
+      const result = await controller.getInvoice(mockReq, 'inv-001');
 
       expect(service.getInvoice).toHaveBeenCalledWith('inv-001', 'cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getNotifications', () => {
     it('should delegate to service', async () => {
-      service.getNotifications.mockResolvedValue({ data: [] } as never);
+      const notifications = { data: [] };
+      service.getNotifications.mockResolvedValueOnce(notifications as never);
 
-      await controller.getNotifications(mockReq);
+      const result = await controller.getNotifications(mockReq);
 
       expect(service.getNotifications).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('markNotificationsRead', () => {
     it('should delegate to service with notification IDs', async () => {
-      service.markNotificationsRead.mockResolvedValue({ data: { updated: 2 } } as never);
+      const updated = { data: { updated: 2 } };
+      service.markNotificationsRead.mockResolvedValueOnce(updated as never);
 
-      await controller.markNotificationsRead(mockReq, { ids: ['n1', 'n2'] });
+      const result = await controller.markNotificationsRead(mockReq, { ids: ['n1', 'n2'] });
 
       expect(service.markNotificationsRead).toHaveBeenCalledWith('cust-001', 'tenant-001', [
         'n1',
         'n2',
       ]);
+      expect(result).toBeDefined();
     });
   });
 
   describe('getDocuments', () => {
     it('should delegate to service with optional type', async () => {
-      service.getDocuments.mockResolvedValue({ data: [] } as never);
+      const docs = { data: [] };
+      service.getDocuments.mockResolvedValueOnce(docs as never);
 
-      await controller.getDocuments(mockReq, 'invoice');
+      const result = await controller.getDocuments(mockReq, 'invoice');
 
       expect(service.getDocuments).toHaveBeenCalledWith('cust-001', 'tenant-001', 'invoice');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getWarranties', () => {
     it('should delegate to service', async () => {
-      service.getWarranties.mockResolvedValue({ data: [] } as never);
+      const warranties = { data: [] };
+      service.getWarranties.mockResolvedValueOnce(warranties as never);
 
-      await controller.getWarranties(mockReq);
+      const result = await controller.getWarranties(mockReq);
 
       expect(service.getWarranties).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getPayments', () => {
     it('should delegate to service', async () => {
-      service.getPayments.mockResolvedValue({ data: [] } as never);
+      const payments = { data: [] };
+      service.getPayments.mockResolvedValueOnce(payments as never);
 
-      await controller.getPayments(mockReq);
+      const result = await controller.getPayments(mockReq);
 
       expect(service.getPayments).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getPayment', () => {
     it('should delegate to service with paymentId', async () => {
-      service.getPayment.mockResolvedValue({ data: { id: 'pay-001' } } as never);
+      const payment = { data: { id: 'pay-001' } };
+      service.getPayment.mockResolvedValueOnce(payment as never);
 
-      await controller.getPayment(mockReq, 'pay-001');
+      const result = await controller.getPayment(mockReq, 'pay-001');
 
       expect(service.getPayment).toHaveBeenCalledWith('pay-001', 'cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getAccount', () => {
     it('should delegate to service', async () => {
-      service.getAccount.mockResolvedValue({ data: {} } as never);
+      const account = { data: {} };
+      service.getAccount.mockResolvedValueOnce(account as never);
 
-      await controller.getAccount(mockReq);
+      const result = await controller.getAccount(mockReq);
 
       expect(service.getAccount).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('updateAccount', () => {
     it('should delegate to service with body', async () => {
-      service.updateAccount.mockResolvedValue({ data: {} } as never);
+      const updated = { data: { firstName: 'Mario' } };
+      service.updateAccount.mockResolvedValueOnce(updated as never);
 
-      await controller.updateAccount(mockReq, { firstName: 'Mario' });
+      const result = await controller.updateAccount(mockReq, { firstName: 'Mario' });
 
       expect(service.updateAccount).toHaveBeenCalledWith('cust-001', 'tenant-001', {
         firstName: 'Mario',
       });
+      expect(result).toBeDefined();
     });
   });
 
   describe('getEstimates', () => {
     it('should delegate to service', async () => {
-      service.getEstimates.mockResolvedValue({ data: [] } as never);
+      const estimates = { data: [] };
+      service.getEstimates.mockResolvedValueOnce(estimates as never);
 
-      await controller.getEstimates(mockReq);
+      const result = await controller.getEstimates(mockReq);
 
       expect(service.getEstimates).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getEstimate', () => {
     it('should delegate to service with estimateId', async () => {
-      service.getEstimate.mockResolvedValue({ data: {} } as never);
+      const estimate = { data: {} };
+      service.getEstimate.mockResolvedValueOnce(estimate as never);
 
-      await controller.getEstimate(mockReq, 'est-001');
+      const result = await controller.getEstimate(mockReq, 'est-001');
 
       expect(service.getEstimate).toHaveBeenCalledWith('est-001', 'cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('acceptEstimate', () => {
     it('should delegate to service', async () => {
-      service.acceptEstimate.mockResolvedValue({ data: {} } as never);
+      const accepted = { data: {} };
+      service.acceptEstimate.mockResolvedValueOnce(accepted as never);
 
-      await controller.acceptEstimate(mockReq, 'est-001');
+      const result = await controller.acceptEstimate(mockReq, 'est-001');
 
       expect(service.acceptEstimate).toHaveBeenCalledWith('est-001', 'cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('rejectEstimate', () => {
     it('should delegate to service with reason', async () => {
-      service.rejectEstimate.mockResolvedValue({ data: {} } as never);
+      const rejected = { data: {} };
+      service.rejectEstimate.mockResolvedValueOnce(rejected as never);
 
-      await controller.rejectEstimate(mockReq, 'est-001', { reason: 'Too expensive' });
+      const result = await controller.rejectEstimate(mockReq, 'est-001', {
+        reason: 'Too expensive',
+      });
 
       expect(service.rejectEstimate).toHaveBeenCalledWith(
         'est-001',
@@ -307,61 +338,72 @@ describe('PortalController', () => {
         'tenant-001',
         'Too expensive',
       );
+      expect(result).toBeDefined();
     });
   });
 
   describe('getTracking', () => {
     it('should delegate to service', async () => {
-      service.getTracking.mockResolvedValue({ data: [] } as never);
+      const tracking = { data: [] };
+      service.getTracking.mockResolvedValueOnce(tracking as never);
 
-      await controller.getTracking(mockReq);
+      const result = await controller.getTracking(mockReq);
 
       expect(service.getTracking).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('getNotificationPreferences', () => {
     it('should delegate to service', async () => {
-      service.getNotificationPreferences.mockResolvedValue({ data: [] } as never);
+      const prefs = { data: [] };
+      service.getNotificationPreferences.mockResolvedValueOnce(prefs as never);
 
-      await controller.getNotificationPreferences(mockReq);
+      const result = await controller.getNotificationPreferences(mockReq);
 
       expect(service.getNotificationPreferences).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('updateNotificationPreferences', () => {
     it('should delegate to service with preferences', async () => {
-      service.updateNotificationPreferences.mockResolvedValue({ data: [] } as never);
+      const updated = { data: [] };
+      service.updateNotificationPreferences.mockResolvedValueOnce(updated as never);
       const prefs = { email: true, sms: false };
 
-      await controller.updateNotificationPreferences(mockReq, prefs);
+      const result = await controller.updateNotificationPreferences(mockReq, prefs);
 
       expect(service.updateNotificationPreferences).toHaveBeenCalledWith(
         'cust-001',
         'tenant-001',
         prefs,
       );
+      expect(result).toBeDefined();
     });
   });
 
   describe('getMessages', () => {
     it('should delegate to service', async () => {
-      service.getMessages.mockResolvedValue({ data: [] } as never);
+      const messages = { data: [] };
+      service.getMessages.mockResolvedValueOnce(messages as never);
 
-      await controller.getMessages(mockReq);
+      const result = await controller.getMessages(mockReq);
 
       expect(service.getMessages).toHaveBeenCalledWith('cust-001', 'tenant-001');
+      expect(result).toBeDefined();
     });
   });
 
   describe('sendMessage', () => {
     it('should delegate to service with message body', async () => {
-      service.sendMessage.mockResolvedValue({ data: { id: 'msg-001' } } as never);
+      const sent = { data: { id: 'msg-001' } };
+      service.sendMessage.mockResolvedValueOnce(sent as never);
 
-      await controller.sendMessage(mockReq, { body: 'Hello' });
+      const result = await controller.sendMessage(mockReq, { body: 'Hello' });
 
       expect(service.sendMessage).toHaveBeenCalledWith('cust-001', 'tenant-001', 'Hello');
+      expect(result).toBeDefined();
     });
   });
 
@@ -395,7 +437,7 @@ describe('PortalController', () => {
       const response = { data: [], meta: { total: 0, page: 1, limit: 20 } };
       service.getInvoices.mockResolvedValueOnce(response as never);
 
-      await controller.getInvoices(mockReq);
+      const result = await controller.getInvoices(mockReq);
 
       expect(service.getInvoices).toHaveBeenCalledWith('cust-001', 'tenant-001', {
         page: 1,
@@ -405,6 +447,7 @@ describe('PortalController', () => {
         to: undefined,
         status: undefined,
       });
+      expect(result.meta.total).toBe(0);
     });
   });
 
@@ -433,6 +476,15 @@ describe('PortalController', () => {
   });
 
   describe('changePassword', () => {
+    it('should validate missing newPassword and throw', async () => {
+      const body = { currentPassword: 'oldpass', newPassword: '' };
+
+      await expect(controller.changePassword(mockReq, body)).rejects.toThrow(
+        'La nuova password deve avere almeno 8 caratteri',
+      );
+      expect(service.changePassword).not.toHaveBeenCalled();
+    });
+
     it('should validate password length and throw if too short', async () => {
       const body = { currentPassword: 'oldpass', newPassword: 'short' };
 

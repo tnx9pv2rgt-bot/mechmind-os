@@ -1328,14 +1328,14 @@ export default function BookingsPage(): React.JSX.Element {
 
       <motion.div
         className="p-8 space-y-6"
-        initial="hidden"
+        initial={false}
         animate="visible"
         variants={containerVariants}
       >
         {/* ================================================================= */}
         {/* KPI Cards (2 rows of 4) */}
         {/* ================================================================= */}
-        <motion.div variants={containerVariants} initial="hidden" animate="visible"
+        <motion.div variants={containerVariants} initial={false} animate="visible"
           className="grid grid-cols-2 lg:grid-cols-4 gap-bento">
           {kpiCards.map((kpi) => (
             <motion.div key={kpi.label} variants={statsCardVariants}>
@@ -1355,7 +1355,7 @@ export default function BookingsPage(): React.JSX.Element {
         {/* ================================================================= */}
         {/* Quick Filters + Search */}
         {/* ================================================================= */}
-        <motion.div variants={listItemVariants} initial="hidden" animate="visible">
+        <motion.div variants={listItemVariants} initial={false} animate="visible">
           <AppleCard hover={false}>
             <AppleCardContent>
             {/* Quick filters */}
@@ -1465,7 +1465,7 @@ export default function BookingsPage(): React.JSX.Element {
         {/* ================================================================= */}
         {/* Content */}
         {/* ================================================================= */}
-        <motion.div variants={listItemVariants} initial="hidden" animate="visible">
+        <motion.div variants={listItemVariants} initial={false} animate="visible">
           <AnimatePresence mode="wait">
             <motion.div
               key={viewMode}
@@ -1777,7 +1777,7 @@ function SortHeader({
 // =============================================================================
 function ErrorState({ onRetry }: { onRetry: () => void }): React.JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div role="alert" className="flex flex-col items-center justify-center py-12 text-center">
       <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
       <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         Impossibile caricare le prenotazioni

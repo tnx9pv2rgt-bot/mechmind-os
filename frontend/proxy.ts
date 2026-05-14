@@ -42,9 +42,7 @@ const PUBLIC_PATHS = [
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === '/') return true;
-  return PUBLIC_PATHS.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  return PUBLIC_PATHS.some(route => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 function isDashboardPath(pathname: string): boolean {
@@ -61,11 +59,35 @@ function isPortalPath(pathname: string): boolean {
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  const isDev = process.env.NODE_ENV !== 'production';
 
   // =========================================================================
   // CSP nonce — generated per-request for script-src strict-dynamic
   // =========================================================================
-  const nonce = btoa(crypto.randomUUID());
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+
+  const cspHeader = [
+    "default-src 'self'",
+    // Hashes per inline scripts non-nonceable:
+    //  - sha256-Ph/Qw... : next-themes FOUC prevention script (v0.2.x — legacy)
+    //  - sha256-q1+Da... : next-themes FOUC prevention script (v0.3.x+ con enableSystem)
+    //  - sha256-K1cBb... : Next.js inline error overlay (dev-only, ignorato in prod)
+    `script-src 'self' 'nonce-${nonce}' 'sha256-Ph/QwnQiwklgtr/n++X4WjXCJZg7LwOQMhFEhUOkmls=' 'sha256-q1+DaXsZUnEJs3jpN9ZoWp6ypK1xBwXiRxG+C31xOUA=' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''} https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.stripe.com https://www.googletagmanager.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com blob:",
+    "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://*.analytics.google.com https://*.sentry.io https://sentry.io" +
+      (isDev
+        ? ' http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001'
+        : ''),
+    "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
+    "media-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    ...(!isDev ? ['upgrade-insecure-requests', 'block-all-mixed-content'] : []),
+  ].join('; ');
 
   // =========================================================================
   // i18n — Set locale cookie (no URL prefix — pages live at /dashboard, not /it/dashboard)
@@ -73,8 +95,14 @@ export function proxy(request: NextRequest): NextResponse {
   const localeCookie = request.cookies.get('NEXT_LOCALE')?.value;
   const locale = localeCookie && LOCALES.includes(localeCookie) ? localeCookie : DEFAULT_LOCALE;
 
-  // Create response
-  const response = NextResponse.next();
+  // Forward nonce to server components via request headers
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('Content-Security-Policy', cspHeader);
+
+  // Create response — forward mutated request headers so layout.tsx can read nonce
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('Content-Security-Policy', cspHeader);
 
   if (!localeCookie) {
     response.cookies.set('NEXT_LOCALE', locale, {
@@ -89,21 +117,7 @@ export function proxy(request: NextRequest): NextResponse {
   // =========================================================================
   // Security headers
   // =========================================================================
-  const csp = [
-    "default-src 'self'",
-    `script-src 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'nonce-${nonce}' 'unsafe-inline'`,
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https: wss:",
-    "media-src 'self'",
-    "frame-ancestors 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; ');
-  response.headers.set('Content-Security-Policy', csp);
-  response.headers.set('x-nonce', nonce);
+  // CSP is set above with per-request nonce. x-nonce already forwarded via requestHeaders.
   response.headers.set('X-DNS-Prefetch-Control', 'on');
   if (process.env.NODE_ENV === 'production') {
     response.headers.set(
@@ -143,13 +157,9 @@ export function proxy(request: NextRequest): NextResponse {
 
   if (!isPublicPath(pathname)) {
     let tenantId =
-      request.cookies.get('tenant_id')?.value ||
-      request.headers.get('x-tenant-id') ||
-      '';
+      request.cookies.get('tenant_id')?.value || request.headers.get('x-tenant-id') || '';
     const tenantSlug =
-      request.cookies.get('tenant_slug')?.value ||
-      request.headers.get('x-tenant-slug') ||
-      '';
+      request.cookies.get('tenant_slug')?.value || request.headers.get('x-tenant-slug') || '';
     const demoSession = request.cookies.get('demo_session')?.value;
 
     // Fallback: extract tenantId from JWT in auth_token cookie
@@ -164,10 +174,7 @@ export function proxy(request: NextRequest): NextResponse {
             ) as Record<string, unknown>;
             if (typeof payload.tenantId === 'string') {
               tenantId = payload.tenantId;
-            } else if (
-              typeof payload.sub === 'string' &&
-              payload.sub.includes(':')
-            ) {
+            } else if (typeof payload.sub === 'string' && payload.sub.includes(':')) {
               tenantId = payload.sub.split(':')[1];
             }
           }
@@ -231,7 +238,13 @@ export function proxy(request: NextRequest): NextResponse {
 
   // Validate CSRF on mutating API requests (POST/PUT/PATCH/DELETE)
   const MUTATING_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
-  const CSRF_SKIP_PATHS = ['/api/auth', '/api/portal/auth', '/api/webhooks', '/api/stripe/webhook', '/api/csrf'];
+  const CSRF_SKIP_PATHS = [
+    '/api/auth',
+    '/api/portal/auth',
+    '/api/webhooks',
+    '/api/stripe/webhook',
+    '/api/csrf',
+  ];
   if (
     pathname.startsWith('/api/') &&
     MUTATING_METHODS.includes(request.method) &&
@@ -243,7 +256,7 @@ export function proxy(request: NextRequest): NextResponse {
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
       return NextResponse.json(
         { error: { code: 'CSRF_INVALID', message: 'Token CSRF non valido' } },
-        { status: 403 },
+        { status: 403 }
       );
     }
   }
@@ -253,16 +266,10 @@ export function proxy(request: NextRequest): NextResponse {
   // =========================================================================
 
   if (pathname.startsWith('/api/')) {
-    response.headers.set(
-      'Cache-Control',
-      'no-store, no-cache, must-revalidate'
-    );
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-  } else if (
-    pathname.startsWith('/dashboard/') ||
-    pathname.startsWith('/portal/')
-  ) {
+  } else if (pathname.startsWith('/dashboard/') || pathname.startsWith('/portal/')) {
     response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
   } else {
     response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');

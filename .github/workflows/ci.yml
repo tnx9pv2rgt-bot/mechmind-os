@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: '0 2 * * *'  # Nightly 02:00 UTC — load tests only
 
+permissions:
+  contents: read
+  attestations: write
+  id-token: write
+
 jobs:
   backend:
     name: Backend
@@ -79,6 +84,12 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: backend
+
+      - name: Generate SLSA provenance (backend)
+        uses: actions/attest-build-provenance@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          subject-path: backend/dist/**
 
   backend-e2e:
     name: Backend E2E
@@ -170,13 +181,18 @@ jobs:
         run: npm run build
         working-directory: frontend
 
+      - name: Generate SLSA provenance (frontend)
+        uses: actions/attest-build-provenance@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          subject-path: frontend/.next/**
+
       - name: Lighthouse CI
         uses: treosh/lighthouse-ci-action@v10
         with:
           uploadArtifacts: true
           temporaryPublicStorage: true
-          configPath: ./frontend/.lighthouserc.json
-        continue-on-error: true
+          configPath: ./frontend/lighthouserc.json
 
   # ─── Mutation Testing (Stryker) — solo su PR, dopo unit tests ───────────────
   # Blocca merge se mutation score < 80% (stryker.conf.js: break=80)

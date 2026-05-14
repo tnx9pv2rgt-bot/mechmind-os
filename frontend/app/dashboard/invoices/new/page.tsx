@@ -120,6 +120,15 @@ export default function NewInvoicePage() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // ESC navigates back to invoice list
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !submitting) router.push('/dashboard/invoices');
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [router, submitting]);
+
   // Fetch customers
   const { data: customersRaw, isLoading: loadingCustomers } = useSWR('/api/customers', fetcher);
   const customers: Customer[] = (() => {
@@ -378,34 +387,36 @@ export default function NewInvoicePage() {
             <AppleCardContent>
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <label htmlFor='inv-number' className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Numero Fattura
                   </label>
                   <Input
+                    id='inv-number'
                     {...register('invoiceNumber')}
                     placeholder='Auto-generato'
                   />
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <label htmlFor='inv-issue-date' className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Data Emissione
                   </label>
-                  <Input type='date' {...register('issueDate')} />
+                  <Input id='inv-issue-date' type='date' {...register('issueDate')} />
                   {formErrors.issueDate && (
                     <p className='text-footnote text-[var(--status-error)] mt-1'>{formErrors.issueDate.message}</p>
                   )}
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <label htmlFor='inv-due-date' className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Data Scadenza
                   </label>
-                  <Input type='date' {...register('dueDate')} />
+                  <Input id='inv-due-date' type='date' {...register('dueDate')} />
                 </div>
                 <div>
-                  <label className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <label htmlFor='inv-payment-method' className='mb-1.5 block text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     Metodo Pagamento
                   </label>
                   <select
+                    id='inv-payment-method'
                     value={paymentMethod}
                     onChange={e => setValue('paymentMethod', e.target.value)}
                     className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
@@ -441,12 +452,14 @@ export default function NewInvoicePage() {
                 <div className='space-y-2'>
                   <Input
                     placeholder='Cerca cliente per nome...'
+                    aria-label='Cerca cliente per nome'
                     value={customerSearch}
                     onChange={e => setCustomerSearch(e.target.value)}
                   />
                   <select
                     value={customerId}
                     onChange={e => setValue('customerId', e.target.value, { shouldValidate: true })}
+                    aria-label='Seleziona cliente'
                     className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-3 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     <option value=''>-- Seleziona un cliente --</option>
@@ -536,6 +549,7 @@ export default function NewInvoicePage() {
                       <select
                         value={item.vatRate}
                         onChange={e => updateLineItem(item.id, 'vatRate', Number(e.target.value))}
+                        aria-label='Aliquota IVA'
                         className='h-10 w-full rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] px-2 text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer'
                       >
                         {VAT_RATES.map(r => (

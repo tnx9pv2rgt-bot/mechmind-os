@@ -5,10 +5,178 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Auto-run smoke tests when Vercel finishes a deploy
+  deployment_status:
 
 jobs:
+  # ── Job 1: Smoke tests su deploy Vercel (trigger: deployment_status) ──────
+  deploy-smoke:
+    name: Smoke — Deploy Validation
+    if: >
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment_status.environment_url != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright (Chromium)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Install Playwright system deps (cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+        working-directory: frontend
+
+      - name: Run smoke tests against deploy URL
+        run: npx playwright test --project=deploy-smoke --reporter=json --output=/tmp/vd_playwright.json
+        working-directory: frontend
+        env:
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+          PLAYWRIGHT_BYPASS_TOKEN: ${{ secrets.VERCEL_BYPASS_TOKEN }}
+          TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+
+      - name: Generate validation report
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import json, datetime, os, sys
+
+          deploy_url = os.environ.get("DEPLOY_URL", "unknown")
+          sha = os.environ.get("GITHUB_SHA", "unknown")[:8]
+
+          try:
+            with open("/tmp/vd_playwright.json") as f:
+              pw = json.load(f)
+            total = pw.get("stats", {}).get("expected", 12)
+            passed = total - pw.get("stats", {}).get("unexpected", 0)
+            failures = [
+              {"route": s.get("title",""), "reason": (s.get("errors",[{}])[0].get("message",""))[:100]}
+              for suite in pw.get("suites", [])
+              for s in suite.get("specs", [])
+              if not s.get("ok", True)
+            ]
+          except Exception:
+            total, passed, failures = 12, 0, [{"route":"all","reason":"playwright report missing"}]
+
+          score = round((passed / max(total, 1)) * 100)
+          verdict = "GO" if score >= 85 else "NO-GO"
+
+          report = {
+            "deploy_url": deploy_url,
+            "git_sha": sha,
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "phases": {
+              "smoke": {"total": total, "passed": passed, "failed": failures}
+            },
+            "score": score,
+            "verdict": verdict,
+          }
+
+          with open("/tmp/deployment_validation.json", "w") as f:
+            json.dump(report, f, indent=2)
+
+          print(f"{'✅' if verdict=='GO' else '❌'} {verdict} — score {score}/100 ({passed}/{total} smoke tests)")
+          sys.exit(0 if verdict == "GO" else 1)
+          EOF
+        env:
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+
+      - name: Post PR comment with results
+        if: always() && github.event.deployment_status.deployment.environment == 'Preview'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = {};
+            try { report = JSON.parse(fs.readFileSync('/tmp/deployment_validation.json', 'utf8')); } catch {}
+
+            const verdict = report.verdict || 'UNKNOWN';
+            const score = report.score || 0;
+            const smoke = report.phases?.smoke || {};
+            const icon = verdict === 'GO' ? '✅' : '❌';
+
+            // Find PR associated with this deployment
+            const sha = context.sha;
+            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: sha,
+            });
+
+            if (prs.data.length === 0) return;
+            const prNumber = prs.data[0].number;
+
+            const failedList = (smoke.failed || [])
+              .map(f => `- \`${f.route}\`: ${f.reason}`)
+              .join('\n') || '_nessuna_';
+
+            const body = [
+              `## ${icon} Deploy Validation — ${verdict} (${score}/100)`,
+              '',
+              `**URL:** ${report.deploy_url}`,
+              `**SHA:** \`${report.git_sha}\``,
+              `**Timestamp:** ${report.timestamp}`,
+              '',
+              `| Metrica | Valore |`,
+              `|---------|--------|`,
+              `| Smoke tests | ${smoke.passed}/${smoke.total} |`,
+              `| Score | ${score}/100 |`,
+              `| Soglia GO | ≥85 |`,
+              '',
+              smoke.failed?.length ? `**Route fallite:**\n${failedList}` : '',
+              '',
+              '<details><summary>Full JSON report</summary>',
+              '',
+              '```json',
+              JSON.stringify(report, null, 2),
+              '```',
+              '</details>',
+              '',
+              '_Generato da `/validate-deploy` skill — Nexo Gestionale_',
+            ].filter(l => l !== undefined).join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });
+
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-validation-report
+          path: /tmp/deployment_validation.json
+          retention-days: 14
+
+  # ── Job 2: E2E completo (trigger: push/PR a main) ─────────────────────────
   e2e:
     name: Playwright E2E
+    if: github.event_name != 'deployment_status'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -53,6 +221,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
       - name: Install backend dependencies
         run: npm ci
@@ -62,12 +233,29 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('frontend/package-lock.json') }}
+
       - name: Install Playwright browsers (Chromium only for CI speed)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Install Playwright system deps (cached browsers)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
         working-directory: frontend
 
       - name: Prisma migrate deploy
         run: npx prisma migrate deploy
+        working-directory: backend
+
+      - name: Build backend
+        run: npm run build
         working-directory: backend
 
       - name: Start backend server

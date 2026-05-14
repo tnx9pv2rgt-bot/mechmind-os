@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { VoiceWebhookController } from './controllers/voice-webhook.controller';
+import { VoiceDataController } from './controllers/voice-data.controller';
 import { VapiWebhookService } from './services/vapi-webhook.service';
 import { IntentHandlerService } from './services/intent-handler.service';
 import { EscalationService } from './services/escalation.service';
@@ -12,7 +13,7 @@ import { BookingModule } from '@booking/booking.module';
 
 @Module({
   imports: [ConfigModule, CommonModule, CustomerModule, BookingModule],
-  controllers: [VoiceWebhookController],
+  controllers: [VoiceWebhookController, VoiceDataController],
   providers: [
     VapiWebhookService,
     IntentHandlerService,

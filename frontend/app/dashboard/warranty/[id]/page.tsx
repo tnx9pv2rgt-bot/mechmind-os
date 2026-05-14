@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { fetchWithTimeout } from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import {
   Shield,
@@ -47,14 +48,39 @@ interface FileClaimDTO {
 
 type ClaimWithApproved = WarrantyClaim & { approvedAmount?: number };
 
-const statusConfig: Partial<Record<WarrantyStatus, { label: string; bg: string; color: string }>> = {
-  ACTIVE: { label: 'Attiva', bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]', color: 'text-[var(--status-success)] dark:text-[var(--status-success)]' },
-  EXPIRING_SOON: { label: 'In Scadenza', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
-  EXPIRED: { label: 'Scaduta', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
-  VOID: { label: 'Annullata', bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]', color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]' },
-  PENDING: { label: 'In Attesa', bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
-  CLAIMED: { label: 'Reclamata', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]' },
-};
+const statusConfig: Partial<Record<WarrantyStatus, { label: string; bg: string; color: string }>> =
+  {
+    ACTIVE: {
+      label: 'Attiva',
+      bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
+      color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    },
+    EXPIRING_SOON: {
+      label: 'In Scadenza',
+      bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
+      color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    EXPIRED: {
+      label: 'Scaduta',
+      bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
+      color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    },
+    VOID: {
+      label: 'Annullata',
+      bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
+      color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]',
+    },
+    PENDING: {
+      label: 'In Attesa',
+      bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
+      color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    CLAIMED: {
+      label: 'Reclamata',
+      bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
+      color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    },
+  };
 
 const typeConfig: Record<WarrantyType, { label: string }> = {
   MANUFACTURER: { label: 'Costruttore' },
@@ -100,7 +126,9 @@ export default function WarrantyDetailPage() {
   const router = useRouter();
   const warrantyId = params.id as string;
 
-  const [warranty, setWarranty] = React.useState<(WarrantyWithClaims & { claims: ClaimWithApproved[] }) | null>(null);
+  const [warranty, setWarranty] = React.useState<
+    (WarrantyWithClaims & { claims: ClaimWithApproved[] }) | null
+  >(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmittingClaim, setIsSubmittingClaim] = React.useState(false);
   const [claimDialogOpen, setClaimDialogOpen] = React.useState(false);
@@ -114,7 +142,7 @@ export default function WarrantyDetailPage() {
   const loadWarranty = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/warranties/${warrantyId}`);
+      const res = await fetchWithTimeout(`/api/warranties/${warrantyId}`);
       if (!res.ok) {
         toast.error('Garanzia non trovata');
         router.push('/dashboard/warranty');
@@ -223,14 +251,20 @@ export default function WarrantyDetailPage() {
     { key: 'vehicle', label: 'Veicolo' },
   ];
 
-  const [claimFilter, setClaimFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [claimFilter, setClaimFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all'
+  );
 
   const filteredClaims = (() => {
     switch (claimFilter) {
-      case 'pending': return pendingClaims;
-      case 'approved': return approvedClaims;
-      case 'rejected': return rejectedClaims;
-      default: return warranty.claims || [];
+      case 'pending':
+        return pendingClaims;
+      case 'approved':
+        return approvedClaims;
+      case 'rejected':
+        return rejectedClaims;
+      default:
+        return warranty.claims || [];
     }
   })();
 
@@ -259,7 +293,9 @@ export default function WarrantyDetailPage() {
                   {type?.label || 'Garanzia'} &bull; {warranty.warrantyNumber}
                 </p>
               </div>
-              <span className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}>
+              <span
+                className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
+              >
                 {status.label}
               </span>
             </div>
@@ -300,26 +336,63 @@ export default function WarrantyDetailPage() {
         </div>
       </div>
 
-      <motion.div className='p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants} key={activeTab}>
+      <motion.div
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+        key={activeTab}
+      >
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
             {/* Stat Cards */}
-            <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-4' variants={containerVariants}>
+            <motion.div
+              className='grid grid-cols-2 lg:grid-cols-4 gap-4'
+              variants={containerVariants}
+            >
               {[
-                { label: 'Copertura Max', value: formatCurrency(warranty.maxClaimAmount || 0), icon: Euro, color: 'bg-[var(--brand)]' },
-                { label: 'Franchigia', value: formatCurrency(warranty.deductibleAmount || 0), icon: Euro, color: 'bg-[var(--status-warning)]' },
-                { label: 'Copertura Km', value: warranty.mileageLimit ? `${warranty.mileageLimit.toLocaleString()} km` : 'Illimitata', icon: Gauge, color: 'bg-[var(--status-success)]' },
-                { label: 'Reclami', value: String(warranty.claims?.length || 0), icon: FileText, color: 'bg-[var(--brand)]' },
+                {
+                  label: 'Copertura Max',
+                  value: formatCurrency(warranty.maxClaimAmount || 0),
+                  icon: Euro,
+                  color: 'bg-[var(--brand)]',
+                },
+                {
+                  label: 'Franchigia',
+                  value: formatCurrency(warranty.deductibleAmount || 0),
+                  icon: Euro,
+                  color: 'bg-[var(--status-warning)]',
+                },
+                {
+                  label: 'Copertura Km',
+                  value: warranty.mileageLimit
+                    ? `${warranty.mileageLimit.toLocaleString()} km`
+                    : 'Illimitata',
+                  icon: Gauge,
+                  color: 'bg-[var(--status-success)]',
+                },
+                {
+                  label: 'Reclami',
+                  value: String(warranty.claims?.length || 0),
+                  icon: FileText,
+                  color: 'bg-[var(--brand)]',
+                },
               ].map(stat => (
                 <motion.div key={stat.label} variants={cardVariants}>
                   <AppleCard hover={false}>
                     <AppleCardContent>
-                      <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
+                      <div
+                        className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}
+                      >
                         <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                       </div>
-                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{stat.value}</p>
-                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {stat.value}
+                      </p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        {stat.label}
+                      </p>
                     </AppleCardContent>
                   </AppleCard>
                 </motion.div>
@@ -338,7 +411,9 @@ export default function WarrantyDetailPage() {
                   {/* Progress Bar */}
                   <div className='space-y-2'>
                     <div className='flex items-center justify-between text-body'>
-                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Periodo di Copertura</span>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Periodo di Copertura
+                      </span>
                       <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                         {progress}% trascorso
                       </span>
@@ -439,7 +514,11 @@ export default function WarrantyDetailPage() {
                       <FileText className='h-5 w-5 text-[var(--text-tertiary)]' /> Storico Reclami
                     </h2>
                     {canFileClaim && (
-                      <AppleButton size='sm' icon={<Plus className='h-4 w-4' />} onClick={() => setClaimDialogOpen(true)}>
+                      <AppleButton
+                        size='sm'
+                        icon={<Plus className='h-4 w-4' />}
+                        onClick={() => setClaimDialogOpen(true)}
+                      >
                         Invia Reclamo
                       </AppleButton>
                     )}
@@ -523,9 +602,16 @@ export default function WarrantyDetailPage() {
                         { label: 'Anno', value: String(warranty.vehicle.year) },
                         { label: 'VIN', value: warranty.vehicle.vin },
                       ].map(row => (
-                        <div key={row.label} className='flex items-center justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'>
-                          <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{row.label}</span>
-                          <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{row.value}</span>
+                        <div
+                          key={row.label}
+                          className='flex items-center justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
+                        >
+                          <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                            {row.label}
+                          </span>
+                          <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            {row.value}
+                          </span>
                         </div>
                       ))}
                     </div>

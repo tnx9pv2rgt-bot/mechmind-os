@@ -439,11 +439,11 @@ describe('MetricsService', () => {
     it('should set value on existing service label (overwrite)', async () => {
       service.recordCircuitBreakerState('multi', 'closed');
       let metrics = await service.getMetrics();
-      let count1 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
+      const count1 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
 
       service.recordCircuitBreakerState('multi', 'open');
       metrics = await service.getMetrics();
-      let count2 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
+      const count2 = (metrics.match(/circuit_breaker_state{service="multi"}/g) || []).length;
 
       // Should still have one entry (it was overwritten, not added)
       expect(count2).toBeLessThanOrEqual(count1 + 1);

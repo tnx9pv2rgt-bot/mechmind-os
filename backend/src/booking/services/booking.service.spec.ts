@@ -29,6 +29,7 @@ describe('BookingService', () => {
   };
   let eventEmitter: { emit: jest.Mock };
   let queueService: { addBookingJob: jest.Mock };
+  let encryption: { encrypt: jest.Mock; decrypt: jest.Mock };
 
   const TENANT_ID = 'tenant-001';
   const SLOT_ID = 'slot-001';
@@ -111,6 +112,10 @@ describe('BookingService', () => {
     }).compile();
 
     service = module.get<BookingService>(BookingService);
+    encryption = module.get<EncryptionService>(EncryptionService) as unknown as {
+      encrypt: jest.Mock;
+      decrypt: jest.Mock;
+    };
   });
 
   it('should be defined', () => {
@@ -209,6 +214,44 @@ describe('BookingService', () => {
       await service.findById(TENANT_ID, 'booking-001');
 
       expect(prisma.withTenant).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
+    });
+
+    it('should return null for encrypted field when value is null (safeDecrypt null path)', async () => {
+      const mockBooking = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        customer: {
+          id: CUSTOMER_ID,
+          encryptedFirstName: null,
+          encryptedEmail: 'enc_test@example.com',
+        },
+      };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValueOnce(mockBooking);
+
+      const result = await service.findById(TENANT_ID, 'booking-001');
+      expect(result.customer).toBeDefined();
+      expect((result.customer as Record<string, unknown>).firstName).toBeNull();
+      expect((result.customer as Record<string, unknown>).email).toBe('test@example.com');
+    });
+
+    it('should return [encrypted] when decrypt throws (safeDecrypt catch path)', async () => {
+      const mockBooking = {
+        id: 'booking-001',
+        tenantId: TENANT_ID,
+        customer: {
+          id: CUSTOMER_ID,
+          encryptedFirstName: 'corrupted_enc_data',
+        },
+      };
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValueOnce(mockBooking);
+      encryption.decrypt.mockImplementationOnce(() => {
+        throw new Error('Decryption failed');
+      });
+
+      const result = await service.findById(TENANT_ID, 'booking-001');
+      expect(result.customer).toBeDefined();
+      expect((result.customer as Record<string, unknown>).firstName).toBe('[encrypted]');
+      expect(encryption.decrypt).toHaveBeenCalledWith('corrupted_enc_data');
     });
   });
 

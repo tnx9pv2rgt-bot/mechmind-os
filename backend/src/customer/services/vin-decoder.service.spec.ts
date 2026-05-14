@@ -270,9 +270,7 @@ describe('VinDecoderService', () => {
         ok: true,
         json: () =>
           Promise.resolve(
-            buildNhtsaResponse([
-              { Variable: 'Fuel Type - Primary', Value: 'Electric' },
-            ]),
+            buildNhtsaResponse([{ Variable: 'Fuel Type - Primary', Value: 'Electric' }]),
           ),
       } as never);
 

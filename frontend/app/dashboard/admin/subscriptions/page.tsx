@@ -192,7 +192,7 @@ export default function AdminSubscriptionsPage() {
                     <div>
                       <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>MRR</p>
                       <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                        &euro;{stats.mrr.toLocaleString('it-IT')}
+                        &euro;{(stats.mrr ?? 0).toLocaleString('it-IT')}
                       </p>
                     </div>
                   </div>
@@ -210,7 +210,7 @@ export default function AdminSubscriptionsPage() {
                     <div>
                       <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>ARR</p>
                       <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                        &euro;{stats.arr.toLocaleString('it-IT')}
+                        &euro;{(stats.arr ?? 0).toLocaleString('it-IT')}
                       </p>
                     </div>
                   </div>
@@ -228,7 +228,7 @@ export default function AdminSubscriptionsPage() {
                     <div>
                       <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Churn Rate</p>
                       <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                        {stats.churnRate.toFixed(1)}%
+                        {(stats.churnRate ?? 0).toFixed(1)}%
                       </p>
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export default function AdminSubscriptionsPage() {
                         <td className='py-3 px-4'>{getPlanBadge(tenant.plan)}</td>
                         <td className='py-3 px-4'>{getStatusBadge(tenant.status)}</td>
                         <td className='py-3 px-4 text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
-                          &euro;{tenant.mrr.toLocaleString('it-IT')}
+                          &euro;{(tenant.mrr ?? 0).toLocaleString('it-IT')}
                         </td>
                         <td className='py-3 px-4 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                           {new Date(tenant.createdAt).toLocaleDateString('it-IT')}

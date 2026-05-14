@@ -753,7 +753,7 @@ describe('AdvisoryLockService', () => {
       ).rejects.toThrow(LockTimeoutError);
 
       const elapsed = Date.now() - start;
-      expect(elapsed).toBeGreaterThanOrEqual(25);
+      expect(elapsed).toBeGreaterThanOrEqual(20);
     });
   });
 

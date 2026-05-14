@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { createHmac } from 'crypto';
 import { PrismaService } from '@common/services/prisma.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import {
   CreateWebhookSubscriptionDto,
   UpdateWebhookSubscriptionDto,
@@ -21,7 +22,10 @@ export class WebhookSubscriptionService {
   private readonly WEBHOOK_TIMEOUT_MS = 10000;
   private readonly MAX_FAIL_COUNT = 5;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: EncryptionService,
+  ) {}
 
   /** Create a new webhook subscription */
   async create(
@@ -34,12 +38,14 @@ export class WebhookSubscriptionService {
 
     this.logger.log(`Creating webhook subscription for tenant ${tenantId}: ${dto.url}`);
 
+    const encryptedSecret = this.encryption.encrypt(dto.secret);
+
     return this.prisma.webhookSubscription.create({
       data: {
         tenantId,
         url: dto.url,
         events: dto.events,
-        secret: dto.secret,
+        secret: encryptedSecret,
         isActive: true,
         failCount: 0,
       },
@@ -104,12 +110,14 @@ export class WebhookSubscriptionService {
     if (dto.events) this.validateEventsArray(dto.events);
     if (dto.secret) this.validateSecret(dto.secret);
 
+    const encryptedSecret = dto.secret ? this.encryption.encrypt(dto.secret) : undefined;
+
     return this.prisma.webhookSubscription.update({
       where: { id },
       data: {
         ...(dto.url !== undefined && { url: dto.url }),
         ...(dto.events !== undefined && { events: dto.events }),
-        ...(dto.secret !== undefined && { secret: dto.secret }),
+        ...(encryptedSecret !== undefined && { secret: encryptedSecret }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
     });
@@ -157,12 +165,14 @@ export class WebhookSubscriptionService {
     let failedCount = 0;
 
     for (const subscription of subscriptions) {
+      const decryptedSecret = this.encryption.decrypt(subscription.secret);
       const success = await this.sendWebhook(
         subscription.id,
         subscription.url,
-        subscription.secret,
+        decryptedSecret,
         event,
         payload,
+        tenantId,
       );
 
       if (success) {
@@ -208,12 +218,14 @@ export class WebhookSubscriptionService {
       data: { message: 'Test payload' },
     };
 
+    const decryptedSecret = this.encryption.decrypt(subscription.secret);
     return this.sendWebhook(
       subscriptionId,
       subscription.url,
-      subscription.secret,
+      decryptedSecret,
       event,
       testPayload,
+      tenantId,
     );
   }
 
@@ -224,8 +236,12 @@ export class WebhookSubscriptionService {
     secret: string,
     event: WebhookEvent,
     payload: Record<string, unknown>,
+    tenantId?: string,
   ): Promise<boolean> {
-    const body = JSON.stringify({ event, timestamp: new Date().toISOString(), data: payload });
+    const webhookPayload = tenantId
+      ? { event, timestamp: new Date().toISOString(), data: payload, _meta: { tenantId } }
+      : { event, timestamp: new Date().toISOString(), data: payload };
+    const body = JSON.stringify(webhookPayload);
     const signature = this.computeHmacSignature(body, secret);
 
     try {

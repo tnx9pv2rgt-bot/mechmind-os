@@ -16,6 +16,8 @@ describe('MembershipController', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MembershipController],
       providers: [
@@ -49,42 +51,45 @@ describe('MembershipController', () => {
 
   describe('listPrograms', () => {
     it('should delegate to service with tenantId', async () => {
-      service.listPrograms.mockResolvedValue([mockProgram] as never);
+      service.listPrograms.mockResolvedValueOnce([mockProgram] as never);
 
       const result = await controller.listPrograms(TENANT_ID);
 
       expect(service.listPrograms).toHaveBeenCalledWith(TENANT_ID);
       expect(result).toEqual([mockProgram]);
+      expect(result).toHaveLength(1);
     });
   });
 
   describe('getProgram', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.getProgram.mockResolvedValue(mockProgram as never);
+      service.getProgram.mockResolvedValueOnce(mockProgram as never);
 
       const result = await controller.getProgram(TENANT_ID, 'prog-001');
 
       expect(service.getProgram).toHaveBeenCalledWith(TENANT_ID, 'prog-001');
       expect(result).toEqual(mockProgram);
+      expect((result as unknown as typeof mockProgram).id).toBe('prog-001');
     });
   });
 
   describe('createProgram', () => {
     it('should delegate to service with tenantId and dto', async () => {
-      service.createProgram.mockResolvedValue(mockProgram as never);
+      service.createProgram.mockResolvedValueOnce(mockProgram as never);
       const dto = { name: 'Gold', priceCents: 2999 };
 
       const result = await controller.createProgram(TENANT_ID, dto as never);
 
       expect(service.createProgram).toHaveBeenCalledWith(TENANT_ID, dto);
       expect(result).toEqual(mockProgram);
+      expect(result.name).toBe('Gold');
     });
   });
 
   describe('updateProgram', () => {
     it('should delegate to service with tenantId, id, and dto', async () => {
       const updated = { ...mockProgram, name: 'Platinum' };
-      service.updateProgram.mockResolvedValue(updated as never);
+      service.updateProgram.mockResolvedValueOnce(updated as never);
 
       const result = await controller.updateProgram(TENANT_ID, 'prog-001', {
         name: 'Platinum',
@@ -94,23 +99,25 @@ describe('MembershipController', () => {
         name: 'Platinum',
       });
       expect(result).toEqual(updated);
+      expect(result.name).toBe('Platinum');
     });
   });
 
   describe('deleteProgram', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.deleteProgram.mockResolvedValue(undefined as never);
+      service.deleteProgram.mockResolvedValueOnce(undefined as never);
 
       await controller.deleteProgram(TENANT_ID, 'prog-001');
 
       expect(service.deleteProgram).toHaveBeenCalledWith(TENANT_ID, 'prog-001');
+      expect(service.deleteProgram).toHaveBeenCalled();
     });
   });
 
   describe('enrollCustomer', () => {
     it('should delegate to service with tenantId, customerId, programId, billingCycle', async () => {
       const enrollment = { id: 'enr-001', status: 'ACTIVE' };
-      service.enrollCustomer.mockResolvedValue(enrollment as never);
+      service.enrollCustomer.mockResolvedValueOnce(enrollment as never);
       const dto = {
         customerId: 'cust-001',
         programId: 'prog-001',
@@ -126,32 +133,35 @@ describe('MembershipController', () => {
         'MONTHLY',
       );
       expect(result).toEqual(enrollment);
+      expect(result.status).toBe('ACTIVE');
     });
   });
 
   describe('getCustomerMemberships', () => {
     it('should delegate to service with tenantId and customerId', async () => {
-      service.getCustomerMemberships.mockResolvedValue([] as never);
+      service.getCustomerMemberships.mockResolvedValueOnce([] as never);
 
-      await controller.getCustomerMemberships(TENANT_ID, 'cust-001');
+      const result = await controller.getCustomerMemberships(TENANT_ID, 'cust-001');
 
       expect(service.getCustomerMemberships).toHaveBeenCalledWith(TENANT_ID, 'cust-001');
+      expect(result).toEqual([]);
     });
   });
 
   describe('checkBenefits', () => {
     it('should delegate to service with tenantId and customerId', async () => {
-      service.checkBenefits.mockResolvedValue({ benefits: [] } as never);
+      service.checkBenefits.mockResolvedValueOnce({ benefits: [] } as never);
 
-      await controller.checkBenefits(TENANT_ID, 'cust-001');
+      const result = await controller.checkBenefits(TENANT_ID, 'cust-001');
 
       expect(service.checkBenefits).toHaveBeenCalledWith(TENANT_ID, 'cust-001');
+      expect(result).toEqual({ benefits: [] });
     });
   });
 
   describe('redeemBenefit', () => {
     it('should delegate to service with all params', async () => {
-      service.redeemBenefit.mockResolvedValue({ redeemed: true } as never);
+      service.redeemBenefit.mockResolvedValueOnce({ redeemed: true } as never);
       const dto = {
         benefitType: 'OIL_CHANGE',
         bookingId: 'book-001',
@@ -170,36 +180,40 @@ describe('MembershipController', () => {
         5000,
       );
       expect(result).toEqual({ redeemed: true });
+      expect(service.redeemBenefit).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('cancelMembership', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.cancelMembership.mockResolvedValue({ status: 'CANCELLED' } as never);
+      service.cancelMembership.mockResolvedValueOnce({ status: 'CANCELLED' } as never);
 
-      await controller.cancelMembership(TENANT_ID, 'enr-001');
+      const result = await controller.cancelMembership(TENANT_ID, 'enr-001');
 
       expect(service.cancelMembership).toHaveBeenCalledWith(TENANT_ID, 'enr-001');
+      expect(result.status).toBe('CANCELLED');
     });
   });
 
   describe('pauseMembership', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.pauseMembership.mockResolvedValue({ status: 'PAUSED' } as never);
+      service.pauseMembership.mockResolvedValueOnce({ status: 'PAUSED' } as never);
 
-      await controller.pauseMembership(TENANT_ID, 'enr-001');
+      const result = await controller.pauseMembership(TENANT_ID, 'enr-001');
 
       expect(service.pauseMembership).toHaveBeenCalledWith(TENANT_ID, 'enr-001');
+      expect(result.status).toBe('PAUSED');
     });
   });
 
   describe('getRedemptionHistory', () => {
     it('should delegate to service with tenantId and id', async () => {
-      service.getRedemptionHistory.mockResolvedValue([] as never);
+      service.getRedemptionHistory.mockResolvedValueOnce([] as never);
 
-      await controller.getRedemptionHistory(TENANT_ID, 'enr-001');
+      const result = await controller.getRedemptionHistory(TENANT_ID, 'enr-001');
 
       expect(service.getRedemptionHistory).toHaveBeenCalledWith(TENANT_ID, 'enr-001');
+      expect(result).toEqual([]);
     });
   });
 });

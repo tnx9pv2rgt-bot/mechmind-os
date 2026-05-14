@@ -68,7 +68,7 @@ export default function WorkflowsPage(): React.ReactElement {
         const res = await fetch('/api/workflows', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          setWorkflows(data.data ?? []);
+          setWorkflows(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
         }
       } catch {
         // Non-critical

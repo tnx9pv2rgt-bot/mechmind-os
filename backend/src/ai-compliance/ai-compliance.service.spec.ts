@@ -170,7 +170,7 @@ describe('AiComplianceService', () => {
       expect(result.humanOverridden).toBe(true);
       expect(result.humanDecision).toBe('Damage is minor, not moderate');
       expect(prisma.aiDecisionLog.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT_ID }) })
+        expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT_ID }) }),
       );
       expect(prisma.aiDecisionLog.update).toHaveBeenCalled();
     });

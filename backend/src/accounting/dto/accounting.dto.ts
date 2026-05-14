@@ -8,21 +8,21 @@ import { AccountingProvider, AccountingSyncStatus } from '@prisma/client';
 export class SyncInvoiceDto {
   @ApiProperty({ description: 'Invoice ID to sync' })
   @IsUUID()
-  invoiceId: string;
+  invoiceId!: string;
 
   @ApiProperty({ enum: AccountingProvider, description: 'Accounting provider' })
   @IsEnum(AccountingProvider)
-  provider: AccountingProvider;
+  provider!: AccountingProvider;
 }
 
 export class SyncCustomerDto {
   @ApiProperty({ description: 'Customer ID to sync' })
   @IsUUID()
-  customerId: string;
+  customerId!: string;
 
   @ApiProperty({ enum: AccountingProvider, description: 'Accounting provider' })
   @IsEnum(AccountingProvider)
-  provider: AccountingProvider;
+  provider!: AccountingProvider;
 }
 
 export class AccountingSyncFilterDto {
@@ -60,44 +60,44 @@ export class AccountingSyncFilterDto {
 
 export class AccountingSyncResponseDto {
   @ApiProperty()
-  id: string;
+  id!: string;
 
   @ApiProperty()
-  tenantId: string;
+  tenantId!: string;
 
   @ApiProperty({ enum: AccountingProvider })
-  provider: AccountingProvider;
+  provider!: AccountingProvider;
 
   @ApiPropertyOptional()
-  externalId: string | null;
+  externalId!: string | null;
 
   @ApiProperty()
-  entityType: string;
+  entityType!: string;
 
   @ApiProperty()
-  entityId: string;
+  entityId!: string;
 
   @ApiProperty({ enum: AccountingSyncStatus })
-  status: AccountingSyncStatus;
+  status!: AccountingSyncStatus;
 
   @ApiProperty()
-  direction: string;
+  direction!: string;
 
   @ApiPropertyOptional()
-  syncedAt: Date | null;
+  syncedAt!: Date | null;
 
   @ApiPropertyOptional()
-  error: string | null;
+  error!: string | null;
 
   @ApiProperty()
-  retryCount: number;
+  retryCount!: number;
 
   @ApiPropertyOptional()
-  lastRetryAt: Date | null;
+  lastRetryAt!: Date | null;
 
   @ApiProperty()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

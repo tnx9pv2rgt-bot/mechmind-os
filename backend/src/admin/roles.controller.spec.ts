@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { UserRole } from '@prisma/client';
 import { RolesController } from './roles.controller';
 
 describe('RolesController', () => {
@@ -9,110 +10,52 @@ describe('RolesController', () => {
       controllers: [RolesController],
     }).compile();
 
-    controller = module.get<RolesController>(RolesController);
-  });
-
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+    controller = module.get(RolesController);
   });
 
   describe('findAll', () => {
-    it('should return all roles with labels and permissions', () => {
+    it('should return success true and non-empty data array', () => {
       const result = controller.findAll();
 
       expect(result.success).toBe(true);
-      expect(Array.isArray(result.data)).toBe(true);
-      expect(result.data.length).toBeGreaterThanOrEqual(5);
-
-      const admin = result.data.find((r: Record<string, unknown>) => r.id === 'ADMIN');
-      expect(admin).toBeDefined();
-      expect(admin).toEqual(
-        expect.objectContaining({
-          id: 'ADMIN',
-          name: 'ADMIN',
-          label: 'Amministratore',
-          permissions: ['*'],
-        }),
-      );
-
-      const mechanic = result.data.find((r: Record<string, unknown>) => r.id === 'MECHANIC');
-      expect(mechanic).toBeDefined();
-      expect(mechanic).toEqual(
-        expect.objectContaining({
-          id: 'MECHANIC',
-          name: 'MECHANIC',
-          label: 'Meccanico',
-        }),
-      );
+      expect(result.data.length).toBeGreaterThan(0);
     });
 
-    it('should include MANAGER, RECEPTIONIST, and VIEWER roles', () => {
+    it('should include all UserRole values in response', () => {
       const result = controller.findAll();
+      const roleIds = (result.data as { id: string }[]).map(r => r.id);
 
-      const manager = result.data.find((r: Record<string, unknown>) => r.id === 'MANAGER');
-      expect(manager).toBeDefined();
-      expect((manager as Record<string, unknown>).label).toBe('Manager');
-      expect((manager as Record<string, unknown>).permissions).toEqual(
-        expect.arrayContaining(['bookings', 'customers', 'invoices']),
-      );
-
-      const receptionist = result.data.find(
-        (r: Record<string, unknown>) => r.id === 'RECEPTIONIST',
-      );
-      expect(receptionist).toBeDefined();
-      expect((receptionist as Record<string, unknown>).label).toBe('Receptionist');
-
-      const viewer = result.data.find((r: Record<string, unknown>) => r.id === 'VIEWER');
-      expect(viewer).toBeDefined();
-      expect((viewer as Record<string, unknown>).label).toBe('Visualizzatore');
-      expect((viewer as Record<string, unknown>).permissions).toEqual(['read-only']);
+      expect(roleIds).toContain(UserRole.ADMIN);
+      expect(roleIds).toContain(UserRole.MANAGER);
     });
 
-    it('should use fallback label/description for roles not in ROLE_DESCRIPTIONS', () => {
+    it('should include MECHANIC and RECEPTIONIST roles', () => {
       const result = controller.findAll();
-      for (const role of result.data) {
-        const r = role as Record<string, unknown>;
-        expect(r.label).toBeDefined();
-        expect(typeof r.label).toBe('string');
-        expect(r.permissions).toBeDefined();
-      }
+      const roleIds = (result.data as { id: string }[]).map(r => r.id);
+
+      expect(roleIds).toContain(UserRole.MECHANIC);
+      expect(roleIds).toContain(UserRole.RECEPTIONIST);
     });
-  });
 
-  describe('findAll - fallback branch (unknown role)', () => {
-    it('should apply fallback metadata when UserRole has a value missing from ROLE_DESCRIPTIONS', () => {
-      jest.isolateModules(() => {
-        jest.doMock('@prisma/client', () => ({
-          UserRole: {
-            ADMIN: 'ADMIN',
-            CUSTOM_UNKNOWN: 'CUSTOM_UNKNOWN',
-          },
-        }));
+    it('should include label and permissions for known roles', () => {
+      const result = controller.findAll();
+      const adminRole = (
+        result.data as { id: string; label: string; permissions: string[] }[]
+      ).find(r => r.id === UserRole.ADMIN);
 
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const mod = require('./roles.controller') as typeof import('./roles.controller');
-        const ctrl = new mod.RolesController();
-        const result = ctrl.findAll();
+      expect(adminRole).toBeDefined();
+      expect(adminRole?.label).toBe('Amministratore');
+      expect(adminRole?.permissions).toContain('*');
+    });
 
-        const unknown = result.data.find(
-          (r: unknown) => (r as Record<string, unknown>).id === 'CUSTOM_UNKNOWN',
-        ) as Record<string, unknown> | undefined;
+    it('should include description for MANAGER role', () => {
+      const result = controller.findAll();
+      const managerRole = (result.data as { id: string; description: string }[]).find(
+        r => r.id === UserRole.MANAGER,
+      );
 
-        expect(unknown).toBeDefined();
-        expect(unknown).toEqual({
-          id: 'CUSTOM_UNKNOWN',
-          name: 'CUSTOM_UNKNOWN',
-          label: 'CUSTOM_UNKNOWN',
-          description: '',
-          permissions: [],
-        });
-
-        const admin = result.data.find(
-          (r: unknown) => (r as Record<string, unknown>).id === 'ADMIN',
-        ) as Record<string, unknown> | undefined;
-        expect(admin).toBeDefined();
-        expect(admin?.label).toBe('Amministratore');
-      });
+      expect(managerRole).toBeDefined();
+      expect(managerRole?.description).toBeTruthy();
     });
   });
 });

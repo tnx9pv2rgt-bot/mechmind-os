@@ -103,8 +103,8 @@ export default function Step4Page() {
         await createVehicle.mutateAsync({
           customerId: customer.id,
           licensePlate: v.plate || 'UNKNOWN',
-          make: v.make || 'N/D',
-          model: v.model || 'N/D',
+          make: v.make || '—',
+          model: v.model || '—',
           year: v.year || undefined,
           mileage: v.km || undefined,
         });
