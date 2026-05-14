@@ -1260,4 +1260,201 @@ describe('FatturapaService', () => {
       expect(xml).toContain('<ModalitaPagamento>MP05</ModalitaPagamento>');
     });
   });
+
+  // ── FatturaPA v1.9.1 (active May 15 2026) ──────────────────────────────────
+  describe('FatturaPA v1.9.1 compliance', () => {
+    const baseTenant = {
+      ragioneSociale: 'Officina Test SRL',
+      partitaIva: '12345678901',
+      codiceFiscale: 'ABCDE12345F',
+      regimeFiscale: 'RF01',
+      indirizzo: 'Via Roma',
+      cap: '00100',
+      comune: 'Roma',
+      provincia: 'RM',
+      nazione: 'IT',
+    };
+    const baseCustomer = {
+      tipo: 'PERSONA' as const,
+      nome: 'Mario',
+      cognome: 'Rossi',
+      codiceFiscale: 'RSSMRA80A01H501U',
+      indirizzo: 'Via Verdi',
+      cap: '20100',
+      comune: 'Milano',
+      provincia: 'MI',
+      nazione: 'IT',
+    };
+    const baseInvoice = {
+      tipoDocumento: 'TD01',
+      numero: 'INV-2026-V191',
+      data: '2026-05-15',
+      divisa: 'EUR',
+    };
+    const basePagamento = {
+      condizioniPagamento: 'TP02',
+      modalitaPagamento: 'MP05',
+      importoPagamento: 122,
+    };
+    const baseItems = [
+      {
+        numero: 1,
+        descrizione: 'Tagliando',
+        quantita: 1,
+        prezzoUnitario: 100,
+        prezzoTotale: 100,
+        aliquotaIva: 22,
+      },
+    ];
+    const baseRiepilogo = [{ aliquotaIva: 22, imponibile: 100, imposta: 22 }];
+
+    it('schema location references v1.9.1 XSD', () => {
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: baseCustomer,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('Schema_del_file_xml_FatturaPA_v1.9.1.xsd');
+      expect(xml).not.toContain('v1.2.2.xsd');
+    });
+
+    it('includes GruppoIVA block when tenant belongs to VAT group', () => {
+      const tenantWithGroup = {
+        ...baseTenant,
+        gruppoIVA: {
+          denominazione: 'Gruppo IVA Automotive IT',
+          partitaIva: '99999999999',
+          codiceSede: 'HQ',
+        },
+      };
+      const xml = service.buildXml({
+        tenant: tenantWithGroup,
+        customer: baseCustomer,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<GruppoIVA>');
+      expect(xml).toContain('<Denominazione>Gruppo IVA Automotive IT</Denominazione>');
+      expect(xml).toContain('<IdCodice>99999999999</IdCodice>');
+      expect(xml).toContain('<CodiceSede>HQ</CodiceSede>');
+    });
+
+    it('omits GruppoIVA block when tenant has no VAT group', () => {
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: baseCustomer,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).not.toContain('<GruppoIVA>');
+    });
+
+    it('includes GruppoIVA without CodiceSede when not provided', () => {
+      const tenantWithGroupNoSede = {
+        ...baseTenant,
+        gruppoIVA: { denominazione: 'Gruppo Nazionale', partitaIva: '88888888888' },
+      };
+      const xml = service.buildXml({
+        tenant: tenantWithGroupNoSede,
+        customer: baseCustomer,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<GruppoIVA>');
+      expect(xml).not.toContain('<CodiceSede>');
+    });
+
+    it('includes NumeroCivico in tenant Sede when provided', () => {
+      const tenantWithCivico = { ...baseTenant, numeroCivico: '10A' };
+      const xml = service.buildXml({
+        tenant: tenantWithCivico,
+        customer: baseCustomer,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<NumeroCivico>10A</NumeroCivico>');
+    });
+
+    it('includes NumeroCivico in customer Sede when provided', () => {
+      const customerWithCivico = { ...baseCustomer, numeroCivico: '5/B' };
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: customerWithCivico,
+        invoice: baseInvoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<NumeroCivico>5/B</NumeroCivico>');
+    });
+
+    it('RT04 (compenso sportivo dilettantistico) renders correct TipoRitenuta', () => {
+      const invoiceWithRT04 = {
+        ...baseInvoice,
+        ritenuta: {
+          tipoRitenuta: 'RT04',
+          importoRitenuta: 46.48,
+          aliquotaRitenuta: 23,
+          causalePagamento: 'E',
+        },
+      };
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: baseCustomer,
+        invoice: invoiceWithRT04,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<TipoRitenuta>RT04</TipoRitenuta>');
+      expect(xml).toContain('<ImportoRitenuta>46.48</ImportoRitenuta>');
+      expect(xml).toContain('<CausalePagamento>E</CausalePagamento>');
+    });
+
+    it('TD28 (acquisto da San Marino senza IVA) maps to correct code', () => {
+      const td28Invoice = { ...baseInvoice, tipoDocumento: 'TD28' };
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: baseCustomer,
+        invoice: td28Invoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<TipoDocumento>TD28</TipoDocumento>');
+    });
+
+    it('TD29 (comunicazione esterometro) maps to correct code', () => {
+      const td29Invoice = { ...baseInvoice, tipoDocumento: 'TD29' };
+      const xml = service.buildXml({
+        tenant: baseTenant,
+        customer: baseCustomer,
+        invoice: td29Invoice,
+        items: baseItems,
+        riepilogoIva: baseRiepilogo,
+        pagamento: basePagamento,
+      });
+
+      expect(xml).toContain('<TipoDocumento>TD29</TipoDocumento>');
+    });
+  });
 });

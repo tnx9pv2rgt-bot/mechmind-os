@@ -18,10 +18,11 @@ model Tenant {
   name       String
   slug       String   @unique
   settings   Json     @default("{}")
-  isActive   Boolean  @default(true) @map("is_active")
-  apiKeyHash String?  @map("api_key_hash")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  isActive    Boolean   @default(true) @map("is_active")
+  apiKeyHash  String?   @map("api_key_hash")
+  trialEndsAt DateTime? @map("trial_ends_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   // Relations
   users        User[]

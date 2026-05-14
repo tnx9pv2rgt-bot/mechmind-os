@@ -160,5 +160,25 @@ describe('AdminSetupService', () => {
       );
       expect(result.users).toHaveLength(3);
     });
+
+    it('should set trialEndsAt to 14 days in the future on both create and update', async () => {
+      const nowBefore = Date.now();
+      await service.seedDemoData();
+      const nowAfter = Date.now();
+
+      const call = (mockPrisma.tenant.upsert as jest.Mock).mock.calls[0][0];
+      const trialCreate: Date = call.create.trialEndsAt;
+      const trialUpdate: Date = call.update.trialEndsAt;
+
+      expect(trialCreate).toBeDefined();
+      expect(trialUpdate).toBeDefined();
+      expect(trialCreate).toEqual(trialUpdate);
+
+      const expectedMs = 14 * 24 * 60 * 60 * 1000;
+      const actualMs = trialCreate.getTime() - nowBefore;
+      expect(Math.abs(actualMs - expectedMs)).toBeLessThan(1000);
+      expect(trialCreate.getTime()).toBeLessThanOrEqual(nowAfter + expectedMs);
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    });
   });
 });

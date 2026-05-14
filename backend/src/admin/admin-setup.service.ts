@@ -22,18 +22,21 @@ export class AdminSetupService {
     const passwordHash: string = await bcrypt.hash(demoPassword, 12);
 
     return this.prisma.$transaction(async tx => {
-      // 1. Create demo tenant
+      // 1. Create demo tenant with 14-day trial
+      const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
       const tenant = await tx.tenant.upsert({
         where: { slug: 'demo' },
         update: {
           name: 'Demo Officina Roma',
           isActive: true,
+          trialEndsAt,
           settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
         },
         create: {
           name: 'Demo Officina Roma',
           slug: 'demo',
           isActive: true,
+          trialEndsAt,
           settings: { timezone: 'Europe/Rome', currency: 'EUR', language: 'it' },
         },
       });

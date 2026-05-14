@@ -21,6 +21,13 @@ interface FatturapaRiepilogoIva {
   natura?: string;
 }
 
+// v1.9.1: GruppoIVA identifies sender as VAT group representative (EU Dir. 2006/112/EC Art. 11)
+interface GruppoIVA {
+  denominazione: string;
+  partitaIva: string;
+  codiceSede?: string;
+}
+
 interface FatturapaData {
   tenant: {
     ragioneSociale: string;
@@ -28,10 +35,12 @@ interface FatturapaData {
     codiceFiscale: string;
     regimeFiscale: string;
     indirizzo: string;
+    numeroCivico?: string;
     cap: string;
     comune: string;
     provincia: string;
     nazione: string;
+    gruppoIVA?: GruppoIVA;
   };
   customer: {
     tipo: 'PERSONA' | 'AZIENDA';
@@ -43,6 +52,7 @@ interface FatturapaData {
     sdiCode?: string;
     pecEmail?: string;
     indirizzo: string;
+    numeroCivico?: string;
     cap: string;
     comune: string;
     provincia: string;
@@ -97,6 +107,9 @@ const DOC_TYPE_MAP: Record<string, string> = {
   FATTURA: 'TD01',
   NOTA_CREDITO: 'TD04',
   PROFORMA: 'TD01',
+  // v1.9.1 new document types
+  ACQUISTO_SAN_MARINO_SENZA_IVA: 'TD28',
+  COMUNICAZIONE_ESTEROMETRO: 'TD29',
 };
 
 @Injectable()
@@ -321,7 +334,7 @@ export class FatturapaService {
     const codiceDestinatario = data.customer.sdiCode || '0000000';
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<p:FatturaElettronica xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" versione="FPR12" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2.2 Schema_del_file_xml_FatturaPA_v1.2.2.xsd">
+<p:FatturaElettronica xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" versione="FPR12" xsi:schemaLocation="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2.2 Schema_del_file_xml_FatturaPA_v1.9.1.xsd">
   <FatturaElettronicaHeader>
     <DatiTrasmissione>
       <IdTrasmittente>
@@ -346,11 +359,32 @@ export class FatturapaService {
         <CodiceFiscale>${this.escapeXml(data.tenant.codiceFiscale)}</CodiceFiscale>
         <Anagrafica>
           <Denominazione>${this.escapeXml(data.tenant.ragioneSociale)}</Denominazione>
-        </Anagrafica>
+        </Anagrafica>${
+          data.tenant.gruppoIVA
+            ? `
+        <GruppoIVA>
+          <Denominazione>${this.escapeXml(data.tenant.gruppoIVA.denominazione)}</Denominazione>
+          <IdFiscaleIVA>
+            <IdPaese>IT</IdPaese>
+            <IdCodice>${this.escapeXml(data.tenant.gruppoIVA.partitaIva)}</IdCodice>
+          </IdFiscaleIVA>${
+            data.tenant.gruppoIVA.codiceSede
+              ? `
+          <CodiceSede>${this.escapeXml(data.tenant.gruppoIVA.codiceSede)}</CodiceSede>`
+              : ''
+          }
+        </GruppoIVA>`
+            : ''
+        }
         <RegimeFiscale>${this.escapeXml(data.tenant.regimeFiscale)}</RegimeFiscale>
       </DatiAnagrafici>
       <Sede>
-        <Indirizzo>${this.escapeXml(data.tenant.indirizzo)}</Indirizzo>
+        <Indirizzo>${this.escapeXml(data.tenant.indirizzo)}</Indirizzo>${
+          data.tenant.numeroCivico
+            ? `
+        <NumeroCivico>${this.escapeXml(data.tenant.numeroCivico)}</NumeroCivico>`
+            : ''
+        }
         <CAP>${this.escapeXml(data.tenant.cap)}</CAP>
         <Comune>${this.escapeXml(data.tenant.comune)}</Comune>
         <Provincia>${this.escapeXml(data.tenant.provincia)}</Provincia>
@@ -383,7 +417,12 @@ export class FatturapaService {
         </Anagrafica>
       </DatiAnagrafici>
       <Sede>
-        <Indirizzo>${this.escapeXml(data.customer.indirizzo)}</Indirizzo>
+        <Indirizzo>${this.escapeXml(data.customer.indirizzo)}</Indirizzo>${
+          data.customer.numeroCivico
+            ? `
+        <NumeroCivico>${this.escapeXml(data.customer.numeroCivico)}</NumeroCivico>`
+            : ''
+        }
         <CAP>${this.escapeXml(data.customer.cap)}</CAP>
         <Comune>${this.escapeXml(data.customer.comune)}</Comune>
         <Provincia>${this.escapeXml(data.customer.provincia)}</Provincia>
