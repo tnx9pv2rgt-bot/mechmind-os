@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { btnPrimary } from '@/components/auth/auth-styles';
+import { clearDemoSession } from '@/lib/auth/demo-session';
 
 function MagicLinkVerifyContent(): React.ReactElement {
   const router = useRouter();
@@ -33,6 +34,7 @@ function MagicLinkVerifyContent(): React.ReactElement {
         const data = (await res.json()) as { success?: boolean; error?: string };
 
         if (res.ok && data.success) {
+          clearDemoSession();
           setStatus('success');
           setTimeout(() => {
             router.push('/dashboard');
@@ -51,14 +53,14 @@ function MagicLinkVerifyContent(): React.ReactElement {
   }, [token, router]);
 
   return (
-    <div className="text-center space-y-5">
+    <div className='text-center space-y-5'>
       {status === 'verifying' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='space-y-4'>
+          <div className='mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent' />
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Verifica in corso...
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             Stiamo verificando il tuo link di accesso
           </p>
         </motion.div>
@@ -68,15 +70,15 @@ function MagicLinkVerifyContent(): React.ReactElement {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="space-y-4"
+          className='space-y-4'
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
-            <span className="text-2xl text-[var(--text-on-brand)]">✓</span>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10'>
+            <span className='text-2xl text-[var(--text-on-brand)]'>✓</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Accesso effettuato!
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             Reindirizzamento alla dashboard...
           </p>
         </motion.div>
@@ -86,24 +88,23 @@ function MagicLinkVerifyContent(): React.ReactElement {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="space-y-5"
+          className='space-y-5'
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
-            <span className="text-2xl text-[var(--text-secondary)]">✕</span>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10'>
+            <span className='text-2xl text-[var(--text-secondary)]'>✕</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Link non valido
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed" role="alert">{error}</p>
-          <button
-            onClick={() => router.push('/auth')}
-            className={btnPrimary}
-          >
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed' role='alert'>
+            {error}
+          </p>
+          <button onClick={() => router.push('/auth')} className={btnPrimary}>
             Richiedi nuovo link
           </button>
           <Link
-            href="/auth"
-            className="inline-flex items-center min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors"
+            href='/auth'
+            className='inline-flex items-center min-h-[44px] text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors'
           >
             Torna al login
           </Link>
@@ -118,9 +119,9 @@ export default function MagicLinkVerifyPage(): React.ReactElement {
     <AuthSplitLayout>
       <Suspense
         fallback={
-          <div className="text-center space-y-4">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
-            <p className="text-[15px] text-[var(--text-secondary)]">Caricamento...</p>
+          <div className='text-center space-y-4'>
+            <div className='mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent' />
+            <p className='text-[15px] text-[var(--text-secondary)]'>Caricamento...</p>
           </div>
         }
       >

@@ -448,12 +448,123 @@ export class StripeWebhookController {
         break;
       }
 
+      case 'invoice.payment_succeeded': {
+        const inv = data.object as unknown as Record<string, unknown>;
+        const tenantId =
+          (
+            (inv?.subscription_details as Record<string, unknown>)?.metadata as Record<
+              string,
+              string
+            >
+          )?.tenantId ?? (inv?.metadata as Record<string, string>)?.tenantId;
+        if (tenantId && inv.subscription) {
+          try {
+            const periodEnd = new Date((inv.period_end as number) * 1000);
+            await this.subscriptionService.renewSubscription(
+              tenantId,
+              inv.subscription as string,
+              periodEnd,
+            );
+            this.logger.log(
+              `Invoice payment succeeded, subscription renewed for tenant ${tenantId}`,
+            );
+          } catch (error) {
+            this.logger.error(
+              `Failed to renew subscription for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const inv = data.object as unknown as Record<string, unknown>;
+        const tenantId =
+          (
+            (inv?.subscription_details as Record<string, unknown>)?.metadata as Record<
+              string,
+              string
+            >
+          )?.tenantId ?? (inv?.metadata as Record<string, string>)?.tenantId;
+        if (tenantId) {
+          this.logger.warn(`Invoice payment failed for tenant ${tenantId}`);
+          try {
+            await this.subscriptionService.markPaymentFailed(tenantId);
+          } catch (error) {
+            this.logger.error(
+              `Failed to mark payment failed for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = data.object as unknown as Record<string, unknown>;
+        const tenantId = (sub?.metadata as Record<string, string>)?.tenantId;
+        if (tenantId) {
+          this.logger.log(
+            `Stripe subscription updated for tenant ${tenantId}, status: ${sub.status}`,
+          );
+          try {
+            await this.subscriptionService.syncStripeSubscriptionStatus(
+              tenantId,
+              sub.status as string,
+            );
+          } catch (error) {
+            this.logger.error(
+              `Failed to sync subscription status for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        }
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const sub = data.object as unknown as Record<string, unknown>;
+        const tenantId = (sub?.metadata as Record<string, string>)?.tenantId;
+        if (tenantId) {
+          const trialEnd = new Date((sub.trial_end as number) * 1000);
+          this.logger.log(
+            `Trial ending soon for tenant ${tenantId}, ends at ${trialEnd.toISOString()}`,
+          );
+          try {
+            await this.subscriptionService.handleTrialWillEnd(tenantId, trialEnd);
+          } catch (error) {
+            this.logger.error(
+              `Failed to handle trial_will_end for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        }
+        break;
+      }
+
       case 'checkout.session.completed': {
         const sessionObj = data.object as unknown as Record<string, unknown>;
         const metadata = (sessionObj?.metadata as Record<string, string>) ?? {};
-        const invoiceId = metadata.invoiceId;
-        if (invoiceId) {
-          this.logger.log(`Checkout session completed for invoice: ${invoiceId}`);
+        const tenantId = metadata.tenantId;
+        const plan = metadata.plan as SubscriptionPlan | undefined;
+        const billingCycle = metadata.billingCycle as 'monthly' | 'yearly' | undefined;
+        const stripeSubId = sessionObj.subscription as string | undefined;
+
+        if (tenantId && plan && billingCycle && stripeSubId) {
+          try {
+            await this.subscriptionService.activateSubscription(
+              tenantId,
+              plan,
+              billingCycle,
+              stripeSubId,
+            );
+            this.logger.log(`Checkout completed: tenant ${tenantId} activated on plan ${plan}`);
+          } catch (error) {
+            this.logger.error(
+              `Failed to activate subscription for tenant ${tenantId}: ${error instanceof Error ? error.message : 'Unknown'}`,
+            );
+          }
+        } else {
+          this.logger.warn(
+            `checkout.session.completed missing metadata: ${JSON.stringify(metadata)}`,
+          );
         }
         break;
       }

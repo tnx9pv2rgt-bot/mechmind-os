@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
-import { EmailProcessor } from './email.processor';
 import { Logger } from '@nestjs/common';
+import { EmailProcessor } from './email.processor';
+import { EmailService, EmailResult } from '../email/email.service';
 
 interface EmailJobData {
   tenantId: string;
@@ -11,280 +12,195 @@ interface EmailJobData {
   variables: Record<string, unknown>;
 }
 
+const mockSendRawEmail = jest.fn<
+  Promise<EmailResult>,
+  [{ to: string; subject: string; html: string }]
+>();
+
+const mockEmailService = {
+  sendRawEmail: mockSendRawEmail,
+} as unknown as EmailService;
+
 describe('EmailProcessor', () => {
   let processor: EmailProcessor;
 
   beforeEach(() => {
-    // Suppress logger output during tests
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    mockSendRawEmail.mockResolvedValue({ success: true, messageId: 'resend-msg-001' });
 
-    processor = new EmailProcessor();
+    processor = new EmailProcessor(mockEmailService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  const makeJob = (overrides: Partial<EmailJobData> = {}): Job<EmailJobData> =>
+    ({
+      id: 'job-001',
+      data: {
+        tenantId: 'tenant-1',
+        userId: 'user-1',
+        to: 'test@example.com',
+        subject: 'Test Subject',
+        template: 'booking_confirmation',
+        variables: {},
+        ...overrides,
+      },
+    }) as unknown as Job<EmailJobData>;
+
   describe('process', () => {
-    const createJob = (data: Partial<EmailJobData> = {}): Job<EmailJobData> =>
-      ({
-        id: 'job-001',
-        data: {
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-          to: 'test@example.com',
-          subject: 'Test Subject',
-          template: 'booking_confirmation',
-          variables: {},
-          ...data,
-        },
-      }) as unknown as Job<EmailJobData>;
-
-    it('should be defined', () => {
-      expect(processor).toBeDefined();
-    });
-
-    it('should mask email addresses in logging', async () => {
-      const logSpy = jest.spyOn(processor['logger'], 'log').mockImplementation();
-
-      const job = createJob({
-        to: 'customer@example.com',
-      });
-
-      // Mock the SES client send to avoid actual AWS calls
-      jest.spyOn(processor['ses'] as any, 'send').mockResolvedValueOnce({ MessageId: 'msg-123' });
-
-      await processor.process(job);
-
-      expect(logSpy).toHaveBeenCalled();
-      logSpy.mockRestore();
-    });
-
-    it('should send email via SES when job is processed', async () => {
-      const sesSpy = (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-124',
-      });
-
-      const job = createJob({
-        to: 'customer2@example.com',
-        subject: 'Prenotazione Confermata',
+    it('should call EmailService.sendRawEmail with rendered HTML', async () => {
+      const job = makeJob({
         template: 'booking_confirmation',
+        variables: { customerName: 'Mario' },
       });
 
       await processor.process(job);
 
-      expect(sesSpy).toHaveBeenCalledTimes(1);
+      expect(mockSendRawEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendRawEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'test@example.com', subject: 'Test Subject' }),
+      );
     });
 
-    it('should use booking_confirmation template by default', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-125',
-      });
+    it('should pass subject from job data verbatim', async () => {
+      const job = makeJob({ subject: 'Conferma Prenotazione BK-999' });
 
-      const job = createJob({
+      await processor.process(job);
+
+      expect(mockSendRawEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ subject: 'Conferma Prenotazione BK-999' }),
+      );
+    });
+
+    it('should render booking_reminder template when specified', async () => {
+      const job = makeJob({ template: 'booking_reminder', variables: { date: '2026-06-01' } });
+
+      await processor.process(job);
+
+      const callArg = mockSendRawEmail.mock.calls[0][0];
+      expect(callArg.html).toContain('Promemoria Prenotazione');
+    });
+
+    it('should fall back to booking_confirmation for unknown templates', async () => {
+      const job = makeJob({ template: 'non_existent_template' });
+
+      await processor.process(job);
+
+      const callArg = mockSendRawEmail.mock.calls[0][0];
+      expect(callArg.html).toContain('Conferma Prenotazione');
+    });
+
+    it('should interpolate template variables into HTML', async () => {
+      const job = makeJob({
         template: 'booking_confirmation',
+        variables: { customerName: 'Luigi Bianchi', bookingCode: 'BK-XYZ' },
       });
 
       await processor.process(job);
 
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
+      const callArg = mockSendRawEmail.mock.calls[0][0];
+      expect(callArg.html).toContain('Luigi Bianchi');
+      expect(callArg.html).toContain('BK-XYZ');
     });
 
-    it('should use booking_reminder template when specified', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-126',
+    it('should escape HTML entities in variables to prevent XSS', async () => {
+      const job = makeJob({
+        template: 'booking_confirmation',
+        variables: { customerName: '<script>alert("xss")</script>', service: 'Oil & Filter' },
       });
 
-      const job = createJob({
+      await processor.process(job);
+
+      const callArg = mockSendRawEmail.mock.calls[0][0];
+      expect(callArg.html).not.toContain('<script>');
+      expect(callArg.html).toContain('&lt;script&gt;');
+      expect(callArg.html).toContain('Oil &amp; Filter');
+    });
+
+    it('should throw when EmailService returns success=false', async () => {
+      mockSendRawEmail.mockResolvedValueOnce({ success: false, error: 'Resend API Error' });
+      const job = makeJob();
+
+      await expect(processor.process(job)).rejects.toThrow('Resend API Error');
+      expect(mockSendRawEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw generic message when EmailService returns no error string', async () => {
+      mockSendRawEmail.mockResolvedValueOnce({ success: false });
+      const job = makeJob();
+
+      await expect(processor.process(job)).rejects.toThrow('Email send failed');
+    });
+
+    it('should propagate EmailService exceptions for BullMQ retry', async () => {
+      mockSendRawEmail.mockRejectedValueOnce(new Error('Network timeout'));
+      const job = makeJob();
+
+      await expect(processor.process(job)).rejects.toThrow('Network timeout');
+    });
+
+    it('should handle multiple variable replacements across templates', async () => {
+      const job = makeJob({
         template: 'booking_reminder',
-      });
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should replace template variables in email body', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-127',
-      });
-
-      const job = createJob({
-        template: 'booking_confirmation',
-        variables: {
-          customerName: 'John Doe',
-          service: 'Oil Change',
-          bookingCode: 'BK-999',
-        },
-      });
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should escape HTML entities in template variables', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-128',
-      });
-
-      const job = createJob({
-        template: 'booking_confirmation',
-        variables: {
-          customerName: '<script>alert("xss")</script>',
-          service: 'Test & Service',
-        },
-      });
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw error when SES send fails', async () => {
-      const error = new Error('SES API Error');
-      jest.spyOn(processor['ses'] as any, 'send').mockRejectedValueOnce(error);
-
-      const job = createJob();
-
-      await expect(processor.process(job)).rejects.toThrow('SES API Error');
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle various template types', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-129',
-      });
-
-      const job = createJob({
-        template: 'non_existent_template',
-        variables: { test: 'value' },
-      });
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should send email with all job data fields', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-130',
-      });
-
-      const job = createJob({
-        tenantId: 'tenant-abc',
-        userId: 'user-xyz',
-        to: 'user@test.com',
-        subject: 'Custom Subject',
-        template: 'booking_confirmation',
-        variables: {
-          customerName: 'Test User',
-          date: '2024-03-20',
-        },
-      });
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should use default SES from email when env not set', async () => {
-      delete process.env.SES_FROM_EMAIL;
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-131',
-      });
-
-      const job = createJob();
-
-      await processor.process(job);
-
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
-    });
-
-    it('should handle multiple variable replacements', async () => {
-      (jest.spyOn(processor['ses'] as any, 'send') as any).mockResolvedValueOnce({
-        MessageId: 'msg-132',
-      });
-
-      const job = createJob({
         variables: {
           customerName: 'Marco Rossi',
           service: 'Cambio Olio',
-          date: '2024-04-20',
+          date: '2026-04-20',
           time: '15:00',
           vehicle: 'BMW X5',
-          bookingCode: 'BK-XYZ',
+          bookingCode: 'BK-ABC',
         },
       });
 
       await processor.process(job);
 
-      expect(processor['ses'].send).toHaveBeenCalledTimes(1);
+      const callArg = mockSendRawEmail.mock.calls[0][0];
+      expect(callArg.html).toContain('Marco Rossi');
+      expect(callArg.html).toContain('Cambio Olio');
     });
   });
 
   describe('onCompleted', () => {
-    it('should log when email job completes', () => {
+    it('should log job completion', () => {
       const logSpy = jest.spyOn(processor['logger'], 'log').mockImplementation();
-
-      const job = {
-        id: 'job-complete',
-      } as Job;
-
-      processor.onCompleted(job);
+      processor.onCompleted({ id: 'job-complete' } as Job);
 
       expect(logSpy).toHaveBeenCalledWith('Email job job-complete completed');
-      logSpy.mockRestore();
     });
 
-    it('should handle different job IDs', () => {
+    it('should handle numeric job ids', () => {
       const logSpy = jest.spyOn(processor['logger'], 'log').mockImplementation();
-
-      processor.onCompleted({ id: 'job-abc123' } as Job);
+      processor.onCompleted({ id: 42 } as unknown as Job);
 
       expect(logSpy).toHaveBeenCalled();
-      logSpy.mockRestore();
     });
   });
 
   describe('onFailed', () => {
-    it('should log when email job fails', () => {
-      const logSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+    it('should log job failure with error message', () => {
+      const errorSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+      processor.onFailed({ id: 'job-fail' } as Job, new Error('Send failed'));
 
-      const job = {
-        id: 'job-failed',
-      } as Job;
-      const error = new Error('Send failed');
-
-      processor.onFailed(job, error);
-
-      expect(logSpy).toHaveBeenCalledWith('Email job job-failed failed: Send failed');
-      logSpy.mockRestore();
+      expect(errorSpy).toHaveBeenCalledWith('Email job job-fail failed: Send failed');
     });
 
-    it('should handle errors with different messages', () => {
-      const logSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+    it('should handle errors with empty message', () => {
+      const errorSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+      processor.onFailed({ id: 'job-fail2' } as Job, new Error());
 
-      const job = { id: 'job-fail2' } as Job;
-      const error = new Error('Network timeout');
-
-      processor.onFailed(job, error);
-
-      expect(logSpy).toHaveBeenCalled();
-      logSpy.mockRestore();
+      expect(errorSpy).toHaveBeenCalled();
     });
 
-    it('should handle missing error message', () => {
-      const logSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+    it('should handle errors with long messages', () => {
+      const errorSpy = jest.spyOn(processor['logger'], 'error').mockImplementation();
+      const longMsg = 'A'.repeat(500);
+      processor.onFailed({ id: 'job-fail3' } as Job, new Error(longMsg));
 
-      const job = { id: 'job-fail3' } as Job;
-      const error = new Error();
-
-      processor.onFailed(job, error);
-
-      expect(logSpy).toHaveBeenCalled();
-      logSpy.mockRestore();
+      expect(errorSpy).toHaveBeenCalledWith(`Email job job-fail3 failed: ${longMsg}`);
     });
   });
 });

@@ -127,6 +127,9 @@ model Tenant {
   // Webhooks
   webhookSubscriptions WebhookSubscription[]
 
+  // GDPR Art. 28 — DPA acceptance audit trail
+  dpaAcceptances DpaAcceptance[]
+
   @@map("tenants")
 }
 
@@ -396,6 +399,8 @@ model Vehicle {
   documents VehicleDocument[]
 
   @@index([tenantId])
+  @@index([customerId])
+  @@index([customerEncryptedId])
   @@map("vehicles")
 }
 
@@ -4177,6 +4182,44 @@ model WebhookSubscription {
 // - Transparency: AI disclosure at call start
 // - Audit trail: GDPR Art.22 automated decision-making
 // - Opt-out: Customer "talk to human" request tracking
+
+// ==========================================
+// GDPR ART. 28 — DATA PROCESSING AGREEMENT
+// ==========================================
+
+model DpaAcceptance {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Who accepted
+  userId      String? @map("user_id")
+  signerName  String  @map("signer_name")
+  signerEmail String  @map("signer_email")
+
+  // What was accepted
+  dpaVersion  String @map("dpa_version")
+  documentUrl String @map("document_url")
+
+  // How it was accepted (click | email | esign | api)
+  method String @default("click")
+
+  // Forensic trail (GDPR Art. 7 accountability)
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  acceptedAt DateTime  @default(now()) @map("accepted_at")
+  revokedAt  DateTime? @map("revoked_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([tenantId, acceptedAt])
+  @@index([signerEmail])
+  @@index([dpaVersion])
+  @@map("dpa_acceptances")
+}
 
 model AIVoiceInteractionLog {
   id String @id @default(uuid())

@@ -64,9 +64,21 @@ export default function RegisterPage(): React.ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [createdSlug, setCreatedSlug] = useState('');
 
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
   const autoSlug = generateSlug(shopName);
   const effectiveSlug = slugManual ? slug : autoSlug;
   const slugCheckTimeout = useRef<NodeJS.Timeout>();
+
+  // Sync Safari autofill — autofill does NOT trigger React onChange
+  useEffect(() => {
+    const el = passwordInputRef.current;
+    if (!el) return;
+    const id = setInterval(() => {
+      if (el.value !== password) setPassword(el.value);
+    }, 100);
+    return () => clearInterval(id);
+  }, [password]);
 
   // Debounced slug availability check
   useEffect(() => {
@@ -378,6 +390,7 @@ export default function RegisterPage(): React.ReactElement {
                 Password
               </label>
               <input
+                ref={passwordInputRef}
                 id='reg-password'
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -385,20 +398,30 @@ export default function RegisterPage(): React.ReactElement {
                   setPassword(e.target.value);
                   setFieldErrors(p => ({ ...p, password: '' }));
                 }}
+                onInput={e => {
+                  setPassword(e.currentTarget.value);
+                  setFieldErrors(p => ({ ...p, password: '' }));
+                }}
                 placeholder='Password'
                 name='password'
                 autoComplete='new-password'
                 aria-describedby={fieldErrors.password ? 'err-password' : undefined}
-                className={`${inputStyle} pr-20 ${fieldErrors.password ? 'border-[var(--text-tertiary)]' : ''}`}
+                data-lpignore='true'
+                data-1p-ignore
+                className={`${inputStyle} pr-24 ${fieldErrors.password ? 'border-[var(--text-tertiary)]' : ''}`}
               />
               <button
                 type='button'
-                onClick={() => setShowPassword(!showPassword)}
-                className='absolute right-5 top-1/2 -translate-y-1/2 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-on-brand)] min-w-[44px] min-h-[44px] flex items-center justify-center'
-                tabIndex={-1}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  setShowPassword(v => !v);
+                }}
+                className='absolute inset-y-0 right-0 z-20 flex min-w-[60px] items-center justify-center px-3 text-[13px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-on-brand)]'
                 aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
               >
-                {showPassword ? 'Nascondi' : 'Mostra'}
+                <span style={{ pointerEvents: 'none' }}>
+                  {showPassword ? 'Nascondi' : 'Mostra'}
+                </span>
               </button>
             </div>
             {fieldErrors.password && (

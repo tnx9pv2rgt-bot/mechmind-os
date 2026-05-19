@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const DEPLOY_URL = process.env.DEPLOY_URL;
+const BASE_URL = process.env.BASE_URL;
 const isDeploySmoke = !!DEPLOY_URL;
 
 export default defineConfig({
@@ -12,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 4,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: DEPLOY_URL || 'http://localhost:3001',
+    baseURL: DEPLOY_URL || BASE_URL || 'http://localhost:3001',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -55,13 +56,14 @@ export default defineConfig({
         ]
       : []),
   ],
-  // webServer solo in modalità locale (non smoke su deploy remoto)
-  webServer: isDeploySmoke
-    ? undefined
-    : {
-        command: 'npm run dev -- -p 3001',
-        port: 3001,
-        reuseExistingServer: true,
-        timeout: 120_000,
-      },
+  // webServer solo in modalità locale (non smoke su deploy remoto, non se BASE_URL è impostato)
+  webServer:
+    isDeploySmoke || BASE_URL
+      ? undefined
+      : {
+          command: 'npm run dev -- -p 3001',
+          port: 3001,
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
 });

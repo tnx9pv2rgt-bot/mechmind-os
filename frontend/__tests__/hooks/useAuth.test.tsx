@@ -57,7 +57,7 @@ describe('useAuth', () => {
 
       expect(result.current.user).toEqual(MOCK_USER);
       expect(result.current.isAuthenticated).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/me');
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/me', { credentials: 'include' });
     });
 
     it('sets user to null when auth check fails', async () => {
@@ -109,7 +109,10 @@ describe('useAuth', () => {
         await result.current.logout();
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+      expect(mockFetch).toHaveBeenCalledWith('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
       await waitFor(() => expect(result.current.user).toBeNull());
       expect(result.current.isAuthenticated).toBe(false);
     });

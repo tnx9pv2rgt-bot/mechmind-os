@@ -576,9 +576,16 @@ function LiveTimestamp({
 }
 
 // =============================================================================
-// Quick Actions
+// Quick Actions — sector-aware
 // =============================================================================
-const quickActions = [
+type QuickAction = {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+};
+
+const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
   {
     label: 'Nuovo OdL',
     href: '/dashboard/work-orders/new',
@@ -606,6 +613,207 @@ const quickActions = [
   },
   { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: '#22d3ee' },
 ];
+
+const SECTOR_QUICK_ACTIONS: Record<string, QuickAction[]> = {
+  meccanica: [
+    {
+      label: 'Nuova Commessa',
+      href: '/dashboard/work-orders/new',
+      icon: Wrench,
+      color: 'var(--status-info)',
+    },
+    { label: 'Diagnosi OBD', href: '/dashboard/obd', icon: Gauge, color: '#a78bfa' },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#22d3ee',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Ispezione',
+      href: '/dashboard/inspections/new',
+      icon: SearchIcon,
+      color: 'var(--brand)',
+    },
+  ],
+  carrozzeria: [
+    {
+      label: 'Nuova Perizia',
+      href: '/dashboard/estimates/new',
+      icon: ClipboardList,
+      color: 'var(--brand)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#a78bfa',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Nuovo OdL',
+      href: '/dashboard/work-orders/new',
+      icon: Wrench,
+      color: 'var(--status-info)',
+    },
+    { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: '#22d3ee' },
+  ],
+  elettrauto: [
+    {
+      label: 'Nuovo Intervento',
+      href: '/dashboard/work-orders/new',
+      icon: Wrench,
+      color: 'var(--status-info)',
+    },
+    { label: 'Diagnosi', href: '/dashboard/diagnostics', icon: Gauge, color: '#a78bfa' },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#22d3ee',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Ispezione',
+      href: '/dashboard/inspections/new',
+      icon: SearchIcon,
+      color: 'var(--brand)',
+    },
+  ],
+  gommista: [
+    {
+      label: 'Nuovo Intervento',
+      href: '/dashboard/work-orders/new',
+      icon: Wrench,
+      color: 'var(--status-info)',
+    },
+    { label: 'Ricambi', href: '/dashboard/parts', icon: Package, color: '#22d3ee' },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#a78bfa',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Preventivo',
+      href: '/dashboard/estimates/new',
+      icon: ClipboardList,
+      color: 'var(--brand)',
+    },
+  ],
+  multimarca: [
+    {
+      label: 'Nuovo Job Card',
+      href: '/dashboard/work-orders/new',
+      icon: Wrench,
+      color: 'var(--status-info)',
+    },
+    { label: 'Diagnosi OEM', href: '/dashboard/obd', icon: Gauge, color: '#a78bfa' },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#22d3ee',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Preventivo',
+      href: '/dashboard/estimates/new',
+      icon: ClipboardList,
+      color: 'var(--brand)',
+    },
+  ],
+  concessionaria: [
+    {
+      label: 'Service Plan',
+      href: '/dashboard/estimates/new',
+      icon: ClipboardList,
+      color: 'var(--brand)',
+    },
+    {
+      label: 'Nuova Fattura',
+      href: '/dashboard/invoices/new',
+      icon: FileText,
+      color: 'var(--status-success)',
+    },
+    {
+      label: 'Nuovo Cliente',
+      href: '/dashboard/customers/new/step1',
+      icon: Users,
+      color: '#a78bfa',
+    },
+    {
+      label: 'Prenotazione',
+      href: '/dashboard/bookings/new',
+      icon: Calendar,
+      color: 'var(--status-warning)',
+    },
+    {
+      label: 'Garanzia',
+      href: '/dashboard/warranty',
+      icon: ShieldCheck,
+      color: 'var(--status-info)',
+    },
+    { label: 'Ispezione', href: '/dashboard/inspections/new', icon: SearchIcon, color: '#22d3ee' },
+  ],
+};
 
 // =============================================================================
 // Main Dashboard
@@ -675,6 +883,36 @@ export default function DashboardPage(): React.ReactElement {
     return 'Buonasera';
   }, []);
 
+  const sectorProfile = useMemo((): { shopType: string | null; label: string | null } => {
+    try {
+      const raw = localStorage.getItem('mechmind_onboarding_answers');
+      if (!raw) return { shopType: null, label: null };
+      const parsed = JSON.parse(raw) as { shopType?: string };
+      const labels: Record<string, string> = {
+        meccanica: 'Meccanica generale',
+        carrozzeria: 'Carrozzeria',
+        elettrauto: 'Elettrauto',
+        gommista: 'Gommista',
+        multimarca: 'Multimarca',
+        concessionaria: 'Concessionaria',
+      };
+      return {
+        shopType: parsed.shopType ?? null,
+        label: parsed.shopType ? (labels[parsed.shopType] ?? null) : null,
+      };
+    } catch {
+      return { shopType: null, label: null };
+    }
+  }, []);
+
+  const quickActions = useMemo(
+    () =>
+      sectorProfile.shopType && SECTOR_QUICK_ACTIONS[sectorProfile.shopType]
+        ? SECTOR_QUICK_ACTIONS[sectorProfile.shopType]
+        : DEFAULT_QUICK_ACTIONS,
+    [sectorProfile.shopType]
+  );
+
   // Banner di errore persistente — backend down o stats fallite.
   // Non blocca l'utilizzo della dashboard: l'utente può comunque navigare,
   // vedere i dati caricati prima, e cliccare "Riprova" per rifare le chiamate.
@@ -699,7 +937,13 @@ export default function DashboardPage(): React.ReactElement {
                 style={{ backgroundColor: 'var(--status-success)' }}
               />
               <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body'>
-                {tenantName} &middot;{' '}
+                {tenantName}
+                {sectorProfile.label && (
+                  <span className='ml-1.5 inline-flex items-center rounded-full bg-[var(--surface-secondary)]/10 px-2 py-0.5 text-[11px] font-medium text-[var(--text-tertiary)]'>
+                    {sectorProfile.label}
+                  </span>
+                )}{' '}
+                &middot;{' '}
                 <span suppressHydrationWarning>
                   {new Date().toLocaleDateString('it-IT', {
                     weekday: 'long',
@@ -1030,7 +1274,11 @@ export default function DashboardPage(): React.ReactElement {
                   <AppleButton
                     variant='secondary'
                     size='sm'
-                    icon={<AIcon className='h-3.5 w-3.5' style={{ color: action.color }} />}
+                    icon={
+                      <span style={{ color: action.color }}>
+                        <AIcon className='h-3.5 w-3.5' />
+                      </span>
+                    }
                   >
                     {action.label}
                   </AppleButton>

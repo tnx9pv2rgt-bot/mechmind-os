@@ -33,10 +33,11 @@ export const AppleButton = forwardRef<HTMLButtonElement, AppleButtonProps>(
       'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300 ease-apple rounded-pill disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] min-h-[44px]';
 
     const variants = {
-      primary: 'bg-[var(--brand)] text-[var(--text-on-brand)] hover:bg-[var(--brand-hover)]',
+      primary: 'bg-[var(--brand-text)] text-[var(--text-on-brand)] hover:bg-[var(--brand-active)]',
       secondary:
         'bg-[var(--surface-elevated)] text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--surface-hover)]',
-      ghost: 'bg-transparent text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--surface-hover)]',
+      ghost:
+        'bg-transparent text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--surface-hover)]',
       text: 'bg-transparent text-[var(--brand)] hover:underline px-0',
     };
 

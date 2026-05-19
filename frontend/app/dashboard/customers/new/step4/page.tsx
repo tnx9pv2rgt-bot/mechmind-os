@@ -163,16 +163,16 @@ export default function Step4Page() {
             </p>
 
             <div className='bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-2xl p-6 mb-8 border border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>Codice Cliente</p>
+              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-2'>
+                Codice Cliente
+              </p>
               <p className='text-title-1 font-mono font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 CLI-{Date.now().toString(36).toUpperCase().slice(-8)}
               </p>
             </div>
 
             <div className='flex gap-4'>
-              <AppleButton
-                onClick={() => router.push('/dashboard/customers')}
-              >
+              <AppleButton onClick={() => router.push('/dashboard/customers')}>
                 Vai ai Clienti
               </AppleButton>
               <AppleButton
@@ -231,58 +231,92 @@ export default function Step4Page() {
             <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
               <User className='w-5 h-5 text-[var(--brand)]' />
             </div>
-            <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Anagrafica</h3>
+            <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+              Anagrafica
+            </h3>
           </div>
           <div className='space-y-3 text-footnote'>
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tipo:</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Tipo:
+              </span>
               <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] px-3 py-1 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-full'>
                 {isBusiness ? 'Azienda' : 'Privato'}
               </span>
             </div>
             {isBusiness && formData.companyName && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ragione Sociale:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.companyName}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Ragione Sociale:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.companyName}
+                </span>
               </div>
             )}
             {formData.title && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Titolo:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.title}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Titolo:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.title}
+                </span>
               </div>
             )}
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nome:</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Nome:
+              </span>
               <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formData.firstName} {formData.lastName}
               </span>
             </div>
             {formData.dateOfBirth && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Data di nascita:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.dateOfBirth}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Data di nascita:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.dateOfBirth}
+                </span>
               </div>
             )}
             {formData.gender && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Sesso:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.gender}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Sesso:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.gender}
+                </span>
               </div>
             )}
             {formData.maritalStatus && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Stato civile:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.maritalStatus}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Stato civile:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.maritalStatus}
+                </span>
               </div>
             )}
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Telefono:</span>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.phone}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Telefono:
+              </span>
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                {formData.phone}
+              </span>
             </div>
             <div className='flex justify-between items-center py-2'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Email:</span>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.email}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Email:
+              </span>
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                {formData.email}
+              </span>
             </div>
           </div>
         </motion.div>
@@ -298,15 +332,23 @@ export default function Step4Page() {
             <div className='w-10 h-10 rounded-xl bg-[var(--brand)]/10 dark:bg-[var(--surface-hover)] flex items-center justify-center'>
               <MapPin className='w-5 h-5 text-[var(--brand)]' />
             </div>
-            <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Indirizzo</h3>
+            <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+              Indirizzo
+            </h3>
           </div>
           <div className='space-y-3 text-footnote'>
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Indirizzo:</span>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.address}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Indirizzo:
+              </span>
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                {formData.address}
+              </span>
             </div>
             <div className='flex justify-between items-center py-2'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Città:</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Città:
+              </span>
               <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formData.city} ({formData.province}) - {formData.zipCode}
               </span>
@@ -331,14 +373,18 @@ export default function Step4Page() {
           </div>
           <div className='space-y-3 text-footnote'>
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Codice Fiscale:</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Codice Fiscale:
+              </span>
               <span className='font-medium font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 {formData.fiscalCode}
               </span>
             </div>
             {formData.vatNumber && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>P.IVA:</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  P.IVA:
+                </span>
                 <span className='font-medium font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {formData.vatNumber}
                 </span>
@@ -346,7 +392,9 @@ export default function Step4Page() {
             )}
             {formData.sdiCode && (
               <div className='flex justify-between items-center py-2'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>SDI:</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  SDI:
+                </span>
                 <span className='font-medium font-mono text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {formData.sdiCode}
                 </span>
@@ -373,7 +421,9 @@ export default function Step4Page() {
           <div className='space-y-3 text-footnote'>
             {formData.preferredChannel && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Canale preferito:</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Canale preferito:
+                </span>
                 <span className='font-medium capitalize text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {formData.preferredChannel}
                 </span>
@@ -381,7 +431,9 @@ export default function Step4Page() {
             )}
             {formData.language && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Lingua:</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Lingua:
+                </span>
                 <span className='font-medium capitalize text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {formData.language}
                 </span>
@@ -389,18 +441,28 @@ export default function Step4Page() {
             )}
             {formData.source && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Fonte:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.source}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Fonte:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.source}
+                </span>
               </div>
             )}
             {formData.tags && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Tag:</span>
-                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{formData.tags}</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Tag:
+                </span>
+                <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {formData.tags}
+                </span>
               </div>
             )}
             <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Marketing:</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                Marketing:
+              </span>
               <span
                 className={`font-medium ${formData.marketingConsent ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}
               >
@@ -409,22 +471,28 @@ export default function Step4Page() {
             </div>
             {formData.doNotCall && (
               <div className='flex justify-between items-center py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Restrizioni:</span>
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Restrizioni:
+                </span>
                 <span className='font-medium text-[var(--status-error)]'>Non chiamare</span>
               </div>
             )}
             {formData.doNotEmail && (
               <div className='flex justify-between items-center py-2'>
-                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Restrizioni:</span>
-                <span className='font-medium text-[var(--status-warning)]'>
-                  Non inviare email
+                <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Restrizioni:
                 </span>
+                <span className='font-medium text-[var(--status-warning)]'>Non inviare email</span>
               </div>
             )}
             {formData.notes && (
               <div className='mt-3 p-3 bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] rounded-xl'>
-                <span className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Note</span>
-                <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1'>{formData.notes}</p>
+                <span className='text-footnote font-medium text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Note
+                </span>
+                <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] mt-1'>
+                  {formData.notes}
+                </p>
               </div>
             )}
           </div>
@@ -464,7 +532,7 @@ export default function Step4Page() {
             >
               Ho letto e accetto il{' '}
               <a
-                href='/privacy-policy'
+                href='/privacy'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='underline text-[var(--brand)] hover:text-[var(--brand)]/80'

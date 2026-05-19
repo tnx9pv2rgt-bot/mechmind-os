@@ -26,7 +26,13 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 // Types
-export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
+export type QuoteStatus =
+  | 'draft'
+  | 'sent'
+  | 'approved'
+  | 'rejected'
+  | 'expired'
+  | 'partially_approved';
 
 export interface Quote {
   id: string;
@@ -79,7 +85,14 @@ interface EstimateResponse {
   estimateNumber: string;
   customerId: string;
   vehicleId?: string | null;
-  status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'CONVERTED';
+  status:
+    | 'DRAFT'
+    | 'SENT'
+    | 'ACCEPTED'
+    | 'REJECTED'
+    | 'EXPIRED'
+    | 'CONVERTED'
+    | 'PARTIALLY_APPROVED';
   subtotalCents: string;
   vatCents: string;
   totalCents: string;
@@ -105,8 +118,9 @@ function mapStatus(backendStatus: EstimateResponse['status']): QuoteStatus {
     REJECTED: 'rejected',
     EXPIRED: 'expired',
     CONVERTED: 'approved',
+    PARTIALLY_APPROVED: 'partially_approved',
   };
-  return statusMap[backendStatus];
+  return statusMap[backendStatus] ?? 'draft';
 }
 
 /** Map backend EstimateLineType to frontend QuoteItem type */
@@ -168,31 +182,43 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
     draft: {
       label: 'Bozza',
       icon: FileClock,
-      className: 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+      className:
+        'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]',
     },
     sent: {
       label: 'Inviato',
       icon: Send,
-      className: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
+      className:
+        'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
     },
     approved: {
       label: 'Approvato',
       icon: FileCheck,
-      className: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]',
+      className:
+        'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]',
     },
     rejected: {
       label: 'Rifiutato',
       icon: FileX,
-      className: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]',
+      className:
+        'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]',
     },
     expired: {
       label: 'Scaduto',
       icon: AlertCircle,
-      className: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+      className:
+        'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    partially_approved: {
+      label: 'Parz. Approvato',
+      icon: MoreHorizontal,
+      className:
+        'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
     },
   };
 
-  const { label, icon: Icon, className } = config[status];
+  const entry = config[status] ?? config.draft;
+  const { label, icon: Icon, className } = entry;
 
   return (
     <span
@@ -249,6 +275,7 @@ export default function QuotesPage() {
         approved: 'ACCEPTED',
         rejected: 'REJECTED',
         expired: 'EXPIRED',
+        partially_approved: 'PARTIALLY_APPROVED',
       };
       params.set('status', backendStatusMap[statusFilter]);
     }
@@ -323,11 +350,36 @@ export default function QuotesPage() {
   };
 
   const statCards = [
-    { label: 'In Bozza', value: String(stats.draftCount), icon: FileClock, color: 'bg-[var(--surface-secondary)]0' },
-    { label: 'Inviati', value: stats.sentCount > 0 ? formatCurrency(stats.totalPending) : '0', icon: Send, color: 'bg-[var(--brand)]' },
-    { label: 'Approvati', value: stats.approvedCount > 0 ? formatCurrency(stats.approved) : '0', icon: FileCheck, color: 'bg-[var(--status-success)]' },
-    { label: 'Rifiutati', value: String(stats.rejectedCount), icon: FileX, color: 'bg-[var(--status-error)]' },
-    { label: 'Scaduti', value: String(stats.expiredCount), icon: AlertCircle, color: 'bg-[var(--status-warning)]' },
+    {
+      label: 'In Bozza',
+      value: String(stats.draftCount),
+      icon: FileClock,
+      color: 'bg-[var(--surface-secondary)]0',
+    },
+    {
+      label: 'Inviati',
+      value: stats.sentCount > 0 ? formatCurrency(stats.totalPending) : '0',
+      icon: Send,
+      color: 'bg-[var(--brand)]',
+    },
+    {
+      label: 'Approvati',
+      value: stats.approvedCount > 0 ? formatCurrency(stats.approved) : '0',
+      icon: FileCheck,
+      color: 'bg-[var(--status-success)]',
+    },
+    {
+      label: 'Rifiutati',
+      value: String(stats.rejectedCount),
+      icon: FileX,
+      color: 'bg-[var(--status-error)]',
+    },
+    {
+      label: 'Scaduti',
+      value: String(stats.expiredCount),
+      icon: AlertCircle,
+      color: 'bg-[var(--status-warning)]',
+    },
   ];
 
   return (
@@ -336,7 +388,7 @@ export default function QuotesPage() {
       <header>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className='flex items-center gap-2 mb-1'>
               <AppleButton
                 variant='ghost'
                 size='sm'
@@ -346,7 +398,9 @@ export default function QuotesPage() {
                 Fatture
               </AppleButton>
             </div>
-            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Preventivi</h1>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+              Preventivi
+            </h1>
             <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
               Gestisci preventivi e trasformali in fatture
             </p>
@@ -367,14 +421,18 @@ export default function QuotesPage() {
             <AppleCard key={stat.label} hover={false}>
               <AppleCardContent>
                 <div className='flex items-center justify-between mb-3'>
-                  <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                  >
                     <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                   </div>
                 </div>
                 <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                   {isLoading ? '...' : stat.value}
                 </p>
-                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  {stat.label}
+                </p>
               </AppleCardContent>
             </AppleCard>
           ))}
@@ -406,6 +464,7 @@ export default function QuotesPage() {
                   <option value='approved'>Approvato</option>
                   <option value='rejected'>Rifiutato</option>
                   <option value='expired'>Scaduto</option>
+                  <option value='partially_approved'>Parz. Approvato</option>
                 </select>
               </div>
             </div>
@@ -442,14 +501,30 @@ export default function QuotesPage() {
                 <table className='w-full text-left text-body'>
                   <thead>
                     <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Numero</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cliente</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Veicolo</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Data</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Scadenza</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>Importo</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
-                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-center'>Azioni</th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Numero
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Cliente
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Veicolo
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Data
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Scadenza
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
+                        Importo
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Stato
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-center'>
+                        Azioni
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -492,9 +567,11 @@ export default function QuotesPage() {
                         </td>
                         <td className='px-4 py-3'>
                           <div className='flex flex-col gap-1'>
-                            <span className={`text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ${
-                              quote.status === 'expired' ? 'text-[var(--status-error)]' : ''
-                            }`}>
+                            <span
+                              className={`text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ${
+                                quote.status === 'expired' ? 'text-[var(--status-error)]' : ''
+                              }`}
+                            >
                               {formatDate(quote.expiryDate)}
                             </span>
                             <ExpiryBadge expiryDate={quote.expiryDate} status={quote.status} />
@@ -510,24 +587,32 @@ export default function QuotesPage() {
                         </td>
                         <td className='px-4 py-3'>
                           <div className='flex items-center justify-center gap-1'>
-                            <AppleButton variant='ghost' size='sm' onClick={() => router.push(`/dashboard/estimates/${quote.id}`)}>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => router.push(`/dashboard/estimates/${quote.id}`)}
+                            >
                               <Eye className='h-4 w-4' />
                             </AppleButton>
-                            <AppleButton variant='ghost' size='sm' onClick={async () => {
-                              try {
-                                const res = await fetch(`/api/estimates/${quote.id}/pdf`);
-                                if (!res.ok) throw new Error('Errore PDF');
-                                const blob = await res.blob();
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `preventivo-${quote.number}.pdf`;
-                                a.click();
-                                URL.revokeObjectURL(url);
-                              } catch {
-                                setError('Errore durante il download del PDF');
-                              }
-                            }}>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`/api/estimates/${quote.id}/pdf`);
+                                  if (!res.ok) throw new Error('Errore PDF');
+                                  const blob = await res.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `preventivo-${quote.number}.pdf`;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                } catch {
+                                  setError('Errore durante il download del PDF');
+                                }
+                              }}
+                            >
                               <Download className='h-4 w-4' />
                             </AppleButton>
                             {quote.status === 'sent' && (
@@ -540,15 +625,21 @@ export default function QuotesPage() {
                               </AppleButton>
                             )}
                             {quote.status === 'draft' && (
-                              <AppleButton variant='ghost' size='sm' onClick={async () => {
-                                try {
-                                  const res = await fetch(`/api/estimates/${quote.id}/send`, { method: 'POST' });
-                                  if (!res.ok) throw new Error('Errore invio');
-                                  mutate();
-                                } catch {
-                                  setError('Errore durante l\'invio del preventivo');
-                                }
-                              }}>
+                              <AppleButton
+                                variant='ghost'
+                                size='sm'
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/estimates/${quote.id}/send`, {
+                                      method: 'POST',
+                                    });
+                                    if (!res.ok) throw new Error('Errore invio');
+                                    mutate();
+                                  } catch {
+                                    setError("Errore durante l'invio del preventivo");
+                                  }
+                                }}
+                              >
                                 <Send className='h-4 w-4' />
                               </AppleButton>
                             )}
@@ -563,7 +654,9 @@ export default function QuotesPage() {
               {filteredQuotes.length === 0 && !isLoading && (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
                   <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
-                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Nessun preventivo trovato</p>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                    Nessun preventivo trovato
+                  </p>
                   <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                     Prova a modificare i filtri o crea un nuovo preventivo
                   </p>

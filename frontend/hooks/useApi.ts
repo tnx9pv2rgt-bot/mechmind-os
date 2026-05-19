@@ -220,13 +220,24 @@ export function useBookings(params?: {
         params as Record<string, string | number>
       );
       const raw = res.data;
+      const normalize = (b: Record<string, unknown>): Booking => ({
+        ...(b as unknown as Booking),
+        scheduledAt: (b.scheduledAt ??
+          b.scheduledDate ??
+          (b.slot as { startTime?: string } | undefined)?.startTime ??
+          '') as string,
+      });
       if ('data' in raw && Array.isArray(raw.data)) {
         return {
-          data: raw.data,
+          data: (raw.data as unknown as Record<string, unknown>[]).map(normalize),
           total: raw.data.length,
           page: params?.page || 1,
           limit: params?.limit || 20,
         };
+      }
+      const paged = raw as unknown as PaginatedResponse<Record<string, unknown>>;
+      if (Array.isArray(paged.data)) {
+        return { ...paged, data: paged.data.map(normalize) } as PaginatedResponse<Booking>;
       }
       return raw as PaginatedResponse<Booking>;
     },
@@ -241,7 +252,11 @@ export function useBooking(id: string | undefined) {
     queryFn: async () => {
       const res = await api.get<Booking | { data: Booking }>(`/bookings/${id}`);
       const raw = res.data;
-      return 'data' in raw && raw.data ? raw.data : (raw as Booking);
+      const b = ('data' in raw && raw.data ? raw.data : raw) as Record<string, unknown>;
+      return {
+        ...(b as unknown as Booking),
+        scheduledAt: (b.scheduledAt ?? b.scheduledDate ?? '') as string,
+      };
     },
     enabled: !!id,
   });

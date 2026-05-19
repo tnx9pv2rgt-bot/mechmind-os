@@ -173,6 +173,13 @@ export class FatturapaService {
     const items = this.buildLineItems(invoice.invoiceItems, invoice.items);
     const riepilogoIva = this.buildRiepilogoIva(items);
 
+    const BOLLO_THRESHOLD = 77.47;
+    const BOLLO_AMOUNT = 2.0;
+    const isVatExempt = Number(invoice.taxRate ?? 0) === 0;
+    const requiresBollo =
+      invoice.stampDuty === true || (isVatExempt && Number(invoice.total ?? 0) > BOLLO_THRESHOLD);
+    const bolloVirtuale = requiresBollo ? BOLLO_AMOUNT : 0;
+
     const data: FatturapaData = {
       tenant: {
         ragioneSociale: tenantSettings.ragioneSociale ?? tenant.name,
@@ -208,7 +215,7 @@ export class FatturapaService {
         data: (invoice.operationDate ?? invoice.createdAt).toISOString().split('T')[0],
         divisa: 'EUR',
         causale: invoice.notes ?? undefined,
-        bollo: invoice.stampDuty,
+        bollo: bolloVirtuale > 0,
         ritenuta: invoice.ritenutaType
           ? {
               tipoRitenuta: invoice.ritenutaType,

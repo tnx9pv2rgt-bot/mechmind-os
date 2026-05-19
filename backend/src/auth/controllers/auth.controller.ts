@@ -175,6 +175,16 @@ export class AuthController {
     return dbUser;
   }
 
+  @Get('tenant-by-email')
+  @Throttle({ strict: { ttl: 60000, limit: 10 } })
+  @ApiOperation({ summary: 'Cerca i tenant attivi associati a un indirizzo email' })
+  @ApiResponse({ status: 200, description: 'Lista tenant trovati' })
+  async getTenantByEmail(
+    @Query('email') email: string,
+  ): Promise<{ tenants: Array<{ slug: string; name: string }> }> {
+    return this.authService.findTenantsByEmail(email ?? '');
+  }
+
   @Post('demo-session')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Crea sessione demo (no login richiesto)' })

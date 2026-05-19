@@ -170,9 +170,9 @@ export class WebhookSubscriptionService {
         subscription.id,
         subscription.url,
         decryptedSecret,
+        tenantId,
         event,
         payload,
-        tenantId,
       );
 
       if (success) {
@@ -212,8 +212,6 @@ export class WebhookSubscriptionService {
     }
 
     const testPayload = {
-      event,
-      timestamp: new Date().toISOString(),
       test: true,
       data: { message: 'Test payload' },
     };
@@ -223,9 +221,9 @@ export class WebhookSubscriptionService {
       subscriptionId,
       subscription.url,
       decryptedSecret,
+      tenantId,
       event,
       testPayload,
-      tenantId,
     );
   }
 
@@ -234,13 +232,16 @@ export class WebhookSubscriptionService {
     subscriptionId: string,
     url: string,
     secret: string,
+    tenantId: string,
     event: WebhookEvent,
     payload: Record<string, unknown>,
-    tenantId?: string,
   ): Promise<boolean> {
-    const webhookPayload = tenantId
-      ? { event, timestamp: new Date().toISOString(), data: payload, _meta: { tenantId } }
-      : { event, timestamp: new Date().toISOString(), data: payload };
+    const webhookPayload = {
+      event,
+      timestamp: new Date().toISOString(),
+      _meta: { tenantId },
+      data: payload,
+    };
     const body = JSON.stringify(webhookPayload);
     const signature = this.computeHmacSignature(body, secret);
 

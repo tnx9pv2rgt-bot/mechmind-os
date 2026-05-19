@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { btnPrimary, btnSpinner, inputStyle } from '@/components/auth/auth-styles';
 import { OTPInput } from '@/components/auth/otp-input';
+import { clearDemoSession } from '@/lib/auth/demo-session';
 
 export function MFAVerifyPageClient(): React.ReactElement {
   const router = useRouter();
@@ -69,9 +70,13 @@ export function MFAVerifyPageClient(): React.ReactElement {
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('mfa_temp_token');
         }
+        clearDemoSession();
         router.push('/dashboard');
       } else {
-        const errMsg = typeof data.error === 'string' ? data.error : (data.error as { message?: string })?.message;
+        const errMsg =
+          typeof data.error === 'string'
+            ? data.error
+            : (data.error as { message?: string })?.message;
         setError(errMsg || 'Codice non valido. Riprova.');
         if (data.remainingAttempts !== undefined) {
           setRemainingAttempts(data.remainingAttempts);
@@ -99,45 +104,47 @@ export function MFAVerifyPageClient(): React.ReactElement {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="space-y-6"
+        className='space-y-6'
       >
-        <div className="text-center mb-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10 mb-4">
-            <span className="text-2xl text-[var(--text-on-brand)]">🛡</span>
+        <div className='text-center mb-2'>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10 mb-4'>
+            <span className='text-2xl text-[var(--text-on-brand)]'>🛡</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Verifica a due fattori
           </h1>
-          <p className="mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed">
+          <p className='mt-2 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             {useBackupCode
               ? 'Inserisci uno dei tuoi codici di backup'
               : 'Inserisci il codice a 6 cifre dalla tua app authenticator'}
           </p>
         </div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode='wait'>
           {useBackupCode ? (
             <motion.div
-              key="backup"
+              key='backup'
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4"
+              className='space-y-4'
             >
-              <label htmlFor="mfa-v-backup" className="sr-only">Codice di backup</label>
+              <label htmlFor='mfa-v-backup' className='sr-only'>
+                Codice di backup
+              </label>
               <input
-                id="mfa-v-backup"
-                type="text"
+                id='mfa-v-backup'
+                type='text'
                 value={backupCode}
-                onChange={(e) => setBackupCode(e.target.value)}
-                placeholder="Codice di backup"
+                onChange={e => setBackupCode(e.target.value)}
+                placeholder='Codice di backup'
                 autoFocus
                 className={inputStyle}
               />
             </motion.div>
           ) : (
             <motion.div
-              key="otp"
+              key='otp'
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
@@ -149,25 +156,25 @@ export function MFAVerifyPageClient(): React.ReactElement {
 
         {error && (
           <motion.p
-            role="alert"
+            role='alert'
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center text-[13px] text-[var(--text-secondary)]"
+            className='text-center text-[13px] text-[var(--text-secondary)]'
           >
             {error}
           </motion.p>
         )}
 
         {remainingAttempts !== null && remainingAttempts > 0 && (
-          <p className="text-center text-[12px] text-[var(--text-tertiary)]">
+          <p className='text-center text-[12px] text-[var(--text-tertiary)]'>
             Tentativi rimanenti: {remainingAttempts}
           </p>
         )}
 
         {remainingAttempts === 0 && (
-          <p className="text-center text-[13px] text-[var(--text-secondary)]" role="alert">
+          <p className='text-center text-[13px] text-[var(--text-secondary)]' role='alert'>
             Troppi tentativi.{' '}
-            <Link href="/auth/locked" className="underline">
+            <Link href='/auth/locked' className='underline'>
               Account bloccato
             </Link>
           </p>
@@ -185,7 +192,7 @@ export function MFAVerifyPageClient(): React.ReactElement {
           {isLoading ? <span className={btnSpinner} /> : 'Verifica'}
         </button>
 
-        <div className="text-center">
+        <div className='text-center'>
           <button
             onClick={() => {
               setUseBackupCode(!useBackupCode);
@@ -193,7 +200,7 @@ export function MFAVerifyPageClient(): React.ReactElement {
               setCode('');
               setBackupCode('');
             }}
-            className="text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px]"
+            className='text-[14px] font-medium text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors min-h-[44px]'
           >
             {useBackupCode ? 'Usa codice authenticator' : 'Usa codice di backup'}
           </button>

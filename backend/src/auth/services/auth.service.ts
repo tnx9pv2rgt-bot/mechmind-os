@@ -862,4 +862,32 @@ export class AuthService {
 
     return { locked: true, until: user.lockedUntil };
   }
+
+  /**
+   * Find all active tenants associated with a given email address.
+   * Used by the two-step login UI to determine the workspace before the password step.
+   * Returns at most 20 results to prevent abuse.
+   * Note: intentionally does NOT distinguish "email exists but no tenant" from "email not found"
+   * to avoid user enumeration (always returns an array, possibly empty).
+   */
+  async findTenantsByEmail(
+    email: string,
+  ): Promise<{ tenants: Array<{ slug: string; name: string }> }> {
+    const normalized = email.toLowerCase().trim();
+    if (!normalized || !normalized.includes('@')) {
+      return { tenants: [] };
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: { email: normalized, isActive: true },
+      select: { tenant: { select: { slug: true, name: true, isActive: true } } },
+      take: 20,
+    });
+
+    const tenants = users
+      .filter(u => u.tenant.isActive)
+      .map(u => ({ slug: u.tenant.slug, name: u.tenant.name }));
+
+    return { tenants };
+  }
 }

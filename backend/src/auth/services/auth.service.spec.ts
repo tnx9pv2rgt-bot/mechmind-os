@@ -82,6 +82,7 @@ describe('AuthService', () => {
             user: {
               findFirst: jest.fn(),
               findUnique: jest.fn(),
+              findMany: jest.fn(),
               update: jest.fn(),
             },
             authAuditLog: {
@@ -1638,6 +1639,90 @@ describe('AuthService', () => {
           headers: expect.objectContaining({ 'User-Agent': 'MechMind-OS' }),
         }),
       );
+    });
+  });
+
+  describe('findTenantsByEmail', () => {
+    it('should return tenants for a valid email', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([
+        { tenant: { slug: 'demo', name: 'Demo Officina Roma', isActive: true } },
+      ]);
+
+      const result = await service.findTenantsByEmail('admin@demo.mechmind.it');
+
+      expect(result.tenants).toEqual([{ slug: 'demo', name: 'Demo Officina Roma' }]);
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { email: 'admin@demo.mechmind.it', isActive: true } }),
+      );
+    });
+
+    it('should return empty array when no users found', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([]);
+
+      const result = await service.findTenantsByEmail('unknown@example.com');
+
+      expect(result.tenants).toEqual([]);
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should filter out inactive tenants', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([
+        { tenant: { slug: 'active', name: 'Active Garage', isActive: true } },
+        { tenant: { slug: 'inactive', name: 'Inactive Garage', isActive: false } },
+      ]);
+
+      const result = await service.findTenantsByEmail('user@example.com');
+
+      expect(result.tenants).toHaveLength(1);
+      expect(result.tenants[0].slug).toBe('active');
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return empty array for invalid email (no @)', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+
+      const result = await service.findTenantsByEmail('notanemail');
+
+      expect(result.tenants).toEqual([]);
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array for empty string', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+
+      const result = await service.findTenantsByEmail('');
+
+      expect(result.tenants).toEqual([]);
+      expect(prisma.user.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should normalize email to lowercase', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([]);
+
+      await service.findTenantsByEmail('Admin@Demo.MechMind.IT');
+
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { email: 'admin@demo.mechmind.it', isActive: true } }),
+      );
+    });
+
+    it('should return multiple tenants when user belongs to multiple workspaces', async () => {
+      const prisma = module.get(PrismaService) as jest.Mocked<PrismaService>;
+      (prisma.user.findMany as jest.Mock).mockResolvedValueOnce([
+        { tenant: { slug: 'garage-a', name: 'Garage A', isActive: true } },
+        { tenant: { slug: 'garage-b', name: 'Garage B', isActive: true } },
+      ]);
+
+      const result = await service.findTenantsByEmail('multi@example.com');
+
+      expect(result.tenants).toHaveLength(2);
+      expect(result.tenants[0].slug).toBe('garage-a');
+      expect(result.tenants[1].slug).toBe('garage-b');
+      expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });

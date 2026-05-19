@@ -68,7 +68,7 @@ function updateGoogleConsent(data: ConsentData): void {
 function loadAnalyticsScripts(): void {
   // Load analytics scripts only after consent
   // Scripts marked with data-consent-type="analytics" will be activated
-  document.querySelectorAll('script[data-consent-type="analytics"]').forEach((el) => {
+  document.querySelectorAll('script[data-consent-type="analytics"]').forEach(el => {
     const script = el as HTMLScriptElement;
     if (script.dataset.src && !script.src) {
       script.src = script.dataset.src;
@@ -163,43 +163,43 @@ export function CookieConsent(): React.ReactNode {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="fixed bottom-4 right-4 z-[9999]"
-          role="dialog"
-          aria-label="Consenso cookie"
+          className='fixed bottom-4 left-4 z-[9999]'
+          role='dialog'
+          aria-label='Consenso cookie'
         >
-          <div className="mx-auto max-w-lg rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+          <div className='mx-auto max-w-lg rounded-2xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]'>
             {!showDetails ? (
               /* ---- Main banner ---- */
-              <div className="flex flex-col gap-4">
-                <p className="text-[15px] leading-relaxed text-[var(--text-secondary)]">
-                  Utilizziamo cookie tecnici necessari per il funzionamento del servizio
-                  e cookie analitici per migliorare la tua esperienza. Per maggiori
-                  informazioni consulta la nostra{' '}
+              <div className='flex flex-col gap-4'>
+                <p className='text-[15px] leading-relaxed text-[var(--text-secondary)]'>
+                  Utilizziamo cookie tecnici necessari per il funzionamento del servizio e cookie
+                  analitici per migliorare la tua esperienza. Per maggiori informazioni consulta la
+                  nostra{' '}
                   <Link
-                    href="/privacy"
-                    className="font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white"
+                    href='/privacy'
+                    className='font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white'
                   >
                     Informativa Privacy
                   </Link>
                   .
                 </p>
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <div className='flex flex-col gap-2 sm:flex-row sm:justify-end'>
                   <button
                     onClick={() => setShowDetails(true)}
-                    className="text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] sm:mr-auto"
+                    className='text-[13px] font-medium text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)] sm:mr-auto'
                   >
                     Personalizza
                   </button>
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5"
+                    className='h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5'
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleAcceptAll}
-                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]"
+                    className='h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]'
                   >
                     Accetta tutti
                   </button>
@@ -207,38 +207,44 @@ export function CookieConsent(): React.ReactNode {
               </div>
             ) : (
               /* ---- Detail panel ---- */
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-medium text-[var(--text-on-brand)]">
+              <div className='flex flex-col gap-4'>
+                <div className='flex items-center justify-between'>
+                  <h3 className='text-base font-medium text-[var(--text-on-brand)]'>
                     Impostazioni cookie
                   </h3>
                   <button
                     onClick={() => setShowDetails(false)}
-                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-secondary)]/10 hover:text-[var(--text-on-brand)]"
-                    aria-label="Chiudi dettagli"
+                    className='flex h-11 w-11 items-center justify-center rounded-full text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-secondary)]/10 hover:text-[var(--text-on-brand)]'
+                    aria-label='Chiudi dettagli'
                   >
-                    <span className="text-lg pointer-events-none" aria-hidden="true">✕</span>
+                    <span className='text-lg pointer-events-none' aria-hidden='true'>
+                      ✕
+                    </span>
                   </button>
                 </div>
 
                 {/* Necessary — always on */}
-                <div className="flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3">
+                <div className='flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3'>
                   <div>
-                    <p className="text-[14px] font-medium text-[var(--text-on-brand)]">Cookie tecnici</p>
-                    <p className="text-[12px] text-[var(--text-tertiary)]">
+                    <p className='text-[14px] font-medium text-[var(--text-on-brand)]'>
+                      Cookie tecnici
+                    </p>
+                    <p className='text-[12px] text-[var(--text-tertiary)]'>
                       Necessari per il funzionamento. Non disattivabili.
                     </p>
                   </div>
-                  <div className="ml-4 flex h-6 w-11 items-center rounded-full bg-[var(--surface-secondary)] px-0.5">
-                    <div className="h-5 w-5 translate-x-5 rounded-full bg-[var(--text-primary)] shadow-sm" />
+                  <div className='ml-4 flex h-6 w-11 items-center rounded-full bg-[var(--surface-secondary)] px-0.5'>
+                    <div className='h-5 w-5 translate-x-5 rounded-full bg-[var(--text-primary)] shadow-sm' />
                   </div>
                 </div>
 
                 {/* Analytics — toggleable */}
-                <div className="flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3">
+                <div className='flex items-center justify-between rounded-xl bg-[var(--surface-secondary)]/5 px-4 py-3'>
                   <div>
-                    <p className="text-[14px] font-medium text-[var(--text-on-brand)]">Cookie analitici</p>
-                    <p className="text-[12px] text-[var(--text-tertiary)]">
+                    <p className='text-[14px] font-medium text-[var(--text-on-brand)]'>
+                      Cookie analitici
+                    </p>
+                    <p className='text-[12px] text-[var(--text-tertiary)]'>
                       Ci aiutano a capire come viene utilizzato il sito.
                     </p>
                   </div>
@@ -247,9 +253,9 @@ export function CookieConsent(): React.ReactNode {
                     className={`ml-4 flex h-6 w-11 items-center rounded-full px-0.5 transition-colors ${
                       analyticsEnabled ? 'bg-[var(--surface-primary)]' : 'bg-[var(--text-tertiary)]'
                     }`}
-                    role="switch"
+                    role='switch'
                     aria-checked={analyticsEnabled}
-                    aria-label="Attiva cookie analitici"
+                    aria-label='Attiva cookie analitici'
                   >
                     <div
                       className={`h-5 w-5 rounded-full shadow-sm transition-transform ${
@@ -262,16 +268,16 @@ export function CookieConsent(): React.ReactNode {
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+                <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end'>
                   <button
                     onClick={handleNecessaryOnly}
-                    className="h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5"
+                    className='h-[44px] rounded-full border border-[var(--border-strong)] bg-transparent px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-secondary)]/5'
                   >
                     Solo necessari
                   </button>
                   <button
                     onClick={handleSavePreferences}
-                    className="h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]"
+                    className='h-[44px] rounded-full bg-[var(--surface-hover)] px-5 text-[15px] font-medium text-[var(--text-on-brand)] transition-colors hover:bg-[var(--surface-active)]'
                   >
                     Salva preferenze
                   </button>

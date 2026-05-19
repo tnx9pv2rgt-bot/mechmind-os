@@ -13,7 +13,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className='text-[20px] font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight'>
         {title}
       </h2>
-      <div className='mt-3 text-[15px] text-[var(--text-secondary)] leading-relaxed space-y-3'>{children}</div>
+      <div className='mt-3 text-[15px] text-[var(--text-secondary)] leading-relaxed space-y-3'>
+        {children}
+      </div>
     </section>
   );
 }
@@ -25,7 +27,9 @@ export default function PrivacyPage() {
         <h1 className='text-[28px] font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)] tracking-tight'>
           Informativa sulla Privacy
         </h1>
-        <p className='mt-2 text-[13px] text-[var(--text-tertiary)]'>Ultimo aggiornamento: marzo 2026</p>
+        <p className='mt-2 text-[13px] text-[var(--text-tertiary)]'>
+          Ultimo aggiornamento: marzo 2026
+        </p>
         <p className='mt-4 text-[15px] text-[var(--text-secondary)] leading-relaxed'>
           La presente informativa descrive come Nexo S.r.l. raccoglie, utilizza e protegge i dati
           personali degli utenti della piattaforma MechMind OS, in conformit&agrave; al Regolamento
@@ -35,11 +39,13 @@ export default function PrivacyPage() {
         <Section title='1. Titolare del trattamento'>
           <p>Il Titolare del trattamento dei dati personali &egrave;:</p>
           <div className='rounded-xl bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-secondary)]/5 border border-[var(--border-default)] dark:border-[var(--border-default)] p-4 text-[14px] space-y-1'>
-            <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Nexo S.r.l.</p>
+            <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+              Nexo S.r.l.
+            </p>
             <p>Sede legale: Via Example 10, 00100 Roma (RM), Italia</p>
             <p>P.IVA: 00000000000</p>
             <p>PEC: nexo@pec.example.it</p>
-            <p>Email DPO: privacy@nexo.dev</p>
+            <p>Email DPO: privacy@mechmind.it</p>
           </div>
         </Section>
 
@@ -108,7 +114,9 @@ export default function PrivacyPage() {
               aggiornamenti del servizio tramite email e SMS.
             </li>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Fatturazione:</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Fatturazione:
+              </span>{' '}
               emissione di fatture, gestione dei pagamenti e adempimento degli obblighi fiscali e
               contabili.
             </li>
@@ -176,15 +184,21 @@ export default function PrivacyPage() {
               <p>Hosting e infrastruttura cloud &mdash; Regione UE (Francoforte)</p>
             </div>
             <div>
-              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Resend Inc.</p>
+              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Resend Inc.
+              </p>
               <p>Invio email transazionali e di servizio</p>
             </div>
             <div>
-              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Twilio Inc.</p>
+              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Twilio Inc.
+              </p>
               <p>Invio SMS di notifica e comunicazioni di servizio</p>
             </div>
             <div>
-              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stripe Inc.</p>
+              <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Stripe Inc.
+              </p>
               <p>Elaborazione dei pagamenti e gestione degli abbonamenti</p>
             </div>
           </div>
@@ -202,8 +216,12 @@ export default function PrivacyPage() {
             <table className='w-full'>
               <thead>
                 <tr className='text-left border-b border-[var(--border-default)] dark:border-[var(--border-default)]'>
-                  <th className='pb-2 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Categoria</th>
-                  <th className='pb-2 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Durata</th>
+                  <th className='pb-2 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                    Categoria
+                  </th>
+                  <th className='pb-2 font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                    Durata
+                  </th>
                 </tr>
               </thead>
               <tbody className='space-y-1'>
@@ -239,16 +257,22 @@ export default function PrivacyPage() {
           <p>Ai sensi degli articoli 15-22 del GDPR, l&apos;interessato ha diritto di:</p>
           <ul className='list-disc list-inside space-y-2 pl-1'>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Accesso</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Accesso
+              </span>{' '}
               &mdash; ottenere conferma del trattamento e copia dei propri dati personali.
             </li>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Rettifica</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Rettifica
+              </span>{' '}
               &mdash; ottenere la correzione di dati inesatti o l&apos;integrazione di dati
               incompleti.
             </li>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cancellazione</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Cancellazione
+              </span>{' '}
               &mdash; ottenere la cancellazione dei propri dati, salvo obblighi di legge.
             </li>
             <li>
@@ -259,11 +283,15 @@ export default function PrivacyPage() {
               automatico (JSON/CSV).
             </li>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Opposizione</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Opposizione
+              </span>{' '}
               &mdash; opporsi al trattamento per motivi legittimi.
             </li>
             <li>
-              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Limitazione</span>{' '}
+              <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Limitazione
+              </span>{' '}
               &mdash; ottenere la limitazione del trattamento nei casi previsti dalla legge.
             </li>
             <li>
@@ -277,10 +305,10 @@ export default function PrivacyPage() {
           <p>
             Per esercitare i propri diritti, &egrave; possibile inviare una richiesta a{' '}
             <a
-              href='mailto:privacy@nexo.dev'
+              href='mailto:privacy@mechmind.it'
               className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] underline underline-offset-2'
             >
-              privacy@nexo.dev
+              privacy@mechmind.it
             </a>
             . La richiesta sar&agrave; evasa entro 30 giorni dal ricevimento.
           </p>
@@ -356,10 +384,10 @@ export default function PrivacyPage() {
             <p>
               Email DPO:{' '}
               <a
-                href='mailto:privacy@nexo.dev'
+                href='mailto:privacy@mechmind.it'
                 className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] underline underline-offset-2'
               >
-                privacy@nexo.dev
+                privacy@mechmind.it
               </a>
             </p>
             <p>PEC: nexo@pec.example.it</p>
@@ -368,9 +396,31 @@ export default function PrivacyPage() {
         </Section>
 
         <div className='mt-12 pt-8 border-t border-[var(--border-default)] dark:border-[var(--border-default)]'>
+          <nav className='flex items-center gap-1 text-footnote text-[var(--text-tertiary)]'>
+            <Link
+              href='/privacy'
+              className='text-[var(--text-primary)] dark:text-[var(--text-primary)] font-medium hover:opacity-70 transition-opacity'
+            >
+              Privacy Policy
+            </Link>
+            <span>&middot;</span>
+            <Link
+              href='/terms'
+              className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
+            >
+              Condizioni di Utilizzo
+            </Link>
+            <span>&middot;</span>
+            <Link
+              href='/dpa'
+              className='text-[var(--text-secondary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
+            >
+              DPA
+            </Link>
+          </nav>
           <Link
             href='/auth'
-            className='inline-flex items-center text-[14px] font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:opacity-70 transition-opacity'
+            className='mt-6 inline-flex items-center text-[14px] font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] hover:opacity-70 transition-opacity'
           >
             &larr; Torna al login
           </Link>

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import { btnPrimary } from '@/components/auth/auth-styles';
+import { clearDemoSession } from '@/lib/auth/demo-session';
 
 function decodeErrorMessage(error: string): string {
   const messages: Record<string, string> = {
@@ -52,10 +53,11 @@ function OAuthCallbackContent(): React.ReactElement {
         const data = (await res.json()) as { success?: boolean; error?: string };
 
         if (res.ok && data.success) {
+          clearDemoSession();
           router.push('/dashboard');
         } else {
           setStatus('error');
-          setError(data.error || 'Errore durante il completamento dell\'accesso.');
+          setError(data.error || "Errore durante il completamento dell'accesso.");
         }
       } catch {
         setStatus('error');
@@ -67,14 +69,14 @@ function OAuthCallbackContent(): React.ReactElement {
   }, [code, state, provider, errorParam, router]);
 
   return (
-    <div className="text-center space-y-5">
+    <div className='text-center space-y-5'>
       {status === 'loading' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='space-y-4'>
+          <div className='mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent' />
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Completamento accesso...
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed">
+          <p className='text-[15px] text-[var(--text-secondary)] leading-relaxed'>
             Stiamo completando il tuo accesso. Un momento...
           </p>
         </motion.div>
@@ -84,18 +86,21 @@ function OAuthCallbackContent(): React.ReactElement {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="space-y-5"
+          className='space-y-5'
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10">
-            <span className="text-2xl text-[var(--text-secondary)]">✕</span>
+          <div className='mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-secondary)]/10'>
+            <span className='text-2xl text-[var(--text-secondary)]'>✕</span>
           </div>
-          <h1 className="text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight">
+          <h1 className='text-[28px] font-normal text-[var(--text-on-brand)] tracking-tight'>
             Accesso non riuscito
           </h1>
-          <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto" role="alert">
+          <p
+            className='text-[15px] text-[var(--text-secondary)] leading-relaxed max-w-[320px] mx-auto'
+            role='alert'
+          >
             {error}
           </p>
-          <Link href="/auth" className={btnPrimary}>
+          <Link href='/auth' className={btnPrimary}>
             Torna al login
           </Link>
         </motion.div>
@@ -109,9 +114,9 @@ export default function OAuthCallbackPage(): React.ReactElement {
     <AuthSplitLayout>
       <Suspense
         fallback={
-          <div className="text-center space-y-4">
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent" />
-            <p className="text-[15px] text-[var(--text-secondary)]">Caricamento...</p>
+          <div className='text-center space-y-4'>
+            <div className='mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--border-default)] border-t-transparent' />
+            <p className='text-[15px] text-[var(--text-secondary)]'>Caricamento...</p>
           </div>
         }
       >

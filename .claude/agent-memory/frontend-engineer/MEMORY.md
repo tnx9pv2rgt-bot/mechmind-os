@@ -37,6 +37,16 @@
 
 ## tsc --noEmit: ✅ PASSA (zero TS errors)
 
+## Page DPA e Footer links completati (2026-05-16)
+
+- `/app/dpa/page.tsx` (387 righe) — Accordo DPA GDPR completo, 8 sezioni, beta
+  clause
+- `components/layout/BetaBanner.tsx` (46 righe) — Banner dismissibile con
+  localStorage
+- Dashboard banner integrato in `dashboard-provider.tsx`
+- Footer links (Privacy, Condizioni, DPA) su `/privacy` e `/terms`
+- Tutti i link usano var CSS per dark mode, niente hardcoded color
+
 Notes:
 
 - Agent threads always have their cwd reset between bash calls, as a result
@@ -45,3 +55,4 @@ Notes:
   id
 - Skip links visibili solo con :focus (sr-only + focus:not-sr-only)
 - Pricing page importa Pricing component esistente, no duplicazione
+- BetaBanner usa localStorage con chiave 'mechmind-beta-banner-dismissed'

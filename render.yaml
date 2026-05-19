@@ -98,43 +98,58 @@ services:
     region: frankfurt
     ipAllowList: []
 
-  # ========== STAGING ==========
+  # ========== STAGING (Beta: 3-5 officine) ==========
+  # NOTE: Auto-deploy is DISABLED for safety. Deploy only via manual trigger in Render dashboard.
   - type: web
-    name: mechmind-backend-staging
+    name: nexo-backend-staging
     runtime: node
     region: frankfurt
     plan: starter
     numInstances: 1
     branch: staging
     rootDir: backend
-    buildCommand: npm install --legacy-peer-deps && npx prisma migrate deploy && npm run build
-    startCommand: npm run start:prod
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && node dist/main
+    # Health check path: /readiness (includes DB + Redis checks)
+    # HTTP 200 = ready, 503 = not ready (will not route traffic during deployment)
     healthCheckPath: /readiness
+    healthCheckTimeout: 30
+    autoDeploy: false
     envVars:
       - key: NODE_ENV
         value: staging
       - key: PORT
-        value: 10000
+        value: 3002
       - key: FRONTEND_URL
-        value: https://mechmind-frontend-staging.onrender.com
+        value: https://nexo-frontend-staging.onrender.com
       - key: CORS_ORIGIN
-        value: https://mechmind-frontend-staging.onrender.com
+        value: https://nexo-frontend-staging.onrender.com
+      # Database (Render PostgreSQL managed service)
       - key: DATABASE_URL
-        sync: false
+        fromService:
+          name: nexo-db-staging
+          type: pgsql
+          property: connectionString
+      # Redis (Render Redis managed service)
+      - key: REDIS_URL
+        fromService:
+          name: nexo-redis-staging
+          type: redis
+          property: connectionString
+      # Secrets (sync: false = manual configuration in Render dashboard only)
       - key: JWT_SECRET
         sync: false
       - key: JWT_REFRESH_SECRET
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
-      - key: REDIS_URL
-        fromService:
-          name: nexo-redis-staging
-          type: redis
-          property: connectionString
+      - key: SENTRY_DSN
+        sync: false
+      - key: SETUP_SECRET
+        sync: false
 
   - type: web
-    name: mechmind-frontend-staging
+    name: nexo-frontend-staging
     runtime: node
     region: frankfurt
     plan: starter
@@ -148,23 +163,35 @@ services:
       - key: NODE_ENV
         value: staging
       - key: PORT
-        value: 10000
+        value: 3000
       - key: NEXT_PUBLIC_APP_URL
-        value: https://mechmind-frontend-staging.onrender.com
+        value: https://nexo-frontend-staging.onrender.com
       - key: NEXT_PUBLIC_API_URL
-        value: https://mechmind-backend-staging.onrender.com
+        value: https://nexo-backend-staging.onrender.com
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://mechmind-backend-staging.onrender.com
+        value: https://nexo-backend-staging.onrender.com
       - key: BACKEND_URL
-        value: https://mechmind-backend-staging.onrender.com/v1
+        value: https://nexo-backend-staging.onrender.com/v1
       - key: JWT_SECRET
         sync: false
       - key: REFRESH_SECRET
         sync: false
 
+  # ========== STAGING DATABASE & CACHE ==========
+  - type: pgsql
+    name: nexo-db-staging
+    plan: free
+    region: frankfurt
+    # Free tier: 256MB, 1 backup, 90-day retention
+    # Sufficient for beta testing (3-5 officine, <1M rows)
+    ipAllowList: []
+    postgresMajorVersion: 15
+
   - type: redis
     name: nexo-redis-staging
     plan: free
-    maxmemoryPolicy: allkeys-lru
     region: frankfurt
+    # Free tier: 30MB max memory, TTL-based eviction
+    # Sufficient for session/cache (BullMQ queues, locks)
+    maxmemoryPolicy: allkeys-lru
     ipAllowList: []

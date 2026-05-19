@@ -53,6 +53,7 @@ describe('AuthController', () => {
             verifyPassword: jest.fn(),
             hashPassword: jest.fn(),
             checkBreachedPassword: jest.fn(),
+            findTenantsByEmail: jest.fn(),
           },
         },
         {
@@ -5795,6 +5796,50 @@ describe('AuthController', () => {
 
       const user = { userId: 'user-001', tenantId: 'tenant-001' } as any;
       await expect(controller.getMe(user)).rejects.toThrow(/Utente non trovato/i);
+    });
+  });
+
+  describe('getTenantByEmail', () => {
+    it('should return tenants for a valid email', async () => {
+      authService.findTenantsByEmail.mockResolvedValueOnce({
+        tenants: [{ slug: 'demo', name: 'Demo Officina Roma' }],
+      } as never);
+
+      const result = await controller.getTenantByEmail('admin@demo.mechmind.it');
+
+      expect(result.tenants).toEqual([{ slug: 'demo', name: 'Demo Officina Roma' }]);
+      expect(authService.findTenantsByEmail).toHaveBeenCalledWith('admin@demo.mechmind.it');
+    });
+
+    it('should return empty tenants when email has no associated workspace', async () => {
+      authService.findTenantsByEmail.mockResolvedValueOnce({ tenants: [] } as never);
+
+      const result = await controller.getTenantByEmail('unknown@example.com');
+
+      expect(result.tenants).toEqual([]);
+      expect(authService.findTenantsByEmail).toHaveBeenCalledWith('unknown@example.com');
+    });
+
+    it('should pass empty string when email param is undefined', async () => {
+      authService.findTenantsByEmail.mockResolvedValueOnce({ tenants: [] } as never);
+
+      await controller.getTenantByEmail(undefined as unknown as string);
+
+      expect(authService.findTenantsByEmail).toHaveBeenCalledWith('');
+    });
+
+    it('should return multiple tenants for multi-workspace user', async () => {
+      authService.findTenantsByEmail.mockResolvedValueOnce({
+        tenants: [
+          { slug: 'garage-a', name: 'Garage A' },
+          { slug: 'garage-b', name: 'Garage B' },
+        ],
+      } as never);
+
+      const result = await controller.getTenantByEmail('multi@example.com');
+
+      expect(result.tenants).toHaveLength(2);
+      expect(authService.findTenantsByEmail).toHaveBeenCalledWith('multi@example.com');
     });
   });
 });

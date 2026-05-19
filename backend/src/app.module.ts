@@ -67,9 +67,15 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     // Rate limiting with in-memory storage (Upstash doesn't support Lua scripts)
     ThrottlerModule.forRoot({
       skipIf: context => {
-        const req = context.switchToHttp()?.getRequest<{ path?: string }>();
+        const req = context.switchToHttp()?.getRequest<{ path?: string; ip?: string }>();
         const path = req?.path ?? '';
-        return path === '/health' || path === '/liveness' || path === '/readiness';
+        const ip = req?.ip ?? '';
+        const isHealthCheck = path === '/health' || path === '/liveness' || path === '/readiness';
+        // Skip throttle for localhost in non-production (E2E/dev). Production still fully protected.
+        const isLocalDev =
+          process.env.NODE_ENV !== 'production' &&
+          (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1');
+        return isHealthCheck || isLocalDev;
       },
       throttlers: [
         { name: 'default', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 100 },

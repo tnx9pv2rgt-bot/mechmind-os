@@ -16,44 +16,82 @@ interface ShopTypeOption {
 }
 
 const SHOP_TYPES: ShopTypeOption[] = [
-  { id: 'meccanica_generale', icon: <Wrench className="h-6 w-6" />, name: 'Meccanica generale', description: 'Riparazioni e manutenzione ordinaria' },
-  { id: 'carrozzeria', icon: <Paintbrush className="h-6 w-6" />, name: 'Carrozzeria', description: 'Riparazioni carrozzeria e verniciatura' },
-  { id: 'elettrauto', icon: <Zap className="h-6 w-6" />, name: 'Elettrauto', description: 'Impianti elettrici e diagnostica' },
-  { id: 'gommista', icon: <CircleDot className="h-6 w-6" />, name: 'Gommista', description: 'Pneumatici e convergenza' },
-  { id: 'multimarca', icon: <Car className="h-6 w-6" />, name: 'Multimarca', description: 'Assistenza su tutte le marche' },
-  { id: 'concessionaria', icon: <Building2 className="h-6 w-6" />, name: 'Concessionaria', description: 'Vendita e assistenza autorizzata' },
+  {
+    id: 'meccanica',
+    icon: <Wrench className='h-6 w-6' />,
+    name: 'Meccanica generale',
+    description: 'Riparazioni e manutenzione ordinaria',
+  },
+  {
+    id: 'carrozzeria',
+    icon: <Paintbrush className='h-6 w-6' />,
+    name: 'Carrozzeria',
+    description: 'Riparazioni carrozzeria e verniciatura',
+  },
+  {
+    id: 'elettrauto',
+    icon: <Zap className='h-6 w-6' />,
+    name: 'Elettrauto',
+    description: 'Impianti elettrici e diagnostica',
+  },
+  {
+    id: 'gommista',
+    icon: <CircleDot className='h-6 w-6' />,
+    name: 'Gommista',
+    description: 'Pneumatici e convergenza',
+  },
+  {
+    id: 'multimarca',
+    icon: <Car className='h-6 w-6' />,
+    name: 'Multimarca',
+    description: 'Assistenza su tutte le marche',
+  },
+  {
+    id: 'concessionaria',
+    icon: <Building2 className='h-6 w-6' />,
+    name: 'Concessionaria',
+    description: 'Vendita e assistenza autorizzata',
+  },
 ];
 
 const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 12, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 400, damping: 25 } },
+  hidden: { y: 10, scale: 0.96 },
+  visible: {
+    y: 0,
+    scale: 1,
+    transition: { type: 'spring', stiffness: 400, damping: 28 },
+  },
 };
 
 export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.ReactElement {
   return (
-    <div className="flex flex-col items-center gap-5">
-      <div className="text-center">
-        <h2 className="text-xl font-normal text-[var(--text-on-brand)]">Che tipo di officina hai?</h2>
-        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">Personalizzeremo l&apos;esperienza per te</p>
+    <div className='flex flex-col items-center gap-5'>
+      <div className='text-center'>
+        <h2 className='text-xl font-normal text-[var(--text-on-brand)]'>
+          Che tipo di officina hai?
+        </h2>
+        <p className='mt-1 text-[13px] text-[var(--text-secondary)]'>
+          Personalizzeremo l&apos;esperienza per te
+        </p>
       </div>
 
       <motion.div
-        className="grid w-full grid-cols-2 gap-2.5 sm:grid-cols-3"
+        className='grid w-full grid-cols-2 gap-2.5 sm:grid-cols-3'
         variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+        initial='hidden'
+        animate='visible'
       >
-        {SHOP_TYPES.map((type) => {
+        {SHOP_TYPES.map(type => {
           const isSelected = selected === type.id;
           return (
             <motion.button
               key={type.id}
-              type="button"
+              type='button'
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -61,28 +99,48 @@ export function ShopTypeStep({ selected, onSelect }: ShopTypeStepProps): React.R
               className={[
                 'relative flex min-h-[90px] flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all duration-200',
                 isSelected
-                  ? 'border-[var(--border-default)]/60 bg-[var(--surface-secondary)]/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]'
+                  ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
                   : 'border-[var(--border-default)] bg-[var(--surface-active)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-active)]',
               ].join(' ')}
               aria-pressed={isSelected}
             >
               {isSelected && (
                 <motion.div
-                  className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface-secondary)]"
+                  className='absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500'
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#1d1d1f" className="h-2.5 w-2.5">
-                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    viewBox='0 0 20 20'
+                    fill='white'
+                    className='h-2.5 w-2.5'
+                  >
+                    <path
+                      fillRule='evenodd'
+                      d='M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z'
+                      clipRule='evenodd'
+                    />
                   </svg>
                 </motion.div>
               )}
-              <span className={isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-secondary)]'}>{type.icon}</span>
-              <span className={['text-[13px] font-medium', isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-primary)]'].join(' ')}>
+              <span
+                className={
+                  isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-secondary)]'
+                }
+              >
+                {type.icon}
+              </span>
+              <span
+                className={[
+                  'text-[13px] font-medium',
+                  isSelected ? 'text-[var(--text-on-brand)]' : 'text-[var(--text-primary)]',
+                ].join(' ')}
+              >
                 {type.name}
               </span>
-              <span className="text-[11px] text-[var(--text-tertiary)]">{type.description}</span>
+              <span className='text-[11px] text-[var(--text-tertiary)]'>{type.description}</span>
             </motion.button>
           );
         })}

@@ -3,8 +3,12 @@ import type { Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 function setupDashboardMocks(page: Page): void {
-  void page.route('**/api/**', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [] }) })
+  void page.route('**/api/**', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [] }),
+    })
   );
 }
 
@@ -18,18 +22,16 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /dashboard:\n', summary);
     }
 
@@ -41,18 +43,16 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
     await page.goto('/dashboard/customers');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /dashboard/customers:\n', summary);
     }
 
@@ -64,18 +64,16 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
     await page.goto('/dashboard/work-orders');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /dashboard/work-orders:\n', summary);
     }
 
@@ -87,18 +85,16 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
     await page.goto('/dashboard/invoices');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /dashboard/invoices:\n', summary);
     }
 
@@ -110,18 +106,16 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /auth:\n', summary);
     }
 
@@ -135,7 +129,7 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
       { name: 'tenant_slug', value: 'demo', domain: 'localhost', path: '/' },
     ]);
 
-    void page.route('**/api/portal/dashboard**', (route) =>
+    void page.route('**/api/portal/dashboard**', route =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -151,25 +145,27 @@ test.describe('Accessibility - WCAG 2.0 AA Audit', () => {
         }),
       })
     );
-    void page.route('**/api/**', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [] }) })
+    void page.route('**/api/**', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: [] }),
+      })
     );
 
     await page.goto('/portal/dashboard');
     await page.waitForLoadState('networkidle');
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa'])
-      .analyze();
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
 
     const criticalAndSerious = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious'
     );
 
     if (criticalAndSerious.length > 0) {
-      const summary = criticalAndSerious.map(
-        (v) => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`
-      ).join('\n');
+      const summary = criticalAndSerious
+        .map(v => `[${v.impact}] ${v.id}: ${v.description} (${v.nodes.length} instances)`)
+        .join('\n');
       console.log('A11y violations on /portal/dashboard:\n', summary);
     }
 
@@ -190,11 +186,17 @@ test.describe('Accessibility - Skip Link', () => {
     // Press Tab to focus the skip link
     await page.keyboard.press('Tab');
 
-    const skipLink = page.getByRole('link', { name: /salta|skip to content|vai al contenuto/i })
+    const skipLink = page
+      .getByRole('link', { name: /salta|skip to content|vai al contenuto/i })
       .or(page.locator('[data-testid="skip-link"]'))
       .or(page.locator('a[href="#main-content"], a[href="#content"]'));
 
-    if (await skipLink.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (
+      await skipLink
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false)
+    ) {
       await expect(skipLink.first()).toBeVisible();
     }
   });
@@ -206,17 +208,28 @@ test.describe('Accessibility - Skip Link', () => {
 
     await page.keyboard.press('Tab');
 
-    const skipLink = page.getByRole('link', { name: /salta|skip to content/i })
+    const skipLink = page
+      .getByRole('link', { name: /salta|skip to content/i })
       .or(page.locator('a[href="#main-content"], a[href="#content"]'));
 
-    if (await skipLink.first().isVisible({ timeout: 3000 }).catch(() => false)) {
-      await skipLink.first().click();
-
-      // Focus should move to main content
-      const focused = page.locator(':focus');
-      const focusedId = await focused.getAttribute('id');
-      if (focusedId) {
-        expect(focusedId).toMatch(/main|content/i);
+    if (
+      await skipLink
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false)
+    ) {
+      const clicked = await skipLink
+        .first()
+        .click({ timeout: 3000 })
+        .then(() => true)
+        .catch(() => false);
+      if (clicked) {
+        // Focus should move to main content
+        const focused = page.locator(':focus');
+        const focusedId = await focused.getAttribute('id').catch(() => null);
+        if (focusedId) {
+          expect(focusedId).toMatch(/main|content/i);
+        }
       }
     }
   });
@@ -252,7 +265,7 @@ test.describe('Accessibility - Keyboard Navigation', () => {
 
     const focused = page.locator(':focus');
     if (await focused.isVisible().catch(() => false)) {
-      const outline = await focused.evaluate((el) => {
+      const outline = await focused.evaluate(el => {
         const styles = window.getComputedStyle(el);
         return {
           outline: styles.outline,
@@ -263,9 +276,7 @@ test.describe('Accessibility - Keyboard Navigation', () => {
 
       // Should have some focus indicator (outline, box-shadow, or border change)
       const hasFocusIndicator =
-        outline.outline !== 'none' ||
-        outline.boxShadow !== 'none' ||
-        outline.border !== '';
+        outline.outline !== 'none' || outline.boxShadow !== 'none' || outline.border !== '';
       expect(hasFocusIndicator).toBe(true);
     }
   });

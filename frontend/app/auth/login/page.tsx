@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Script from 'next/script';
-import { startRegistration } from '@simplewebauthn/browser';
+import { startRegistration, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { z } from 'zod';
 import { AuthSplitLayout } from '@/components/auth/auth-split-layout';
 import {
@@ -19,11 +18,16 @@ import { SocialButtons } from '@/components/auth/social-buttons';
 import { MagicLinkSent } from '@/components/auth/magic-link-sent';
 import { PasskeyPrompt } from '@/components/auth/passkey-prompt';
 import { OTPInput } from '@/components/auth/otp-input';
-import { createDemoSession } from '@/lib/auth/demo-session';
+import { createDemoSession, clearDemoSession } from '@/lib/auth/demo-session';
 import { SkipLink } from '@/components/ui/skip-link';
 
+const emailSchema = z
+  .string()
+  .min(1, 'Inserisci la tua email')
+  .email('Inserisci un indirizzo email valido');
+
 const loginSchema = z.object({
-  email: z.string().min(1, 'Inserisci la tua email').email('Inserisci un indirizzo email valido'),
+  email: emailSchema,
   password: z.string().min(1, 'Inserisci la password'),
 });
 
@@ -31,6 +35,7 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 function extractErrorMessage(data: Record<string, unknown>, fallback: string): string {
   if (typeof data.message === 'string' && data.message) return data.message;
+  if (typeof data.error === 'string' && data.error) return data.error;
   if (data.error && typeof data.error === 'object' && 'message' in data.error) {
     const msg = (data.error as { message?: string }).message;
     if (msg) return msg;
@@ -38,7 +43,7 @@ function extractErrorMessage(data: Record<string, unknown>, fallback: string): s
   return fallback;
 }
 
-type Step = 'main' | 'magic-sent' | 'mfa' | 'passkey-prompt';
+type Step = 'email' | 'magic-sent' | 'mfa' | 'passkey-prompt';
 
 // =============================================================================
 // Google One Tap
@@ -119,7 +124,7 @@ function GoogleOneTap({
 // Main Page
 // =============================================================================
 export default function AuthPage(): React.ReactElement {
-  const [step, setStep] = useState<Step>('main');
+  const [step, setStep] = useState<Step>('email');
   const [direction, setDirection] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -144,13 +149,11 @@ export default function AuthPage(): React.ReactElement {
   const [loginRiskLevel, setLoginRiskLevel] = useState<string | null>(null);
   const [isResendingMagicLink, setIsResendingMagicLink] = useState(false);
   const [loadingButton, setLoadingButton] = useState<'google' | 'magiclink' | null>(null);
-  const router = useRouter();
-  const emailInputRef = useRef<HTMLInputElement>(null);
 
-  const tenantSlug =
-    typeof window !== 'undefined'
-      ? (new URLSearchParams(window.location.search).get('tenant') ?? '')
-      : '';
+  const [tenantSlug, setTenantSlug] = useState('');
+
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const getRedirectTo = (): string => {
     if (typeof window === 'undefined') return '/dashboard';
@@ -158,9 +161,19 @@ export default function AuthPage(): React.ReactElement {
     return params.get('redirect') || '/dashboard';
   };
 
+  // Pre-fill tenant from URL param; in dev default to "demo"
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    const urlTenant = params.get('tenant');
+    if (urlTenant) {
+      setTenantSlug(urlTenant);
+    } else {
+      const isDev =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isDev) setTenantSlug('demo');
+    }
+
     const urlError = params.get('error');
     if (urlError === 'google_not_configured') {
       setError('Accesso con Google non ancora configurato. Usa email e password.');
@@ -168,6 +181,38 @@ export default function AuthPage(): React.ReactElement {
       window.history.replaceState({}, '', '/auth');
     }
   }, []);
+
+  // BUG-4: redirect utente già autenticato a /dashboard
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.json())
+      .then((data: { user: unknown }) => {
+        if (data.user) {
+          clearDemoSession();
+          window.location.href = '/dashboard';
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Sync Safari autofill — autofill does NOT trigger React onChange
+  useEffect(() => {
+    const el = passwordInputRef.current;
+    if (!el) return;
+    const id = setInterval(() => {
+      if (el.value !== password) setPassword(el.value);
+    }, 100);
+    return () => clearInterval(id);
+  }, [password]);
+
+  // BUG-2: rifocalizza l'email dopo il dismiss del cookie consent
+  useEffect(() => {
+    const onConsent = (): void => {
+      if (step === 'email') setTimeout(() => emailInputRef.current?.focus(), 80);
+    };
+    window.addEventListener('mechmind-consent-update', onConsent);
+    return () => window.removeEventListener('mechmind-consent-update', onConsent);
+  }, [step]);
 
   const goTo = (nextStep: Step, dir: number = 1): void => {
     setError('');
@@ -194,27 +239,26 @@ export default function AuthPage(): React.ReactElement {
   };
 
   // --- Google ---
-  const handleGoogleLogin = useCallback(
-    async (credential: string) => {
-      setIsLoading(true);
-      setError('');
-      try {
-        const res = await fetch('/api/auth/oauth/google', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credential }),
-        });
-        const data = (await res.json()) as Record<string, unknown>;
-        if (res.ok && data.success) router.push(getRedirectTo());
-        else setError(extractErrorMessage(data, "Account non trovato. Contatta l'amministratore."));
-      } catch {
-        setError('Errore di rete. Riprova.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [router]
-  );
+  const handleGoogleLogin = useCallback(async (credential: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/oauth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (res.ok && data.success) {
+        clearDemoSession();
+        window.location.href = getRedirectTo();
+      } else setError(extractErrorMessage(data, "Account non trovato. Contatta l'amministratore."));
+    } catch {
+      setError('Errore di rete. Riprova.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // --- Magic link ---
   const handleMagicLink = async (): Promise<void> => {
@@ -271,6 +315,10 @@ export default function AuthPage(): React.ReactElement {
       setError(result.error.errors[0].message);
       return;
     }
+    if (!tenantSlug) {
+      setError('Inserisci il nome del workspace per continuare');
+      return;
+    }
     setIsLoading(true);
     setError('');
     setColdStartHint(false);
@@ -289,7 +337,12 @@ export default function AuthPage(): React.ReactElement {
           if (data.deviceId) setDeviceId(data.deviceId as string);
           goTo('mfa');
         } else {
-          router.push(getRedirectTo());
+          clearDemoSession();
+          if (browserSupportsWebAuthn() && !localStorage.getItem('skip-passkey-prompt')) {
+            goTo('passkey-prompt');
+          } else {
+            window.location.href = getRedirectTo();
+          }
         }
       } else if (res.status === 429) {
         setError('Troppi tentativi. Riprova tra 60 secondi.');
@@ -299,6 +352,18 @@ export default function AuthPage(): React.ReactElement {
           setError('Accesso bloccato per attività sospetta. Contatta il supporto.');
         } else if (msg.includes('locked') || msg.includes('Account locked')) {
           setError('Account temporaneamente bloccato. Riprova più tardi.');
+        } else if (
+          msg.toLowerCase().includes('tenantslug') ||
+          msg.toLowerCase().includes('workspace')
+        ) {
+          setError('Workspace non valido. Verifica il nome e riprova.');
+        } else if (
+          msg.toLowerCase().includes('invalid credentials') ||
+          msg.toLowerCase().includes('invalid password') ||
+          msg.toLowerCase().includes('unauthorized') ||
+          msg.toLowerCase().includes('wrong password')
+        ) {
+          setError('Email o password non corretta');
         } else {
           setError(msg || 'Email o password non corretta');
         }
@@ -332,7 +397,12 @@ export default function AuthPage(): React.ReactElement {
       });
       const data = (await res.json()) as Record<string, unknown>;
       if (res.ok) {
-        router.push(getRedirectTo());
+        clearDemoSession();
+        if (browserSupportsWebAuthn() && !localStorage.getItem('skip-passkey-prompt')) {
+          goTo('passkey-prompt');
+        } else {
+          window.location.href = getRedirectTo();
+        }
       } else {
         if (data.remainingAttempts !== undefined) {
           setRemainingAttempts(data.remainingAttempts as number);
@@ -340,7 +410,7 @@ export default function AuthPage(): React.ReactElement {
         setError(extractErrorMessage(data, 'Codice non valido'));
       }
     } catch {
-      setError('Errore di rete. Riprova.');
+      setError('Errore di connessione. Riprova.');
     } finally {
       setIsLoading(false);
     }
@@ -349,15 +419,20 @@ export default function AuthPage(): React.ReactElement {
   const handleSendSmsOtp = async (): Promise<void> => {
     setIsSendingSms(true);
     try {
-      await fetch('/api/auth/sms-otp/send', {
+      const res = await fetch('/api/auth/sms-otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tempToken: mfaTempToken }),
       });
-      setSmsSent(true);
-      setUseSmsOtp(true);
+      if (res.ok) {
+        setSmsSent(true);
+        setUseSmsOtp(true);
+      } else {
+        const data = (await res.json()) as Record<string, unknown>;
+        setError(extractErrorMessage(data, 'Errore invio SMS'));
+      }
     } catch {
-      setError('Errore invio SMS. Riprova.');
+      setError('Errore di rete. Riprova.');
     } finally {
       setIsSendingSms(false);
     }
@@ -374,10 +449,17 @@ export default function AuthPage(): React.ReactElement {
         body: JSON.stringify({ tempToken: mfaTempToken, code: smsOtpCode, trustDevice, deviceId }),
       });
       const data = (await res.json()) as Record<string, unknown>;
-      if (res.ok) router.push(getRedirectTo());
-      else setError(extractErrorMessage(data, 'Codice SMS non valido'));
+      if (res.ok) {
+        clearDemoSession();
+        window.location.href = getRedirectTo();
+      } else {
+        if (data.remainingAttempts !== undefined) {
+          setRemainingAttempts(data.remainingAttempts as number);
+        }
+        setError(extractErrorMessage(data, 'Codice SMS non valido'));
+      }
     } catch {
-      setError('Errore di rete. Riprova.');
+      setError('Errore di connessione. Riprova.');
     } finally {
       setIsLoading(false);
     }
@@ -403,7 +485,8 @@ export default function AuthPage(): React.ReactElement {
     try {
       const optionsRes = await fetch('/api/auth/passkey/register-options', { method: 'POST' });
       if (!optionsRes.ok) {
-        router.push(getRedirectTo());
+        clearDemoSession();
+        window.location.href = getRedirectTo();
         return;
       }
       const options = await optionsRes.json();
@@ -415,17 +498,21 @@ export default function AuthPage(): React.ReactElement {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ registration }),
       });
-      router.push(getRedirectTo());
+      clearDemoSession();
+      window.location.href = getRedirectTo();
     } catch {
-      router.push(getRedirectTo());
+      clearDemoSession();
+      window.location.href = getRedirectTo();
     } finally {
       setIsRegisteringPasskey(false);
     }
   };
 
-  const showBack = step === 'mfa';
+  const showBack = step === 'mfa' || step === 'magic-sent';
   const handleBack = (): void => {
-    if (step === 'mfa') goTo('main', -1);
+    if (step === 'mfa' || step === 'magic-sent') {
+      goTo('email', -1);
+    }
   };
 
   return (
@@ -434,10 +521,10 @@ export default function AuthPage(): React.ReactElement {
       <GoogleOneTap onSuccess={handleGoogleLogin} />
 
       <AnimatePresence mode='wait' custom={direction}>
-        {/* ============ STEP: Main (email + password) ============ */}
-        {step === 'main' && (
+        {/* ============ STEP: Login (workspace + email + password) ============ */}
+        {step === 'email' && (
           <motion.div
-            key='main'
+            key='email'
             custom={direction}
             variants={slideVariants}
             initial='enter'
@@ -445,7 +532,7 @@ export default function AuthPage(): React.ReactElement {
             exit='exit'
           >
             <div className='flex flex-col items-stretch gap-5'>
-              <h2 className='text-center text-3xl font-normal text-[var(--text-on-brand)]'>
+              <h2 className='text-center text-3xl font-normal text-[var(--text-primary)]'>
                 Accedi
               </h2>
               <p className='mb-2 px-4 text-center text-base text-[var(--text-secondary)]'>
@@ -477,7 +564,7 @@ export default function AuthPage(): React.ReactElement {
                 <div className='h-px bg-[var(--border-strong)]' />
               </div>
 
-              {/* Form */}
+              {/* Login form: workspace + email + password */}
               <form
                 id='login-form'
                 className='flex flex-col gap-4'
@@ -485,6 +572,25 @@ export default function AuthPage(): React.ReactElement {
                 noValidate
                 onSubmit={handleLoginSubmit}
               >
+                {/* Workspace */}
+                <div>
+                  <label htmlFor='login-workspace' className='sr-only'>
+                    Workspace
+                  </label>
+                  <input
+                    id='login-workspace'
+                    type='text'
+                    value={tenantSlug}
+                    onChange={e => {
+                      setTenantSlug(e.target.value.toLowerCase().trim());
+                      setError('');
+                    }}
+                    placeholder='Workspace (es. demo)'
+                    autoComplete='organization'
+                    className={inputStyle}
+                  />
+                </div>
+
                 {/* Email */}
                 <div>
                   <label htmlFor='login-email' className='sr-only'>
@@ -514,26 +620,37 @@ export default function AuthPage(): React.ReactElement {
                   </label>
                   <input
                     id='login-password'
+                    ref={passwordInputRef}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => {
                       setPassword(e.target.value);
                       setError('');
                     }}
+                    onInput={e => {
+                      setPassword(e.currentTarget.value);
+                      setError('');
+                    }}
                     placeholder='Password'
                     name='password'
                     autoComplete='current-password'
                     aria-describedby={error ? 'login-error' : undefined}
+                    data-lpignore='true'
+                    data-1p-ignore
                     className={`${inputStyle} pr-20 ${error ? 'border-[var(--text-tertiary)]' : ''}`}
                   />
                   <button
                     type='button'
-                    onClick={() => setShowPassword(!showPassword)}
-                    className='absolute right-4 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[13px] text-[var(--text-tertiary)] hover:text-[var(--text-on-brand)] transition-colors'
-                    tabIndex={-1}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      setShowPassword(v => !v);
+                    }}
+                    className='absolute inset-y-0 right-0 z-20 flex min-w-[60px] items-center justify-center px-3 text-[13px] text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-on-brand)]'
                     aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                   >
-                    {showPassword ? 'Nascondi' : 'Mostra'}
+                    <span style={{ pointerEvents: 'none' }}>
+                      {showPassword ? 'Nascondi' : 'Mostra'}
+                    </span>
                   </button>
                 </div>
 
@@ -557,7 +674,6 @@ export default function AuthPage(): React.ReactElement {
                   </Link>
                 </div>
 
-                {/* Error */}
                 {error && (
                   <motion.p
                     id='login-error'
@@ -576,7 +692,6 @@ export default function AuthPage(): React.ReactElement {
                   </p>
                 )}
 
-                {/* Submit */}
                 <button type='submit' disabled={isLoading} className={`mt-1 ${btnPrimary}`}>
                   {isLoading ? <span className={btnSpinner} /> : 'Accedi'}
                 </button>
@@ -588,7 +703,7 @@ export default function AuthPage(): React.ReactElement {
                   Non hai un account?{' '}
                   <Link
                     href='/auth/register'
-                    className='min-h-[44px] inline-flex items-center font-medium text-[var(--text-on-brand)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-white'
+                    className='min-h-[44px] inline-flex items-center font-medium text-[var(--text-primary)] underline decoration-[var(--text-tertiary)] underline-offset-2 hover:decoration-[var(--text-primary)]'
                   >
                     Registrati
                   </Link>
@@ -619,7 +734,7 @@ export default function AuthPage(): React.ReactElement {
             <MagicLinkSent
               email={email}
               onResend={handleResendMagicLink}
-              onBackToPassword={() => goTo('main', -1)}
+              onBackToPassword={() => goTo('email', -1)}
               isResending={isResendingMagicLink}
             />
           </motion.div>
@@ -636,7 +751,7 @@ export default function AuthPage(): React.ReactElement {
             exit='exit'
           >
             <div className='flex flex-col items-stretch gap-5'>
-              <h2 className='text-center text-3xl font-normal text-[var(--text-on-brand)]'>
+              <h2 className='text-center text-3xl font-normal text-[var(--text-primary)]'>
                 Verifica in due passaggi
               </h2>
               {loginRiskLevel && loginRiskLevel !== 'low' && (
@@ -649,7 +764,7 @@ export default function AuthPage(): React.ReactElement {
                 >
                   <span>
                     {loginRiskLevel === 'critical' || loginRiskLevel === 'high'
-                      ? 'Accesso da posizione insolita. Verifica la tua identità.'
+                      ? 'Accesso da posizione o dispositivo insolito. Verifica la tua identità.'
                       : 'Nuovo dispositivo rilevato. Conferma la tua identità.'}
                   </span>
                 </div>
@@ -825,7 +940,10 @@ export default function AuthPage(): React.ReactElement {
           >
             <PasskeyPrompt
               onRegister={handleRegisterPasskey}
-              onSkip={() => router.push(getRedirectTo())}
+              onSkip={() => {
+                clearDemoSession();
+                window.location.href = getRedirectTo();
+              }}
               isRegistering={isRegisteringPasskey}
             />
           </motion.div>

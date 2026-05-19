@@ -5,7 +5,7 @@
 
 export const btnPrimary = [
   'flex h-[52px] w-full items-center justify-center rounded-full',
-  'bg-white text-base font-normal text-[var(--surface-tertiary)]',
+  'bg-white text-base font-normal text-[var(--text-primary)]',
   'transition-colors hover:bg-[var(--surface-active)]',
   'disabled:opacity-30',
 ].join(' ');

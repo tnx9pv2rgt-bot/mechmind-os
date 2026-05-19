@@ -89,7 +89,9 @@ export default function PortalLoginPage() {
           <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
             MechMind Portal
           </h1>
-          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>Accedi al tuo account cliente</p>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
+            Accedi al tuo account cliente
+          </p>
         </motion.div>
 
         {/* Login Form */}
@@ -114,7 +116,10 @@ export default function PortalLoginPage() {
               <form onSubmit={handleSubmit} className='space-y-5'>
                 {/* Email */}
                 <div className='space-y-2'>
-                  <Label htmlFor='email' className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <Label
+                    htmlFor='email'
+                    className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                  >
                     Email
                   </Label>
                   <div className='relative'>
@@ -136,7 +141,10 @@ export default function PortalLoginPage() {
 
                 {/* Password */}
                 <div className='space-y-2'>
-                  <Label htmlFor='password' className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  <Label
+                    htmlFor='password'
+                    className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                  >
                     Password
                   </Label>
                   <div className='relative'>
@@ -160,7 +168,9 @@ export default function PortalLoginPage() {
                     </button>
                   </div>
                   {fieldErrors.password && (
-                    <p className='text-xs text-[var(--status-error)] mt-1'>{fieldErrors.password}</p>
+                    <p className='text-xs text-[var(--status-error)] mt-1'>
+                      {fieldErrors.password}
+                    </p>
                   )}
                 </div>
 
@@ -168,9 +178,14 @@ export default function PortalLoginPage() {
                 <div className='flex items-center justify-between text-sm'>
                   <label className='flex items-center gap-2 cursor-pointer'>
                     <input type='checkbox' className='rounded border-[var(--border-default)]' />
-                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Ricordami</span>
+                    <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Ricordami
+                    </span>
                   </label>
-                  <Link href='/portal/reset-password' className='text-[var(--brand)] hover:underline'>
+                  <Link
+                    href='/portal/reset-password'
+                    className='text-[var(--brand-text)] hover:underline'
+                  >
                     Password dimenticata?
                   </Link>
                 </div>
@@ -194,7 +209,7 @@ export default function PortalLoginPage() {
                   Non hai un account?{' '}
                   <Link
                     href='/portal/register'
-                    className='text-[var(--brand)] font-medium hover:underline'
+                    className='text-[var(--brand-text)] font-medium hover:underline'
                   >
                     Registrati
                   </Link>

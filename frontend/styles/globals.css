@@ -22,6 +22,7 @@
     --brand-subtle: color-mix(in oklch, var(--brand) 12%, white);
     --brand-muted: color-mix(in oklch, var(--brand) 20%, white);
     --brand-foreground: #ffffff;
+    --brand-text: #0059d6; /* WCAG AA on white: 6.18:1 — use for text/links on light bg */
 
     /* ── Layer 2: Semantic Surface Tokens — Light ── */
     --surface-primary: #ffffff;
@@ -35,7 +36,7 @@
     /* ── Layer 2: Semantic Text Tokens — Light ── */
     --text-primary: #0d0d0d;
     --text-secondary: #6e6e6e;
-    --text-tertiary: #767676;
+    --text-tertiary: #696969;
     --text-on-brand: #ffffff;
     --text-on-surface: #0d0d0d;
 
@@ -132,6 +133,7 @@
     --brand-active: color-mix(in oklch, var(--brand) 70%, white);
     --brand-subtle: color-mix(in oklch, var(--brand) 15%, #212121);
     --brand-muted: color-mix(in oklch, var(--brand) 25%, #212121);
+    --brand-text: var(--brand); /* In dark mode brand is light enough on dark bg */
 
     /* ── Semantic Surface Tokens — Dark ── */
     --surface-primary: #1c1c1e;
@@ -787,4 +789,31 @@
   tr {
     break-inside: avoid;
   }
+}
+
+/* Suppress browser-native password controls (Safari/Chrome/Edge)
+   that overlap custom show/hide buttons */
+input[type='password']::-webkit-credentials-auto-fill-button,
+input[type='password']::-webkit-contacts-auto-fill-button,
+input[type='password']::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
+/* Override browser autofill yellow background — preserves dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #2c2c2e inset !important;
+  -webkit-text-fill-color: #ececec !important;
+  caret-color: #ececec;
+  transition: background-color 9999s ease-in-out 0s;
 }
