@@ -134,6 +134,9 @@ export default function WarrantyDetailPage() {
   const [claimDialogOpen, setClaimDialogOpen] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<TabKey>('overview');
+  const [claimFilter, setClaimFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all'
+  );
 
   React.useEffect(() => {
     loadWarranty();
@@ -250,10 +253,6 @@ export default function WarrantyDetailPage() {
     { key: 'claims', label: `Reclami (${warranty.claims?.length || 0})` },
     { key: 'vehicle', label: 'Veicolo' },
   ];
-
-  const [claimFilter, setClaimFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>(
-    'all'
-  );
 
   const filteredClaims = (() => {
     switch (claimFilter) {

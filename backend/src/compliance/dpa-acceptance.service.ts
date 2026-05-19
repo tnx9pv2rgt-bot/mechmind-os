@@ -26,12 +26,8 @@ export class DpaAcceptanceService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Access dpaAcceptance model (created after schema migration)
-   */
-  private get dpaAcceptance(): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (this.prisma as any).dpaAcceptance;
+  private get dpaAcceptance() {
+    return this.prisma.dpaAcceptance;
   }
 
   /**

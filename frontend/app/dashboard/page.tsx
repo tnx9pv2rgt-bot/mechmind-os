@@ -1069,7 +1069,7 @@ export default function DashboardPage(): React.ReactElement {
                     Nessun appuntamento oggi
                   </p>
                   <p className='text-footnote text-[var(--text-tertiary)] mt-1 mb-4'>
-                    L'agenda è libera. Crea il primo appuntamento o controlla il calendario.
+                    L&apos;agenda è libera. Crea il primo appuntamento o controlla il calendario.
                   </p>
                   <Link href='/dashboard/bookings/new'>
                     <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />}>

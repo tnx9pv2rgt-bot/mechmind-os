@@ -130,19 +130,32 @@ function getWarrantyStatus(
   color: string;
 } {
   if (warrantyStatus === 'VOID') {
-    return { label: 'Annullata', variant: 'destructive', color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]' };
+    return {
+      label: 'Annullata',
+      variant: 'destructive',
+      color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]',
+    };
   }
   if (daysRemaining <= 0) {
-    return { label: 'Scaduta', variant: 'destructive', color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]' };
+    return {
+      label: 'Scaduta',
+      variant: 'destructive',
+      color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]',
+    };
   }
   if (daysRemaining <= 30) {
     return {
       label: 'In Scadenza',
       variant: 'outline',
-      color: 'text-[var(--status-warning)] bg-[var(--status-warning)]/5 border-[var(--status-warning)]/20',
+      color:
+        'text-[var(--status-warning)] bg-[var(--status-warning)]/5 border-[var(--status-warning)]/20',
     };
   }
-  return { label: 'Attiva', variant: 'default', color: 'text-[var(--status-success)] bg-[var(--status-success-subtle)]' };
+  return {
+    label: 'Attiva',
+    variant: 'default',
+    color: 'text-[var(--status-success)] bg-[var(--status-success-subtle)]',
+  };
 }
 
 /**
@@ -248,7 +261,9 @@ function CountdownTimer({ expirationDate }: { expirationDate: string }) {
     return (
       <div className='text-center'>
         <div className='text-4xl font-bold text-[var(--status-error)]'>Scaduta</div>
-        <p className='text-sm text-[var(--text-tertiary)] mt-1'>La copertura della garanzia &egrave; terminata</p>
+        <p className='text-sm text-[var(--text-tertiary)] mt-1'>
+          La copertura della garanzia &egrave; terminata
+        </p>
       </div>
     );
   }
@@ -367,7 +382,10 @@ function NewClaimForm({
       </div>
 
       <div className='space-y-2'>
-        <label htmlFor='issueDescription' className='text-sm font-medium text-[var(--text-primary)]'>
+        <label
+          htmlFor='issueDescription'
+          className='text-sm font-medium text-[var(--text-primary)]'
+        >
           Descrizione Problema
         </label>
         <Textarea
@@ -405,7 +423,9 @@ function NewClaimForm({
           </Button>
         </div>
         {uploadedFiles.length > 0 && (
-          <p className='text-sm text-[var(--status-success)]'>{uploadedFiles.length} file selezionati</p>
+          <p className='text-sm text-[var(--status-success)]'>
+            {uploadedFiles.length} file selezionati
+          </p>
         )}
       </div>
 
@@ -469,12 +489,16 @@ function ClaimDetailDialog({
 
           <div className='space-y-2'>
             <span className='text-sm font-medium text-[var(--text-secondary)]'>Descrizione</span>
-            <p className='text-sm text-[var(--text-primary)] bg-[var(--surface-secondary)] p-3 rounded-lg'>{claim.description}</p>
+            <p className='text-sm text-[var(--text-primary)] bg-[var(--surface-secondary)] p-3 rounded-lg'>
+              {claim.description}
+            </p>
           </div>
 
           {claim.documents.length > 0 && (
             <div className='space-y-2'>
-              <span className='text-sm font-medium text-[var(--text-secondary)]'>Foto Evidenza</span>
+              <span className='text-sm font-medium text-[var(--text-secondary)]'>
+                Foto Evidenza
+              </span>
               <div className='grid grid-cols-3 gap-2'>
                 {claim.documents.map((url, index) => (
                   <div
@@ -544,7 +568,7 @@ function BlockchainVerificationCard({
           <Shield className='h-5 w-5 text-[var(--status-info)]' />
           Verifica Blockchain
         </CardTitle>
-        <CardDescription>Verifica l'autenticità della garanzia su blockchain</CardDescription>
+        <CardDescription>Verifica l&apos;autenticità della garanzia su blockchain</CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
         {/* QR Code Placeholder */}
@@ -556,11 +580,17 @@ function BlockchainVerificationCard({
 
         {/* Contract Address */}
         <div className='space-y-1'>
-          <label htmlFor='contractAddress' className='text-xs font-medium text-[var(--text-tertiary)] uppercase'>
+          <label
+            htmlFor='contractAddress'
+            className='text-xs font-medium text-[var(--text-tertiary)] uppercase'
+          >
             Indirizzo Contratto
           </label>
           <div className='flex items-center gap-2 p-2 bg-[var(--surface-secondary)] rounded-lg'>
-            <code id='contractAddress' className='text-xs text-[var(--text-secondary)] flex-1 truncate'>
+            <code
+              id='contractAddress'
+              className='text-xs text-[var(--text-secondary)] flex-1 truncate'
+            >
               {contractAddress}
             </code>
             <Button
@@ -695,7 +725,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
         <CardContent className='flex flex-col items-center justify-center py-12'>
           <AlertTriangle className='h-12 w-12 text-[var(--status-warning)] mb-4' />
           <h3 className='text-lg font-semibold text-[var(--text-primary)]'>Garanzia Non Trovata</h3>
-          <p className='text-sm text-[var(--text-tertiary)] mt-1'>La garanzia richiesta non è stata trovata</p>
+          <p className='text-sm text-[var(--text-tertiary)] mt-1'>
+            La garanzia richiesta non è stata trovata
+          </p>
         </CardContent>
       </Card>
     );
@@ -716,7 +748,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
           <h1 className='text-2xl font-bold text-[var(--text-primary)]'>Pannello Garanzie</h1>
-          <p className='text-sm text-[var(--text-tertiary)] mt-1'>Gestisci coperture e reclami in garanzia</p>
+          <p className='text-sm text-[var(--text-tertiary)] mt-1'>
+            Gestisci coperture e reclami in garanzia
+          </p>
         </div>
         <Dialog open={isNewClaimModalOpen} onOpenChange={setIsNewClaimModalOpen}>
           <DialogTrigger asChild>
@@ -780,7 +814,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
               <div className='space-y-2'>
                 <div className='flex items-center justify-between text-sm'>
                   <span className='text-[var(--text-secondary)]'>Periodo Copertura</span>
-                  <span className='font-medium text-[var(--text-primary)]'>{progress}% trascorso</span>
+                  <span className='font-medium text-[var(--text-primary)]'>
+                    {progress}% trascorso
+                  </span>
                 </div>
                 <Progress value={progress} className='h-2' />
                 <div className='flex items-center justify-between text-xs text-[var(--text-tertiary)]'>
@@ -816,7 +852,9 @@ export function WarrantyDashboard({ warrantyId, inspectionId }: WarrantyDashboar
                   >
                     {warrantyType.label}
                   </div>
-                  <div className='text-xs text-[var(--text-tertiary)] mt-1'>{warrantyType.description}</div>
+                  <div className='text-xs text-[var(--text-tertiary)] mt-1'>
+                    {warrantyType.description}
+                  </div>
                 </div>
               </div>
             </CardContent>

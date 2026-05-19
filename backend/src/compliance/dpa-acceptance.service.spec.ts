@@ -189,7 +189,7 @@ describe('DpaAcceptanceService', () => {
     });
 
     it('should order by acceptedAt descending to get latest', async () => {
-      const older = mockDpaAcceptance({ acceptedAt: new Date(Date.now() - 1000) });
+      const _older = mockDpaAcceptance({ acceptedAt: new Date(Date.now() - 1000) });
       const newer = mockDpaAcceptance({ acceptedAt: new Date() });
       prisma.dpaAcceptance.findFirst.mockResolvedValue(newer);
 

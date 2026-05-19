@@ -54,26 +54,26 @@ export default function PortabilityPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <DatabaseZap className="w-6 h-6 text-blue-500" />
+    <div className='p-6 space-y-6'>
+      <div className='flex items-center gap-3'>
+        <DatabaseZap className='w-6 h-6 text-blue-500' />
         <div>
-          <h1 className="text-2xl font-semibold">Portabilità dei dati</h1>
-          <p className="text-sm text-muted-foreground">EU Data Act Art. 20 · GDPR Art. 20</p>
+          <h1 className='text-2xl font-semibold'>Portabilità dei dati</h1>
+          <p className='text-sm text-muted-foreground'>EU Data Act Art. 20 · GDPR Art. 20</p>
         </div>
       </div>
 
       <AppleCard>
-        <AppleCardHeader title="Esporta tutti i dati" />
+        <AppleCardHeader title='Esporta tutti i dati' />
         <AppleCardContent>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+          <div className='space-y-4'>
+            <p className='text-sm text-muted-foreground'>
               Scarica un archivio ZIP con tutti i dati del tuo tenant in formato machine-readable
               (JSON). Includi clienti, veicoli, fatture e prenotazioni. Il file è firmato HMAC per
-              garantirne l'integrità.
+              garantirne l&apos;integrità.
             </p>
 
-            <ul className="text-sm space-y-1 text-muted-foreground list-disc list-inside">
+            <ul className='text-sm space-y-1 text-muted-foreground list-disc list-inside'>
               <li>customers.json — anagrafica con PII decifrata</li>
               <li>vehicles.json — veicoli registrati</li>
               <li>invoices.json — fatture emesse</li>
@@ -82,14 +82,14 @@ export default function PortabilityPage() {
             </ul>
 
             {state === 'loading' && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
+              <div className='space-y-2'>
+                <div className='flex justify-between text-xs text-muted-foreground'>
                   <span>Generazione in corso...</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div className='w-full bg-muted rounded-full h-2 overflow-hidden'>
                   <div
-                    className="h-2 bg-blue-500 rounded-full transition-all duration-500"
+                    className='h-2 bg-blue-500 rounded-full transition-all duration-500'
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -97,26 +97,26 @@ export default function PortabilityPage() {
             )}
 
             {state === 'done' && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
-                <CheckCircle className="w-4 h-4" />
+              <div className='flex items-center gap-2 text-sm text-green-600'>
+                <CheckCircle className='w-4 h-4' />
                 <span>Export completato e scaricato</span>
               </div>
             )}
 
             {state === 'error' && (
-              <div className="flex items-center gap-2 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                <span>Errore durante l'export. Riprova.</span>
+              <div className='flex items-center gap-2 text-sm text-red-600'>
+                <AlertCircle className='w-4 h-4' />
+                <span>Errore durante l&apos;export. Riprova.</span>
               </div>
             )}
 
             <AppleButton
-              variant="primary"
+              variant='primary'
               onClick={handleExport}
               disabled={state === 'loading'}
-              className="w-full"
+              className='w-full'
             >
-              <Download className="w-4 h-4 mr-2" />
+              <Download className='w-4 h-4 mr-2' />
               {state === 'loading' ? 'Generazione ZIP...' : 'Esporta tutti i dati'}
             </AppleButton>
           </div>
