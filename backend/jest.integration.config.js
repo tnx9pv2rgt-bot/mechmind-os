@@ -4,7 +4,20 @@ module.exports = {
   rootDir: '.',
   testRegex: 'tests/integration/.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.(t|j)s$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          allowSyntheticDefaultImports: true,
+          esModuleInterop: true,
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true,
+          strictNullChecks: true,
+          noImplicitAny: true,
+          skipLibCheck: true,
+        },
+      },
+    ],
   },
   collectCoverageFrom: [
     'src/**/*.(t|j)s',
