@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as request from 'supertest';
+import express from 'express';
 
 const STATE_FILE = path.join(__dirname, '.testcontainer-state.json');
 
@@ -99,7 +100,7 @@ export async function createRealDbApp(): Promise<INestApplication> {
     })
     .compile();
 
-  const app = moduleFixture.createNestApplication();
+  const app = moduleFixture.createNestApplication(express());
 
   app.enableVersioning({
     type: VersioningType.URI,

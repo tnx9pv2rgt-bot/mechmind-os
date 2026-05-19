@@ -17,6 +17,7 @@ import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
 import { AuthService } from '@auth/services/auth.service';
+import express from 'express';
 
 describe('Multi-Tenant Isolation (Integration)', () => {
   let app: INestApplication;
@@ -42,7 +43,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication(express());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -210,9 +211,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
 
   describe('Unauthenticated access', () => {
     it('should reject requests without token', async () => {
-      await request(app.getHttpServer())
-        .get('/customers')
-        .expect(401);
+      await request(app.getHttpServer()).get('/customers').expect(401);
     });
 
     it('should reject requests with invalid token', async () => {

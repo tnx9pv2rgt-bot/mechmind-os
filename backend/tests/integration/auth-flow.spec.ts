@@ -17,6 +17,7 @@ import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
 import { AuthService } from '@auth/services/auth.service';
+import express from 'express';
 
 describe('Authentication Flow (Integration)', () => {
   let app: INestApplication;
@@ -38,7 +39,7 @@ describe('Authentication Flow (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication(express());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -156,9 +157,9 @@ describe('Authentication Flow (Integration)', () => {
     });
 
     it('should reject expired/invalid refresh token', async () => {
-      await expect(
-        authService.refreshTokens('invalid-refresh-token'),
-      ).rejects.toThrow('Invalid refresh token');
+      await expect(authService.refreshTokens('invalid-refresh-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
   });
 
