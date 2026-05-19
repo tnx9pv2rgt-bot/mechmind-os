@@ -40,36 +40,24 @@ jest.mock('@prisma/client', () => {
   };
 });
 
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './prisma.service';
-import { LoggerService } from './logger.service';
+
+const ORIGINAL_ENV = process.env;
 
 describe('PrismaService', () => {
   let service: PrismaService;
-  let logger: { log: jest.Mock; warn: jest.Mock; debug: jest.Mock };
-  let configService: { get: jest.Mock };
 
   beforeEach(() => {
-    configService = {
-      get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-        const map: Record<string, unknown> = {
-          DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-          NODE_ENV: 'test',
-        };
-        // eslint-disable-next-line security/detect-object-injection
-        return map[key] ?? defaultVal;
-      }),
+    process.env = {
+      ...ORIGINAL_ENV,
+      DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
+      NODE_ENV: 'test',
     };
-    logger = {
-      log: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
-    };
+    service = new PrismaService();
+  });
 
-    service = new PrismaService(
-      configService as unknown as ConfigService,
-      logger as unknown as LoggerService,
-    );
+  afterEach(() => {
+    process.env = ORIGINAL_ENV;
   });
 
   it('should be defined', () => {
@@ -84,7 +72,6 @@ describe('PrismaService', () => {
 
   describe('setTenantContext / clearTenantContext', () => {
     it('should store tenant context', async () => {
-      // Mock the raw query since we don't have a real DB
       jest.spyOn(service, '$executeRaw').mockResolvedValue(1);
 
       await service.setTenantContext('tenant-123');
@@ -146,7 +133,6 @@ describe('PrismaService', () => {
       await service.acquireAdvisoryLock('tenant-1', 'resource-1');
 
       expect(querySpy).toHaveBeenCalled();
-      // Verify it was called with a BigInt lock ID string
       const rawCall = querySpy.mock.calls[0];
       expect(rawCall).toBeDefined();
     });
@@ -180,36 +166,29 @@ describe('PrismaService', () => {
   describe('onModuleInit / onModuleDestroy', () => {
     it('should connect on init and log', async () => {
       jest.spyOn(service, '$connect').mockResolvedValue();
+      const logSpy = jest
+        .spyOn((service as unknown as { logger: { log: jest.Mock } }).logger, 'log')
+        .mockImplementation();
 
       await service.onModuleInit();
       expect(service.$connect).toHaveBeenCalled();
-      expect(logger.log).toHaveBeenCalledWith('Prisma connected to database');
+      expect(logSpy).toHaveBeenCalledWith('Prisma connected to database');
     });
 
     it('should disconnect on destroy and log', async () => {
       jest.spyOn(service, '$disconnect').mockResolvedValue();
+      const logSpy = jest
+        .spyOn((service as unknown as { logger: { log: jest.Mock } }).logger, 'log')
+        .mockImplementation();
 
       await service.onModuleDestroy();
       expect(service.$disconnect).toHaveBeenCalled();
-      expect(logger.log).toHaveBeenCalledWith('Prisma disconnected from database');
+      expect(logSpy).toHaveBeenCalledWith('Prisma disconnected from database');
     });
 
     it('should setup query logging in development', async () => {
-      // Override NODE_ENV to development
-      const devConfigService = {
-        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-          const map: Record<string, unknown> = {
-            DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-            NODE_ENV: 'development',
-          };
-          // eslint-disable-next-line security/detect-object-injection
-          return map[key] ?? defaultVal;
-        }),
-      };
-      const devService = new PrismaService(
-        devConfigService as unknown as ConfigService,
-        logger as unknown as LoggerService,
-      );
+      process.env.NODE_ENV = 'development';
+      const devService = new PrismaService();
       jest.spyOn(devService, '$connect').mockResolvedValue();
       jest.spyOn(devService, '$on').mockImplementation(() => undefined as never);
 
@@ -296,58 +275,23 @@ describe('PrismaService', () => {
     });
   });
 
-  describe('constructor (production mode)', () => {
+  describe('constructor — env-driven configuration', () => {
     it('should use production pool size when NODE_ENV is production', () => {
-      const prodConfig = {
-        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-          const map: Record<string, unknown> = {
-            DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-            NODE_ENV: 'production',
-          };
-          // eslint-disable-next-line security/detect-object-injection
-          return map[key] ?? defaultVal;
-        }),
-      };
-      const prodService = new PrismaService(
-        prodConfig as unknown as ConfigService,
-        logger as unknown as LoggerService,
-      );
+      process.env.NODE_ENV = 'production';
+      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+      const prodService = new PrismaService();
       expect(prodService).toBeDefined();
     });
 
     it('should handle DATABASE_URL with existing query params', () => {
-      const configWithParams = {
-        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-          const map: Record<string, unknown> = {
-            DATABASE_URL: 'postgresql://test:test@localhost:5432/test?sslmode=require',
-            NODE_ENV: 'test',
-          };
-          // eslint-disable-next-line security/detect-object-injection
-          return map[key] ?? defaultVal;
-        }),
-      };
-      const svc = new PrismaService(
-        configWithParams as unknown as ConfigService,
-        logger as unknown as LoggerService,
-      );
+      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test?sslmode=require';
+      const svc = new PrismaService();
       expect(svc).toBeDefined();
     });
 
     it('should not append connection_limit if already in URL', () => {
-      const configWithLimit = {
-        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-          const map: Record<string, unknown> = {
-            DATABASE_URL: 'postgresql://test:test@localhost:5432/test?connection_limit=5',
-            NODE_ENV: 'test',
-          };
-          // eslint-disable-next-line security/detect-object-injection
-          return map[key] ?? defaultVal;
-        }),
-      };
-      const svc = new PrismaService(
-        configWithLimit as unknown as ConfigService,
-        logger as unknown as LoggerService,
-      );
+      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test?connection_limit=5';
+      const svc = new PrismaService();
       expect(svc).toBeDefined();
     });
   });
@@ -360,23 +304,14 @@ describe('PrismaService', () => {
     });
   });
 
-  describe('onModuleInit — development query callback (line 59)', () => {
+  describe('onModuleInit — development query callback', () => {
     it('should invoke the query callback with event data', async () => {
-      const devConfig = {
-        get: jest.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-          const map: Record<string, unknown> = {
-            DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-            NODE_ENV: 'development',
-          };
-          // eslint-disable-next-line security/detect-object-injection
-          return map[key] ?? defaultVal;
-        }),
-      };
-      const devSvc = new PrismaService(
-        devConfig as unknown as ConfigService,
-        logger as unknown as LoggerService,
-      );
+      process.env.NODE_ENV = 'development';
+      const devSvc = new PrismaService();
       let capturedCallback: ((e: { query: string; duration: number }) => void) | undefined;
+      const debugSpy = jest
+        .spyOn((devSvc as unknown as { logger: { debug: jest.Mock } }).logger, 'debug')
+        .mockImplementation();
       jest.spyOn(devSvc, '$connect').mockResolvedValue();
       jest.spyOn(devSvc, '$on').mockImplementation((_event: string, cb: unknown) => {
         capturedCallback = cb as (e: { query: string; duration: number }) => void;
@@ -388,7 +323,7 @@ describe('PrismaService', () => {
       expect(capturedCallback).toBeDefined();
       if (capturedCallback) {
         capturedCallback({ query: 'SELECT 1', duration: 5 });
-        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('SELECT 1'));
+        expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('SELECT 1'));
       }
     });
   });
