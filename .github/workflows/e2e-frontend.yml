@@ -207,9 +207,13 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      DB_PASSWORD: mechmind
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      JWT_SECRET: ci-e2e-secret-do-not-use-in-production-e2e
+      JWT_SECRET: ci-e2e-secret-do-not-use-in-production-e2e-32chars!
+      JWT_REFRESH_SECRET: ci-e2e-refresh-secret-not-for-production-32ch!
+      CSRF_SECRET: ci-e2e-csrf-secret-16ch
+      SETUP_SECRET: ci-e2e-setup-secret-16ch
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       NODE_ENV: test
       NEXT_PUBLIC_API_URL: http://localhost:3002
@@ -265,7 +269,7 @@ jobs:
           PORT: 3002
 
       - name: Wait for backend health
-        run: npx wait-on http://localhost:3002/health --timeout 30000
+        run: npx wait-on http://localhost:3002/health --timeout 60000
 
       - name: Run Playwright E2E tests
         run: npx playwright test --project=chromium
