@@ -1,11 +1,15 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '@common/services/prisma.service';
+import type { DpaAcceptance as PrismaDpaAcceptance } from '@prisma/client';
 
 export interface RecordDpaAcceptanceInput {
   tenantId: string;
   version: string;
   ipAddress: string;
   userAgent?: string;
+  signerName?: string;
+  signerEmail?: string;
+  documentUrl?: string;
 }
 
 export interface DpaAcceptanceRecord {
@@ -13,13 +17,10 @@ export interface DpaAcceptanceRecord {
   tenantId: string;
   version: string;
   acceptedAt: Date;
-  ipAddress: string;
+  ipAddress: string | null;
   userAgent?: string | null;
 }
 
-/**
- * Service to track DPA (Data Processing Agreement) acceptance for GDPR compliance
- */
 @Injectable()
 export class DpaAcceptanceService {
   private readonly logger = new Logger(DpaAcceptanceService.name);
@@ -30,9 +31,18 @@ export class DpaAcceptanceService {
     return this.prisma.dpaAcceptance;
   }
 
-  /**
-   * Record DPA acceptance for a tenant
-   */
+  // Prisma stores `dpaVersion`; service API exposes `version`
+  private mapResult(r: PrismaDpaAcceptance): DpaAcceptanceRecord {
+    return {
+      id: r.id,
+      tenantId: r.tenantId,
+      version: r.dpaVersion,
+      acceptedAt: r.acceptedAt,
+      ipAddress: r.ipAddress,
+      userAgent: r.userAgent,
+    };
+  }
+
   async recordAcceptance(input: RecordDpaAcceptanceInput): Promise<DpaAcceptanceRecord> {
     if (!input.tenantId || !input.version || !input.ipAddress) {
       throw new BadRequestException('tenantId, version, and ipAddress are required');
@@ -46,34 +56,33 @@ export class DpaAcceptanceService {
       `Recording DPA acceptance for tenant ${input.tenantId} version ${input.version}`,
     );
 
-    return this.dpaAcceptance.create({
+    const r = await this.dpaAcceptance.create({
       data: {
         tenantId: input.tenantId,
-        version: input.version,
+        dpaVersion: input.version,
+        signerName: input.signerName ?? 'DPA Click Acceptance',
+        signerEmail: input.signerEmail ?? '',
+        documentUrl: input.documentUrl ?? '',
         acceptedAt: new Date(),
         ipAddress: input.ipAddress,
         userAgent: input.userAgent || null,
       },
     });
+    return this.mapResult(r);
   }
 
-  /**
-   * Get the latest DPA acceptance for a tenant
-   */
   async getLatestAcceptance(tenantId: string): Promise<DpaAcceptanceRecord | null> {
     if (!tenantId) {
       throw new BadRequestException('tenantId is required');
     }
 
-    return this.dpaAcceptance.findFirst({
+    const r = await this.dpaAcceptance.findFirst({
       where: { tenantId },
       orderBy: { acceptedAt: 'desc' },
     });
+    return r ? this.mapResult(r) : null;
   }
 
-  /**
-   * Check if tenant has accepted DPA for a specific version
-   */
   async hasAcceptedVersion(tenantId: string, version: string): Promise<boolean> {
     if (!tenantId || !version) {
       throw new BadRequestException('tenantId and version are required');
@@ -82,16 +91,13 @@ export class DpaAcceptanceService {
     const acceptance = await this.dpaAcceptance.findFirst({
       where: {
         tenantId,
-        version,
+        dpaVersion: version,
       },
     });
 
     return !!acceptance;
   }
 
-  /**
-   * List all DPA acceptances for a tenant with pagination
-   */
   async listAcceptances(
     tenantId: string,
     page: number = 1,
@@ -113,6 +119,6 @@ export class DpaAcceptanceService {
       this.dpaAcceptance.count({ where: { tenantId } }),
     ]);
 
-    return { data, total, page, limit };
+    return { data: data.map(r => this.mapResult(r)), total, page, limit };
   }
 }

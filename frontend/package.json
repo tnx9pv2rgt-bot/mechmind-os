@@ -110,7 +110,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@eslint/eslintrc": "^3.3.5",
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.0.0",
     "@faker-js/faker": "^8.4.1",
     "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^16.1.6",

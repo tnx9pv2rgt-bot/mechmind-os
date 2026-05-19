@@ -8,12 +8,34 @@ const DPA_VERSION = '1.0';
 const IP_ADDRESS = '192.168.1.1';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
 
+// Raw Prisma row shape (dpaVersion, signerName, signerEmail, etc.)
+function mockPrismaRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 'dpa-acceptance-001',
+    tenantId: TENANT_ID,
+    dpaVersion: DPA_VERSION,
+    signerName: 'DPA Click Acceptance',
+    signerEmail: '',
+    method: 'click',
+    documentUrl: '',
+    acceptedAt: new Date(),
+    ipAddress: IP_ADDRESS,
+    userAgent: USER_AGENT,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    revokedAt: null,
+    userId: null,
+    ...overrides,
+  };
+}
+
+// Expected DpaAcceptanceRecord shape returned by service (version, not dpaVersion)
 function mockDpaAcceptance(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'dpa-acceptance-001',
     tenantId: TENANT_ID,
     version: DPA_VERSION,
-    acceptedAt: new Date(),
+    acceptedAt: expect.any(Date),
     ipAddress: IP_ADDRESS,
     userAgent: USER_AGENT,
     ...overrides,
@@ -56,16 +78,18 @@ describe('DpaAcceptanceService', () => {
         ipAddress: IP_ADDRESS,
         userAgent: USER_AGENT,
       };
-      const expected = mockDpaAcceptance();
-      prisma.dpaAcceptance.create.mockResolvedValue(expected);
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow());
 
       const result = await service.recordAcceptance(input);
 
-      expect(result).toEqual(expected);
+      expect(result).toMatchObject(mockDpaAcceptance());
       expect(prisma.dpaAcceptance.create).toHaveBeenCalledWith({
         data: {
           tenantId: TENANT_ID,
-          version: DPA_VERSION,
+          dpaVersion: DPA_VERSION,
+          signerName: 'DPA Click Acceptance',
+          signerEmail: '',
+          documentUrl: '',
           acceptedAt: expect.any(Date),
           ipAddress: IP_ADDRESS,
           userAgent: USER_AGENT,
@@ -79,12 +103,11 @@ describe('DpaAcceptanceService', () => {
         version: DPA_VERSION,
         ipAddress: IP_ADDRESS,
       };
-      const expected = mockDpaAcceptance({ userAgent: null });
-      prisma.dpaAcceptance.create.mockResolvedValue(expected);
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow({ userAgent: null }));
 
       const result = await service.recordAcceptance(input);
 
-      expect(result).toEqual(expected);
+      expect(result).toMatchObject(mockDpaAcceptance({ userAgent: null }));
       const createCall = (prisma.dpaAcceptance.create as jest.Mock).mock.calls[0];
       expect(createCall[0].data.userAgent).toBeNull();
     });
@@ -133,7 +156,7 @@ describe('DpaAcceptanceService', () => {
         ipAddress: IP_ADDRESS,
       };
       const nowBefore = Date.now();
-      prisma.dpaAcceptance.create.mockResolvedValue(mockDpaAcceptance());
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow());
 
       await service.recordAcceptance(input);
 
@@ -152,8 +175,7 @@ describe('DpaAcceptanceService', () => {
         ipAddress: IP_ADDRESS,
         userAgent: 'TestAgent',
       };
-      const expected = mockDpaAcceptance({ version: '2.5.1' });
-      prisma.dpaAcceptance.create.mockResolvedValue(expected);
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow({ dpaVersion: '2.5.1' }));
 
       const result = await service.recordAcceptance(input);
 
@@ -164,12 +186,11 @@ describe('DpaAcceptanceService', () => {
 
   describe('getLatestAcceptance', () => {
     it('should return latest DPA acceptance for tenant', async () => {
-      const expected = mockDpaAcceptance({ acceptedAt: new Date() });
-      prisma.dpaAcceptance.findFirst.mockResolvedValue(expected);
+      prisma.dpaAcceptance.findFirst.mockResolvedValue(mockPrismaRow());
 
       const result = await service.getLatestAcceptance(TENANT_ID);
 
-      expect(result).toEqual(expected);
+      expect(result).toMatchObject(mockDpaAcceptance());
       expect(prisma.dpaAcceptance.findFirst).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID },
         orderBy: { acceptedAt: 'desc' },
@@ -189,9 +210,7 @@ describe('DpaAcceptanceService', () => {
     });
 
     it('should order by acceptedAt descending to get latest', async () => {
-      const _older = mockDpaAcceptance({ acceptedAt: new Date(Date.now() - 1000) });
-      const newer = mockDpaAcceptance({ acceptedAt: new Date() });
-      prisma.dpaAcceptance.findFirst.mockResolvedValue(newer);
+      prisma.dpaAcceptance.findFirst.mockResolvedValue(mockPrismaRow());
 
       await service.getLatestAcceptance(TENANT_ID);
 
@@ -202,8 +221,7 @@ describe('DpaAcceptanceService', () => {
 
   describe('hasAcceptedVersion', () => {
     it('should return true if tenant has accepted specific version', async () => {
-      const acceptance = mockDpaAcceptance({ version: '2.0' });
-      prisma.dpaAcceptance.findFirst.mockResolvedValue(acceptance);
+      prisma.dpaAcceptance.findFirst.mockResolvedValue(mockPrismaRow({ dpaVersion: '2.0' }));
 
       const result = await service.hasAcceptedVersion(TENANT_ID, '2.0');
 
@@ -211,7 +229,7 @@ describe('DpaAcceptanceService', () => {
       expect(prisma.dpaAcceptance.findFirst).toHaveBeenCalledWith({
         where: {
           tenantId: TENANT_ID,
-          version: '2.0',
+          dpaVersion: '2.0',
         },
       });
     });
@@ -244,28 +262,25 @@ describe('DpaAcceptanceService', () => {
       const call1 = (prisma.dpaAcceptance.findFirst as jest.Mock).mock.calls[0];
       const call2 = (prisma.dpaAcceptance.findFirst as jest.Mock).mock.calls[1];
 
-      expect(call1[0].where.version).toBe('1.0');
-      expect(call2[0].where.version).toBe('2.0');
+      expect(call1[0].where.dpaVersion).toBe('1.0');
+      expect(call2[0].where.dpaVersion).toBe('2.0');
     });
   });
 
   describe('listAcceptances', () => {
     it('should return paginated DPA acceptances for tenant', async () => {
-      const acceptances = [
-        mockDpaAcceptance({ id: 'dpa-001' }),
-        mockDpaAcceptance({ id: 'dpa-002' }),
-      ];
-      prisma.dpaAcceptance.findMany.mockResolvedValue(acceptances);
+      const rows = [mockPrismaRow({ id: 'dpa-001' }), mockPrismaRow({ id: 'dpa-002' })];
+      prisma.dpaAcceptance.findMany.mockResolvedValue(rows);
       prisma.dpaAcceptance.count.mockResolvedValue(2);
 
       const result = await service.listAcceptances(TENANT_ID, 1, 20);
 
-      expect(result).toEqual({
-        data: acceptances,
-        total: 2,
-        page: 1,
-        limit: 20,
-      });
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toMatchObject(mockDpaAcceptance({ id: 'dpa-001' }));
+      expect(result.data[1]).toMatchObject(mockDpaAcceptance({ id: 'dpa-002' }));
       expect(prisma.dpaAcceptance.findMany).toHaveBeenCalledWith({
         where: { tenantId: TENANT_ID },
         orderBy: { acceptedAt: 'desc' },
@@ -300,8 +315,7 @@ describe('DpaAcceptanceService', () => {
     });
 
     it('should isolate acceptances per tenant', async () => {
-      const tenant1Acceptances = [mockDpaAcceptance({ tenantId: 'tenant-001' })];
-      prisma.dpaAcceptance.findMany.mockResolvedValue(tenant1Acceptances);
+      prisma.dpaAcceptance.findMany.mockResolvedValue([mockPrismaRow({ tenantId: 'tenant-001' })]);
       prisma.dpaAcceptance.count.mockResolvedValue(1);
 
       await service.listAcceptances('tenant-001', 1, 20);
@@ -338,7 +352,7 @@ describe('DpaAcceptanceService', () => {
         version: '1.0',
         ipAddress: '203.0.113.45',
       };
-      prisma.dpaAcceptance.create.mockResolvedValue(mockDpaAcceptance());
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow({ ipAddress: '203.0.113.45' }));
 
       await service.recordAcceptance(input);
 
@@ -353,7 +367,7 @@ describe('DpaAcceptanceService', () => {
         ipAddress: IP_ADDRESS,
         userAgent: 'Custom-Bot/2.0',
       };
-      prisma.dpaAcceptance.create.mockResolvedValue(mockDpaAcceptance());
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow({ userAgent: 'Custom-Bot/2.0' }));
 
       await service.recordAcceptance(input);
 
@@ -367,7 +381,7 @@ describe('DpaAcceptanceService', () => {
         version: '1.0',
         ipAddress: IP_ADDRESS,
       };
-      prisma.dpaAcceptance.create.mockResolvedValue(mockDpaAcceptance());
+      prisma.dpaAcceptance.create.mockResolvedValue(mockPrismaRow());
 
       await service.recordAcceptance(input);
 
@@ -376,11 +390,12 @@ describe('DpaAcceptanceService', () => {
     });
 
     it('should enforce tenantId isolation for GDPR data separation', async () => {
-      const tenant1Acceptance = mockDpaAcceptance({ tenantId: 'tenant-001' });
-      const tenant2Acceptance = mockDpaAcceptance({ tenantId: 'tenant-002' });
-
-      prisma.dpaAcceptance.findFirst.mockResolvedValueOnce(tenant1Acceptance);
-      prisma.dpaAcceptance.findFirst.mockResolvedValueOnce(tenant2Acceptance);
+      prisma.dpaAcceptance.findFirst.mockResolvedValueOnce(
+        mockPrismaRow({ tenantId: 'tenant-001' }),
+      );
+      prisma.dpaAcceptance.findFirst.mockResolvedValueOnce(
+        mockPrismaRow({ tenantId: 'tenant-002' }),
+      );
 
       const result1 = await service.getLatestAcceptance('tenant-001');
       const result2 = await service.getLatestAcceptance('tenant-002');
