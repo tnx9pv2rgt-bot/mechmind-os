@@ -18,7 +18,6 @@ module.exports = {
           noImplicitAny: true,
           skipLibCheck: true,
         },
-        isolatedModules: true,
       },
     ],
   },
