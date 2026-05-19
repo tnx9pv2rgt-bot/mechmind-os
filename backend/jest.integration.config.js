@@ -27,4 +27,5 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/test/setup-integration.ts'],
   testTimeout: 120000, // 2 minutes for integration tests
+  transformIgnorePatterns: ['node_modules/(?!(jose)/)'],
 };
