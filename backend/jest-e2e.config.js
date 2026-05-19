@@ -36,5 +36,5 @@ module.exports = {
   },
   maxWorkers: 1,
   testTimeout: 30000,
-  transformIgnorePatterns: ['node_modules/(?!(jose)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(jose|uuid)/)'],
 };
