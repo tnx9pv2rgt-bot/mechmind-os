@@ -124,9 +124,13 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      DB_PASSWORD: mechmind
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      JWT_SECRET: ci-test-secret-do-not-use-in-production
+      JWT_SECRET: ci-e2e-secret-do-not-use-in-production-e2e-32chars!
+      JWT_REFRESH_SECRET: ci-e2e-refresh-secret-not-for-production-32ch!
+      CSRF_SECRET: ci-e2e-csrf-secret-16ch
+      SETUP_SECRET: ci-e2e-setup-secret-16ch
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       NODE_ENV: test
 
@@ -143,8 +147,12 @@ jobs:
         run: npm ci
         working-directory: backend
 
+      - name: Prisma migrate deploy
+        run: npx prisma migrate deploy
+        working-directory: backend
+
       - name: E2E Tests
-        run: npx jest --config test/jest-e2e.json --forceExit --ci --bail
+        run: npx jest --config jest-e2e.config.js --forceExit --ci --bail
         working-directory: backend
 
   frontend:
@@ -339,11 +347,14 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://mechmind:mechmind@localhost:5432/mechmind_test
+      DB_PASSWORD: mechmind
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       JWT_SECRET: ci-integration-secret-minimum-32chars!
       JWT_REFRESH_SECRET: ci-integration-refresh-minimum-32chars!
       JWT_2FA_SECRET: ci-integration-2fa-secret-minimum-32chars!!
+      CSRF_SECRET: ci-integration-csrf-secret-16ch
+      SETUP_SECRET: ci-integration-setup-secret-16c
       ENCRYPTION_KEY: ci-integration-enc-key-exactly-32chars!
       NODE_ENV: test
       LOG_LEVEL: error

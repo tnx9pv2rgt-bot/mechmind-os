@@ -57,6 +57,8 @@ export async function createRealDbApp(): Promise<INestApplication> {
   process.env.CORS_ORIGIN = 'http://localhost:3001';
   process.env.LOG_LEVEL = 'error';
   process.env.SETUP_SECRET = 'e2e-real-db-setup-secret';
+  process.env.CSRF_SECRET = 'e2e-real-db-csrf-secret';
+  process.env.DB_PASSWORD = 'mechmind';
 
   const { AppModule } = await import('../../../src/app.module');
   const { RedisService } = await import('../../../src/common/services/redis.service');

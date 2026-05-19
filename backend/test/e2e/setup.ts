@@ -22,6 +22,8 @@ process.env.ENCRYPTION_KEY = 'e2e-test-encryption-key-32chars!';
 process.env.CORS_ORIGIN = 'http://localhost:3001';
 process.env.LOG_LEVEL = 'error';
 process.env.SETUP_SECRET = 'e2e-test-setup-secret';
+process.env.CSRF_SECRET = 'e2e-test-csrf-secret';
+process.env.DB_PASSWORD = 'mechmind';
 
 // ── Test Constants ─────────────────────────────────────────────
 

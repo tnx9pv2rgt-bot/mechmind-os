@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "numberOfRuns": 3,
-      "startServerCommand": "npm run start",
+      "startServerCommand": "npm --prefix frontend run start",
       "startServerReadyPattern": "ready",
       "startServerReadyTimeout": 30000,
       "url": [
