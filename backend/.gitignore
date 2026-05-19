@@ -5,7 +5,9 @@ pnpm-lock.yaml
 
 # Build output
 build/
+dist/
 *.tsbuildinfo
+src/**/*.js
 
 # Environment files
 .env
