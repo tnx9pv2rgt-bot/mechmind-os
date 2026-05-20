@@ -177,8 +177,10 @@ export function createMockEncryption(): Record<string, jest.Mock> {
   return {
     encrypt: jest.fn((value: string) => `enc_${value}`),
     decrypt: jest.fn((value: string) => value.replace(/^enc_/, '')),
+    hash: jest.fn((value: string) => `hash_${value}`),
     hashForLookup: jest.fn((value: string) => `hash_${value}`),
     hashDeterministic: jest.fn((value: string) => `dhash_${value}`),
+    verifyHash: jest.fn(() => true),
   };
 }
 
@@ -292,6 +294,7 @@ export async function createE2eApp(moduleOverrides?: {
   const { QueueService } = await import('../../src/common/services/queue.service');
   const { S3Service } = await import('../../src/common/services/s3.service');
   const { LoggerService } = await import('../../src/common/services/logger.service');
+  const { PasswordPolicyService } = await import('../../src/auth/services/password-policy.service');
 
   let builder = Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(PrismaService)
@@ -305,7 +308,12 @@ export async function createE2eApp(moduleOverrides?: {
     .overrideProvider(S3Service)
     .useValue(createMockS3())
     .overrideProvider(LoggerService)
-    .useValue(createMockLogger());
+    .useValue(createMockLogger())
+    .overrideProvider(PasswordPolicyService)
+    .useValue({
+      validatePassword: jest.fn().mockResolvedValue({ valid: true, strength: 'strong' }),
+      checkBreachedPassword: jest.fn().mockResolvedValue({ breached: false, count: 0 }),
+    });
 
   if (moduleOverrides?.overrideProviders) {
     for (const override of moduleOverrides.overrideProviders) {

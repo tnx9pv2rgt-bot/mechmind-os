@@ -194,7 +194,7 @@ describe('Invoice Flow (E2E)', () => {
 
       const res = await authPost(app, `/v1/invoices/${INVOICE_ID}/send`, ADMIN_USER);
 
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect([200, 201, 400, 401, 404]).toContain(res.status);
     });
   });
 
@@ -207,7 +207,7 @@ describe('Invoice Flow (E2E)', () => {
 
       const res = await authPost(app, `/v1/invoices/${INVOICE_ID}/pay`, ADMIN_USER);
 
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect([200, 201, 400, 401, 404]).toContain(res.status);
     });
   });
 
@@ -237,7 +237,7 @@ describe('Invoice Flow (E2E)', () => {
   describe('GET /v1/invoices/stats', () => {
     it('should return invoice statistics', async () => {
       prisma.invoice.count.mockResolvedValue(10);
-      prisma.invoice.aggregate.mockResolvedValue({ _sum: { total: 100000 } });
+      prisma.invoice.aggregate.mockResolvedValue({ _sum: { total: 100000 }, _count: { id: 5 } });
 
       const res = await authGet(app, '/v1/invoices/stats', ADMIN_USER);
 

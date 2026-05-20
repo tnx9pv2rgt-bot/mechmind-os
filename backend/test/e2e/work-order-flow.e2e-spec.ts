@@ -151,7 +151,7 @@ describe('Work Order Flow (E2E)', () => {
   describe('PATCH /v1/work-orders/:id', () => {
     it('should update work order fields', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(mockWorkOrder());
-      prisma.workOrder.update.mockResolvedValue(mockWorkOrder({ diagnosis: 'Updated diagnosis' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const res = await authPatch(app, `/v1/work-orders/${WORK_ORDER_ID}`, ADMIN_USER).send({
         diagnosis: 'Updated diagnosis',
@@ -166,7 +166,7 @@ describe('Work Order Flow (E2E)', () => {
   describe('POST /v1/work-orders/:id/start', () => {
     it('should start an open work order', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(mockWorkOrder({ status: 'OPEN' }));
-      prisma.workOrder.update.mockResolvedValue(mockWorkOrder({ status: 'IN_PROGRESS' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const res = await authPost(app, `/v1/work-orders/${WORK_ORDER_ID}/start`, ADMIN_USER);
 
@@ -179,7 +179,7 @@ describe('Work Order Flow (E2E)', () => {
   describe('POST /v1/work-orders/:id/complete', () => {
     it('should complete an in-progress work order', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(mockWorkOrder({ status: 'IN_PROGRESS' }));
-      prisma.workOrder.update.mockResolvedValue(mockWorkOrder({ status: 'COMPLETED' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
 
       const res = await authPost(app, `/v1/work-orders/${WORK_ORDER_ID}/complete`, ADMIN_USER);
 
