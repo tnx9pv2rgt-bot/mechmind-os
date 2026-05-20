@@ -13,7 +13,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as request from 'supertest';
-import express from 'express';
+// Use require() to handle both CJS and ESM-wrapped express in Jest
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const expressModule = require('express');
+const expressFactory: () => ReturnType<typeof import('express')> =
+  typeof expressModule === 'function' ? expressModule : (expressModule.default ?? expressModule);
 
 const STATE_FILE = path.join(__dirname, '.testcontainer-state.json');
 
@@ -100,7 +104,7 @@ export async function createRealDbApp(): Promise<INestApplication> {
     })
     .compile();
 
-  const app = moduleFixture.createNestApplication(express());
+  const app = moduleFixture.createNestApplication(expressFactory());
 
   app.enableVersioning({
     type: VersioningType.URI,

@@ -17,7 +17,10 @@ import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
 import { AuthService } from '@auth/services/auth.service';
-import express from 'express';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const expressModule = require('express');
+const expressFactory: () => ReturnType<typeof import('express')> =
+  typeof expressModule === 'function' ? expressModule : (expressModule.default ?? expressModule);
 
 describe('Authentication Flow (Integration)', () => {
   let app: INestApplication;
@@ -39,7 +42,7 @@ describe('Authentication Flow (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication(express());
+    app = moduleFixture.createNestApplication(expressFactory());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);

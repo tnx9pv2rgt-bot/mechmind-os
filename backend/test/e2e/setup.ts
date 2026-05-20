@@ -10,7 +10,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as request from 'supertest';
-import express from 'express';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const expressModule = require('express');
+const expressFactory: () => ReturnType<typeof import('express')> =
+  typeof expressModule === 'function' ? expressModule : (expressModule.default ?? expressModule);
 
 // ── Environment ────────────────────────────────────────────────
 jest.setTimeout(30000);
@@ -311,7 +314,7 @@ export async function createE2eApp(moduleOverrides?: {
   }
 
   const moduleFixture: TestingModule = await builder.compile();
-  const app = moduleFixture.createNestApplication(express());
+  const app = moduleFixture.createNestApplication(expressFactory());
 
   // Mirror main.ts configuration
   app.enableVersioning({
