@@ -512,6 +512,14 @@ export class BookingService {
         },
       });
 
+      // Free the slot when booking is cancelled
+      if (dto.status === BookingStatus.CANCELLED && booking.slot) {
+        await prisma.bookingSlot.update({
+          where: { id: booking.slot.id },
+          data: { status: 'AVAILABLE' },
+        });
+      }
+
       // Create update event
       await prisma.bookingEvent.create({
         data: {
