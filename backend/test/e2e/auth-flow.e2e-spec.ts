@@ -197,9 +197,10 @@ describe('Auth Flow (E2E)', () => {
 
       // Expect success (either 200 direct or wrapped)
       expect([200, 401]).toContain(res.status);
-      // If 200, the body should contain user data
+      // If 200, the body should contain user data (may be wrapped in { data: {...} })
       if (res.status === 200) {
-        expect(res.body).toHaveProperty('id');
+        const user = res.body.data ?? res.body;
+        expect(user).toHaveProperty('id');
       }
     });
   });

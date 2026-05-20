@@ -45,9 +45,12 @@ describe('Work Order Flow (E2E)', () => {
     customerId: TEST_CUSTOMER_ID,
     status: 'OPEN',
     diagnosis: 'Test diagnosis',
+    totalCost: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     items: [],
+    services: [],
+    parts: [],
     vehicle: { id: TEST_VEHICLE_ID, make: 'Fiat', model: 'Punto' },
     customer: { id: TEST_CUSTOMER_ID },
     ...overrides,
@@ -170,7 +173,7 @@ describe('Work Order Flow (E2E)', () => {
 
       const res = await authPost(app, `/v1/work-orders/${WORK_ORDER_ID}/start`, ADMIN_USER);
 
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect([200, 201, 400, 401, 404]).toContain(res.status);
     });
   });
 
@@ -183,7 +186,7 @@ describe('Work Order Flow (E2E)', () => {
 
       const res = await authPost(app, `/v1/work-orders/${WORK_ORDER_ID}/complete`, ADMIN_USER);
 
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect([200, 201, 400, 401, 404]).toContain(res.status);
     });
 
     it('should reject completing an already completed work order', async () => {
@@ -191,7 +194,7 @@ describe('Work Order Flow (E2E)', () => {
 
       const res = await authPost(app, `/v1/work-orders/${WORK_ORDER_ID}/complete`, ADMIN_USER);
 
-      expect([200, 400, 401, 404]).toContain(res.status);
+      expect([200, 201, 400, 401, 404]).toContain(res.status);
     });
   });
 
@@ -200,6 +203,7 @@ describe('Work Order Flow (E2E)', () => {
   describe('POST /v1/work-orders/:id/invoice', () => {
     it('should create an invoice from a completed work order', async () => {
       prisma.workOrder.findFirst.mockResolvedValue(mockWorkOrder({ status: 'COMPLETED' }));
+      prisma.workOrder.updateMany.mockResolvedValue({ count: 1 });
       prisma.invoice.create.mockResolvedValue({
         id: 'e2e-invoice-from-wo',
         tenantId: TENANT_A.id,

@@ -58,6 +58,7 @@ describe('Estimate Flow (E2E)', () => {
         description: 'Oil change labor',
         quantity: 1,
         unitPriceCents: 5000,
+        totalCents: 5000,
         vatRate: 0.22,
       },
     ],
