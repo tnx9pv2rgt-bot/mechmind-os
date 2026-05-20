@@ -32,13 +32,33 @@ import {
 const TENANT_API = 'api-bk-tenant';
 const TENANT_OTHER = 'api-bk-other-tenant';
 
-const ADMIN = { userId: 'api-bk-admin', email: 'admin@api-bk.test', role: 'ADMIN', tenantId: TENANT_API };
-const RECEPTIONIST = { userId: 'api-bk-rec', email: 'rec@api-bk.test', role: 'RECEPTIONIST', tenantId: TENANT_API };
-const MECHANIC = { userId: 'api-bk-mec', email: 'mec@api-bk.test', role: 'MECHANIC', tenantId: TENANT_API };
-const OTHER_ADMIN = { userId: 'api-bk-other', email: 'admin@other.test', role: 'ADMIN', tenantId: TENANT_OTHER };
+const ADMIN = {
+  userId: 'api-bk-admin',
+  email: 'admin@api-bk.test',
+  role: 'ADMIN',
+  tenantId: TENANT_API,
+};
+const RECEPTIONIST = {
+  userId: 'api-bk-rec',
+  email: 'rec@api-bk.test',
+  role: 'RECEPTIONIST',
+  tenantId: TENANT_API,
+};
+const MECHANIC = {
+  userId: 'api-bk-mec',
+  email: 'mec@api-bk.test',
+  role: 'MECHANIC',
+  tenantId: TENANT_API,
+};
+const OTHER_ADMIN = {
+  userId: 'api-bk-other',
+  email: 'admin@other.test',
+  role: 'ADMIN',
+  tenantId: TENANT_OTHER,
+};
 
-const CUSTOMER_ID = 'api-bk-customer';
-const VEHICLE_ID = 'api-bk-vehicle';
+const CUSTOMER_ID = '00000000-0000-4000-8000-000000000021';
+const VEHICLE_ID = '00000000-0000-4000-8000-000000000022';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,13 +86,45 @@ describe('Booking API Endpoints (HTTP Contract)', () => {
     app = await createRealDbApp();
     prisma = getPrismaClient();
 
-    await seedTenant(prisma, { id: TENANT_API, name: 'API Test Shop', slug: `api-bk-${Date.now()}` });
-    await seedTenant(prisma, { id: TENANT_OTHER, name: 'Other Shop', slug: `api-bk-other-${Date.now()}` });
+    await seedTenant(prisma, {
+      id: TENANT_API,
+      name: 'API Test Shop',
+      slug: `api-bk-${Date.now()}`,
+    });
+    await seedTenant(prisma, {
+      id: TENANT_OTHER,
+      name: 'Other Shop',
+      slug: `api-bk-other-${Date.now()}`,
+    });
 
-    await seedUser(prisma, { id: ADMIN.userId, email: ADMIN.email, name: 'Admin', role: 'ADMIN', tenantId: TENANT_API });
-    await seedUser(prisma, { id: RECEPTIONIST.userId, email: RECEPTIONIST.email, name: 'Rec', role: 'RECEPTIONIST', tenantId: TENANT_API });
-    await seedUser(prisma, { id: MECHANIC.userId, email: MECHANIC.email, name: 'Mec', role: 'MECHANIC', tenantId: TENANT_API });
-    await seedUser(prisma, { id: OTHER_ADMIN.userId, email: OTHER_ADMIN.email, name: 'Other', role: 'ADMIN', tenantId: TENANT_OTHER });
+    await seedUser(prisma, {
+      id: ADMIN.userId,
+      email: ADMIN.email,
+      name: 'Admin',
+      role: 'ADMIN',
+      tenantId: TENANT_API,
+    });
+    await seedUser(prisma, {
+      id: RECEPTIONIST.userId,
+      email: RECEPTIONIST.email,
+      name: 'Rec',
+      role: 'RECEPTIONIST',
+      tenantId: TENANT_API,
+    });
+    await seedUser(prisma, {
+      id: MECHANIC.userId,
+      email: MECHANIC.email,
+      name: 'Mec',
+      role: 'MECHANIC',
+      tenantId: TENANT_API,
+    });
+    await seedUser(prisma, {
+      id: OTHER_ADMIN.userId,
+      email: OTHER_ADMIN.email,
+      name: 'Other',
+      role: 'ADMIN',
+      tenantId: TENANT_OTHER,
+    });
 
     await seedCustomer(prisma, {
       id: CUSTOMER_ID,
@@ -233,8 +285,19 @@ describe('Booking API Endpoints (HTTP Contract)', () => {
     });
 
     it('200 con MANAGER role', async () => {
-      const managerUser = { userId: 'api-bk-manager', email: 'mgr@api-bk.test', role: 'MANAGER', tenantId: TENANT_API };
-      await seedUser(prisma, { id: managerUser.userId, email: managerUser.email, name: 'Manager', role: 'MANAGER', tenantId: TENANT_API });
+      const managerUser = {
+        userId: 'api-bk-manager',
+        email: 'mgr@api-bk.test',
+        role: 'MANAGER',
+        tenantId: TENANT_API,
+      };
+      await seedUser(prisma, {
+        id: managerUser.userId,
+        email: managerUser.email,
+        name: 'Manager',
+        role: 'MANAGER',
+        tenantId: TENANT_API,
+      });
 
       const slotId = await createSlot();
       const createRes = await authPost(app, '/v1/bookings', ADMIN).send({
