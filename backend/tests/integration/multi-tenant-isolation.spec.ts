@@ -17,10 +17,13 @@ import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
 import { AuthService } from '@auth/services/auth.service';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const expressModule = require('express');
-const expressFactory: () => ReturnType<typeof import('express')> =
-  typeof expressModule === 'function' ? expressModule : (expressModule.default ?? expressModule);
+import { createRequire } from 'module';
+const _nativeRequire = createRequire(__filename);
+function createExpressApp() {
+  const exp = _nativeRequire('express');
+  const factory = typeof exp === 'function' ? exp : exp.default || exp;
+  return factory();
+}
 
 describe('Multi-Tenant Isolation (Integration)', () => {
   let app: INestApplication;
@@ -46,7 +49,7 @@ describe('Multi-Tenant Isolation (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication(expressFactory());
+    app = moduleFixture.createNestApplication(createExpressApp());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
