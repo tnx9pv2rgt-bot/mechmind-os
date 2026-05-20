@@ -11,6 +11,7 @@ import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { PrismaClient } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { setupGracefulShutdown } from 'nestjs-graceful-shutdown';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as request from 'supertest';
@@ -117,6 +118,7 @@ export async function createRealDbApp(): Promise<INestApplication> {
   );
 
   await app.init();
+  setupGracefulShutdown({ app });
   return app;
 }
 
