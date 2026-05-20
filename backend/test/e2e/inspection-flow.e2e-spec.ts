@@ -52,10 +52,14 @@ describe('Inspection Flow (E2E)', () => {
     fuelLevel: 'HALF',
     items: [],
     findings: [],
+    photos: [],
+    startedAt: new Date(),
+    completedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    vehicle: { id: TEST_VEHICLE_ID, make: 'Fiat', model: '500' },
-    customer: { id: TEST_CUSTOMER_ID },
+    vehicle: { id: TEST_VEHICLE_ID, make: 'Fiat', model: '500', licensePlate: 'AB123CD' },
+    customer: { id: TEST_CUSTOMER_ID, encryptedFirstName: 'Mario', encryptedLastName: 'Rossi' },
+    mechanic: { id: MECHANIC_USER.userId, name: 'Test Mechanic' },
     ...overrides,
   });
 

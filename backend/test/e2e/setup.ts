@@ -61,8 +61,8 @@ export const TENANT_B_ADMIN = {
   tenantId: TENANT_B.id,
 };
 
-export const TEST_CUSTOMER_ID = 'e2e-customer-001';
-export const TEST_VEHICLE_ID = 'e2e-vehicle-001';
+export const TEST_CUSTOMER_ID = '00000000-0000-4000-8000-000000000001';
+export const TEST_VEHICLE_ID = '00000000-0000-4000-8000-000000000002';
 
 // ── Mock Services ──────────────────────────────────────────────
 

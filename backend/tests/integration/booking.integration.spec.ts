@@ -43,8 +43,8 @@ const ADMIN_B = {
   role: 'ADMIN',
   tenantId: TENANT_B,
 };
-const CUSTOMER_ID = 'int-bk-customer-a';
-const VEHICLE_ID = 'int-bk-vehicle-a';
+const CUSTOMER_ID = '00000000-0000-4000-8000-000000000011';
+const VEHICLE_ID = '00000000-0000-4000-8000-000000000012';
 
 // ── Suite ───────────────────────────────────────────────────────────────────
 
