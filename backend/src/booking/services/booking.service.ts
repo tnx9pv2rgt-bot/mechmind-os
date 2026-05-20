@@ -179,32 +179,13 @@ export class BookingService {
             throw new NotFoundException(`Customer ${customerId} not found`);
           }
 
-          // Step 5: Insert booking event
-          const bookingEvent = await tx.bookingEvent.create({
-            data: {
-              eventType: 'booking_created',
-              payload: {
-                customerId,
-                slotId,
-                vehicleId,
-                serviceIds,
-                notes,
-              },
-              booking: {
-                connect: {
-                  id: 'temp', // Will be updated after booking creation
-                },
-              },
-            },
-          });
-
-          // Step 6: Update slot status
+          // Step 5: Update slot status
           await tx.bookingSlot.update({
             where: { id: slotId },
             data: { status: 'BOOKED' },
           });
 
-          // Step 7: Create booking
+          // Step 6: Create booking
           const booking = await tx.booking.create({
             data: {
               status: BookingStatus.CONFIRMED,
@@ -241,10 +222,17 @@ export class BookingService {
             },
           });
 
-          // Update booking event with correct booking ID
-          await tx.bookingEvent.update({
-            where: { id: bookingEvent.id },
+          // Step 7: Insert booking event with real booking ID
+          await tx.bookingEvent.create({
             data: {
+              eventType: 'booking_created',
+              payload: {
+                customerId,
+                slotId,
+                vehicleId,
+                serviceIds,
+                notes,
+              },
               booking: { connect: { id: booking.id } },
             },
           });

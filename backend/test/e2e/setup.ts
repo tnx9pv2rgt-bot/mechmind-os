@@ -136,6 +136,8 @@ export function createMockPrisma(): Record<string, unknown> {
     'publicToken',
     'maintenanceSchedule',
     'vehicleHistory',
+    'customerNotificationPreference',
+    'bookingEvent',
   ];
 
   const prisma: Record<string, unknown> = {};
@@ -241,6 +243,7 @@ export function createMockLogger(): Record<string, jest.Mock> {
     debug: jest.fn(),
     verbose: jest.fn(),
     setContext: jest.fn(),
+    setStructuredContext: jest.fn(),
   };
 }
 
