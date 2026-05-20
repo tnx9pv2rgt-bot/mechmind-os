@@ -86,13 +86,10 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
       errorMessage: 'Rate limit exceeded. Please try again later.',
     }),
 
-    // Graceful shutdown — drains in-flight HTTP requests on SIGTERM
-    GracefulShutdownModule.forRoot({
-      gracefulShutdownTimeout: 30_000,
-      cleanup: async (_app, signal) => {
-        console.log(`[GracefulShutdown] Received ${signal}, draining connections...`);
-      },
-    }),
+    // Graceful shutdown — drains in-flight HTTP requests on SIGTERM (disabled in tests)
+    ...(process.env.NODE_ENV !== 'test'
+      ? [GracefulShutdownModule.forRoot({ gracefulShutdownTimeout: 30_000 })]
+      : []),
 
     // Feature modules
     CommonModule,
