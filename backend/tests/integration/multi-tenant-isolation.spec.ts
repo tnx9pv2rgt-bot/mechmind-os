@@ -12,7 +12,7 @@
 // @ts-nocheck
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import * as request from 'supertest';
 import { AppModule } from '@/app.module';
@@ -44,6 +44,8 @@ describe('Multi-Tenant Isolation (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication(new ExpressAdapter());
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
