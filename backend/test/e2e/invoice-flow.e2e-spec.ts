@@ -200,12 +200,12 @@ describe('Invoice Flow (E2E)', () => {
 
   // ── Mark Paid ────────────────────────────────────────────────
 
-  describe('POST /v1/invoices/:id/mark-paid', () => {
+  describe('POST /v1/invoices/:id/pay', () => {
     it('should mark a sent invoice as paid', async () => {
       prisma.invoice.findFirst.mockResolvedValue(mockInvoice({ status: 'SENT' }));
       prisma.invoice.update.mockResolvedValue(mockInvoice({ status: 'PAID' }));
 
-      const res = await authPost(app, `/v1/invoices/${INVOICE_ID}/mark-paid`, ADMIN_USER);
+      const res = await authPost(app, `/v1/invoices/${INVOICE_ID}/pay`, ADMIN_USER);
 
       expect([200, 400, 401, 404]).toContain(res.status);
     });

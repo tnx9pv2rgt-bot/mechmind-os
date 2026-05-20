@@ -44,17 +44,22 @@ describe('Booking Flow (E2E)', () => {
       const bookingId = 'e2e-booking-001';
 
       // Mock slot and customer existence
-      prisma.bookingSlot.findFirst.mockResolvedValue({
+      const mockSlot = {
         id: slotId,
         tenantId: TENANT_A.id,
-        date: new Date('2026-04-15'),
-        startTime: '09:00',
-        endTime: '10:00',
-        isAvailable: true,
-      });
+        startTime: new Date('2026-04-15T09:00:00Z'),
+        endTime: new Date('2026-04-15T10:00:00Z'),
+        status: 'AVAILABLE',
+      };
+      prisma.bookingSlot.findFirst.mockResolvedValue(mockSlot);
+      prisma.bookingSlot.findUnique.mockResolvedValue(mockSlot);
       prisma.customer.findFirst.mockResolvedValue({
         id: TEST_CUSTOMER_ID,
         tenantId: TENANT_A.id,
+        encryptedFirstName: 'enc_Mario',
+        encryptedLastName: 'enc_Rossi',
+        encryptedEmail: 'enc_mario@test.it',
+        encryptedPhone: 'enc_3331234567',
       });
       prisma.vehicle.findFirst.mockResolvedValue({
         id: TEST_VEHICLE_ID,
@@ -69,6 +74,16 @@ describe('Booking Flow (E2E)', () => {
         scheduledDate: new Date('2026-04-15T09:00:00Z'),
         status: 'PENDING',
         createdAt: new Date(),
+        customer: {
+          id: TEST_CUSTOMER_ID,
+          encryptedFirstName: 'enc_Mario',
+          encryptedLastName: 'enc_Rossi',
+          encryptedEmail: 'enc_mario@test.it',
+          encryptedPhone: 'enc_3331234567',
+        },
+        vehicle: null,
+        services: [],
+        slot: mockSlot,
       });
 
       const res = await authPost(app, '/v1/bookings', ADMIN_USER).send({
@@ -118,8 +133,6 @@ describe('Booking Flow (E2E)', () => {
       const res = await authPost(app, '/v1/bookings/reserve', ADMIN_USER).send({
         slotId: '550e8400-e29b-41d4-a716-446655440002',
         customerId: '550e8400-e29b-41d4-a716-446655440000',
-        scheduledDate: '2026-04-15T09:00:00Z',
-        durationMinutes: 60,
       });
 
       // The controller handles conflict with 409
@@ -188,7 +201,7 @@ describe('Booking Flow (E2E)', () => {
 
       const res = await authGet(
         app,
-        '/v1/bookings/calendar?startDate=2026-04-01&endDate=2026-04-30',
+        '/v1/bookings/calendar?from=2026-04-01T00:00:00.000Z&to=2026-04-30T23:59:59.000Z',
         ADMIN_USER,
       );
 
