@@ -17,6 +17,9 @@ describe('RiskAssessmentService', () => {
   };
 
   beforeEach(async () => {
+    // Fix system time to 10:00 AM to avoid the unusual_hour signal (2-5 AM check)
+    jest.useFakeTimers({ now: new Date('2024-01-15T10:00:00Z') });
+
     prisma = {
       device: {
         findFirst: jest.fn().mockResolvedValue(null),
@@ -36,6 +39,10 @@ describe('RiskAssessmentService', () => {
     }).compile();
 
     service = module.get<RiskAssessmentService>(RiskAssessmentService);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should be defined', () => {
