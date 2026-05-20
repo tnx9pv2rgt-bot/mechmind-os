@@ -13,17 +13,11 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
 import { AuthService } from '@auth/services/auth.service';
-import { createRequire } from 'module';
-const _nativeRequire = createRequire(__filename);
-function createExpressApp() {
-  const exp = _nativeRequire('express');
-  const factory = typeof exp === 'function' ? exp : exp.default || exp;
-  return factory();
-}
 
 describe('Authentication Flow (Integration)', () => {
   let app: INestApplication;
@@ -45,7 +39,7 @@ describe('Authentication Flow (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication(createExpressApp());
+    app = moduleFixture.createNestApplication(new ExpressAdapter());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);

@@ -8,19 +8,12 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { PrismaClient } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as request from 'supertest';
-import { createRequire } from 'module';
-// Use Node.js native require (bypasses Jest module interop) to load the real express factory
-const _nativeRequire = createRequire(__filename);
-function createExpressApp() {
-  const exp = _nativeRequire('express');
-  const factory = typeof exp === 'function' ? exp : exp.default || exp;
-  return factory();
-}
 
 const STATE_FILE = path.join(__dirname, '.testcontainer-state.json');
 
@@ -107,7 +100,7 @@ export async function createRealDbApp(): Promise<INestApplication> {
     })
     .compile();
 
-  const app = moduleFixture.createNestApplication(createExpressApp());
+  const app = moduleFixture.createNestApplication(new ExpressAdapter());
 
   app.enableVersioning({
     type: VersioningType.URI,

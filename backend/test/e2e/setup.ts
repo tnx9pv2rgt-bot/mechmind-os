@@ -8,16 +8,9 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { JwtService } from '@nestjs/jwt';
 import * as request from 'supertest';
-import { createRequire } from 'module';
-// Use Node.js native require (bypasses Jest module interop) to load the real express factory
-const _nativeRequire = createRequire(__filename);
-function createExpressApp() {
-  const exp = _nativeRequire('express');
-  const factory = typeof exp === 'function' ? exp : exp.default || exp;
-  return factory();
-}
 
 // ── Environment ────────────────────────────────────────────────
 jest.setTimeout(30000);
@@ -318,7 +311,7 @@ export async function createE2eApp(moduleOverrides?: {
   }
 
   const moduleFixture: TestingModule = await builder.compile();
-  const app = moduleFixture.createNestApplication(createExpressApp());
+  const app = moduleFixture.createNestApplication(new ExpressAdapter());
 
   // Mirror main.ts configuration
   app.enableVersioning({
