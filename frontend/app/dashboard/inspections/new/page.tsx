@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import {
-  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -16,10 +18,25 @@ import {
   Cpu,
   CheckCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import {
+  AppleCard,
+  AppleCardContent,
+  AppleCardHeader,
+} from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+
+const inspectionSchema = z.object({
+  type: z.enum(['PRE_PURCHASE', 'PERIODIC', 'PRE_SALE', 'WARRANTY', 'ACCIDENT'], {
+    required_error: 'Tipo ispezione obbligatorio',
+  }),
+  plate: z.string().min(1, 'Targa obbligatoria'),
+  vehicle: z.string().min(1, 'Veicolo obbligatorio'),
+  customer: z.string().min(1, 'Cliente obbligatorio'),
+});
 
 const totalSteps = 7;
 
@@ -33,16 +50,30 @@ const steps = [
   { num: 7, label: 'Elettronica', icon: Cpu },
 ];
 
+type InspectionFormData = z.infer<typeof inspectionSchema>;
+
 export default function NewInspectionPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    plate: '',
-    vehicle: '',
-    customer: '',
-    type: 'PRE_PURCHASE',
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit: rhfHandleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<InspectionFormData>({
+    resolver: zodResolver(inspectionSchema),
+    defaultValues: {
+      plate: '',
+      vehicle: '',
+      customer: '',
+      type: 'PRE_PURCHASE',
+    },
   });
+
+  const formData = watch();
 
   const handleNext = () => {
     if (step < totalSteps) setStep(step + 1);
@@ -53,10 +84,7 @@ export default function NewInspectionPage() {
     else router.push('/dashboard/inspections');
   };
 
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const onSubmit = async (data: InspectionFormData) => {
     setSubmitError(null);
     try {
       const res = await fetch('/api/inspections', {
@@ -64,72 +92,62 @@ export default function NewInspectionPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateId: 'default',
-          vehicleId: formData.plate,
-          customerId: formData.customer,
+          vehicleId: data.plate,
+          customerId: data.customer,
           mechanicId: 'current-user',
-          notes: `Tipo: ${formData.type}, Veicolo: ${formData.vehicle}`,
+          notes: `Tipo: ${data.type}, Veicolo: ${data.vehicle}`,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || json.details || 'Errore creazione ispezione');
       const newId = json.data?.id || json.id || 'new';
+      toast.success('Ispezione creata con successo');
       router.push(`/dashboard/inspections/${newId}`);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Errore durante il salvataggio');
-      setIsSubmitting(false);
+      const errMsg = err instanceof Error ? err.message : 'Errore durante il salvataggio';
+      setSubmitError(errMsg);
+      toast.error(errMsg);
     }
+  };
+
+  const handleSubmit = () => {
+    rhfHandleSubmit(onSubmit)();
   };
 
   const progress = (step / totalSteps) * 100;
 
   return (
-    <div className='fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#212121] dark:to-[#2f2f2f] flex items-center justify-center p-4 overflow-hidden'>
-      <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
-        {/* Background Icon/Illustration */}
-        <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-blue-100/40 via-purple-100/30 to-pink-100/40 blur-3xl' />
-          <motion.div
-            className='absolute'
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: [0, 5, -5, 0],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <ClipboardCheck className='w-[45%] h-[45%] text-blue-200/30' strokeWidth={0.5} />
-          </motion.div>
-        </div>
-
-        {/* Glass Card Container */}
-        <motion.div
-          className='relative z-10 w-full h-full bg-white/70 dark:bg-[#2f2f2f]/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 dark:border-[#424242]/50 overflow-hidden flex flex-col'
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className='px-10 pt-8 pb-4'>
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h1 className='text-3xl font-semibold text-gray-900 dark:text-[#ececec] tracking-tight'>
-                  Nuova Ispezione
-                </h1>
-                <p className='text-gray-500 dark:text-[#636366] mt-1'>
-                  Wizard 7 step - AI + Blockchain
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-400'>Step</span>
-                <span className='text-2xl font-bold text-green-600'>{step}</span>
-                <span className='text-gray-400'>/</span>
-                <span className='text-gray-400'>{totalSteps}</span>
-              </div>
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb items={[{ label: 'Ispezioni', href: '/dashboard/inspections' }, { label: 'Nuova Ispezione' }]} />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Nuova Ispezione
+              </h1>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
+                Wizard 7 step - AI + Blockchain
+              </p>
             </div>
+            <div className='flex items-center gap-2'>
+              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>{step}</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            {/* Progress Bar */}
-            <div className='h-2 bg-gray-200 dark:bg-[#424242] rounded-full overflow-hidden'>
+      <div className='p-8 max-w-4xl mx-auto space-y-6'>
+        {/* Progress Bar */}
+        <AppleCard hover={false}>
+          <AppleCardContent>
+            <div className='h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
               <motion.div
-                className='h-full bg-green-500'
+                className='h-full bg-[var(--brand)]'
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
@@ -139,108 +157,131 @@ export default function NewInspectionPage() {
             {/* Step Indicators */}
             <div className='flex items-center justify-between mt-4'>
               {steps.map(s => (
-                <div
+                <button
                   key={s.num}
+                  onClick={() => s.num < step && setStep(s.num)}
                   className={`flex items-center gap-2 transition-all ${
                     s.num === step
-                      ? 'text-green-600 cursor-default'
+                      ? 'text-[var(--text-primary)] dark:text-[var(--text-primary)] cursor-default'
                       : s.num < step
-                        ? 'text-green-600 hover:text-green-700 cursor-pointer hover:scale-105'
-                        : 'text-gray-400 dark:text-[#6e6e6e] cursor-not-allowed'
+                        ? 'text-[var(--brand)] hover:opacity-70 cursor-pointer hover:scale-105'
+                        : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] cursor-not-allowed'
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                      s.num < step
-                        ? 'bg-green-500 text-white'
-                        : s.num === step
-                          ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
+                      s.num === step
+                        ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                        : s.num < step
+                          ? 'bg-[var(--status-success)] text-[var(--text-on-brand)]'
+                          : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                     }`}
                   >
-                    {s.num < step ? '✓' : s.num}
+                    {s.num < step ? <CheckCircle className='h-4 w-4' /> : s.num}
                   </div>
-                  <span className='hidden sm:inline text-sm font-medium'>{s.label}</span>
-                </div>
+                  <span className='hidden sm:inline text-footnote font-medium'>{s.label}</span>
+                </button>
               ))}
             </div>
-          </div>
+          </AppleCardContent>
+        </AppleCard>
 
-          {/* Content */}
-          <div className='flex-1 px-10 pb-24 overflow-y-auto'>
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className='space-y-6'
-            >
-              {/* Step 1: Vehicle */}
-              {step === 1 && (
-                <div className='space-y-6'>
-                  <div className='flex items-center gap-3 mb-6'>
-                    <div className='w-12 h-12 rounded-2xl bg-gray-800 flex items-center justify-center'>
-                      <Car className='w-6 h-6 text-white' />
-                    </div>
-                    <div>
-                      <h2 className='text-xl font-semibold text-gray-900 dark:text-[#ececec]'>
-                        Dati Veicolo
-                      </h2>
-                      <p className='text-gray-500 dark:text-[#636366] text-sm'>
-                        Inserisci i dati del veicolo da ispezionare
-                      </p>
-                    </div>
+        {/* Content */}
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Step 1: Vehicle */}
+          {step === 1 && (
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <div className='flex items-center gap-3'>
+                  <div className='w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                    <Car className='w-6 h-6 text-[var(--brand)]' />
                   </div>
-
+                  <div>
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                      Dati Veicolo
+                    </h2>
+                    <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Inserisci i dati del veicolo da ispezionare
+                    </p>
+                  </div>
+                </div>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <Label className='text-sm font-medium text-gray-700 dark:text-[#636366]'>
+                      <label
+                        htmlFor='plate'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
                         Targa
-                      </Label>
+                      </label>
                       <Input
+                        id='plate'
                         placeholder='AB123CD'
-                        className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
-                        value={formData.plate}
-                        onChange={e => setFormData({ ...formData, plate: e.target.value })}
+                        {...register('plate')}
                       />
+                      {errors.plate && <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.plate.message}</p>}
                     </div>
                     <div className='space-y-2'>
-                      <Label className='text-sm font-medium text-gray-700 dark:text-[#636366]'>
+                      <label
+                        htmlFor='vehicle'
+                        className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                      >
                         Veicolo
-                      </Label>
+                      </label>
                       <Input
+                        id='vehicle'
                         placeholder='BMW X5'
-                        className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
-                        value={formData.vehicle}
-                        onChange={e => setFormData({ ...formData, vehicle: e.target.value })}
+                        {...register('vehicle')}
                       />
+                      {errors.vehicle && (
+                        <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.vehicle.message}</p>
+                      )}
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label className='text-sm font-medium text-gray-700'>Cliente</Label>
+                    <label htmlFor='customer' className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                      Cliente
+                    </label>
                     <Input
+                      id='customer'
                       placeholder='Nome cliente'
-                      className='h-14 rounded-xl border-gray-200 focus:border-blue-500'
-                      value={formData.customer}
-                      onChange={e => setFormData({ ...formData, customer: e.target.value })}
+                      {...register('customer')}
                     />
+                    {errors.customer && (
+                      <p className='text-footnote text-[var(--status-error)] mt-1'>{errors.customer.message}</p>
+                    )}
                   </div>
 
                   <div className='space-y-2'>
-                    <Label className='text-sm font-medium text-gray-700'>Tipo Ispezione</Label>
+                    <label className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Tipo Ispezione</label>
                     <div className='flex flex-wrap gap-2'>
                       {['PRE_PURCHASE', 'PERIODIC', 'PRE_SALE', 'WARRANTY', 'ACCIDENT'].map(
                         type => (
                           <Badge
                             key={type}
                             variant={formData.type === type ? 'default' : 'outline'}
-                            className={`cursor-pointer px-4 py-2 text-sm ${
+                            className={`cursor-pointer px-4 py-2 text-sm rounded-full ${
                               formData.type === type
-                                ? 'bg-gray-800 text-white hover:bg-gray-900'
-                                : 'hover:bg-gray-100'
+                                ? 'bg-[var(--brand)] text-[var(--text-on-brand)] border-[var(--brand)]'
+                                : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] bg-transparent border-[var(--border-default)]/20 dark:border-[var(--border-default)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
                             }`}
-                            onClick={() => setFormData({ ...formData, type })}
+                            role='button'
+                            tabIndex={0}
+                            onClick={() => setValue('type', type as InspectionFormData['type'])}
+                            onKeyDown={(e: React.KeyboardEvent) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setValue('type', type as InspectionFormData['type']);
+                              }
+                            }}
                           >
                             {type === 'PRE_PURCHASE' && 'Pre-Acquisto'}
                             {type === 'PERIODIC' && 'Periodica'}
@@ -253,21 +294,25 @@ export default function NewInspectionPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              </AppleCardContent>
+            </AppleCard>
+          )}
 
-              {/* Steps 2-7: Placeholder */}
-              {step > 1 && (
+          {/* Steps 2-7: Placeholder */}
+          {step > 1 && (
+            <AppleCard hover={false}>
+              <AppleCardContent>
                 <div className='text-center py-12'>
-                  <div className='w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#353535] flex items-center justify-center mx-auto mb-4'>
+                  <div className='w-16 h-16 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center mx-auto mb-4'>
                     {(() => {
                       const Icon = steps[step - 1].icon;
-                      return <Icon className='w-8 h-8 text-gray-400' />;
+                      return <Icon className='w-8 h-8 text-[var(--brand)]' />;
                     })()}
                   </div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-[#ececec] mb-2'>
+                  <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
                     {steps[step - 1].label}
                   </h3>
-                  <p className='text-gray-500 dark:text-[#636366] max-w-md mx-auto'>
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] max-w-md mx-auto'>
                     Questa sezione include {steps[step - 1].label.toLowerCase()} inspection con AI
                     detection, foto e annotazioni.
                   </p>
@@ -275,72 +320,61 @@ export default function NewInspectionPage() {
                   <div className='flex justify-center gap-2 mt-6'>
                     {step === 2 && (
                       <>
-                        <Badge variant='outline'>📸 Foto AI</Badge>
-                        <Badge variant='outline'>🎥 Video 360°</Badge>
+                        <Badge variant='outline'>Foto AI</Badge>
+                        <Badge variant='outline'>Video 360</Badge>
                       </>
                     )}
                     {step === 4 && (
                       <>
-                        <Badge variant='outline'>💧 Umidità</Badge>
-                        <Badge variant='outline'>👃 Odori</Badge>
-                        <Badge variant='outline'>🦠 Muffa</Badge>
+                        <Badge variant='outline'>Umidita</Badge>
+                        <Badge variant='outline'>Odori</Badge>
+                        <Badge variant='outline'>Muffa</Badge>
                       </>
                     )}
                     {step === 7 && (
                       <>
-                        <Badge variant='outline'>🔌 OBD-II</Badge>
-                        <Badge variant='outline'>⚡ Elettronica</Badge>
+                        <Badge variant='outline'>OBD-II</Badge>
+                        <Badge variant='outline'>Elettronica</Badge>
                       </>
                     )}
                   </div>
                 </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Footer */}
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-xl border-t border-gray-200/50 dark:border-[#424242]/50'>
-            <div className='flex items-center justify-between'>
-              <Button
-                onClick={handleBack}
-                disabled={isSubmitting}
-                className='rounded-full px-6 h-12 bg-gray-800 text-white hover:bg-gray-900 border-2 border-transparent hover:border-green-500 transition-all'
-              >
-                <ChevronLeft className='w-5 h-5 mr-2' />
-                Indietro
-              </Button>
-
-              {step < totalSteps ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-12 bg-gray-800 hover:bg-gray-900 text-white shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-green-500'
-                >
-                  Avanti
-                  <ChevronRight className='w-5 h-5 ml-2' />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all border-2 border-transparent hover:border-green-500'
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                      Salvataggio...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className='w-5 h-5 mr-2' />
-                      Completa Ispezione
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
+              </AppleCardContent>
+            </AppleCard>
+          )}
         </motion.div>
+
+        {/* Footer Navigation */}
+        <div className='flex items-center justify-between pt-2'>
+          <AppleButton
+            variant='ghost'
+            onClick={handleBack}
+            disabled={isSubmitting}
+            icon={<ChevronLeft className='w-4 h-4' />}
+          >
+            Indietro
+          </AppleButton>
+
+          {step < totalSteps ? (
+            <AppleButton
+              onClick={handleNext}
+              disabled={isSubmitting}
+              icon={<ChevronRight className='w-4 h-4' />}
+              iconPosition='right'
+            >
+              Avanti
+            </AppleButton>
+          ) : (
+            <AppleButton
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              icon={!isSubmitting ? <CheckCircle className='w-4 h-4' /> : undefined}
+            >
+              {isSubmitting ? 'Salvataggio...' : 'Completa Ispezione'}
+            </AppleButton>
+          )}
+        </div>
       </div>
     </div>
   );

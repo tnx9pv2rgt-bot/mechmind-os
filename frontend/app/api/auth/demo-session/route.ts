@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
+import { BACKEND_URL } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
-
-const RAW_BACKEND_URL =
-  process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/v1';
-const BACKEND_URL = RAW_BACKEND_URL.replace(/\/+$/, '').endsWith('/v1')
-  ? RAW_BACKEND_URL.replace(/\/+$/, '')
-  : `${RAW_BACKEND_URL.replace(/\/+$/, '')}/v1`;
 
 const DEMO_MAX_AGE = 3600; // 1 hour
 
@@ -28,7 +23,10 @@ export async function POST(): Promise<NextResponse> {
 
     const raw = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-      return NextResponse.json({ success: false, error: 'Demo login failed' }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: 'Credenziali demo non valide o backend non pronto' },
+        { status: 502 },
+      );
     }
 
     const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<

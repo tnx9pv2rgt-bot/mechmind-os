@@ -4,15 +4,16 @@
  * Handles subscription management, upgrades, downgrades, and Stripe integration
  */
 
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-// import Stripe from 'stripe'; // COMMENTATO: stripe non installato
+import Stripe from 'stripe';
 import { PrismaService } from '../../common/services/prisma.service';
 import { SubscriptionPlan, SubscriptionStatus, FeatureFlag, Prisma } from '@prisma/client';
 import {
   AI_ADDON,
   PLAN_LIMITS,
   PLAN_FEATURES,
+  PLAN_PRICING,
   calculateProratedAmount,
 } from '../config/pricing.config';
 
@@ -54,18 +55,24 @@ export interface SubscriptionResponse {
 
 @Injectable()
 export class SubscriptionService {
-  // private stripe: Stripe; // COMMENTATO: stripe non installato
+  private readonly logger = new Logger(SubscriptionService.name);
+  private readonly stripe: Stripe | undefined;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    // const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-    // if (stripeKey) {
-    //   this.stripe = new Stripe(stripeKey, {
-    //     apiVersion: '2024-12-18.acacia',
-    //   });
-    // }
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    if (stripeKey) {
+      this.stripe = new Stripe(stripeKey, { apiVersion: '2026-02-25.clover' });
+    }
+  }
+
+  private getStripe(): Stripe {
+    if (!this.stripe) {
+      throw new BadRequestException('Stripe non configurato: impostare STRIPE_SECRET_KEY');
+    }
+    return this.stripe;
   }
 
   // ==========================================
@@ -79,6 +86,7 @@ export class SubscriptionService {
     });
 
     if (!subscription) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Subscription not found');
     }
 
@@ -109,7 +117,20 @@ export class SubscriptionService {
     };
   }
 
-  async getAllSubscriptions(filters?: { status?: SubscriptionStatus; plan?: SubscriptionPlan }) {
+  async getAllSubscriptions(filters?: {
+    status?: SubscriptionStatus;
+    plan?: SubscriptionPlan;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    data: Awaited<ReturnType<PrismaService['subscription']['findMany']>>;
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
     const where: Prisma.SubscriptionWhereInput = {};
 
     if (filters?.status) {
@@ -119,23 +140,30 @@ export class SubscriptionService {
       where.plan = filters.plan;
     }
 
-    const subscriptions = await this.prisma.subscription.findMany({
-      where,
-      include: {
-        tenant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            isActive: true,
+    const [data, total] = await Promise.all([
+      this.prisma.subscription.findMany({
+        where,
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              isActive: true,
+            },
           },
+          features: true,
         },
-        features: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.subscription.count({ where }),
+    ]);
 
-    return subscriptions;
+    const serializedData = data.map(sub => this.serializeBigIntFields(sub));
+
+    return { data: serializedData, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // ==========================================
@@ -219,6 +247,7 @@ export class SubscriptionService {
       });
 
       // Update subscription
+      // eslint-disable-next-line security/detect-object-injection
       const limits = PLAN_LIMITS[newPlan];
       const subscription = await tx.subscription.update({
         where: { tenantId },
@@ -555,28 +584,190 @@ export class SubscriptionService {
   }
 
   // ==========================================
-  // STRIPE INTEGRATION (COMMENTATO: stripe non installato)
+  // STRIPE INTEGRATION
   // ==========================================
 
   async createStripeCheckoutSession(
-    _tenantId: string,
-    _plan: SubscriptionPlan,
-    _billingCycle: 'monthly' | 'yearly',
-    _aiAddon: boolean,
-    _successUrl: string,
-    _cancelUrl: string,
+    tenantId: string,
+    plan: SubscriptionPlan,
+    billingCycle: 'monthly' | 'yearly',
+    aiAddon: boolean,
+    successUrl: string,
+    cancelUrl: string,
   ): Promise<{ sessionId: string; url: string }> {
-    throw new BadRequestException('Stripe is not configured - install stripe package');
-    // if (!this.stripe) {
-    //   throw new BadRequestException('Stripe is not configured');
-    // }
-    // ... resto del metodo commentato
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { tenantId },
+    });
+    if (!subscription) throw new NotFoundException('Subscription not found');
+
+    // eslint-disable-next-line security/detect-object-injection
+    const pricing = PLAN_PRICING[plan];
+    const unitAmount =
+      billingCycle === 'yearly'
+        ? Math.round(pricing.yearlyPrice * 100)
+        : Math.round(pricing.monthlyPrice * 100);
+
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            // eslint-disable-next-line security/detect-object-injection
+            name: pricing.nameIt,
+            metadata: { plan, billingCycle },
+          },
+          unit_amount: unitAmount,
+          recurring: { interval: billingCycle === 'yearly' ? 'year' : 'month' },
+        },
+        quantity: 1,
+      },
+    ];
+
+    if (aiAddon) {
+      const addonPrice = billingCycle === 'yearly' ? AI_ADDON.yearlyPrice : AI_ADDON.monthlyPrice;
+      lineItems.push({
+        price_data: {
+          currency: 'eur',
+          product_data: { name: 'AI Add-on', metadata: { type: 'ai_addon' } },
+          unit_amount: Math.round(addonPrice * 100),
+          recurring: { interval: billingCycle === 'yearly' ? 'year' : 'month' },
+        },
+        quantity: 1,
+      });
+    }
+
+    let customerId = subscription.stripeCustomerId ?? undefined;
+    if (!customerId) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+      const customer = await this.getStripe().customers.create({
+        metadata: { tenantId },
+        description: tenant?.name ?? tenantId,
+      });
+      customerId = customer.id;
+      await this.prisma.subscription.update({
+        where: { tenantId },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    const session = await this.getStripe().checkout.sessions.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'subscription',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: { tenantId, plan, billingCycle, aiAddon: String(aiAddon) },
+      subscription_data: { metadata: { tenantId, plan } },
+    });
+
+    return { sessionId: session.id, url: session.url! };
   }
 
-  async handleStripeWebhook(_event: unknown): Promise<void> {
-    // COMMENTATO: stripe non installato
-    // if (!this.stripe) return;
-    // ... resto del metodo commentato
+  // ==========================================
+  // WEBHOOK HANDLERS
+  // ==========================================
+
+  async renewSubscription(
+    tenantId: string,
+    stripeSubscriptionId: string,
+    newPeriodEnd: Date,
+  ): Promise<void> {
+    await this.prisma.subscription.update({
+      where: { tenantId },
+      data: {
+        stripeSubscriptionId,
+        currentPeriodEnd: newPeriodEnd,
+        status: SubscriptionStatus.ACTIVE,
+      },
+    });
+  }
+
+  async markPaymentFailed(tenantId: string): Promise<void> {
+    await this.prisma.subscription.update({
+      where: { tenantId },
+      data: { status: SubscriptionStatus.PAST_DUE },
+    });
+  }
+
+  async syncStripeSubscriptionStatus(tenantId: string, stripeStatus: string): Promise<void> {
+    const statusMap: Record<string, SubscriptionStatus> = {
+      active: SubscriptionStatus.ACTIVE,
+      past_due: SubscriptionStatus.PAST_DUE,
+      canceled: SubscriptionStatus.CANCELLED,
+      trialing: SubscriptionStatus.TRIAL,
+      unpaid: SubscriptionStatus.PAST_DUE,
+      paused: SubscriptionStatus.CANCELLED,
+    };
+    // eslint-disable-next-line security/detect-object-injection
+    const mappedStatus = statusMap[stripeStatus];
+    if (mappedStatus) {
+      await this.prisma.subscription.update({
+        where: { tenantId },
+        data: { status: mappedStatus },
+      });
+    }
+  }
+
+  async activateSubscription(
+    tenantId: string,
+    plan: SubscriptionPlan,
+    billingCycle: 'monthly' | 'yearly',
+    stripeSubscriptionId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async tx => {
+      const periodStart = new Date();
+      const periodEnd = new Date();
+      if (billingCycle === 'yearly') {
+        periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+      } else {
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+      }
+
+      // eslint-disable-next-line security/detect-object-injection
+      const limits = PLAN_LIMITS[plan];
+      const subscription = await tx.subscription.update({
+        where: { tenantId },
+        data: {
+          plan,
+          status: SubscriptionStatus.ACTIVE,
+          stripeSubscriptionId,
+          currentPeriodStart: periodStart,
+          currentPeriodEnd: periodEnd,
+          trialEndsAt: null,
+          maxUsers: limits.maxUsers ?? 999999,
+          maxLocations: limits.maxLocations ?? 999999,
+          apiCallsLimit: limits.maxApiCallsPerMonth,
+          storageLimitBytes: limits.maxStorageBytes ?? BigInt(10737418240),
+        },
+      });
+
+      await this.syncPlanFeatures(tx, subscription.id, plan, false);
+
+      await tx.subscriptionChange.create({
+        data: {
+          subscriptionId: subscription.id,
+          tenantId,
+          changeType: 'UPGRADE',
+          oldPlan: subscription.plan,
+          newPlan: plan,
+          oldStatus: SubscriptionStatus.TRIAL,
+          newStatus: SubscriptionStatus.ACTIVE,
+          proratedAmount: 0,
+        },
+      });
+    });
+  }
+
+  async handleTrialWillEnd(tenantId: string, trialEnd: Date): Promise<void> {
+    await this.prisma.subscription.update({
+      where: { tenantId },
+      data: { trialEndsAt: trialEnd },
+    });
+    this.logger.log(`Trial will end for tenant ${tenantId} at ${trialEnd.toISOString()}`);
   }
 
   // ==========================================
@@ -604,6 +795,7 @@ export class SubscriptionService {
     hasAiAddon: boolean,
   ): Promise<void> {
     // Get features for this plan
+    // eslint-disable-next-line security/detect-object-injection
     const planFeatures = [...PLAN_FEATURES[plan]];
     if (hasAiAddon) {
       planFeatures.push(FeatureFlag.AI_INSPECTIONS, FeatureFlag.VOICE_ASSISTANT);
@@ -624,6 +816,23 @@ export class SubscriptionService {
     });
   }
 
+  /**
+   * Converts BigInt fields to Number for JSON serialization.
+   * Prisma returns storageLimitBytes / storageUsedBytes as BigInt,
+   * which JSON.stringify cannot handle.
+   */
+  private serializeBigIntFields<T extends Record<string, unknown>>(obj: T): T {
+    const result = { ...obj };
+    for (const key of Object.keys(result)) {
+      // eslint-disable-next-line security/detect-object-injection
+      if (typeof result[key] === 'bigint') {
+        // eslint-disable-next-line security/detect-object-injection
+        (result as Record<string, unknown>)[key] = Number(result[key]);
+      }
+    }
+    return result as T;
+  }
+
   // Metodi Stripe commentati - stripe non installato
   // private async updateStripeSubscription(
   //   stripeSubscriptionId: string,
@@ -636,21 +845,21 @@ export class SubscriptionService {
   // }
 
   // private async handleCheckoutCompleted(
-  //   session: any
+  //   session: Record<string, unknown>
   // ): Promise<void> {
   //   ...
   // }
 
-  // private async handleInvoicePaid(invoice: any): Promise<void> {
+  // private async handleInvoicePaid(invoice: Record<string, unknown>): Promise<void> {
   //   ...
   // }
 
-  // private async handlePaymentFailed(invoice: any): Promise<void> {
+  // private async handlePaymentFailed(invoice: Record<string, unknown>): Promise<void> {
   //   ...
   // }
 
   // private async handleSubscriptionDeleted(
-  //   stripeSubscription: any
+  //   stripeSubscription: Record<string, unknown>
   // ): Promise<void> {
   //   ...
   // }

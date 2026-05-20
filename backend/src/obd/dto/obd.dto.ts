@@ -221,6 +221,11 @@ export class ReadingQueryDto {
   @IsString()
   to?: string;
 
+  @ApiProperty({ required: false, default: 1, description: 'Page number' })
+  @IsOptional()
+  @IsInt()
+  page?: number;
+
   @ApiProperty({ required: false, default: 100 })
   @IsOptional()
   @IsInt()

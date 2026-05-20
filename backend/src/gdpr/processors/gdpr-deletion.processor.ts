@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, InternalServerErrorException } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { GdprDeletionService, DeletionJobPayload } from '../services/gdpr-deletion.service';
 import { PrismaService } from '@common/services/prisma.service';
@@ -73,7 +73,9 @@ export class GdprDeletionProcessor extends WorkerHost {
       );
 
       if (!anonymizationResult.success) {
-        throw new Error(`Anonymization failed: ${anonymizationResult.errors?.join(', ')}`);
+        throw new InternalServerErrorException(
+          `Anonymization failed: ${anonymizationResult.errors?.join(', ')}`,
+        );
       }
       await job.updateProgress(50);
 

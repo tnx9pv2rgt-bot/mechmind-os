@@ -23,24 +23,43 @@ export class MagicLinkService {
 
   async sendMagicLink(
     email: string,
-    tenantSlug: string,
+    tenantSlug?: string,
     ipAddress?: string,
     userAgent?: string,
   ): Promise<{ sent: true }> {
-    // Find tenant
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { slug: tenantSlug },
-    });
+    let tenant: { id: string; isActive: boolean } | null = null;
+    let user: { id: string; email: string; name: string; tenantId: string } | null = null;
 
-    if (!tenant || !tenant.isActive) {
-      // Don't reveal if tenant exists
-      return { sent: true };
+    if (tenantSlug) {
+      // Tenant-specific login (from tenant subdomain or portal)
+      tenant = await this.prisma.tenant.findUnique({
+        where: { slug: tenantSlug },
+      });
+
+      if (!tenant || !tenant.isActive) {
+        return { sent: true };
+      }
+
+      user = await this.prisma.user.findFirst({
+        where: { email, tenantId: tenant.id, isActive: true },
+      });
+    } else {
+      // Generic login — find user by email across all tenants (like Google/Microsoft)
+      user = await this.prisma.user.findFirst({
+        where: { email, isActive: true },
+        include: { tenant: true },
+      });
+
+      if (user) {
+        tenant = await this.prisma.tenant.findUnique({
+          where: { id: user.tenantId },
+        });
+      }
     }
 
-    // Find user
-    const user = await this.prisma.user.findFirst({
-      where: { email, tenantId: tenant.id, isActive: true },
-    });
+    if (!tenant || !tenant.isActive) {
+      return { sent: true };
+    }
 
     if (!user) {
       // Don't reveal if user exists

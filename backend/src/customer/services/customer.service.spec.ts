@@ -68,6 +68,12 @@ describe('CustomerService', () => {
         update: jest.fn().mockResolvedValue(mockDbCustomer),
         count: jest.fn().mockResolvedValue(1),
       },
+      workOrder: {
+        count: jest.fn().mockResolvedValue(0),
+      },
+      invoice: {
+        count: jest.fn().mockResolvedValue(0),
+      },
     } as unknown as Record<string, jest.Mock | Record<string, jest.Mock>>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -183,7 +189,7 @@ describe('CustomerService', () => {
       // Act & Assert
       await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(ConflictException);
       await expect(service.create(TENANT_ID, createDto)).rejects.toThrow(
-        `Customer with phone ${createDto.phone} already exists`,
+        'Customer with this phone number already exists',
       );
     });
 
@@ -237,6 +243,60 @@ describe('CustomerService', () => {
       const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
       expect(createCall.data.gdprConsent).toBe(false);
       expect(createCall.data.marketingConsent).toBe(false);
+    });
+
+    it('should encrypt codiceFiscale and pecEmail as PII (P027)', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      const dtoWithFiscal: CreateCustomerDto = {
+        phone: '+390123456789',
+        codiceFiscale: 'RSSMRA85M01H501Z',
+        pecEmail: 'azienda@pec.it',
+        partitaIva: '12345678901',
+        sdiCode: 'M5UXCR1',
+      };
+
+      const dbCustomerWithFiscal = {
+        ...mockDbCustomer,
+        codiceFiscale: 'enc_RSSMRA85M01H501Z',
+        pecEmail: 'enc_azienda@pec.it',
+        partitaIva: '12345678901',
+        sdiCode: 'M5UXCR1',
+        customerType: 'PERSONA',
+      };
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(dbCustomerWithFiscal);
+
+      // Act
+      const result = await service.create(TENANT_ID, dtoWithFiscal);
+
+      // Assert - codiceFiscale and pecEmail are encrypted
+      expect(encryption.encrypt).toHaveBeenCalledWith('RSSMRA85M01H501Z');
+      expect(encryption.encrypt).toHaveBeenCalledWith('azienda@pec.it');
+
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.codiceFiscale).toBe('enc_RSSMRA85M01H501Z');
+      expect(createCall.data.pecEmail).toBe('enc_azienda@pec.it');
+      // partitaIva and sdiCode are NOT encrypted (not PII)
+      expect(createCall.data.partitaIva).toBe('12345678901');
+      expect(createCall.data.sdiCode).toBe('M5UXCR1');
+
+      // Assert - decrypted in response
+      expect(result.codiceFiscale).toBe('RSSMRA85M01H501Z');
+      expect(result.pecEmail).toBe('azienda@pec.it');
+    });
+
+    it('should handle null fiscal PII fields in create', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      const dtoNoFiscal: CreateCustomerDto = { phone: '+390123456789' };
+
+      // Act
+      await service.create(TENANT_ID, dtoNoFiscal);
+
+      // Assert
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.codiceFiscale).toBeNull();
+      expect(createCall.data.pecEmail).toBeNull();
     });
   });
 
@@ -665,6 +725,7 @@ describe('CustomerService', () => {
           encryptedEmail: 'enc_new@email.it',
           encryptedFirstName: 'enc_Luigi',
           encryptedLastName: 'enc_Verdi',
+          searchName: 'luigi verdi',
           notes: 'Updated notes',
         },
       });
@@ -776,6 +837,98 @@ describe('CustomerService', () => {
       // Assert
       expect(logger.log).toHaveBeenCalledWith(`Updated customer ${CUSTOMER_ID}`);
     });
+
+    it('should encrypt codiceFiscale and pecEmail on update (P027)', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      const updatedDb = {
+        ...mockDbCustomer,
+        codiceFiscale: 'enc_RSSMRA85M01H501Z',
+        pecEmail: 'enc_azienda@pec.it',
+      };
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(updatedDb);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        codiceFiscale: 'RSSMRA85M01H501Z',
+        pecEmail: 'azienda@pec.it',
+      });
+
+      // Assert
+      expect(encryption.encrypt).toHaveBeenCalledWith('RSSMRA85M01H501Z');
+      expect(encryption.encrypt).toHaveBeenCalledWith('azienda@pec.it');
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.codiceFiscale).toBe('enc_RSSMRA85M01H501Z');
+      expect(updateCall.data.pecEmail).toBe('enc_azienda@pec.it');
+    });
+
+    it('should clear codiceFiscale and pecEmail when set to empty string', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        codiceFiscale: '',
+        pecEmail: '',
+      });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.codiceFiscale).toBeNull();
+      expect(updateCall.data.pecEmail).toBeNull();
+    });
+
+    it('should update all fiscal and address fields', async () => {
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        partitaIva: '12345678901',
+        sdiCode: 'ABCDEFG',
+        customerType: 'BUSINESS',
+        address: 'Via Roma 1',
+        city: 'Milano',
+        postalCode: '20100',
+        province: 'MI',
+        preferredChannel: 'EMAIL',
+        source: 'REFERRAL',
+      } as never);
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.partitaIva).toBe('12345678901');
+      expect(updateCall.data.sdiCode).toBe('ABCDEFG');
+      expect(updateCall.data.customerType).toBe('BUSINESS');
+      expect(updateCall.data.address).toBe('Via Roma 1');
+      expect(updateCall.data.city).toBe('Milano');
+      expect(updateCall.data.postalCode).toBe('20100');
+      expect(updateCall.data.province).toBe('MI');
+      expect(updateCall.data.preferredChannel).toBe('EMAIL');
+      expect(updateCall.data.source).toBe('REFERRAL');
+    });
+
+    it('should set address and fiscal fields to null when empty string', async () => {
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      await service.update(TENANT_ID, CUSTOMER_ID, {
+        partitaIva: '',
+        sdiCode: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        province: '',
+      } as never);
+
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.partitaIva).toBeNull();
+      expect(updateCall.data.sdiCode).toBeNull();
+      expect(updateCall.data.address).toBeNull();
+      expect(updateCall.data.city).toBeNull();
+      expect(updateCall.data.postalCode).toBeNull();
+      expect(updateCall.data.province).toBeNull();
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -808,6 +961,9 @@ describe('CustomerService', () => {
           encryptedLastName: null,
           phoneHash: 'DELETED',
           notes: 'Customer data deleted per GDPR request',
+          // Fiscal PII also cleared (P027)
+          codiceFiscale: null,
+          pecEmail: null,
         },
       });
     });
@@ -1211,6 +1367,233 @@ describe('CustomerService', () => {
 
       // Assert - decrypt called exactly 4 times (phone, email, firstName, lastName)
       expect(encryption.decrypt).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // BRANCH COVERAGE ENHANCEMENTS (90/90 target)
+  // ---------------------------------------------------------------------------
+  describe('branch coverage - update scenarios', () => {
+    it('should not include phone in update when not provided', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { firstName: 'NewName' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.encryptedPhone).toBeUndefined();
+      expect(updateCall.data.phoneHash).toBeUndefined();
+      expect(updateCall.data.encryptedFirstName).toBe('enc_NewName');
+    });
+
+    it('should encrypt email when provided in update', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { email: 'new@email.it' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.encryptedEmail).toBe('enc_new@email.it');
+    });
+
+    it('should set email to null when explicitly cleared', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { email: null as unknown as undefined });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.encryptedEmail).toBeNull();
+    });
+
+    it('should update searchName when firstName changes', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { firstName: 'Giuseppe' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.searchName).toBe('giuseppe rossi');
+    });
+
+    it('should handle codiceFiscale fiscal PII field', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { codiceFiscale: 'RSSMRA90A01H501X' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.codiceFiscale).toBe('enc_RSSMRA90A01H501X');
+    });
+
+    it('should handle pecEmail fiscal field', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { pecEmail: 'info@pec.it' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.pecEmail).toBe('enc_info@pec.it');
+    });
+
+    it('should handle partitaIva field (plain text, not encrypted)', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.update(TENANT_ID, CUSTOMER_ID, { partitaIva: '12345678901' });
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.partitaIva).toBe('12345678901');
+      expect(encryption.encrypt).not.toHaveBeenCalledWith('12345678901');
+    });
+  });
+
+  describe('branch coverage - findAll with search', () => {
+    it('should filter findAll by searchName when search provided', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
+
+      // Act
+      await service.findAll(TENANT_ID, { search: 'mario' });
+
+      // Assert
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findMany.mock.calls[0][0];
+      expect(findCall.where.OR).toBeDefined();
+    });
+
+    it('should filter findAll by phoneHash when search provided', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([]);
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(0);
+
+      // Act
+      await service.findAll(TENANT_ID, { search: '+390123456789' });
+
+      // Assert
+      const findCall = (prisma.customer as Record<string, jest.Mock>).findMany.mock.calls[0][0];
+      expect(findCall.where.OR).toBeDefined();
+    });
+
+    it('should return customers with decrypted data from findAll', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findMany.mockResolvedValue([mockDbCustomer]);
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1);
+
+      // Act
+      const result = await service.findAll(TENANT_ID, {});
+
+      // Assert
+      expect(result.customers).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.customers[0].phone).toBe('+390123456789');
+    });
+  });
+
+  describe('branch coverage - delete scenarios', () => {
+    it('should throw ConflictException when customer has active work orders', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.workOrder as Record<string, jest.Mock>).count.mockResolvedValue(1);
+      (prisma.invoice as Record<string, jest.Mock>).count.mockResolvedValue(0);
+
+      // Act & Assert
+      await expect(service.delete(TENANT_ID, CUSTOMER_ID)).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw ConflictException when customer has unpaid invoices', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.workOrder as Record<string, jest.Mock>).count.mockResolvedValue(0);
+      (prisma.invoice as Record<string, jest.Mock>).count.mockResolvedValue(2);
+
+      // Act & Assert
+      await expect(service.delete(TENANT_ID, CUSTOMER_ID)).rejects.toThrow(ConflictException);
+    });
+
+    it('should soft-delete customer by encrypting sensitive data with DELETED markers', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValue(mockDbCustomer);
+      (prisma.workOrder as Record<string, jest.Mock>).count.mockResolvedValue(0);
+      (prisma.invoice as Record<string, jest.Mock>).count.mockResolvedValue(0);
+      (prisma.customer as Record<string, jest.Mock>).update.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.delete(TENANT_ID, CUSTOMER_ID);
+
+      // Assert
+      const updateCall = (prisma.customer as Record<string, jest.Mock>).update.mock.calls[0][0];
+      expect(updateCall.data.encryptedPhone).toBe('enc_DELETED');
+      expect(updateCall.data.phoneHash).toBe('DELETED');
+    });
+  });
+
+  describe('branch coverage - create with full fields', () => {
+    it('should create customer with all fiscal and address fields', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(mockDbCustomer);
+
+      const fullDto: CreateCustomerDto = {
+        phone: '+390123456789',
+        email: 'mario@rossi.it',
+        firstName: 'Mario',
+        lastName: 'Rossi',
+        gdprConsent: true,
+        marketingConsent: true,
+        codiceFiscale: 'RSSMRA90A01H501X',
+        partitaIva: '12345678901',
+        pecEmail: 'mario@pec.it',
+        address: 'Via Roma 1',
+        city: 'Milano',
+      };
+
+      // Act
+      const result = await service.create(TENANT_ID, fullDto);
+
+      // Assert
+      expect(result).toBeDefined();
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.codiceFiscale).toBe('enc_RSSMRA90A01H501X');
+      expect(createCall.data.pecEmail).toBe('enc_mario@pec.it');
+    });
+
+    it('should handle gdprConsentMethod defaults correctly', async () => {
+      // Arrange
+      (prisma.customer as Record<string, jest.Mock>).findFirst.mockResolvedValueOnce(null);
+      (prisma.customer as Record<string, jest.Mock>).create.mockResolvedValue(mockDbCustomer);
+
+      // Act
+      await service.create(TENANT_ID, {
+        phone: '+390123456789',
+        gdprConsent: true,
+      });
+
+      // Assert
+      const createCall = (prisma.customer as Record<string, jest.Mock>).create.mock.calls[0][0];
+      expect(createCall.data.gdprConsentMethod).toBe('form-checkbox');
+      expect(createCall.data.gdprPrivacyVersion).toBe('2.0');
     });
   });
 });

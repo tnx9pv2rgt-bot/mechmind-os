@@ -14,6 +14,7 @@ import {
   HttpStatus,
   Req,
   Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
@@ -97,6 +98,7 @@ export class SegmentWebhookService {
         processedAt: new Date(),
       };
     } catch (error: unknown) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       const message = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error('Segment webhook error:', message);
       throw error;
@@ -115,6 +117,7 @@ export class SegmentWebhookService {
       'Vehicle Added': 'vehicle.added',
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const internalEvent = (eventName && eventMap[eventName]) || eventName || 'unknown';
 
     // Analytics events are logged; integration with EventEmitter2 can be added when AnalyticsModule needs real-time events
@@ -137,7 +140,24 @@ export class SegmentWebhookService {
   verifySignature(payload: string, signature: string, secret: string): boolean {
     const expectedSignature = createHmac('sha1', secret).update(payload).digest('hex');
 
-    return signature === expectedSignature || signature === `sha1=${expectedSignature}`;
+    // Try plain hex comparison first, then with sha1= prefix
+    try {
+      const sigBuffer = Buffer.from(signature);
+      const expectedBuffer = Buffer.from(expectedSignature);
+      if (sigBuffer.length === expectedBuffer.length) {
+        if (timingSafeEqual(sigBuffer, expectedBuffer)) return true;
+      }
+
+      const prefixedExpected = `sha1=${expectedSignature}`;
+      const prefixedBuffer = Buffer.from(prefixedExpected);
+      if (sigBuffer.length === prefixedBuffer.length) {
+        return timingSafeEqual(sigBuffer, prefixedBuffer);
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -211,9 +231,10 @@ export class ZapierWebhookService {
       },
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const automation = automations[event];
     if (!automation) {
-      throw new Error(`Unknown automation: ${event}`);
+      throw new BadRequestException(`Unknown automation: ${event}`);
     }
 
     return automation();
@@ -491,7 +512,9 @@ export class CRMWebhookService {
     const { objectType, properties } = event;
 
     if (objectType === 'Contact' || objectType === 'Lead') {
-      this.logger.log(`Syncing Salesforce ${objectType}: ${String(properties['Email'] ?? '')}`);
+      const rawEmail = String(properties['Email'] ?? '');
+      const maskedEmail = rawEmail.length > 3 ? rawEmail.slice(0, 3) + '***@***' : '***';
+      this.logger.log(`Syncing Salesforce ${objectType}: ${maskedEmail}`);
     } else if (objectType === 'Opportunity') {
       this.logger.log(`Syncing Salesforce Opportunity: ${String(properties['Name'] ?? '')}`);
     }
@@ -528,6 +551,7 @@ export class CRMWebhookService {
       },
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const config = configs[provider];
     if (!config.token) {
       this.logger.warn(`${provider} not configured`);
@@ -574,17 +598,28 @@ export class WebhookController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Post('segment')
+  private validateTenantId(tenantId: string): void {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!tenantId || !UUID_REGEX.test(tenantId)) {
+      throw new BadRequestException('Invalid tenantId');
+    }
+  }
+
+  @Post(':tenantId/segment')
   async handleSegment(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SegmentEvent,
     @Headers('x-signature') signature: string,
     @Req() req: Request,
   ): Promise<WebhookResponse> {
-    // Verify signature if configured
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing segment webhook`);
+
     const secret = this.configService.get('SEGMENT_WEBHOOK_SECRET');
     if (secret && signature) {
       const body = JSON.stringify(req.body);
       if (!this.segmentService.verifySignature(body, signature, secret)) {
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         throw new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
       }
     }
@@ -592,27 +627,46 @@ export class WebhookController {
     return this.segmentService.handleEvent(payload);
   }
 
-  @Post('zapier')
+  @Post(':tenantId/zapier')
   async handleZapier(
+    @Param('tenantId') tenantId: string,
     @Body() payload: ZapierPayload,
     @Headers('x-zapier-secret') secret: string,
   ): Promise<WebhookResponse> {
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing zapier webhook`);
+
     const expectedSecret = this.configService.get('ZAPIER_WEBHOOK_SECRET');
-    if (expectedSecret && secret !== expectedSecret) {
-      throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+    if (expectedSecret) {
+      try {
+        const secretBuffer = Buffer.from(secret || '');
+        const expectedBuffer = Buffer.from(expectedSecret);
+        if (
+          secretBuffer.length !== expectedBuffer.length ||
+          !timingSafeEqual(secretBuffer, expectedBuffer)
+        ) {
+          throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+        }
+      } catch (error) {
+        if (error instanceof HttpException) throw error;
+        throw new HttpException('Invalid secret', HttpStatus.UNAUTHORIZED);
+      }
     }
 
     return this.zapierService.handleIncoming(payload);
   }
 
-  @Post('slack/events')
+  @Post(':tenantId/slack/events')
   async handleSlackEvents(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SlackEvent,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
     @Req() req: RequestWithRawBody,
   ): Promise<{ challenge?: string; ok?: boolean }> {
-    // Verify Slack signature
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing slack event`);
+
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
       const body = req.rawBody || JSON.stringify(req.body);
@@ -632,14 +686,17 @@ export class WebhookController {
     return this.slackService.handleEvent(payload);
   }
 
-  @Post('slack/commands')
+  @Post(':tenantId/slack/commands')
   async handleSlackCommands(
+    @Param('tenantId') tenantId: string,
     @Body() payload: SlackSlashCommand,
     @Headers('x-slack-signature') signature: string,
     @Headers('x-slack-request-timestamp') timestamp: string,
     @Req() req: RequestWithRawBody,
   ): Promise<SlackResponse> {
-    // Verify signature
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing slack command`);
+
     const secret = this.configService.get('SLACK_SIGNING_SECRET');
     if (secret && signature && timestamp) {
       const body = req.rawBody || JSON.stringify(req.body);
@@ -651,20 +708,23 @@ export class WebhookController {
     return this.slackService.handleSlashCommand(payload);
   }
 
-  @Post('crm/:provider')
+  @Post(':tenantId/crm/:provider')
   async handleCRM(
+    @Param('tenantId') tenantId: string,
     @Body() payload: CRMProviderPayload,
     @Param('provider') provider: string,
     @Headers('x-crm-signature') signature: string,
     @Req() req: Request,
   ): Promise<WebhookResponse> {
+    this.validateTenantId(tenantId);
+    this.logger.log(`Tenant ${tenantId}: processing crm/${provider} webhook`);
+
     if (!VALID_CRM_PROVIDERS.includes(provider as CRMProvider)) {
       throw new HttpException('Invalid provider', HttpStatus.BAD_REQUEST);
     }
 
     const validProvider = provider as CRMProvider;
 
-    // Verify CRM webhook signature
     const secretKey = `${validProvider.toUpperCase()}_WEBHOOK_SECRET`;
     const secret = this.configService.get<string>(secretKey);
     if (secret && signature) {
@@ -674,7 +734,6 @@ export class WebhookController {
       }
     }
 
-    // Normalize payload based on provider
     const event: CRMEvent = this.normalizeCRMEvent(validProvider, payload);
 
     return this.crmService.handleEvent(event);

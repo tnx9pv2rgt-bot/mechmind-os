@@ -297,13 +297,13 @@ export function SendNotificationButton({
         {/* Preview */}
         <div className="space-y-2">
           <Label>Anteprima</Label>
-          <div className="p-3 bg-gray-50 rounded-lg border">
+          <div className="p-3 bg-[var(--surface-secondary)] rounded-lg border">
             <p className="text-sm whitespace-pre-wrap">{previewMessage}</p>
           </div>
           
           {/* SMS Info */}
           {(channel === 'SMS' || channel === 'WHATSAPP') && (
-            <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-4 text-xs text-[var(--text-tertiary)]">
               <span>{previewMessage.length} caratteri</span>
               <span>•</span>
               <span>{smsInfo.segments} segmento{smsInfo.segments > 1 ? 'i' : ''}</span>
@@ -321,9 +321,9 @@ export function SendNotificationButton({
 
         {/* Alerts */}
         {previewMessage.length > 160 && channel === 'SMS' && (
-          <Alert variant="default" className="bg-amber-50 border-amber-200">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-700 text-sm">
+          <Alert variant="default" className="bg-[var(--status-warning)]/5 border-[var(--status-warning)]/30">
+            <AlertCircle className="h-4 w-4 text-[var(--status-warning)]" />
+            <AlertDescription className="text-[var(--status-warning)] text-sm">
               Il messaggio supera 160 caratteri e verrà inviato come SMS concatenato.
             </AlertDescription>
           </Alert>

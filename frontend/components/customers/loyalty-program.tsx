@@ -61,8 +61,8 @@ const loyaltyTiers: Tier[] = [
     name: 'Bronze',
     minPoints: 0,
     maxPoints: 999,
-    color: 'text-amber-700',
-    bgColor: 'bg-amber-100',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/10',
     icon: Star,
     benefits: ['1 punto per ogni € speso', 'Sconto compleanno 5%'],
   },
@@ -70,8 +70,8 @@ const loyaltyTiers: Tier[] = [
     name: 'Silver',
     minPoints: 1000,
     maxPoints: 4999,
-    color: 'text-slate-600',
-    bgColor: 'bg-slate-200',
+    color: 'text-[var(--text-secondary)]',
+    bgColor: 'bg-[var(--surface-secondary)]',
     icon: Trophy,
     benefits: ['1.2 punti per ogni € speso', 'Sconto compleanno 10%', 'Priority booking'],
   },
@@ -79,8 +79,8 @@ const loyaltyTiers: Tier[] = [
     name: 'Gold',
     minPoints: 5000,
     maxPoints: 9999,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/20',
     icon: Crown,
     benefits: ['1.5 punti per ogni € speso', 'Sconto compleanno 15%', 'Priority booking', 'Servizio di cortesia gratuito'],
   },
@@ -88,8 +88,8 @@ const loyaltyTiers: Tier[] = [
     name: 'Platinum',
     minPoints: 10000,
     maxPoints: Infinity,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--brand-subtle)]',
     icon: Gem,
     benefits: ['2 punti per ogni € speso', 'Sconto compleanno 20%', 'Priority booking', 'Servizi gratuiti', 'Consulenza dedicata'],
   },
@@ -194,10 +194,10 @@ function TierBadge({ tier }: { tier: Tier }) {
 
 function TransactionIcon({ type }: { type: LoyaltyTransaction['type'] }) {
   const config = {
-    earned: { icon: ArrowUp, color: 'text-status-ready bg-green-100' },
-    redeemed: { icon: ArrowDown, color: 'text-status-urgent bg-red-100' },
-    bonus: { icon: Gift, color: 'text-purple-600 bg-purple-100' },
-    expired: { icon: Calendar, color: 'text-gray-600 bg-gray-100' },
+    earned: { icon: ArrowUp, color: 'text-[var(--status-success)] bg-[var(--status-success-subtle)]' },
+    redeemed: { icon: ArrowDown, color: 'text-[var(--status-error)] bg-[var(--status-error-subtle)]' },
+    bonus: { icon: Gift, color: 'text-[var(--brand)] bg-[var(--brand)]/10' },
+    expired: { icon: Calendar, color: 'text-[var(--text-secondary)] bg-[var(--surface-secondary)]' },
   }
 
   const { icon: Icon, color } = config[type]
@@ -214,17 +214,17 @@ function RewardCard({ reward, userPoints, onRedeem }: { reward: Reward; userPoin
   const canAfford = userPoints >= reward.pointsCost
 
   const categoryColors = {
-    service: 'bg-blue-100 text-blue-800',
-    discount: 'bg-green-100 text-green-800',
-    product: 'bg-purple-100 text-purple-800',
-    experience: 'bg-amber-100 text-amber-800',
+    service: 'bg-[var(--status-info-subtle)] text-[var(--status-info)]',
+    discount: 'bg-[var(--status-success-subtle)] text-[var(--status-success)]',
+    product: 'bg-[var(--brand)]/10 text-[var(--brand)]',
+    experience: 'bg-[var(--status-warning)]/10 text-[var(--status-warning)]',
   }
 
   return (
     <div className={`workshop-card relative ${!reward.available ? 'opacity-60' : ''}`}>
       {!reward.available && (
-        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/5 backdrop-blur-[1px]">
-          <span className="rounded-full bg-gray-800 px-3 py-1 text-xs font-medium text-white">
+        <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[var(--surface-primary)]/5 backdrop-blur-[1px]">
+          <span className="rounded-full bg-[var(--surface-primary)] px-3 py-1 text-xs font-medium text-[var(--text-on-brand)]">
             Non disponibile
           </span>
         </div>
@@ -240,13 +240,13 @@ function RewardCard({ reward, userPoints, onRedeem }: { reward: Reward; userPoin
           {reward.category === 'experience' && 'Esperienza'}
         </span>
       </div>
-      <h4 className="mt-3 font-semibold text-gray-900 dark:text-white">{reward.name}</h4>
-      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{reward.description}</p>
+      <h4 className="mt-3 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{reward.name}</h4>
+      <p className="mt-1 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">{reward.description}</p>
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <Star className="h-4 w-4 text-amber-500" />
-          <span className="font-bold text-gray-900 dark:text-white">{reward.pointsCost}</span>
-          <span className="text-sm text-gray-500">punti</span>
+          <Star className="h-4 w-4 text-[var(--status-warning)]" />
+          <span className="font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{reward.pointsCost}</span>
+          <span className="text-sm text-[var(--text-tertiary)]">punti</span>
         </div>
         <Button
           size="sm"
@@ -265,7 +265,7 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
   const progress = Math.min(100, Math.max(0, ((current - min) / (max - min)) * 100))
 
   return (
-    <div className="h-3 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+    <div className="h-3 w-full rounded-full bg-[var(--border-default)] dark:bg-[var(--border-default)]">
       <div
         className={`h-full rounded-full transition-all duration-500 ${color}`}
         style={{ width: `${progress}%` }}
@@ -290,7 +290,7 @@ export function LoyaltyProgram() {
   const renderOverview = () => (
     <div className="space-y-6">
       {/* Current Tier Card */}
-      <div className="workshop-card bg-gradient-to-br from-brand-600 to-brand-700 text-white">
+      <div className="workshop-card bg-gradient-to-br from-brand-600 to-brand-700 text-[var(--text-on-brand)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-brand-100">Il tuo livello</p>
@@ -299,7 +299,7 @@ export function LoyaltyProgram() {
               <span className="text-3xl font-bold">{userTier.name}</span>
             </div>
           </div>
-          <div className="rounded-full bg-white/20 p-3">
+          <div className="rounded-full bg-[var(--surface-secondary)]/20 p-3">
             <Gift className="h-6 w-6" />
           </div>
         </div>
@@ -309,9 +309,9 @@ export function LoyaltyProgram() {
             <span className="text-brand-100">Punti accumulati</span>
             <span className="font-bold">{userPoints.toLocaleString()}</span>
           </div>
-          <div className="mt-2 h-3 rounded-full bg-brand-900/30">
+          <div className="mt-2 h-3 rounded-full bg-[var(--brand)]/40/30">
             <div
-              className="h-full rounded-full bg-white transition-all"
+              className="h-full rounded-full bg-[var(--surface-secondary)] transition-all"
               style={{ width: `${progressToNext}%` }}
             />
           </div>
@@ -325,16 +325,16 @@ export function LoyaltyProgram() {
 
       {/* Tier Benefits */}
       <div className="workshop-card">
-        <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
+        <h3 className="mb-4 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           I tuoi vantaggi {userTier.name}
         </h3>
         <div className="space-y-3">
           {userTier.benefits.map((benefit, idx) => (
             <div key={idx} className="flex items-center gap-3">
-              <div className="rounded-full bg-green-100 p-1 dark:bg-green-900/30">
-                <Check className="h-4 w-4 text-status-ready" />
+              <div className="rounded-full bg-[var(--status-success-subtle)] p-1 dark:bg-[var(--status-success)]/40/30">
+                <Check className="h-4 w-4 text-[var(--status-success)]" />
               </div>
-              <span className="text-gray-700 dark:text-gray-300">{benefit}</span>
+              <span className="text-[var(--text-primary)] dark:text-[var(--text-primary)]">{benefit}</span>
             </div>
           ))}
         </div>
@@ -343,19 +343,19 @@ export function LoyaltyProgram() {
       {/* Quick Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="workshop-card text-center">
-          <ShoppingCart className="mx-auto h-8 w-8 text-brand-600" />
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">18</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Interventi</p>
+          <ShoppingCart className="mx-auto h-8 w-8 text-[var(--brand)]" />
+          <p className="mt-2 text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">18</p>
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Interventi</p>
         </div>
         <div className="workshop-card text-center">
-          <Gift className="mx-auto h-8 w-8 text-purple-600" />
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">3</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Premi riscattati</p>
+          <Gift className="mx-auto h-8 w-8 text-[var(--brand)]" />
+          <p className="mt-2 text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">3</p>
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Premi riscattati</p>
         </div>
         <div className="workshop-card text-center">
-          <Calendar className="mx-auto h-8 w-8 text-amber-600" />
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">15</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Giorni al compleanno</p>
+          <Calendar className="mx-auto h-8 w-8 text-[var(--status-warning)]" />
+          <p className="mt-2 text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">15</p>
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Giorni al compleanno</p>
         </div>
       </div>
     </div>
@@ -363,21 +363,21 @@ export function LoyaltyProgram() {
 
   const renderHistory = () => (
     <div className="workshop-card p-0">
-      <div className="border-b border-gray-200 p-4 dark:border-gray-700">
-        <h3 className="font-semibold text-gray-900 dark:text-white">Storico Punti</h3>
+      <div className="border-b border-[var(--border-default)] p-4 dark:border-[var(--border-default)]">
+        <h3 className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Storico Punti</h3>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
         {mockTransactions.map((transaction) => (
-          <div key={transaction.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+          <div key={transaction.id} className="flex items-center gap-4 p-4 hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-hover)]/50">
             <TransactionIcon type={transaction.type} />
             <div className="flex-1">
-              <p className="font-medium text-gray-900 dark:text-white">{transaction.description}</p>
-              <p className="text-sm text-gray-500">
+              <p className="font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">{transaction.description}</p>
+              <p className="text-sm text-[var(--text-tertiary)]">
                 {formatDate(transaction.date)}
                 {transaction.reference && ` • Ref: ${transaction.reference}`}
               </p>
             </div>
-            <div className={`text-right ${transaction.points > 0 ? 'text-status-ready' : 'text-status-urgent'}`}>
+            <div className={`text-right ${transaction.points > 0 ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}>
               <p className="font-bold">
                 {transaction.points > 0 ? '+' : ''}{transaction.points}
               </p>
@@ -395,18 +395,18 @@ export function LoyaltyProgram() {
       <div className="workshop-card">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Punti disponibili</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{userPoints.toLocaleString()}</p>
+            <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Punti disponibili</p>
+            <p className="text-3xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{userPoints.toLocaleString()}</p>
           </div>
-          <div className="rounded-full bg-amber-100 p-4 dark:bg-amber-900/30">
-            <Star className="h-8 w-8 text-amber-600" />
+          <div className="rounded-full bg-[var(--status-warning)]/10 p-4 dark:bg-[var(--status-warning)]/40/30">
+            <Star className="h-8 w-8 text-[var(--status-warning)]" />
           </div>
         </div>
       </div>
 
       {/* Rewards Grid */}
       <div>
-        <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Catalogo Premi</h3>
+        <h3 className="mb-4 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Catalogo Premi</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {rewardsCatalog.map((reward) => (
             <RewardCard
@@ -426,20 +426,20 @@ export function LoyaltyProgram() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Loyalty Program</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <h2 className="text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">Loyalty Program</h2>
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Manage loyalty points and rewards
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Star className="h-5 w-5 text-amber-500" />
-          <span className="text-2xl font-bold text-gray-900 dark:text-white">{userPoints.toLocaleString()}</span>
-          <span className="text-sm text-gray-500">punti</span>
+          <Star className="h-5 w-5 text-[var(--status-warning)]" />
+          <span className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{userPoints.toLocaleString()}</span>
+          <span className="text-sm text-[var(--text-tertiary)]">punti</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-[var(--border-default)] dark:border-[var(--border-default)]">
         <nav className="flex gap-1">
           {[
             { id: 'overview', label: 'Overview', icon: Star },
@@ -451,8 +451,8 @@ export function LoyaltyProgram() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-brand-600 text-brand-600'
-                  : 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+                  ? 'border-brand-600 text-[var(--brand)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:border-[var(--border-default)] hover:text-[var(--text-primary)] dark:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]'
               }`}
             >
               <tab.icon className="h-4 w-4" />
@@ -471,24 +471,24 @@ export function LoyaltyProgram() {
 
       {/* Redeem Modal */}
       {selectedReward && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-[var(--surface-secondary)] p-6 shadow-xl dark:bg-[var(--surface-primary)]">
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30">
-                <selectedReward.icon className="h-8 w-8 text-brand-600" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand)]/10 dark:bg-[var(--brand)]/40/30">
+                <selectedReward.icon className="h-8 w-8 text-[var(--brand)]" />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-gray-900 dark:text-white">
+              <h3 className="mt-4 text-lg font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                 {selectedReward.name}
               </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                 {selectedReward.description}
               </p>
               <div className="mt-4 flex items-center justify-center gap-2">
-                <Star className="h-5 w-5 text-amber-500" />
-                <span className="text-xl font-bold text-gray-900 dark:text-white">{selectedReward.pointsCost}</span>
-                <span className="text-gray-500">punti</span>
+                <Star className="h-5 w-5 text-[var(--status-warning)]" />
+                <span className="text-xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{selectedReward.pointsCost}</span>
+                <span className="text-[var(--text-tertiary)]">punti</span>
               </div>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-[var(--text-tertiary)]">
                 Saldo dopo riscatto: {userPoints - selectedReward.pointsCost} punti
               </p>
             </div>

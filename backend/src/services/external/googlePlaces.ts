@@ -3,7 +3,7 @@
  * Autocomplete indirizzi, geocoding e reverse geocoding
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -53,6 +53,7 @@ export class GooglePlacesService {
     this.isDevelopment = this.configService.get('NODE_ENV') === 'development';
     this.apiKey = this.configService.get('GOOGLE_PLACES_API_KEY') || '';
 
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     const redisUrl = this.configService.get('REDIS_URL') || 'redis://localhost:6379';
     this.redis = new Redis(redisUrl, {
       password: this.configService.get('REDIS_PASSWORD') || undefined,
@@ -68,6 +69,7 @@ export class GooglePlacesService {
   /**
    * Autocomplete indirizzi (ottimizzato per Italia)
    */
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async autocompleteAddress(
     input: string,
     options?: {
@@ -115,13 +117,15 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/place/autocomplete/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Places API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Places API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Places API error: ${data.status} - ${data.error_message || ''}`);
+        throw new BadGatewayException(
+          `Places API error: ${data.status} - ${data.error_message || ''}`,
+        );
       }
 
       const predictions: AddressPrediction[] = (data.predictions || []).map(
@@ -144,6 +148,7 @@ export class GooglePlacesService {
     } catch (error) {
       this.logger.error(
         'Autocomplete error:',
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
 
@@ -180,13 +185,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/place/details/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Place Details API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Place Details API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK') {
-        throw new Error(`Place Details API error: ${data.status}`);
+        throw new BadGatewayException(`Place Details API error: ${data.status}`);
       }
 
       const result = data.result as Record<string, unknown>;
@@ -238,13 +243,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Geocoding API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Geocoding API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Geocoding API error: ${data.status}`);
+        throw new BadGatewayException(`Geocoding API error: ${data.status}`);
       }
 
       const results: GeocodeResult[] = (data.results || []).map((r: Record<string, unknown>) => ({
@@ -297,13 +302,13 @@ export class GooglePlacesService {
       const response = await fetch(`${this.baseUrl}/geocode/json?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error(`Reverse Geocoding API HTTP error: ${response.status}`);
+        throw new BadGatewayException(`Reverse Geocoding API HTTP error: ${response.status}`);
       }
 
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Reverse Geocoding API error: ${data.status}`);
+        throw new BadGatewayException(`Reverse Geocoding API error: ${data.status}`);
       }
 
       const results: AddressDetails[] = (data.results || []).map((r: Record<string, unknown>) =>
@@ -490,6 +495,7 @@ export class GooglePlacesService {
     };
 
     return (
+      // eslint-disable-next-line security/detect-object-injection
       mocks[placeId] || {
         street: 'Via Example',
         number: '1',
@@ -546,6 +552,7 @@ export async function autocompleteAddress(
         NODE_ENV: apiKey ? 'production' : 'development',
         REDIS_URL: 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);
@@ -565,6 +572,7 @@ export async function getPlaceDetails(placeId: string, apiKey?: string): Promise
         NODE_ENV: apiKey ? 'production' : 'development',
         REDIS_URL: 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);

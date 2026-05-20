@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -19,8 +20,10 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { CustomerService } from '../services/customer.service';
 import { VehicleService } from '../services/vehicle.service';
+import { CsvImportExportService } from '../services/csv-import-export.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -41,6 +44,7 @@ export class CustomerController {
   constructor(
     private readonly customerService: CustomerService,
     private readonly vehicleService: VehicleService,
+    private readonly csvService: CsvImportExportService,
   ) {}
 
   // ==================== CUSTOMER ENDPOINTS ====================
@@ -66,14 +70,17 @@ export class CustomerController {
   @ApiOperation({ summary: 'Get all customers' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   async getCustomers(
     @CurrentTenant() tenantId: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('search') search?: string,
   ) {
     const result = await this.customerService.findAll(tenantId, {
       limit: limit ? parseInt(limit) : undefined,
       offset: offset ? parseInt(offset) : undefined,
+      search: search || undefined,
     });
 
     return {
@@ -110,6 +117,7 @@ export class CustomerController {
   @Get(':id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get customer by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Customer ID' })
   async getCustomer(@CurrentTenant() tenantId: string, @Param('id') customerId: string) {
     const customer = await this.customerService.findById(tenantId, customerId);
@@ -133,6 +141,42 @@ export class CustomerController {
       success: true,
       data: customer,
     };
+  }
+
+  // ==================== CSV IMPORT / EXPORT ====================
+
+  @Get('export')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Export customers as CSV' })
+  async exportCustomers(@CurrentTenant() tenantId: string, @Res() res: Response): Promise<void> {
+    const csv = await this.csvService.exportCustomers(tenantId);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="customers.csv"');
+    res.send(csv);
+  }
+
+  @Post('import')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Import customers from CSV' })
+  async importCustomers(
+    @CurrentTenant() tenantId: string,
+    @Body('csv') csvContent: string,
+  ): Promise<{
+    success: boolean;
+    data: { imported: number; errors: Array<{ row: number; error: string }> };
+  }> {
+    const result = await this.csvService.importCustomers(tenantId, csvContent);
+    return { success: true, data: result };
+  }
+
+  @Get('vehicles/export')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Export vehicles as CSV' })
+  async exportVehicles(@CurrentTenant() tenantId: string, @Res() res: Response): Promise<void> {
+    const csv = await this.csvService.exportVehicles(tenantId);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="vehicles.csv"');
+    res.send(csv);
   }
 
   // ==================== VEHICLE ENDPOINTS ====================
@@ -165,9 +209,11 @@ export class CustomerController {
     };
   }
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @Get('vehicles/:vehicleId')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'vehicleId', description: 'Vehicle ID' })
   async getVehicle(@CurrentTenant() tenantId: string, @Param('vehicleId') vehicleId: string) {
     const vehicle = await this.vehicleService.findById(tenantId, vehicleId);

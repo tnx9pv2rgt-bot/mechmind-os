@@ -1,287 +1,480 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
+import { toast } from 'sonner';
 import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 import {
   Car,
   Search,
   Plus,
-  User,
-  Wrench,
+  Eye,
+  Pencil,
+  Trash2,
   AlertCircle,
-  CheckCircle2,
-  ClipboardCheck,
+  AlertTriangle,
+  Filter,
+  Loader2,
+  ShieldAlert,
 } from 'lucide-react';
-import Link from 'next/link';
-import { useVehicles } from '@/hooks/useApi';
+import { Pagination } from '@/components/ui/pagination';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { formatPlate, formatNumber } from '@/lib/utils/format';
+
+interface Vehicle {
+  id: string;
+  licensePlate: string;
+  make: string;
+  model: string;
+  year?: number;
+  vin?: string;
+  color?: string;
+  fuelType?: string;
+  mileage?: number;
+  status: string;
+  customerId?: string;
+  revisionExpiry?: string | null;
+  insuranceExpiry?: string | null;
+  taxExpiry?: string | null;
+  customer?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  createdAt: string;
+}
+
+interface VehiclesResponse {
+  data: Vehicle[];
+  meta?: { total: number; limit: number; offset: number };
+  total?: number;
+}
+
+interface ExpiringResponse {
+  data: Vehicle[];
+  summary: { revision: number; insurance: number; tax: number; total: number };
+}
+
+function expiryWarning(dateStr?: string | null): 'expired' | 'soon' | null {
+  if (!dateStr) return null;
+  const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  if (days < 0) return 'expired';
+  if (days <= 60) return 'soon';
+  return null;
+}
+
+function VehicleExpiryBadges({ vehicle }: { vehicle: Vehicle }) {
+  const revision = expiryWarning(vehicle.revisionExpiry);
+  const insurance = expiryWarning(vehicle.insuranceExpiry);
+  const tax = expiryWarning(vehicle.taxExpiry);
+
+  const alerts = [
+    revision === 'expired' && { label: 'Revisione scaduta', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    revision === 'soon' && { label: 'Revisione in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+    insurance === 'expired' && { label: 'Assicurazione scaduta', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    insurance === 'soon' && { label: 'Assicurazione in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+    tax === 'expired' && { label: 'Bollo scaduto', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]' },
+    tax === 'soon' && { label: 'Bollo in scadenza', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]' },
+  ].filter(Boolean) as { label: string; color: string }[];
+
+  if (alerts.length === 0) return null;
+
+  const hasExpired = alerts.some(a => a.color.includes('red'));
+
+  return (
+    <span
+      title={alerts.map(a => a.label).join(' • ')}
+      className={`inline-flex items-center gap-1 ml-1 ${hasExpired ? 'text-[var(--status-error)] dark:text-[var(--status-error)]' : 'text-[var(--status-warning)] dark:text-[var(--status-warning)]'}`}
+    >
+      <AlertTriangle className="h-3.5 w-3.5" />
+      <span className="text-[11px] font-semibold">{alerts.length}</span>
+    </span>
+  );
+}
+
+const FUEL_TYPES: { value: string; label: string }[] = [
+  { value: '', label: 'Tutti i carburanti' },
+  { value: 'Benzina', label: 'Benzina' },
+  { value: 'Diesel', label: 'Diesel' },
+  { value: 'GPL', label: 'GPL' },
+  { value: 'Metano', label: 'Metano' },
+  { value: 'Ibrido', label: 'Ibrido' },
+  { value: 'Elettrico', label: 'Elettrico' },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
     opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-const headerVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
 };
 
-const statusConfig: Record<
-  string,
-  { color: string; icon: React.ComponentType<{ className?: string }>; label: string }
-> = {
-  ready: { color: 'bg-apple-green', icon: CheckCircle2, label: 'Pronto' },
-  in_service: { color: 'bg-apple-blue', icon: Wrench, label: 'In lavorazione' },
-  'in-service': { color: 'bg-apple-blue', icon: Wrench, label: 'In lavorazione' },
-  waiting_parts: { color: 'bg-apple-orange', icon: AlertCircle, label: 'Attesa ricambi' },
-  'waiting-parts': { color: 'bg-apple-orange', icon: AlertCircle, label: 'Attesa ricambi' },
-  urgent: { color: 'bg-apple-red', icon: AlertCircle, label: 'Urgente' },
-};
-
-const defaultStatus = { color: 'bg-apple-gray', icon: Car, label: 'N/D' };
-
-export default function VehiclesPage() {
+export default function VehiclesPage(): React.ReactElement {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const {
-    data: vehiclesData,
-    isLoading,
-    error,
-  } = useVehicles({ search: searchQuery || undefined });
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [fuelFilter, setFuelFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const PAGE_SIZE = 20;
 
-  const vehicles = vehiclesData?.data ?? [];
-  const total = vehiclesData?.total ?? 0;
+  // Close delete modal on ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && deleteTarget && !deleteLoading) setDeleteTarget(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [deleteTarget, deleteLoading]);
 
-  const inShop = vehicles.filter(
-    v => v.status === 'in_service' || v.status === 'in-service'
-  ).length;
-  const ready = vehicles.filter(v => v.status === 'ready').length;
-  const waitingParts = vehicles.filter(
-    v => v.status === 'waiting_parts' || v.status === 'waiting-parts'
-  ).length;
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const buildUrl = useCallback((): string => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(PAGE_SIZE));
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (fuelFilter) params.set('fuelType', fuelFilter);
+    return `/api/dashboard/vehicles?${params.toString()}`;
+  }, [page, debouncedSearch, fuelFilter]);
+
+  const { data: rawData, error, isLoading, mutate } = useSWR<VehiclesResponse | Vehicle[]>(
+    buildUrl(),
+    fetcher,
+    { onErrorRetry: () => {} },
+  );
+
+  const { data: expiringData } = useSWR<ExpiringResponse>(
+    '/api/dashboard/vehicles/expiring?days=60',
+    fetcher,
+  );
+
+  const vehicles: Vehicle[] = (() => {
+    if (!rawData) return [];
+    if (Array.isArray(rawData)) return rawData;
+    if ('data' in rawData && Array.isArray(rawData.data)) return rawData.data;
+    return [];
+  })();
+
+  const total = (() => {
+    if (!rawData) return 0;
+    if (Array.isArray(rawData)) return rawData.length;
+    if ('meta' in rawData && rawData.meta) return rawData.meta.total;
+    if ('total' in rawData && rawData.total != null) return rawData.total;
+    return vehicles.length;
+  })();
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const expiringSummary = expiringData?.summary;
+
+  const handleDelete = async (): Promise<void> => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/vehicles/${deleteTarget.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Errore durante l\'eliminazione');
+      toast.success('Veicolo eliminato', {
+        description: `${deleteTarget.make} ${deleteTarget.model} (${formatPlate(deleteTarget.licensePlate)}) rimosso`,
+      });
+      mutate();
+    } catch {
+      toast.error('Errore durante l\'eliminazione del veicolo');
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const getOwnerName = (vehicle: Vehicle): string => {
+    if (!vehicle.customer) return '\u2014';
+    return [vehicle.customer.firstName, vehicle.customer.lastName].filter(Boolean).join(' ') || '\u2014';
+  };
 
   return (
     <div>
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5 flex items-center justify-between'>
+      {/* Header */}
+      <header>
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Veicoli</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">Veicoli</h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
               Gestisci il parco veicoli dei tuoi clienti
             </p>
           </div>
-          <AppleButton icon={<Plus className='h-4 w-4' />}>Nuovo Veicolo</AppleButton>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/vehicles/new">
+              <AppleButton variant="primary" icon={<Plus className="h-4 w-4" />}>
+                Nuovo Veicolo
+              </AppleButton>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className='p-8 space-y-6'>
-        {/* Stats */}
-        <motion.div
-          initial='hidden'
-          animate='visible'
-          variants={containerVariants}
-          className='grid grid-cols-1 sm:grid-cols-5 gap-bento'
-        >
-          {[
-            {
-              label: 'Totale Veicoli',
-              value: isLoading ? '—' : String(total),
-              color: 'bg-apple-blue',
-            },
-            {
-              label: 'In Officina',
-              value: isLoading ? '—' : String(inShop),
-              color: 'bg-apple-orange',
-            },
-            { label: 'Pronti', value: isLoading ? '—' : String(ready), color: 'bg-apple-green' },
-            {
-              label: 'Attesa Ricambi',
-              value: isLoading ? '—' : String(waitingParts),
-              color: 'bg-amber-400',
-            },
-            {
-              label: 'Manutenzione Urgente',
-              value: isLoading ? '—' : String(vehicles.filter(v => v.status === 'urgent').length),
-              color: 'bg-apple-red',
-            },
-          ].map(stat => (
-            <motion.div key={stat.label} variants={cardVariants}>
-              <AppleCard>
-                <AppleCardContent className='text-center'>
-                  <div className={`w-3 h-3 rounded-full ${stat.color} mx-auto mb-2`} />
-                  <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    {stat.value}
-                  </p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>{stat.label}</p>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          ))}
-        </motion.div>
+      <motion.div
+        className="p-4 sm:p-8 space-y-6"
+        initial={false}
+        animate="visible"
+        variants={containerVariants}
+      >
+        {/* Expiry Banner */}
+        {expiringSummary && expiringSummary.total > 0 && (
+          <motion.div variants={listItemVariants}>
+            <div className="rounded-xl border border-[var(--status-warning)]/30/50 dark:border-[var(--status-warning)]/30 bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/10 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <ShieldAlert className="h-5 w-5 text-[var(--status-warning)] dark:text-[var(--status-warning)] flex-shrink-0" />
+                  <div>
+                    <p className="text-body font-semibold text-[var(--status-warning)] dark:text-[var(--status-warning)]">
+                      {expiringSummary.total} {expiringSummary.total === 1 ? 'veicolo con scadenze' : 'veicoli con scadenze'} nei prossimi 60 giorni
+                    </p>
+                    <p className="text-footnote text-[var(--status-warning)]/70 dark:text-[var(--status-warning)]/70 mt-0.5">
+                      {[
+                        expiringSummary.revision > 0 && `Revisione: ${expiringSummary.revision}`,
+                        expiringSummary.insurance > 0 && `Assicurazione: ${expiringSummary.insurance}`,
+                        expiringSummary.tax > 0 && `Bollo: ${expiringSummary.tax}`,
+                      ].filter(Boolean).join(' • ')}
+                    </p>
+                  </div>
+                </div>
+                <Link href="/dashboard/vehicles?scadenze=1">
+                  <AppleButton variant="ghost" size="sm">
+                    Vedi tutti
+                  </AppleButton>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Search */}
-        <motion.div initial='hidden' animate='visible' variants={cardVariants}>
-          <AppleCard>
+        {/* Search + Filters */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
             <AppleCardContent>
-              <div className='relative'>
-                <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
-                <Input
-                  placeholder='Cerca per targa, marca, modello o proprietario...'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className='pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
-                />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
+                  <Input
+                    type="text"
+                    placeholder="Cerca per targa, marca, modello..."
+                    aria-label="Cerca veicoli"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="relative">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none" />
+                  <select
+                    value={fuelFilter}
+                    onChange={(e) => { setFuelFilter(e.target.value); setPage(1); }}
+                    aria-label="Filtra per carburante"
+                    className="h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/50 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none appearance-none cursor-pointer min-w-[180px]"
+                  >
+                    {FUEL_TYPES.map((ft) => (
+                      <option key={ft.value} value={ft.value}>{ft.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </AppleCardContent>
           </AppleCard>
         </motion.div>
 
-        {/* Vehicles Grid */}
-        {isLoading ? (
-          <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <AppleCard key={i}>
-                <AppleCardContent>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <div className='w-12 h-12 rounded-2xl bg-gray-200 dark:bg-[#424242] animate-pulse' />
-                    <div>
-                      <div className='w-24 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse mb-2' />
-                      <div className='w-32 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse' />
-                    </div>
-                  </div>
-                  <div className='w-full h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse mb-2' />
-                  <div className='w-3/4 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse' />
-                </AppleCardContent>
-              </AppleCard>
-            ))}
-          </div>
-        ) : error ? (
-          <div className='text-center py-12 text-apple-gray dark:text-[#636366]'>
-            <Car className='h-12 w-12 mx-auto mb-4 opacity-50' />
-            <p>Impossibile caricare i veicoli. Riprova.</p>
-          </div>
-        ) : vehicles.length === 0 ? (
-          <div className='text-center py-12 text-apple-gray dark:text-[#636366]'>
-            <Car className='h-12 w-12 mx-auto mb-4 opacity-50' />
-            <p>Nessun veicolo trovato</p>
-          </div>
-        ) : (
-          <motion.div
-            initial='hidden'
-            animate='visible'
-            variants={containerVariants}
-            className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento'
-          >
-            {vehicles.map(vehicle => {
-              const status = statusConfig[vehicle.status] || defaultStatus;
-              const StatusIcon = status.icon;
-
-              return (
-                <motion.div key={vehicle.id} variants={cardVariants}>
-                  <AppleCard hover>
-                    <AppleCardContent>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='flex items-center gap-3'>
-                          <div className='w-12 h-12 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center'>
-                            <Car className='h-6 w-6 text-apple-blue' />
-                          </div>
-                          <div>
-                            <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                              {vehicle.licensePlate}
-                            </h3>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                              {vehicle.make} {vehicle.model}{' '}
-                              {vehicle.year ? `• ${vehicle.year}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${status.color}/10`}
-                        >
-                          <StatusIcon
-                            className={`h-3.5 w-3.5 ${status.color.replace('bg-', 'text-')}`}
-                          />
-                          <span
-                            className={`text-[10px] font-bold uppercase ${status.color.replace('bg-', 'text-')}`}
+        {/* Content */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                Elenco Veicoli
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
+                </div>
+              ) : error ? (
+                <div role="alert" className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Impossibile caricare i veicoli
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => mutate()}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : vehicles.length === 0 && !debouncedSearch && !fuelFilter ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Car className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Nessun veicolo registrato. Aggiungi il primo veicolo per iniziare.
+                  </p>
+                  <Link href="/dashboard/vehicles/new">
+                    <AppleButton variant="ghost" className="mt-4">
+                      Nuovo Veicolo
+                    </AppleButton>
+                  </Link>
+                </div>
+              ) : vehicles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Nessun veicolo trovato per &quot;{debouncedSearch || fuelFilter}&quot;
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => { setSearchQuery(''); setFuelFilter(''); }}
+                  >
+                    Cancella filtri
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className="space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+                          <th className="text-left px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Targa</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden sm:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Marca / Modello</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Anno</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Carburante</th>
+                          <th className="text-left px-4 py-3 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Proprietario</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Km</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vehicles.map((vehicle) => (
+                          <motion.tr
+                            key={vehicle.id}
+                            variants={listItemVariants}
+                            className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)] last:border-b-0 transition-colors hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)]"
                           >
-                            {status.label}
-                          </span>
-                        </div>
-                      </div>
-
-                      {vehicle.customer && (
-                        <div className='flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366] mb-4'>
-                          <User className='h-4 w-4' />
-                          <span>
-                            {[vehicle.customer.firstName, vehicle.customer.lastName]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className='grid grid-cols-2 gap-3 pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                        <div>
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>
-                            Ultimo service
-                          </p>
-                          <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
-                            {vehicle.lastServiceDate
-                              ? new Date(vehicle.lastServiceDate).toLocaleDateString('it-IT')
-                              : '—'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>
-                            Prossimo service (km)
-                          </p>
-                          <p className='text-callout font-medium text-apple-dark dark:text-[#ececec]'>
-                            {vehicle.nextServiceDueKm
-                              ? vehicle.nextServiceDueKm.toLocaleString('it-IT')
-                              : '—'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {vehicle.mileage && (
-                        <div className='mt-3 text-footnote text-apple-gray dark:text-[#636366]'>
-                          Km: {vehicle.mileage.toLocaleString('it-IT')}
-                        </div>
-                      )}
-
-                      <div className='mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242] flex gap-2'>
-                        <Link
-                          href={`/dashboard/inspections?vehicle=${vehicle.id}`}
-                          className='flex-1'
-                        >
-                          <AppleButton variant='secondary' fullWidth>
-                            <ClipboardCheck className='h-4 w-4 mr-2' />
-                            Storico DVI
-                          </AppleButton>
-                        </Link>
-                        <AppleButton variant='secondary' fullWidth className='flex-1'>
-                          Dettagli
-                        </AppleButton>
-                      </div>
-                    </AppleCardContent>
-                  </AppleCard>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                <span className="inline-block px-2.5 py-1 rounded-md font-mono font-bold text-xs tracking-wider bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                                  {formatPlate(vehicle.licensePlate)}
+                                </span>
+                                <VehicleExpiryBadges vehicle={vehicle} />
+                              </div>
+                              <span className="block sm:hidden text-footnote mt-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                {vehicle.make} {vehicle.model}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 hidden sm:table-cell text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                              {vehicle.make} {vehicle.model}
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                              {vehicle.year || '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 hidden lg:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                              {vehicle.fuelType || '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 hidden md:table-cell">
+                              {vehicle.customer ? (
+                                <Link
+                                  href={`/dashboard/customers/${vehicle.customer.id}`}
+                                  className="text-body text-[var(--brand)] hover:underline"
+                                >
+                                  {getOwnerName(vehicle)}
+                                </Link>
+                              ) : (
+                                <span className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{'\u2014'}</span>
+                              )}
+                            </td>
+                            <td
+                              className="px-4 py-3 text-right hidden lg:table-cell text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]"
+                              style={{ fontVariantNumeric: 'tabular-nums' }}
+                            >
+                              {vehicle.mileage ? formatNumber(vehicle.mileage) : '\u2014'}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}`)}
+                                  aria-label={`Visualizza ${vehicle.licensePlate}`}
+                                  icon={<Eye className="h-3.5 w-3.5" />}
+                                />
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => router.push(`/dashboard/vehicles/${vehicle.id}?tab=dettagli&edit=true`)}
+                                  aria-label={`Modifica ${vehicle.licensePlate}`}
+                                  icon={<Pencil className="h-3.5 w-3.5" />}
+                                />
+                                <AppleButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteTarget(vehicle)}
+                                  aria-label={`Elimina ${vehicle.licensePlate}`}
+                                  icon={<Trash2 className="h-3.5 w-3.5" />}
+                                />
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
                 </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
-      </div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
+      </motion.div>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Elimina veicolo"
+        description={deleteTarget ? `Sei sicuro di voler eliminare il veicolo ${formatPlate(deleteTarget.licensePlate)} (${deleteTarget.make} ${deleteTarget.model})? L'azione non può essere annullata.` : ''}
+        confirmLabel="Elimina"
+        variant="danger"
+        onConfirm={handleDelete}
+        loading={deleteLoading}
+      />
     </div>
   );
 }

@@ -20,7 +20,7 @@ export const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInpu
         <div className="relative">
           {/* Icona sinistra */}
           {icon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] z-10">
               {icon}
             </div>
           )}
@@ -38,14 +38,14 @@ export const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInpu
               props.onBlur?.(e);
             }}
             className={cn(
-              "w-full bg-white/60 backdrop-blur-sm border rounded-xl px-4 py-4",
-              "text-gray-900 placeholder-transparent",
-              "focus:outline-none focus:ring-4 focus:ring-blue-500/20",
+              "w-full bg-[var(--surface-secondary)]/60 backdrop-blur-sm border rounded-xl px-4 py-4",
+              "text-[var(--text-primary)] placeholder-transparent",
+              "focus:outline-none focus:ring-4 focus:ring-[var(--status-info)]/20",
               "transition-all duration-200",
               icon && "pl-12",
               error 
-                ? "border-red-300 focus:border-red-500" 
-                : "border-gray-200 focus:border-blue-500",
+                ? "border-[var(--status-error)]/30 focus:border-[var(--status-error)]" 
+                : "border-[var(--border-default)] focus:border-[var(--status-info)]",
               className
             )}
             animate={{
@@ -65,7 +65,7 @@ export const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInpu
           <motion.label
             className={cn(
               "absolute left-4 pointer-events-none origin-left",
-              "text-gray-500 font-medium",
+              "text-[var(--text-tertiary)] font-medium",
               icon && "left-12"
             )}
             animate={{
@@ -97,7 +97,7 @@ export const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInpu
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-red-500 text-sm mt-1 ml-1"
+            className="text-[var(--status-error)] text-sm mt-1 ml-1"
           >
             {error}
           </motion.p>

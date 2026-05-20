@@ -1,22 +1,13 @@
 /**
- * Prisma Client Singleton
- * 
- * Provides a single PrismaClient instance for the application.
- * In development, this prevents multiple instances from being created during hot reloading.
+ * Prisma Client Singleton — REMOVED
+ *
+ * Direct database access from the frontend has been eliminated.
+ * All data must flow through the NestJS backend API.
+ *
+ * If you need Prisma types, import them from '@prisma/client' as type-only imports.
+ * If you need data, call the backend API via proxyToNestJS or fetchFromBackend.
  */
 
-// Note: server-only guard removed because service files mix types and runtime code.
-// PrismaClient only works server-side at runtime regardless of this guard.
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
-}
-
-export default prisma
+throw new Error(
+  'Direct Prisma access from the frontend is forbidden. Use the NestJS backend API instead.'
+);

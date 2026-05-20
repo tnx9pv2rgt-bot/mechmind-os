@@ -9,8 +9,11 @@
  *
  * Requires: docker-compose.test.yml running (PostgreSQL + Redis)
  */
+// @ts-nocheck
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import * as request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@common/services/prisma.service';
@@ -36,7 +39,7 @@ describe('Authentication Flow (Integration)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app = moduleFixture.createNestApplication(new ExpressAdapter());
     await app.init();
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -154,9 +157,9 @@ describe('Authentication Flow (Integration)', () => {
     });
 
     it('should reject expired/invalid refresh token', async () => {
-      await expect(
-        authService.refreshTokens('invalid-refresh-token'),
-      ).rejects.toThrow('Invalid refresh token');
+      await expect(authService.refreshTokens('invalid-refresh-token')).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
   });
 

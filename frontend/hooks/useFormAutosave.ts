@@ -20,7 +20,8 @@ export function useFormAutosave<T extends FieldValues>(
     try {
       const saved = sessionStorage.getItem(storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved) as T;
+        const parsed = JSON.parse(saved) as T & { voiceNote?: unknown };
+        delete parsed.voiceNote;
         reset(parsed, { keepDefaultValues: true });
         setHasDraft(true);
       }

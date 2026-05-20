@@ -1,5 +1,5 @@
 ---
-paths:
+globs:
   - "backend/**/*.ts"
 ---
 # Backend Rules (NestJS)

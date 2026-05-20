@@ -1,12 +1,16 @@
 /**
  * USE AUTH HOOK
- * 
- * React hook for managing authentication state
+ *
+ * React hook for managing authentication state.
+ * Distingue tra:
+ *  - user autenticato (response 200 con user popolato)
+ *  - user non autenticato (response 200 con user: null OR 401)
+ *  - errore di rete / backend down (presumed authenticated, banner)
  */
 
 'use client';
 
-import { useState, useEffect, useContext, createContext } from 'react';
+import { useState, useEffect, useContext, createContext, useCallback } from 'react';
 
 interface User {
   id: string;
@@ -17,10 +21,15 @@ interface User {
   tenantName?: string;
 }
 
+type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'network-error';
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** true se /api/auth/me ha fallito per network/5xx (non un 401). */
+  hasNetworkError: boolean;
+  authStatus: AuthStatus;
   login: (jwtToken: string, refreshToken: string) => void;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -28,69 +37,91 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }): React.ReactElement {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
 
-  useEffect(() => {
-    // Check for existing session
-    checkAuth();
+  const checkAuth = useCallback(async (): Promise<void> => {
+    try {
+      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      if (res.status >= 500 || res.status === 502 || res.status === 504) {
+        // Backend down — non sappiamo se l'utente è auth, presumiamo di sì
+        setAuthStatus('network-error');
+        return;
+      }
+      if (!res.ok) {
+        // 401/403 → non autenticato
+        setUser(null);
+        setAuthStatus('unauthenticated');
+        return;
+      }
+      const data = (await res.json()) as { user: User | null };
+      if (data.user) {
+        setUser(data.user);
+        setAuthStatus('authenticated');
+      } else {
+        setUser(null);
+        setAuthStatus('unauthenticated');
+      }
+    } catch {
+      // Network error (fetch abort, DNS fail, offline)
+      setAuthStatus('network-error');
+    }
   }, []);
 
-  const checkAuth = async () => {
+  useEffect(() => {
+    void checkAuth();
+  }, [checkAuth]);
+
+  const login = useCallback((): void => {
+    void checkAuth();
+  }, [checkAuth]);
+
+  const logout = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-    } finally {
-      setIsLoading(false);
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch {
+      // anche se la chiamata fallisce, ripuliamo lo stato locale
     }
-  };
-
-  const login = (jwtToken: string, refreshToken: string) => {
-    // Store tokens (cookies are httpOnly, this is just for state)
-    checkAuth();
-  };
-
-  const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
-    window.location.href = '/auth';
-  };
+    setAuthStatus('unauthenticated');
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
+  }, []);
 
-  const refresh = async () => {
+  const refresh = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch('/api/auth/refresh', { method: 'POST' });
+      const res = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
       if (res.ok) {
         await checkAuth();
       } else {
-        logout();
+        await logout();
       }
-    } catch (error) {
-      logout();
+    } catch {
+      await logout();
     }
+  }, [checkAuth, logout]);
+
+  const value: AuthContextType = {
+    user,
+    isLoading: authStatus === 'loading',
+    isAuthenticated: authStatus === 'authenticated',
+    hasNetworkError: authStatus === 'network-error',
+    authStatus,
+    login,
+    logout,
+    refresh,
   };
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      isAuthenticated: !!user,
-      login,
-      logout,
-      refresh
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = () => {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
-};
+}

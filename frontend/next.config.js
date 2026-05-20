@@ -1,3 +1,4 @@
+const { withSentryConfig } = require('@sentry/nextjs');
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
@@ -5,11 +6,14 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Standalone output for non-Vercel hosting (Render, Docker)
-  output: 'standalone',
+  // Only enable in production — standalone breaks dev server static file serving
+  ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
 
   // Image optimization
   images: {
-    unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 3600,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,23 +26,26 @@ const nextConfig = {
     ],
   },
 
-  // TypeScript and ESLint handling
+  // TypeScript handling
   typescript: {
     ignoreBuildErrors: false,
   },
-  eslint: {
-    ignoreDuringBuilds: true, // TODO: fix frontend lint errors then set to false
-  },
 
-  // Experimental features
+  // Packages that should not be bundled (run in Node.js runtime only)
+  serverExternalPackages: ['@prisma/client', 'prisma'],
+
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
     optimizePackageImports: [
       'framer-motion',
       'lucide-react',
       '@radix-ui/react-icons',
       'recharts',
       'react-phone-number-input',
+      'date-fns',
+      'sonner',
+      'zod',
+      '@hookform/resolvers',
+      'cmdk',
       // NOTE: @simplewebauthn/browser removed — barrel optimization breaks
       // dynamic import of startAuthentication (vercel/next.js#61995)
     ],
@@ -46,6 +53,14 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+
+  // On-demand entries for development
+  ...(process.env.NODE_ENV === 'development' && {
+    onDemandEntries: {
+      maxInactiveAge: 25 * 1000,
+      pagesBufferLength: 5,
+    },
+  }),
 
   // Webpack configuration
   webpack: (config, { isServer, dev }) => {
@@ -110,27 +125,9 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          // Content Security Policy
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://accounts.google.com https://www.google.com https://www.gstatic.com https://js.stripe.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
-              "font-src 'self' https://fonts.gstatic.com data:",
-              "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co blob:",
-              "connect-src 'self' https://accounts.google.com https://*.supabase.co https://api.ipapi.co https://www.google.com https://*.upstash.io https://nexo-gestionale.onrender.com https://nexo-frontend.onrender.com http://localhost:3000 http://localhost:3001 http://localhost:3002 ws://localhost:3000 ws://localhost:3001",
-              "frame-src 'self' https://accounts.google.com https://www.google.com https://js.stripe.com https://hooks.stripe.com",
-              "media-src 'self'",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-ancestors 'none'",
-              ...(process.env.NODE_ENV === 'production'
-                ? ['upgrade-insecure-requests', 'block-all-mixed-content']
-                : []),
-            ].join('; '),
-          },
+          // NOTE: Content-Security-Policy is injected per-request by middleware.ts
+          // with a per-request nonce. Do not add a static CSP here — it would
+          // override the nonce-bearing header and break 'strict-dynamic'.
           // Security headers
           {
             key: 'X-Frame-Options',
@@ -174,6 +171,13 @@ const nextConfig = {
               'fullscreen=(self)',
             ].join(', '),
           },
+          // OWASP ASVS 5.0 V14.4 — COOP isolates browsing context from cross-origin windows.
+          // same-origin-allow-popups preserves Google OAuth popup flow (COEP skipped: breaks
+          // third-party iframes — Stripe, Google OAuth — not worth the tradeoff).
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
+          },
         ],
       },
       // API routes - No cache
@@ -194,16 +198,20 @@ const nextConfig = {
           },
         ],
       },
-      // Static assets - Long cache in production, no cache in dev
+      // NOTE: /_next/static Cache-Control intentionally omitted — Vercel manages
+      // immutable caching for static assets automatically (custom header overrides
+      // break Vercel's CDN layer and generate a build warning).
+      // Service Worker — MAI cachare, il browser deve sempre verificare
       {
-        source: '/_next/static/:path*',
+        source: '/sw.js',
         headers: [
           {
             key: 'Cache-Control',
-            value:
-              process.env.NODE_ENV === 'production'
-                ? 'public, max-age=31536000, immutable'
-                : 'no-store, must-revalidate',
+            value: 'no-store, no-cache, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
           },
         ],
       },
@@ -248,6 +256,38 @@ const nextConfig = {
   // Do NOT use modularizeImports for lucide-react — it conflicts with
   // optimizePackageImports and causes webpack module resolution errors
   // (lucide-icons/lucide#1482, vercel/next.js#53668).
+
+  // Rewrites for API proxy — eliminates CORS issues by proxying through Next.js
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Proxy /api/* to Next.js route handlers which forward to NestJS
+        // This avoids CORS issues by making requests same-origin
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        },
+      ],
+      afterFiles: [
+        // Fallback for direct backend calls if needed (dev-only for debugging)
+        ...(process.env.NODE_ENV === 'development'
+          ? [
+              {
+                source: '/v1/:path*',
+                destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3002'}/v1/:path*`,
+              },
+            ]
+          : []),
+      ],
+    };
+  },
 };
 
-module.exports = withBundleAnalyzer(nextConfig);
+module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
+  silent: true,
+  org: process.env.SENTRY_ORG || '',
+  project: process.env.SENTRY_PROJECT || '',
+  widenClientFileUpload: false,
+  hideSourceMaps: true,
+  telemetry: false,
+});

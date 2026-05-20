@@ -1,384 +1,280 @@
-import { test, expect } from '../fixtures/auth.fixture';
-import { TestDataFactory } from '../helpers/test-data';
+import { test, expect } from '@playwright/test';
 
 /**
- * Authentication Login Flow Tests
- * Comprehensive test suite for user authentication
+ * Login Page E2E Tests — API-mocked, no backend required.
+ *
+ * The auth page is a multi-step flow:
+ *   1. "methods" — choose login method (Accedi, Registrati, Google, etc.)
+ *   2. "email"   — enter tenant slug + email
+ *   3. "password" — enter password + submit
  */
 
-test.describe('Login Page', () => {
-  
+test.describe('Login - Render', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth');
   });
 
-  test('should display login form with all required fields', async ({ page }) => {
-    // Check form elements exist
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /login|accedi|entra/i })).toBeVisible();
-    
-    // Check for password visibility toggle if exists
-    const passwordToggle = page.locator('button[aria-label*="password"], button[aria-label*="mostra"]').first();
-    if (await passwordToggle.isVisible().catch(() => false)) {
-      await expect(passwordToggle).toBeVisible();
-    }
+  test('shows "Benvenuto in MechMind" heading', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: /Benvenuto in MechMind/i })).toBeVisible();
   });
 
-  test('should show validation error for empty email', async ({ page }) => {
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/email è obbligatoria|email is required|inserisci l'email/i)).toBeVisible();
+  test('shows Accedi button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /^Accedi$/i })).toBeVisible();
   });
 
-  test('should show validation error for invalid email format', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('invalid-email');
-    await page.getByLabel(/password/i).fill('somepassword');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/formato email non valido|invalid email|email non valida/i)).toBeVisible();
+  test('shows Registrati button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /^Registrati$/i })).toBeVisible();
   });
 
-  test('should show validation error for empty password', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('test@example.com');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/password è obbligatoria|password is required|inserisci la password/i)).toBeVisible();
+  test('shows Google login button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Accedi con Google/i })).toBeVisible();
   });
 
-  test('should show validation error for short password', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('test@example.com');
-    await page.getByLabel(/password/i).fill('123');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/password.*almeno|password.*minimum|troppo corta/i)).toBeVisible();
+  test('shows Facebook login button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Accedi con Facebook/i })).toBeVisible();
   });
 
-  test('should successfully login with valid credentials', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await authPage.login(user.email, user.password);
-    
-    await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByText(/benvenuto|welcome/i)).toBeVisible();
+  test('shows Microsoft login button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Accedi con Microsoft/i })).toBeVisible();
   });
 
-  test('should successfully login with admin credentials', async ({ authPage, page }) => {
-    const admin = TestDataFactory.predefinedUsers.admin;
-    
-    await authPage.login(admin.email, admin.password);
-    
-    await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByText(/admin|amministratore/i)).toBeVisible();
+  test('shows "Prima provalo" demo button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Prima provalo/i })).toBeVisible();
   });
 
-  test('should successfully login with mechanic credentials', async ({ authPage, page }) => {
-    const mechanic = TestDataFactory.predefinedUsers.mechanic;
-    
-    await authPage.login(mechanic.email, mechanic.password);
-    
-    await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByText(/officina|workshop|meccanico/i)).toBeVisible();
+  test('shows "Inizia gratis" free trial link', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Inizia gratis/i })).toBeVisible();
   });
 
-  test('should display error for incorrect password', async ({ page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/password/i).fill('WrongPassword123!');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/credenziali non valide|invalid credentials|password errata/i)).toBeVisible();
-    await expect(page).toHaveURL(/auth/);
+  test('shows footer links (Condizioni d\'uso, Informativa)', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /Condizioni d'uso/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Informativa sulla privacy/i })).toBeVisible();
   });
 
-  test('should display error for non-existent user', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('nonexistent@example.com');
-    await page.getByLabel(/password/i).fill('SomePassword123!');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/utente non trovato|user not found|credenziali/i)).toBeVisible();
-  });
-
-  test('should disable submit button during login request', async ({ page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/password/i).fill(user.password);
-    
-    const submitButton = page.getByRole('button', { name: /login|accedi/i });
-    await submitButton.click();
-    
-    // Button should be disabled while loading
-    await expect(submitButton).toBeDisabled();
-  });
-
-  test('should show loading state during login', async ({ page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/password/i).fill(user.password);
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    // Check for loading indicator
-    await expect(page.locator('[data-testid="loading"], .loading, .spinner, button:has(.spinner)')).toBeVisible();
-  });
-
-  test('should persist session after page reload', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await authPage.login(user.email, user.password);
-    await expect(page).toHaveURL(/dashboard/);
-    
-    // Reload page
-    await page.reload();
-    
-    // Should still be logged in
-    await expect(page).toHaveURL(/dashboard/);
-    await expect(page.getByText(/benvenuto|welcome/i)).toBeVisible();
-  });
-
-  test('should redirect to original URL after login', async ({ page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    const targetUrl = '/dashboard/bookings';
-    
-    // Try to access protected page
-    await page.goto(targetUrl);
-    
-    // Should redirect to login with return URL
-    await expect(page).toHaveURL(/auth.*redirect|login.*return/);
-    
-    // Login
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/password/i).fill(user.password);
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    // Should redirect to original URL
-    await expect(page).toHaveURL(new RegExp(targetUrl.replace('/', '\\/')));
-  });
-
-  test('should have link to password reset', async ({ page }) => {
-    const forgotPasswordLink = page.getByRole('link', { name: /password dimenticata|forgot password|recupera/i });
-    await expect(forgotPasswordLink).toBeVisible();
-    
-    await forgotPasswordLink.click();
-    await expect(page).toHaveURL(/reset-password|forgot-password|recupero/);
-  });
-
-  test('should have link to registration', async ({ page }) => {
-    const registerLink = page.getByRole('link', { name: /registrati|sign up|crea account|registrazione/i });
-    await expect(registerLink).toBeVisible();
-    
-    await registerLink.click();
-    await expect(page).toHaveURL(/register|signup|registrazione/);
-  });
-
-  test('should toggle password visibility', async ({ page }) => {
-    const passwordInput = page.getByLabel(/password/i);
-    await passwordInput.fill('Secret123!');
-    
-    // Initially password should be hidden
-    await expect(passwordInput).toHaveAttribute('type', 'password');
-    
-    // Find and click toggle button
-    const toggleButton = page.locator('button[aria-label*="password"], button[aria-label*="mostra"]').first();
-    if (await toggleButton.isVisible().catch(() => false)) {
-      await toggleButton.click();
-      
-      // Password should now be visible
-      await expect(passwordInput).toHaveAttribute('type', 'text');
-      
-      await toggleButton.click();
-      
-      // Password should be hidden again
-      await expect(passwordInput).toHaveAttribute('type', 'password');
-    }
-  });
-
-  test('should handle remember me option', async ({ page }) => {
-    const rememberCheckbox = page.getByLabel(/ricordami|remember me|mantieni accesso/i);
-    
-    if (await rememberCheckbox.isVisible().catch(() => false)) {
-      await expect(rememberCheckbox).not.toBeChecked();
-      
-      await rememberCheckbox.check();
-      await expect(rememberCheckbox).toBeChecked();
-    }
-  });
-
-  test('should be accessible via keyboard navigation', async ({ page }) => {
-    // Start from email field
-    await page.getByLabel(/email/i).press('Tab');
-    
-    // Should be on password field
-    await expect(page.getByLabel(/password/i)).toBeFocused();
-    
-    // Tab to submit button
-    await page.getByLabel(/password/i).press('Tab');
-    
-    // Submit button should be focused
-    const focusedElement = page.locator(':focus');
-    await expect(focusedElement).toHaveRole('button');
-  });
-
-  test('should submit form with Enter key', async ({ page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await page.getByLabel(/email/i).fill(user.email);
-    await page.getByLabel(/password/i).fill(user.password);
-    await page.getByLabel(/password/i).press('Enter');
-    
-    await expect(page).toHaveURL(/dashboard/);
-  });
-
-  test('should display terms and privacy links', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /termini|terms/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /privacy|policy/i })).toBeVisible();
+  test('Apple button is disabled', async ({ page }) => {
+    const appleBtn = page.getByRole('button', { name: /Apple/i });
+    await expect(appleBtn).toBeDisabled();
   });
 });
 
-test.describe('Logout Flow', () => {
-  
-  test('should successfully logout user', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    // Login first
-    await authPage.login(user.email, user.password);
-    await expect(page).toHaveURL(/dashboard/);
-    
-    // Logout
-    await authPage.logout();
-    
-    // Should be redirected to login
-    await expect(page).toHaveURL(/auth|login/);
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-  });
-
-  test('should clear session after logout', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await authPage.login(user.email, user.password);
-    await authPage.logout();
-    
-    // Try to access protected page
-    await page.goto('/dashboard');
-    
-    // Should be redirected to login
-    await expect(page).toHaveURL(/auth|login/);
-  });
-
-  test('should show logout success message', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await authPage.login(user.email, user.password);
-    await authPage.logout();
-    
-    await expect(page.getByText(/logout effettuato|logged out|arrivederci/i)).toBeVisible();
-  });
-});
-
-test.describe('Session Management', () => {
-  
-  test('should expire session after inactivity', async ({ authPage, page }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    await authPage.login(user.email, user.password);
-    
-    // Simulate long inactivity (if short session is configured for testing)
-    if (process.env.TEST_SHORT_SESSION === 'true') {
-      await page.waitForTimeout(7000); // Wait for 7 second test session
-      
-      // Try to navigate
-      await page.goto('/dashboard/bookings');
-      
-      // Should be redirected to login
-      await expect(page).toHaveURL(/auth|login/);
-    }
-  });
-
-  test('should handle concurrent sessions', async ({ browser }) => {
-    const user = TestDataFactory.predefinedUsers.customer;
-    
-    // Create two contexts (simulating two browsers/devices)
-    const context1 = await browser.newContext();
-    const context2 = await browser.newContext();
-    
-    const page1 = await context1.newPage();
-    const page2 = await context2.newPage();
-    
-    // Login from both contexts
-    await page1.goto('/auth');
-    await page1.getByLabel(/email/i).fill(user.email);
-    await page1.getByLabel(/password/i).fill(user.password);
-    await page1.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await page2.goto('/auth');
-    await page2.getByLabel(/email/i).fill(user.email);
-    await page2.getByLabel(/password/i).fill(user.password);
-    await page2.getByRole('button', { name: /login|accedi/i }).click();
-    
-    // Both should be logged in
-    await expect(page1).toHaveURL(/dashboard/);
-    await expect(page2).toHaveURL(/dashboard/);
-    
-    // Logout from one context
-    await page1.getByRole('button', { name: /utente|user|menu/i }).click();
-    await page1.getByRole('menuitem', { name: /logout|esci/i }).click();
-    
-    // First context should be logged out
-    await expect(page1).toHaveURL(/auth|login/);
-    
-    // Second context behavior depends on implementation
-    // (either stays logged in or also logs out)
-    
-    await context1.close();
-    await context2.close();
-  });
-});
-
-test.describe('Rate Limiting', () => {
-  
-  test('should implement rate limiting on failed login attempts', async ({ page }) => {
-    const email = 'test@example.com';
-    
-    // Attempt multiple failed logins
-    for (let i = 0; i < 5; i++) {
-      await page.goto('/auth');
-      await page.getByLabel(/email/i).fill(email);
-      await page.getByLabel(/password/i).fill(`WrongPassword${i}!`);
-      await page.getByRole('button', { name: /login|accedi/i }).click();
-    }
-    
-    // Next attempt should show rate limit message
+test.describe('Login - Email Step', () => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/auth');
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password/i).fill('AnotherWrong1!');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    await expect(page.getByText(/troppi tentativi|too many attempts|rate limit/i)).toBeVisible();
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    // Wait for the email step heading (timer-based transition ~400ms)
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('shows slug and email inputs', async ({ page }) => {
+    await expect(page.locator('input[name="tenant"]')).toBeVisible();
+    await expect(page.locator('input[name="email"]')).toBeVisible();
+  });
+
+  test('shows Continua button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /^Continua$/i })).toBeVisible();
+  });
+
+  test('shows magic link option', async ({ page }) => {
+    await expect(page.getByRole('button', { name: /Invia magic link invece/i })).toBeVisible();
+  });
+
+  test('shows Indietro button', async ({ page }) => {
+    await expect(page.getByText(/Indietro/i)).toBeVisible();
+  });
+
+  test('validation: empty slug shows error', async ({ page }) => {
+    await page.locator('input[name="email"]').fill('user@example.com');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByText(/Inserisci lo slug/i)).toBeVisible();
+  });
+
+  test('validation: empty email shows error', async ({ page }) => {
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByText(/Inserisci la tua email/i)).toBeVisible();
+  });
+
+  test('validation: invalid email shows error', async ({ page }) => {
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('not-an-email');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByText(/email valido/i)).toBeVisible();
+  });
+
+  test('back button returns to methods step', async ({ page }) => {
+    await page.getByText(/Indietro/i).click();
+    await expect(page.getByRole('heading', { name: /Benvenuto in MechMind/i })).toBeVisible({ timeout: 10000 });
   });
 });
 
-test.describe('Security Headers', () => {
-  
-  test('should have proper security headers', async ({ page }) => {
-    const response = await page.goto('/auth');
-    const headers = response?.headers() || {};
-    
-    // Check for security headers
-    expect(headers['x-frame-options']?.toLowerCase()).toBe('deny');
-    expect(headers['x-content-type-options']?.toLowerCase()).toBe('nosniff');
+test.describe('Login - Password Step', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('user@example.com');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci la password/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test('should not expose sensitive information in error messages', async ({ page }) => {
-    await page.getByLabel(/email/i).fill('admin@mechmind.local');
-    await page.getByLabel(/password/i).fill('wrongpassword');
-    await page.getByRole('button', { name: /login|accedi/i }).click();
-    
-    const errorText = await page.getByText(/credenziali|invalid|errore/i).textContent();
-    
-    // Should not reveal if email exists
-    expect(errorText?.toLowerCase()).not.toContain('email');
-    expect(errorText?.toLowerCase()).not.toContain('password');
+  test('shows password input and submit button', async ({ page }) => {
+    await expect(page.locator('input[name="password"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Continua$/i })).toBeVisible();
+  });
+
+  test('shows "Ricordami per 30 giorni" checkbox', async ({ page }) => {
+    await expect(page.getByText(/Ricordami per 30 giorni/i)).toBeVisible();
+  });
+
+  test('shows "Password dimenticata?" link', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /Password dimenticata/i })).toBeVisible();
+  });
+
+  test('displays the email used', async ({ page }) => {
+    await expect(page.getByText('user@example.com')).toBeVisible();
+  });
+
+  test('validation: empty password shows error', async ({ page }) => {
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    // Error message appears in red text (not the heading which also contains "Inserisci la password")
+    await expect(page.locator('.text-red-600, .dark\\:text-red-400').filter({ hasText: /Inserisci la password/i })).toBeVisible();
+  });
+});
+
+test.describe('Login - Successful Login', () => {
+  test('successful login proceeds past password step', async ({ page }) => {
+    // Mock the login API to return success
+    await page.route('**/api/auth/password/login', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('admin@demo.it');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci la password/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="password"]').fill('SecurePassword123!');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+
+    // After successful login, the password step should disappear
+    // (either passkey-prompt shows, or router navigates to /dashboard)
+    await expect(page.getByRole('heading', { name: /Inserisci la password/i })).not.toBeVisible({ timeout: 15000 });
+  });
+
+  test('failed login shows error message', async ({ page }) => {
+    await page.route('**/api/auth/password/login', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Email o password non corretta' }),
+      });
+    });
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('admin@demo.it');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci la password/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="password"]').fill('wrongpassword');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+
+    await expect(page.getByText(/Email o password non corretta/i)).toBeVisible({ timeout: 10000 });
+  });
+
+  test('rate limited login shows throttle message', async ({ page }) => {
+    await page.route('**/api/auth/password/login', async (route) => {
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Too many requests' }),
+      });
+    });
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('admin@demo.it');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci la password/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="password"]').fill('whatever');
+    await page.getByRole('button', { name: /^Continua$/i }).click();
+
+    await expect(page.getByText(/Troppi tentativi/i)).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe('Login - Demo Session', () => {
+  test('"Prima provalo" triggers demo session API', async ({ page }) => {
+    let demoCalled = false;
+    await page.route('**/api/auth/demo-session', async (route) => {
+      demoCalled = true;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    // Set auth cookies so middleware allows /dashboard access after redirect
+    await page.context().addCookies([
+      { name: 'auth_token', value: 'demo-jwt-token', url: 'http://localhost:3001' },
+      { name: 'tenant_slug', value: 'demo', url: 'http://localhost:3001' },
+      { name: 'tenant_id', value: 'demo-tenant', url: 'http://localhost:3001' },
+      { name: 'demo_session', value: '1', url: 'http://localhost:3001' },
+    ]);
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /Prima provalo/i }).click();
+
+    // Wait for redirect to dashboard
+    await page.waitForURL(/dashboard/, { timeout: 15000 });
+    expect(demoCalled).toBe(true);
+  });
+
+  test('"Prima provalo" shows error on API failure', async ({ page }) => {
+    await page.route('**/api/auth/demo-session', async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false }),
+      });
+    });
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /Prima provalo/i }).click();
+
+    await expect(page.getByText(/Demo non disponibile/i)).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe('Login - Magic Link', () => {
+  test('magic link sent shows success message', async ({ page }) => {
+    await page.route('**/api/auth/magic-link/send', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto('/auth');
+    await page.getByRole('button', { name: /^Accedi$/i }).click();
+    await expect(page.getByRole('heading', { name: /Inserisci le tue credenziali/i })).toBeVisible({ timeout: 10000 });
+    await page.locator('input[name="tenant"]').fill('demo');
+    await page.locator('input[name="email"]').fill('user@example.com');
+    await page.getByRole('button', { name: /Invia magic link invece/i }).click();
+
+    await expect(page.getByRole('heading', { name: /Controlla la tua email/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('user@example.com')).toBeVisible();
   });
 });

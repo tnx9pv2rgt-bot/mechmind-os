@@ -97,6 +97,7 @@ export interface Mode08EvapTest {
 
 export interface ObdDataStream {
   id: string;
+  tenantId: string;
   deviceId: string;
   adapterType: AdapterType;
   protocol: ObdProtocol;

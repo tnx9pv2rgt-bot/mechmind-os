@@ -1,0 +1,1 @@
+{"date":"2026-05-02","module":"peppol","type":"CEILING_ACCEPTED","stmt":94.58,"branch":88.04,"gap_pp":2,"reason":"NestJS @Injectable IIFE (lines 5-6,13-15); TS array literal and template literal source-map offset (lines 62-67,202-204,376-385); architectural ceiling unreachable in unit tests","auditor":"Giovanni Romano"}

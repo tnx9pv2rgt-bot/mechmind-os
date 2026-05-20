@@ -87,34 +87,34 @@ function KPICard({
 
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          <p className="text-sm font-medium text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             {title}
           </p>
           <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+            <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
               {isLoading ? (
-                <span className="inline-block h-8 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                <span className="inline-block h-8 w-24 animate-pulse rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
               ) : (
                 value
               )}
             </p>
             {suffix && (
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                 {suffix}
               </span>
             )}
           </div>
           <div className="mt-1 flex items-center gap-1">
             {isLoading ? (
-              <span className="inline-block h-4 w-16 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+              <span className="inline-block h-4 w-16 animate-pulse rounded bg-[var(--border-default)] dark:bg-[var(--border-default)]" />
             ) : (
               <>
                 <span
                   className={cn(
                     "flex items-center text-sm font-medium",
                     isPositive
-                      ? "text-status-ready"
-                      : "text-status-urgent"
+                      ? "text-[var(--status-success)]"
+                      : "text-[var(--status-error)]"
                   )}
                 >
                   {isPositive ? (
@@ -124,7 +124,7 @@ function KPICard({
                   )}
                   {Math.abs(change).toFixed(1)}%
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                   vs periodo precedente
                 </span>
               </>
@@ -137,7 +137,7 @@ function KPICard({
             color
           )}
         >
-          <Icon className="h-5 w-5 text-white" />
+          <Icon className="h-5 w-5 text-[var(--text-on-brand)]" />
         </div>
       </div>
 
@@ -148,7 +148,7 @@ function KPICard({
             key={i}
             className={cn(
               "flex-1 rounded-t transition-all duration-500",
-              isPositive ? "bg-status-ready/20" : "bg-status-urgent/20"
+              isPositive ? "bg-[var(--status-success)]/20" : "bg-[var(--status-error)]/20"
             )}
             style={{ height: `${h}%` }}
           />
@@ -207,14 +207,14 @@ export function KPICards() {
       value: formatCurrency(data.totalRevenue),
       change: data.revenueChange,
       icon: TrendingUp,
-      color: "bg-status-ready",
+      color: "bg-[var(--status-success)]",
     },
     {
       title: "Ordini Attivi",
       value: data.activeOrders.toString(),
       change: data.ordersChange,
       icon: Wrench,
-      color: "bg-status-info",
+      color: "bg-[var(--status-info)]",
     },
     {
       title: "ARO Medio",
@@ -228,7 +228,7 @@ export function KPICards() {
       value: data.customerSatisfaction.toFixed(1),
       change: data.satisfactionChange,
       icon: Star,
-      color: "bg-yellow-500",
+      color: "bg-[var(--status-warning)]/100",
       suffix: "/5",
     },
     {
@@ -236,7 +236,7 @@ export function KPICards() {
       value: Math.round(data.mechanicUtilization).toString(),
       change: data.utilizationChange,
       icon: Clock,
-      color: "bg-purple-600",
+      color: "bg-[var(--brand)]",
       suffix: "%",
     },
     {
@@ -244,7 +244,7 @@ export function KPICards() {
       value: Math.round(data.conversionRate).toString(),
       change: data.conversionChange,
       icon: FileCheck,
-      color: "bg-orange-500",
+      color: "bg-[var(--status-warning)]/50",
       suffix: "%",
     },
   ];
@@ -253,17 +253,17 @@ export function KPICards() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             KPI in Tempo Reale
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Ultimo aggiornamento: {lastUpdate.toLocaleTimeString("it-IT")}
           </p>
         </div>
         <button
           onClick={refreshData}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] px-3 py-1.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-secondary)] disabled:opacity-50 dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)] dark:text-[var(--text-primary)] dark:hover:bg-[var(--surface-hover)]"
         >
           <Activity
             className={cn(

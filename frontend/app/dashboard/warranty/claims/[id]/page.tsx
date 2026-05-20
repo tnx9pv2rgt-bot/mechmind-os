@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { fetchWithTimeout } from '@/lib/api-client';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   FileText,
@@ -10,16 +12,17 @@ import {
   XCircle,
   DollarSign,
   User,
-  Calendar,
   MessageSquare,
   Eye,
   Check,
   X,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import {
   Dialog,
   DialogContent,
@@ -29,11 +32,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface WarrantyClaim {
   id: string;
@@ -73,34 +76,51 @@ const statusConfig: Record<
   }
 > = {
   SUBMITTED: {
-    label: 'Submitted',
-    color: 'text-blue-700 dark:text-blue-300',
+    label: 'Inviato',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
     icon: <FileText className='h-5 w-5' />,
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    bgColor: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
   },
   UNDER_REVIEW: {
-    label: 'Under Review',
-    color: 'text-amber-700 dark:text-amber-300',
+    label: 'In Revisione',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
     icon: <Clock className='h-5 w-5' />,
-    bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    bgColor: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
   },
   APPROVED: {
-    label: 'Approved',
-    color: 'text-green-700 dark:text-green-300',
+    label: 'Approvato',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
     icon: <CheckCircle2 className='h-5 w-5' />,
-    bgColor: 'bg-green-50 dark:bg-green-900/20',
+    bgColor: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
   },
   REJECTED: {
-    label: 'Rejected',
-    color: 'text-red-700 dark:text-red-300',
+    label: 'Rifiutato',
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
     icon: <XCircle className='h-5 w-5' />,
-    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    bgColor: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
   },
   PAID: {
-    label: 'Paid',
-    color: 'text-purple-700 dark:text-purple-300',
+    label: 'Pagato',
+    color: 'text-[var(--brand)] dark:text-[var(--brand)]',
     icon: <DollarSign className='h-5 w-5' />,
-    bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    bgColor: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]',
+  },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
+
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
   },
 };
 
@@ -108,7 +128,6 @@ export default function ClaimDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
   const claimId = params.id as string;
   const autoReview = searchParams.get('action') === 'review';
 
@@ -144,12 +163,10 @@ export default function ClaimDetailPage() {
   const loadClaim = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/warranties/claims/${claimId}`);
+      const res = await fetchWithTimeout(`/api/warranties/claims/${claimId}`);
       if (!res.ok) {
-        toast({
-          title: 'Claim not found',
-          description: 'The requested claim could not be found',
-          variant: 'error',
+        toast.error('Reclamo non trovato', {
+          description: 'Il reclamo richiesto non e stato trovato',
         });
         router.push('/dashboard/warranty/claims');
         return;
@@ -161,10 +178,8 @@ export default function ClaimDetailPage() {
         setApprovedAmount(data.approvedAmount.toString());
       }
     } catch (error) {
-      toast({
-        title: 'Error loading claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
+      toast.error('Errore nel caricamento del reclamo', {
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
       });
     } finally {
       setIsLoading(false);
@@ -189,19 +204,19 @@ export default function ClaimDetailPage() {
       );
       if (!reviewRes.ok) {
         const err = await reviewRes.json();
-        throw new Error(err.error || 'Review failed');
+        throw new Error(err.error || 'Revisione fallita');
       }
-      toast({
-        title: `Claim ${reviewDecision.toLowerCase()}ed`,
-        description: `The claim has been ${reviewDecision.toLowerCase()}ed successfully`,
+      toast.success(reviewDecision === 'APPROVE' ? 'Reclamo approvato' : 'Reclamo rifiutato', {
+        description:
+          reviewDecision === 'APPROVE'
+            ? 'Il reclamo e stato approvato con successo'
+            : 'Il reclamo e stato rifiutato',
       });
       setReviewDialogOpen(false);
       loadClaim();
     } catch (error) {
-      toast({
-        title: 'Error reviewing claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
+      toast.error('Errore nella revisione del reclamo', {
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
       });
     } finally {
       setIsReviewing(false);
@@ -211,31 +226,42 @@ export default function ClaimDetailPage() {
   const handleMarkPaid = async () => {
     try {
       const payRes = await fetch(`/api/warranties/claims/${claimId}/pay`, { method: 'POST' });
-      if (!payRes.ok) throw new Error('Failed to mark as paid');
-      toast({
-        title: 'Claim marked as paid',
-        description: 'The claim has been marked as paid successfully',
+      if (!payRes.ok) throw new Error('Errore nel pagamento');
+      toast.success('Reclamo pagato', {
+        description: 'Il reclamo e stato contrassegnato come pagato',
       });
       loadClaim();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
+      toast.error('Errore', {
+        description: error instanceof Error ? error.message : 'Errore sconosciuto',
       });
     }
   };
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-96'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' />
+      <div className='min-h-screen flex items-center justify-center'>
+        <Loader2 className='w-8 h-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
 
   if (!claim) {
-    return null;
+    return (
+      <div className='min-h-screen flex items-center justify-center p-8'>
+        <AppleCard className='max-w-md w-full'>
+          <AppleCardContent className='text-center py-12'>
+            <AlertCircle className='w-12 h-12 text-[var(--status-error)]/40 mx-auto mb-4' />
+            <h3 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-2'>
+              Reclamo non trovato
+            </h3>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+              Il reclamo richiesto non esiste o e stato rimosso.
+            </p>
+          </AppleCardContent>
+        </AppleCard>
+      </div>
+    );
   }
 
   const status = statusConfig[claim.status as ClaimStatus];
@@ -244,201 +270,262 @@ export default function ClaimDetailPage() {
   const canPay = claim.status === ClaimStatus.APPROVED;
 
   return (
-    <div className='space-y-6'>
+    <div>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div className='flex items-center gap-4'>
-          <Button
-            variant='outline'
-            size='icon'
-            onClick={() => router.push('/dashboard/warranty/claims')}
-          >
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <div>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>Claim Details</h1>
-            <p className='text-sm text-gray-500 dark:text-[#636366]'>
-              Submitted on {formatDate(claim.submittedDate)}
-            </p>
+      <header className=''>
+        <div className='px-4 sm:px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Garanzie', href: '/dashboard/warranty' },
+              { label: 'Reclami', href: '/dashboard/warranty/claims' },
+              { label: claim.claimNumber },
+            ]}
+          />
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-2'>
+            <div className='flex items-center gap-3'>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                className='min-w-[44px] min-h-[44px]'
+                onClick={() => router.push('/dashboard/warranty/claims')}
+                icon={<ArrowLeft className='h-4 w-4' />}
+              >
+                <span className='sr-only'>Indietro</span>
+              </AppleButton>
+              <div>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  Dettaglio Reclamo
+                </h1>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
+                  Inviato il {formatDate(claim.submittedDate)}
+                </p>
+              </div>
+            </div>
+            <div className='flex items-center gap-2'>
+              {canReview && (
+                <AppleButton
+                  icon={<CheckCircle2 className='h-4 w-4' />}
+                  onClick={() => setReviewDialogOpen(true)}
+                >
+                  Revisiona Reclamo
+                </AppleButton>
+              )}
+              {canPay && (
+                <AppleButton
+                  variant='secondary'
+                  icon={<DollarSign className='h-4 w-4' />}
+                  onClick={handleMarkPaid}
+                >
+                  Segna come Pagato
+                </AppleButton>
+              )}
+            </div>
           </div>
         </div>
-        <div className='flex items-center gap-2'>
-          {canReview && (
-            <Button onClick={() => setReviewDialogOpen(true)}>
-              <CheckCircle2 className='h-4 w-4 mr-2' />
-              Review Claim
-            </Button>
-          )}
-          {canPay && (
-            <Button onClick={handleMarkPaid}>
-              <DollarSign className='h-4 w-4 mr-2' />
-              Mark as Paid
-            </Button>
-          )}
-        </div>
-      </div>
+      </header>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* Main Content */}
-        <div className='lg:col-span-2 space-y-6'>
-          {/* Status Card */}
-          <Card>
-            <CardHeader>
-              <div className='flex items-center gap-3'>
-                <div className={cn('p-3 rounded-lg', status.bgColor)}>
-                  <span className={status.color}>{status.icon}</span>
-                </div>
-                <div>
-                  <CardTitle className='text-lg'>Claim Status</CardTitle>
-                  <Badge className={cn('mt-1', status.bgColor, status.color)}>{status.label}</Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Amounts */}
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    Estimated Cost
-                  </div>
-                  <div className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    {formatCurrency(claim.amount ?? 0)}
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  <MessageSquare className='h-4 w-4' />
-                  <span>Issue Description</span>
-                </div>
-                <div className='bg-gray-50 dark:bg-[#353535] p-4 rounded-lg'>
-                  <p className='text-gray-800 dark:text-gray-200 whitespace-pre-wrap'>
-                    {claim.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Evidence */}
-              {claim.evidencePhotos && claim.evidencePhotos.length > 0 && (
-                <div className='space-y-2'>
-                  <div className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    <Eye className='h-4 w-4' />
-                    <span>Photo Evidence ({claim.evidencePhotos.length})</span>
-                  </div>
-                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
-                    {claim.evidencePhotos.map((url, index) => (
-                      <div
-                        key={index}
-                        className='aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200'
+      <motion.div
+        className='p-4 sm:p-8 max-w-7xl mx-auto'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+      >
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Main Content */}
+          <div className='lg:col-span-2 space-y-6'>
+            {/* Status Card */}
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center',
+                        status.bgColor
+                      )}
+                    >
+                      <span className={status.color}>{status.icon}</span>
+                    </div>
+                    <div>
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Stato Reclamo
+                      </h2>
+                      <span
+                        className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bgColor} ${status.color} mt-1 inline-block`}
                       >
-                        <img
-                          src={url}
-                          alt={`Evidence ${index + 1}`}
-                          className='w-full h-full object-cover'
-                        />
+                        {status.label}
+                      </span>
+                    </div>
+                  </div>
+                </AppleCardHeader>
+                <AppleCardContent className='space-y-6'>
+                  {/* Amounts */}
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] rounded-xl p-4'>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
+                        Costo Stimato
+                      </p>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {formatCurrency(claim.amount ?? 0)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-2 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                      <MessageSquare className='h-4 w-4' />
+                      <span>Descrizione del Problema</span>
+                    </div>
+                    <div className='bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] p-4 rounded-xl'>
+                      <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] whitespace-pre-wrap'>
+                        {claim.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Evidence */}
+                  {claim.evidencePhotos && claim.evidencePhotos.length > 0 && (
+                    <div className='space-y-2'>
+                      <div className='flex items-center gap-2 text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        <Eye className='h-4 w-4' />
+                        <span>Foto Prove ({claim.evidencePhotos.length})</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
+                        {claim.evidencePhotos.map((url, index) => (
+                          <div
+                            key={index}
+                            className='aspect-video rounded-xl overflow-hidden bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] border border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
+                          >
+                            <img
+                              src={url}
+                              alt={`Foto allegata al reclamo ${index + 1}`}
+                              className='w-full h-full object-cover'
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
 
-          {/* Review History */}
-          {(claim.reviewedDate || claim.resolvedDate) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-lg flex items-center gap-2'>
-                  <Clock className='h-5 w-5' />
-                  Claim History
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {claim.reviewedDate && (
-                  <div className='flex items-start gap-3'>
-                    <div className='p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
-                      <User className='h-4 w-4 text-blue-600' />
+            {/* Review History */}
+            {(claim.reviewedDate || claim.resolvedDate) && (
+              <motion.div variants={listItemVariants}>
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <div className='flex items-center gap-3'>
+                      <Clock className='h-5 w-5 text-[var(--brand)]' />
+                      <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Storico Reclamo
+                      </h2>
                     </div>
-                    <div>
-                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Reviewed</p>
-                      <p className='text-sm text-gray-500 dark:text-[#636366]'>
-                        on {formatDate(claim.reviewedDate)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {claim.resolvedDate && (
-                  <div className='flex items-start gap-3'>
-                    <div className='p-2 bg-green-50 dark:bg-green-900/20 rounded-lg'>
-                      <CheckCircle2 className='h-4 w-4 text-green-600' />
-                    </div>
-                    <div>
-                      <p className='font-medium text-gray-900 dark:text-[#ececec]'>Resolved</p>
-                      <p className='text-sm text-gray-500 dark:text-[#636366]'>
-                        on {formatDate(claim.resolvedDate)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                  </AppleCardHeader>
+                  <AppleCardContent className='space-y-4'>
+                    {claim.reviewedDate && (
+                      <div className='flex items-start gap-3'>
+                        <div className='w-10 h-10 rounded-xl bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] flex items-center justify-center'>
+                          <User className='h-4 w-4 text-[var(--status-info)] dark:text-[var(--status-info)]' />
+                        </div>
+                        <div>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            Revisionato
+                          </p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                            il {formatDate(claim.reviewedDate)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {claim.resolvedDate && (
+                      <div className='flex items-start gap-3'>
+                        <div className='w-10 h-10 rounded-xl bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] flex items-center justify-center'>
+                          <CheckCircle2 className='h-4 w-4 text-[var(--status-success)]' />
+                        </div>
+                        <div>
+                          <p className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            Risolto
+                          </p>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                            il {formatDate(claim.resolvedDate)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </AppleCardContent>
+                </AppleCard>
+              </motion.div>
+            )}
+          </div>
 
-        {/* Sidebar */}
-        <div className='space-y-6'>
-          {/* Warranty Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className='text-lg'>Warranty Information</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              {claim.warranty?.vehicle && (
-                <>
+          {/* Sidebar */}
+          <div className='space-y-6'>
+            {/* Warranty Info */}
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                    Informazioni Garanzia
+                  </h2>
+                </AppleCardHeader>
+                <AppleCardContent className='space-y-3'>
+                  {claim.warranty?.vehicle && (
+                    <>
+                      <div className='flex justify-between'>
+                        <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                          Veicolo
+                        </span>
+                        <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                          {claim.warranty.vehicle.make} {claim.warranty.vehicle.model}
+                        </span>
+                      </div>
+                      <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50' />
+                    </>
+                  )}
                   <div className='flex justify-between'>
-                    <span className='text-gray-600 dark:text-gray-400'>Vehicle</span>
-                    <span className='font-medium'>
-                      {claim.warranty.vehicle.make} {claim.warranty.vehicle.model}
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Fornitore
+                    </span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                      {claim.warranty?.provider}
                     </span>
                   </div>
-                  <Separator />
-                </>
-              )}
-              <div className='flex justify-between'>
-                <span className='text-gray-600 dark:text-gray-400'>Provider</span>
-                <span className='font-medium'>{claim.warranty?.provider}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600 dark:text-gray-400'>Max Coverage</span>
-                <span className='font-medium'>
-                  {formatCurrency(claim.warranty?.maxCoverage || 0)}
-                </span>
-              </div>
-              <Separator />
-              <Button
-                variant='outline'
-                className='w-full'
-                onClick={() =>
-                  router.push(
-                    `/dashboard/warranty/${(claim as unknown as { warrantyId: string }).warrantyId}`
-                  )
-                }
-              >
-                View Warranty
-              </Button>
-            </CardContent>
-          </Card>
+                  <div className='flex justify-between'>
+                    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Copertura Max
+                    </span>
+                    <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                      {formatCurrency(claim.warranty?.maxCoverage || 0)}
+                    </span>
+                  </div>
+                  <div className='border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50' />
+                  <AppleButton
+                    variant='secondary'
+                    className='w-full'
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/warranty/${(claim as unknown as { warrantyId: string }).warrantyId}`
+                      )
+                    }
+                  >
+                    Vedi Garanzia
+                  </AppleButton>
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Review Dialog */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Review Claim</DialogTitle>
-            <DialogDescription>Approve or reject this warranty claim</DialogDescription>
+            <DialogTitle>Revisiona Reclamo</DialogTitle>
+            <DialogDescription>Approva o rifiuta questo reclamo di garanzia</DialogDescription>
           </DialogHeader>
           <div className='space-y-4 py-4'>
             {/* Decision Buttons */}
@@ -446,49 +533,57 @@ export default function ClaimDetailPage() {
               <button
                 onClick={() => setReviewDecision('APPROVE')}
                 className={cn(
-                  'p-4 rounded-lg border-2 text-center transition-all',
+                  'p-4 rounded-xl border-2 text-center transition-all min-h-[44px]',
                   reviewDecision === 'APPROVE'
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-green-300'
+                    ? 'border-apple-green bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]'
+                    : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-apple-green/50'
                 )}
               >
                 <Check
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'APPROVE' ? 'text-green-600' : 'text-gray-400'
+                    reviewDecision === 'APPROVE'
+                      ? 'text-[var(--status-success)]'
+                      : 'text-[var(--text-tertiary)]'
                   )}
                 />
                 <p
                   className={cn(
                     'font-medium',
-                    reviewDecision === 'APPROVE' ? 'text-green-700' : 'text-gray-700'
+                    reviewDecision === 'APPROVE'
+                      ? 'text-[var(--status-success)]'
+                      : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   )}
                 >
-                  Approve
+                  Approva
                 </p>
               </button>
               <button
                 onClick={() => setReviewDecision('REJECT')}
                 className={cn(
-                  'p-4 rounded-lg border-2 text-center transition-all',
+                  'p-4 rounded-xl border-2 text-center transition-all min-h-[44px]',
                   reviewDecision === 'REJECT'
-                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-red-300'
+                    ? 'border-[var(--status-error)] bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]'
+                    : 'border-[var(--border-default)]/30 dark:border-[var(--border-default)] hover:border-[var(--status-error)]/50'
                 )}
               >
                 <X
                   className={cn(
                     'h-6 w-6 mx-auto mb-2',
-                    reviewDecision === 'REJECT' ? 'text-red-600' : 'text-gray-400'
+                    reviewDecision === 'REJECT'
+                      ? 'text-[var(--status-error)]'
+                      : 'text-[var(--text-tertiary)]'
                   )}
                 />
                 <p
                   className={cn(
                     'font-medium',
-                    reviewDecision === 'REJECT' ? 'text-red-700' : 'text-gray-700'
+                    reviewDecision === 'REJECT'
+                      ? 'text-[var(--status-error)]'
+                      : 'text-[var(--text-primary)] dark:text-[var(--text-primary)]'
                   )}
                 >
-                  Reject
+                  Rifiuta
                 </p>
               </button>
             </div>
@@ -496,7 +591,12 @@ export default function ClaimDetailPage() {
             {/* Approved Amount (only for approve) */}
             {reviewDecision === 'APPROVE' && (
               <div className='space-y-2'>
-                <Label htmlFor='approvedAmount'>Approved Amount (€)</Label>
+                <Label
+                  htmlFor='approvedAmount'
+                  className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+                >
+                  Importo Approvato (EUR)
+                </Label>
                 <Input
                   id='approvedAmount'
                   type='number'
@@ -505,8 +605,9 @@ export default function ClaimDetailPage() {
                   placeholder='0.00'
                   value={approvedAmount}
                   onChange={e => setApprovedAmount(e.target.value)}
+                  className='h-11 rounded-xl'
                 />
-                <p className='text-xs text-gray-500'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                   Max: {formatCurrency(claim.warranty?.maxCoverage || 0)}
                 </p>
               </div>
@@ -514,30 +615,40 @@ export default function ClaimDetailPage() {
 
             {/* Review Notes */}
             <div className='space-y-2'>
-              <Label htmlFor='notes'>Review Notes</Label>
+              <Label
+                htmlFor='notes'
+                className='text-footnote font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'
+              >
+                Note di Revisione
+              </Label>
               <Textarea
                 id='notes'
                 placeholder={
-                  reviewDecision === 'REJECT' ? 'Reason for rejection...' : 'Additional notes...'
+                  reviewDecision === 'REJECT' ? 'Motivo del rifiuto...' : 'Note aggiuntive...'
                 }
                 value={reviewNotes}
                 onChange={e => setReviewNotes(e.target.value)}
+                className='rounded-xl'
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant='outline' onClick={() => setReviewDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
+            <AppleButton variant='secondary' onClick={() => setReviewDialogOpen(false)}>
+              Annulla
+            </AppleButton>
+            <AppleButton
               onClick={handleReview}
               disabled={
                 !reviewDecision || (reviewDecision === 'APPROVE' && !approvedAmount) || isReviewing
               }
-              className={cn(reviewDecision === 'REJECT' && 'bg-red-600 hover:bg-red-700')}
+              className={cn(
+                reviewDecision === 'REJECT' &&
+                  'bg-[var(--status-error)] hover:bg-[var(--status-error)]'
+              )}
             >
-              {isReviewing ? 'Processing...' : 'Confirm'}
-            </Button>
+              {isReviewing ? <Loader2 className='w-4 h-4 animate-spin mr-2' /> : null}
+              Conferma
+            </AppleButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

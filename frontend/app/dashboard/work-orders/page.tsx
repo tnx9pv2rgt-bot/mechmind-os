@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { motion } from 'framer-motion';
 import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import { AppleButton } from '@/components/ui/apple-button';
@@ -9,90 +11,136 @@ import { Input } from '@/components/ui/input';
 import {
   ClipboardList,
   Plus,
-  Wrench,
-  CheckCircle,
+  Eye,
   Search,
   Filter,
-  Loader2,
-  Eye,
-  Play,
-  FileText,
+  Clock,
   AlertCircle,
-  Activity,
+  Loader2,
+  CheckCircle,
+  Wrench,
+  TrendingUp,
+  PlayCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
+import { formatCurrency, formatDate } from '@/lib/utils/format';
 
+// =============================================================================
+// Types & Config
+// =============================================================================
 interface WorkOrder {
   id: string;
   woNumber: string;
-  vehicleMake: string;
-  vehicleModel: string;
-  vehiclePlate: string;
-  customerName: string;
-  status: WorkOrderStatus;
+  status: string;
+  priority?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
+  customerName?: string;
+  technicianName?: string;
   totalCost: number;
+  estimatedHours?: number;
   createdAt: string;
+  updatedAt: string;
 }
 
-type WorkOrderStatus =
-  | 'OPEN'
-  | 'PENDING'
-  | 'IN_PROGRESS'
-  | 'WAITING_PARTS'
-  | 'READY'
-  | 'COMPLETED'
-  | 'INVOICED';
+interface WorkOrdersResponse {
+  data: WorkOrder[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
-type StatusFilterValue = 'ALL' | WorkOrderStatus;
+type WorkOrderStatus = 'ALL' | 'DRAFT' | 'OPEN' | 'IN_PROGRESS' | 'QC' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED';
 
-const statusConfig: Record<WorkOrderStatus, { color: string; bg: string; label: string }> = {
+const statusConfig: Record<string, { color: string; bg: string; label: string }> = {
+  DRAFT: {
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]',
+    bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]',
+    label: 'Bozza',
+  },
   OPEN: {
-    color: 'text-gray-700 dark:text-gray-300',
-    bg: 'bg-gray-200 dark:bg-gray-700',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
     label: 'Aperto',
   },
-  PENDING: {
-    color: 'text-yellow-700 dark:text-yellow-300',
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-    label: 'In Attesa',
-  },
   IN_PROGRESS: {
-    color: 'text-blue-700 dark:text-blue-300',
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
     label: 'In Lavorazione',
   },
+  QC: {
+    color: 'text-[var(--brand)] dark:text-[var(--brand)]',
+    bg: 'bg-[var(--brand)]/10 dark:bg-[var(--brand-subtle)]',
+    label: 'Controllo Qualita',
+  },
+  COMPLETED: {
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
+    label: 'Completato',
+  },
+  DELIVERED: {
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info)]/10 dark:bg-[var(--status-info)]/30/40',
+    label: 'Consegnato',
+  },
+  CANCELLED: {
+    color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
+    label: 'Annullato',
+  },
+  PENDING: {
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
+    label: 'In Attesa',
+  },
   WAITING_PARTS: {
-    color: 'text-orange-700 dark:text-orange-300',
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
+    color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
     label: 'Attesa Ricambi',
   },
   READY: {
-    color: 'text-green-700 dark:text-green-300',
-    bg: 'bg-green-100 dark:bg-green-900/40',
+    color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
     label: 'Pronto',
   },
-  COMPLETED: {
-    color: 'text-purple-700 dark:text-purple-300',
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
-    label: 'Completato',
-  },
   INVOICED: {
-    color: 'text-teal-700 dark:text-teal-300',
-    bg: 'bg-teal-100 dark:bg-teal-900/40',
+    color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    bg: 'bg-[var(--status-info)]/10 dark:bg-[var(--status-info)]/30/40',
     label: 'Fatturato',
   },
 };
 
-const statusOptions: { value: StatusFilterValue; label: string }[] = [
+const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  LOW: { label: 'Bassa', color: 'text-[var(--text-primary)] dark:text-[var(--text-primary)]', bg: 'bg-[var(--border-default)] dark:bg-[var(--border-default)]' },
+  NORMAL: { label: 'Normale', color: 'text-[var(--status-info)] dark:text-[var(--status-info)]', bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]' },
+  HIGH: { label: 'Alta', color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]', bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]' },
+  URGENT: { label: 'Urgente', color: 'text-[var(--status-error)] dark:text-[var(--status-error)]', bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]' },
+};
+
+const statusOptions: { value: WorkOrderStatus; label: string }[] = [
   { value: 'ALL', label: 'Tutti gli stati' },
+  { value: 'DRAFT', label: 'Bozza' },
   { value: 'OPEN', label: 'Aperto' },
-  { value: 'PENDING', label: 'In Attesa' },
   { value: 'IN_PROGRESS', label: 'In Lavorazione' },
-  { value: 'WAITING_PARTS', label: 'Attesa Ricambi' },
-  { value: 'READY', label: 'Pronto' },
+  { value: 'QC', label: 'Controllo Qualita' },
   { value: 'COMPLETED', label: 'Completato' },
-  { value: 'INVOICED', label: 'Fatturato' },
+  { value: 'DELIVERED', label: 'Consegnato' },
+  { value: 'CANCELLED', label: 'Annullato' },
 ];
 
+const NEXT_STATUS: Record<string, string> = {
+  DRAFT: 'OPEN',
+  OPEN: 'IN_PROGRESS',
+  IN_PROGRESS: 'QC',
+  QC: 'COMPLETED',
+  COMPLETED: 'DELIVERED',
+};
+
+// =============================================================================
+// Animation Variants
+// =============================================================================
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -120,134 +168,115 @@ const listItemVariants = {
   },
 };
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
-}
-
-export default function WorkOrdersPage() {
+export default function WorkOrdersPage(): React.ReactElement {
   const router = useRouter();
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('ALL');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<WorkOrderStatus>('ALL');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  const fetchData = useCallback(() => {
-    setIsLoading(true);
-    fetch('/api/work-orders')
-      .then(r => r.json())
-      .then(res => {
-        const list = res.data || res || [];
-        setWorkOrders(Array.isArray(list) ? list : []);
-      })
-      .catch(() => {
-        setWorkOrders([]);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const handleStart = async (id: string) => {
-    setActionLoading(id);
+  const buildUrl = useCallback((): string => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(PAGE_SIZE));
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (statusFilter !== 'ALL') params.set('status', statusFilter);
+    return `/api/dashboard/work-orders?${params.toString()}`;
+  }, [page, debouncedSearch, statusFilter]);
+
+  const { data: rawData, error, isLoading, mutate } = useSWR<WorkOrdersResponse | WorkOrder[]>(
+    buildUrl(),
+    fetcher,
+    { onErrorRetry: () => {} },
+  );
+
+  const workOrders: WorkOrder[] = (() => {
+    if (!rawData) return [];
+    if (Array.isArray(rawData)) return rawData;
+    if ('data' in rawData && Array.isArray(rawData.data)) return rawData.data;
+    return [];
+  })();
+
+  const total = (() => {
+    if (!rawData) return 0;
+    if (Array.isArray(rawData)) return rawData.length;
+    if ('total' in rawData) return rawData.total;
+    return workOrders.length;
+  })();
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleChangeStatus = async (woId: string, newStatus: string): Promise<void> => {
+    setActionLoading(woId);
     try {
-      const res = await fetch(`/api/work-orders/${id}/start`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore avvio');
-      fetchData();
-    } catch {
-      // silent
+      const res = await fetch(`/api/dashboard/work-orders/${woId}/transition`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error?.message || json.message || 'Transizione non consentita');
+      }
+      toast.success(`Stato aggiornato a "${statusConfig[newStatus]?.label || newStatus}"`);
+      mutate();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Errore durante il cambio stato');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleComplete = async (id: string) => {
-    setActionLoading(id);
-    try {
-      const res = await fetch(`/api/work-orders/${id}/complete`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore completamento');
-      fetchData();
-    } catch {
-      // silent
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleInvoice = async (id: string) => {
-    setActionLoading(id);
-    try {
-      const res = await fetch(`/api/work-orders/${id}/invoice`, { method: 'POST' });
-      if (!res.ok) throw new Error('Errore fatturazione');
-      fetchData();
-    } catch {
-      // silent
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const filteredWorkOrders = workOrders.filter(wo => {
-    const matchesSearch =
-      !searchQuery ||
-      wo.woNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wo.vehiclePlate?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || wo.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Compute stats client-side
-  const activeCount = workOrders.filter(
-    wo =>
-      wo.status === 'OPEN' ||
-      wo.status === 'PENDING' ||
-      wo.status === 'IN_PROGRESS' ||
-      wo.status === 'WAITING_PARTS' ||
-      wo.status === 'READY'
-  ).length;
-  const inProgressCount = workOrders.filter(wo => wo.status === 'IN_PROGRESS').length;
-  const completedCount = workOrders.filter(
-    wo => wo.status === 'COMPLETED' || wo.status === 'INVOICED'
-  ).length;
-  const totalCount = workOrders.length;
+  // KPI counts
+  const openCount = workOrders.filter(w => w.status === 'OPEN').length;
+  const inProgressCount = workOrders.filter(w => w.status === 'IN_PROGRESS').length;
+  const completedCount = workOrders.filter(w => w.status === 'COMPLETED').length;
 
   const statCards = [
     {
-      label: 'Attivi',
-      value: String(activeCount),
-      icon: Activity,
-      color: 'bg-apple-blue',
+      label: 'Totale OdL',
+      value: String(total),
+      icon: ClipboardList,
+      color: 'bg-[var(--brand)]',
+    },
+    {
+      label: 'Aperti',
+      value: String(openCount),
+      icon: AlertCircle,
+      color: 'bg-[var(--status-warning)]',
     },
     {
       label: 'In Lavorazione',
       value: String(inProgressCount),
-      icon: Wrench,
-      color: 'bg-apple-orange',
+      icon: Clock,
+      color: 'bg-[var(--status-success)]',
     },
     {
       label: 'Completati',
       value: String(completedCount),
       icon: CheckCircle,
-      color: 'bg-apple-green',
-    },
-    {
-      label: 'Totale',
-      value: String(totalCount),
-      icon: ClipboardList,
-      color: 'bg-purple-500',
+      color: 'bg-[var(--brand)]',
     },
   ];
 
   return (
     <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
+      <header className=''>
         <div className='px-8 py-5 flex items-center justify-between'>
           <div>
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Ordini di Lavoro</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Ordini di Lavoro</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>
               Gestisci le lavorazioni della tua officina
             </p>
           </div>
@@ -255,20 +284,20 @@ export default function WorkOrdersPage() {
             icon={<Plus className='h-4 w-4' />}
             onClick={() => router.push('/dashboard/work-orders/new')}
           >
-            Nuovo Ordine
+            Nuovo OdL
           </AppleButton>
         </div>
       </header>
 
       <motion.div
         className='p-8 space-y-6'
-        initial='hidden'
+        initial={false}
         animate='visible'
         variants={containerVariants}
       >
         {/* Stats */}
         <motion.div
-          className='grid grid-cols-1 sm:grid-cols-4 gap-bento'
+          className='grid grid-cols-2 lg:grid-cols-4 gap-bento'
           variants={containerVariants}
         >
           {statCards.map(stat => (
@@ -279,13 +308,13 @@ export default function WorkOrdersPage() {
                     <div
                       className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
                     >
-                      <stat.icon className='h-5 w-5 text-white' />
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
                     </div>
                   </div>
-                  <p className='text-title-1 font-bold text-apple-dark dark:text-[#ececec]'>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                     {isLoading ? '...' : stat.value}
                   </p>
-                  <p className='text-footnote text-apple-gray dark:text-[#636366]'>{stat.label}</p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
@@ -298,20 +327,22 @@ export default function WorkOrdersPage() {
             <AppleCardContent>
               <div className='flex flex-col sm:flex-row gap-4'>
                 <div className='relative flex-1'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
                   <Input
-                    placeholder='Cerca per numero ordine o targa veicolo...'
+                    placeholder='Cerca per numero OdL, cliente, targa...'
+                    aria-label='Cerca ordini di lavoro'
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className='pl-10'
                   />
                 </div>
                 <div className='relative'>
-                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-apple-gray pointer-events-none' />
+                  <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
                   <select
                     value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value as StatusFilterValue)}
-                    className='h-10 pl-10 pr-4 rounded-md border border-gray-300 dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-sm text-gray-900 dark:text-[#ececec] focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none cursor-pointer'
+                    onChange={e => { setStatusFilter(e.target.value as WorkOrderStatus); setPage(1); }}
+                    aria-label='Filtra per stato ordine di lavoro'
+                    className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
                   >
                     {statusOptions.map(opt => (
                       <option key={opt.value} value={opt.value}>
@@ -325,24 +356,38 @@ export default function WorkOrdersPage() {
           </AppleCard>
         </motion.div>
 
-        {/* Work Order List */}
+        {/* Work Orders List */}
         <motion.div variants={listItemVariants}>
           <AppleCard hover={false}>
             <AppleCardHeader>
-              <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                 Elenco Ordini di Lavoro
               </h2>
             </AppleCardHeader>
             <AppleCardContent>
-              {isLoading ? (
-                <div className='flex items-center justify-center py-12'>
-                  <Loader2 className='h-8 w-8 animate-spin text-apple-blue' />
+              {error ? (
+                <div role='alert' className='flex flex-col items-center justify-center py-12 text-center'>
+                  <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                    Impossibile caricare gli ordini di lavoro
+                  </p>
+                  <AppleButton
+                    variant='ghost'
+                    className='mt-4'
+                    onClick={() => mutate()}
+                  >
+                    Riprova
+                  </AppleButton>
                 </div>
-              ) : filteredWorkOrders.length === 0 ? (
+              ) : isLoading ? (
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
+                </div>
+              ) : workOrders.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-12 text-center'>
-                  <AlertCircle className='h-12 w-12 text-apple-gray/40 mb-4' />
-                  <p className='text-body text-apple-gray dark:text-[#636366]'>
-                    Nessun ordine di lavoro trovato
+                  <AlertCircle className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                    Nessun ordine di lavoro. Crea il primo ordine.
                   </p>
                   <AppleButton
                     variant='ghost'
@@ -353,93 +398,96 @@ export default function WorkOrdersPage() {
                   </AppleButton>
                 </div>
               ) : (
-                <motion.div
-                  className='space-y-3'
-                  variants={containerVariants}
-                  initial='hidden'
-                  animate='visible'
-                >
-                  {filteredWorkOrders.map((wo, index) => {
-                    const status = statusConfig[wo.status] || statusConfig.OPEN;
-                    return (
-                      <motion.div
-                        key={wo.id}
-                        className='flex items-center justify-between p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535] hover:bg-white dark:hover:bg-[#3a3a3a] hover:shadow-apple transition-all duration-300'
-                        variants={listItemVariants}
-                        custom={index}
-                        whileHover={{ scale: 1.005, x: 4 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className='flex items-center gap-4'>
-                          <div className='w-12 h-12 rounded-xl bg-apple-blue/10 flex items-center justify-center'>
-                            <ClipboardList className='h-6 w-6 text-apple-blue' />
-                          </div>
-                          <div>
-                            <p className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                              {wo.woNumber}
-                            </p>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366]'>
-                              {wo.vehicleMake} {wo.vehicleModel} &bull; {wo.vehiclePlate}
-                            </p>
-                          </div>
-                        </div>
-                        <div className='flex items-center gap-4'>
-                          <span
-                            className={`text-[11px] font-semibold uppercase px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
+                <div className='overflow-x-auto'>
+                  <table className='w-full'>
+                    <thead>
+                      <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+                        <th className='text-left py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>N. OdL</th>
+                        <th className='text-left py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Cliente / Veicolo</th>
+                        <th className='text-center py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Priorità</th>
+                        <th className='text-center py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Stato</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Importo</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Data</th>
+                        <th className='text-right py-3 px-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Azioni</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workOrders.map((wo) => {
+                        const status = statusConfig[wo.status] || statusConfig.DRAFT;
+                        const priority = PRIORITY_CONFIG[wo.priority || 'NORMAL'] || PRIORITY_CONFIG.NORMAL;
+                        const nextStatus = NEXT_STATUS[wo.status];
+                        const nextLabel = nextStatus ? statusConfig[nextStatus]?.label : null;
+                        return (
+                          <tr
+                            key={wo.id}
+                            className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors cursor-pointer'
+                            onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
                           >
-                            {status.label}
-                          </span>
-                          <p className='text-body font-semibold text-apple-dark dark:text-[#ececec] min-w-[100px] text-right'>
-                            {formatCurrency(wo.totalCost ?? 0)}
-                          </p>
-                          <div className='flex items-center gap-2'>
-                            <AppleButton
-                              variant='ghost'
-                              size='sm'
-                              icon={<Eye className='h-3.5 w-3.5' />}
-                              onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
-                            >
-                              Visualizza
-                            </AppleButton>
-                            {(wo.status === 'PENDING' || wo.status === 'OPEN') && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<Play className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleStart(wo.id)}
-                              >
-                                Avvia
-                              </AppleButton>
-                            )}
-                            {wo.status === 'IN_PROGRESS' && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<CheckCircle className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleComplete(wo.id)}
-                              >
-                                Completa
-                              </AppleButton>
-                            )}
-                            {(wo.status === 'COMPLETED' || wo.status === 'READY') && (
-                              <AppleButton
-                                variant='secondary'
-                                size='sm'
-                                icon={<FileText className='h-3.5 w-3.5' />}
-                                loading={actionLoading === wo.id}
-                                onClick={() => handleInvoice(wo.id)}
-                              >
-                                Fattura
-                              </AppleButton>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
+                            <td className='py-3.5 px-3'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                {wo.woNumber || `#${wo.id.slice(0, 8)}`}
+                              </p>
+                            </td>
+                            <td className='py-3.5 px-3'>
+                              <p className='text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                {wo.customerName || 'Cliente'}
+                              </p>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                {wo.vehiclePlate}{wo.vehicleMake ? ` · ${wo.vehicleMake} ${wo.vehicleModel || ''}` : ''}
+                              </p>
+                            </td>
+                            <td className='py-3.5 px-3 text-center'>
+                              <span className={`inline-flex text-footnote font-medium px-2.5 py-1 rounded-full ${priority.bg} ${priority.color}`}>
+                                {priority.label}
+                              </span>
+                            </td>
+                            <td className='py-3.5 px-3 text-center'>
+                              <span className={`inline-flex text-footnote font-medium px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}>
+                                {status.label}
+                              </span>
+                            </td>
+                            <td className='py-3.5 px-3 text-right'>
+                              <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] tabular-nums'>
+                                {formatCurrency(wo.totalCost)}
+                              </p>
+                            </td>
+                            <td className='py-3.5 px-3 text-right'>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] tabular-nums'>
+                                {new Date(wo.createdAt).toLocaleDateString('it-IT')}
+                              </p>
+                            </td>
+                            <td className='py-3.5 px-3 text-right' onClick={(e) => e.stopPropagation()}>
+                              <div className='flex items-center justify-end gap-2'>
+                                <AppleButton
+                                  variant='ghost'
+                                  size='sm'
+                                  icon={<Eye className='h-3.5 w-3.5' />}
+                                  onClick={() => router.push(`/dashboard/work-orders/${wo.id}`)}
+                                >
+                                  Visualizza
+                                </AppleButton>
+                                {nextStatus && nextLabel && (
+                                  <AppleButton
+                                    variant='secondary'
+                                    size='sm'
+                                    icon={<PlayCircle className='h-3.5 w-3.5' />}
+                                    loading={actionLoading === wo.id}
+                                    onClick={() => handleChangeStatus(wo.id, nextStatus)}
+                                  >
+                                    {nextLabel}
+                                  </AppleButton>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <div className='mt-4'>
+                    <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                  </div>
+                </div>
               )}
             </AppleCardContent>
           </AppleCard>

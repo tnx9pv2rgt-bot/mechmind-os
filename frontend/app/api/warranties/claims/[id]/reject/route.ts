@@ -1,96 +1,14 @@
-/**
- * POST /api/warranties/claims/[id]/reject
- * Reject a claim
- */
+import { NextRequest } from 'next/server';
+import { proxyToNestJS } from '@/lib/auth/api-proxy';
 
-import { NextRequest, NextResponse } from 'next/server'
-import { 
-  warrantyService,
-  WarrantyError,
-  InvalidClaimDataError,
-  ClaimNotFoundError 
-} from '@/lib/services/warrantyService'
+export const dynamic = 'force-dynamic';
 
 interface RouteParams {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
-    const { id } = await params
-    const body = await request.json()
-
-    // Validate required fields
-    const { reviewedBy } = body
-
-    if (!reviewedBy) {
-      return NextResponse.json(
-        { 
-          error: 'Missing required field',
-          details: 'reviewedBy is required'
-        },
-        { status: 400 }
-      )
-    }
-
-    const claim = await warrantyService.reviewClaim(
-      id,
-      'REJECT',
-      undefined,
-      body.notes,
-      reviewedBy
-    )
-
-    return NextResponse.json(
-      { 
-        success: true,
-        data: claim 
-      },
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Reject claim error:', error)
-
-    if (error instanceof ClaimNotFoundError) {
-      return NextResponse.json(
-        { 
-          error: error.message,
-          code: error.code
-        },
-        { status: 404 }
-      )
-    }
-
-    if (error instanceof InvalidClaimDataError) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed',
-          details: error.message,
-          code: error.code
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof WarrantyError) {
-      return NextResponse.json(
-        { 
-          error: error.message,
-          code: error.code
-        },
-        { status: error.statusCode || 500 }
-      )
-    }
-
-    return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
+export async function POST(req: NextRequest, { params }: RouteParams): Promise<Response> {
+  const { id } = await params;
+  const body: unknown = await req.json();
+  return proxyToNestJS({ backendPath: `v1/inspections/findings/${id}`, method: 'PATCH', body });
 }

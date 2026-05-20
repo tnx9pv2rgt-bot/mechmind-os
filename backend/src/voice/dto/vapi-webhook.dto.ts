@@ -74,6 +74,7 @@ export class VapiWebhookDto {
 
   @ApiProperty({
     description: 'Tenant ID',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsUUID()
@@ -123,6 +124,7 @@ export class VapiWebhookDto {
   @ApiPropertyOptional({
     description: 'Additional metadata',
     type: 'object',
+    additionalProperties: true,
   })
   @IsOptional()
   @IsObject()
@@ -151,6 +153,7 @@ export class VoiceWebhookResponseDto {
   @ApiPropertyOptional({
     description: 'Escalation info if escalated',
     type: 'object',
+    additionalProperties: true,
   })
   escalation?: {
     escalated: boolean;

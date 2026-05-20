@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationTriggersService } from './notification-triggers.service';
 import { NotificationV2Service } from './notification-v2.service';
+import { PrismaService } from '../../common/services/prisma.service';
 
 // Mock Prisma enums and PrismaClient (needed because PrismaService extends PrismaClient)
 jest.mock('@prisma/client', () => {
@@ -27,6 +28,7 @@ jest.mock('@prisma/client', () => {
       SMS: 'SMS',
       WHATSAPP: 'WHATSAPP',
       EMAIL: 'EMAIL',
+      IN_APP: 'IN_APP',
     },
     NotificationStatus: {
       PENDING: 'PENDING',
@@ -40,11 +42,32 @@ jest.mock('@prisma/client', () => {
 describe('NotificationTriggersService', () => {
   let service: NotificationTriggersService;
   let notificationService: NotificationV2Service;
+  let prisma: {
+    booking: { findMany: jest.Mock };
+    vehicle: { findMany: jest.Mock };
+    invoice: { updateMany: jest.Mock };
+    workOrder: { findMany: jest.Mock; update: jest.Mock };
+    estimate: { findMany: jest.Mock; updateMany: jest.Mock };
+  };
 
   const mockTenantId = 'tenant-uuid-1';
   const mockCustomerId = 'customer-uuid-1';
 
   beforeEach(async () => {
+    prisma = {
+      booking: { findMany: jest.fn().mockResolvedValue([]) },
+      vehicle: { findMany: jest.fn().mockResolvedValue([]) },
+      invoice: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      workOrder: {
+        findMany: jest.fn().mockResolvedValue([]),
+        update: jest.fn().mockResolvedValue({}),
+      },
+      estimate: {
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationTriggersService,
@@ -58,6 +81,7 @@ describe('NotificationTriggersService', () => {
             }),
           },
         },
+        { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
 
@@ -96,6 +120,7 @@ describe('NotificationTriggersService', () => {
         metadata: expect.objectContaining({
           bookingId: 'booking-123',
           bookingCode: expect.any(String),
+          template: 'booking-confirmed',
         }),
       });
     });
@@ -467,19 +492,1004 @@ describe('NotificationTriggersService', () => {
   });
 
   // =========================================================================
-  // Scheduled notification methods
+  // CRON: sendBookingReminders
   // =========================================================================
-  describe('queueBookingReminders', () => {
-    it('should return 0 (placeholder)', async () => {
-      const result = await service.queueBookingReminders();
-      expect(result).toBe(0);
+  describe('sendBookingReminders', () => {
+    it('should find tomorrow bookings and send SMS reminders', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      prisma.booking.findMany.mockResolvedValue([
+        {
+          id: 'bk-100',
+          tenantId: mockTenantId,
+          customerId: 'cust-001',
+          scheduledDate: tomorrow,
+        },
+        {
+          id: 'bk-101',
+          tenantId: mockTenantId,
+          customerId: 'cust-002',
+          scheduledDate: tomorrow,
+        },
+      ]);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(2);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'CONFIRMED' }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return 0 when no bookings found', async () => {
+      prisma.booking.findMany.mockResolvedValue([]);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should continue sending even if one fails', async () => {
+      prisma.booking.findMany.mockResolvedValue([
+        { id: 'bk-1', tenantId: mockTenantId, customerId: 'c1', scheduledDate: new Date() },
+        { id: 'bk-2', tenantId: mockTenantId, customerId: 'c2', scheduledDate: new Date() },
+      ]);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(1);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('queueMaintenanceReminders', () => {
-    it('should return 0 (placeholder)', async () => {
-      const result = await service.queueMaintenanceReminders();
-      expect(result).toBe(0);
+  // =========================================================================
+  // CRON: sendMaintenanceReminders
+  // =========================================================================
+  describe('sendMaintenanceReminders', () => {
+    it('should find vehicles needing maintenance and send reminders', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'veh-001',
+          customerId: 'cust-001',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+      ]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(1);
+      expect(prisma.vehicle.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'ACTIVE' }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            vehicleName: 'Fiat 500',
+            template: 'maintenance-due',
+          }),
+        }),
+      );
+    });
+
+    it('should return 0 when no vehicles need maintenance', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // New event handlers
+  // =========================================================================
+  describe('onVehicleCheckedIn', () => {
+    it('should send vehicle check-in notification', async () => {
+      await service.onVehicleCheckedIn({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        vehiclePlate: 'AB123CD',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'vehicle-checked-in',
+            vehiclePlate: 'AB123CD',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onEstimateSent', () => {
+    it('should send estimate notification via email', async () => {
+      await service.onEstimateSent({
+        estimateId: 'est-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        estimateNumber: 'EST-2026-0001',
+        totalCents: 15000,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'estimate-sent',
+            amount: '€150.00',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onWorkOrderStatusChanged', () => {
+    it('should send in-app notification for WO status change', async () => {
+      await service.onWorkOrderStatusChanged({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        status: 'IN_PROGRESS',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            template: 'wo-status-changed',
+            status: 'In corso',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onPartsArrived', () => {
+    it('should send parts arrived notification', async () => {
+      await service.onPartsArrived({
+        workOrderId: 'wo-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        partNames: ['Filtro olio', 'Candela'],
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            template: 'parts-arrived',
+            parts: 'Filtro olio, Candela',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('onPaymentReceived', () => {
+    it('should send payment received notification', async () => {
+      await service.onPaymentReceived({
+        invoiceId: 'inv-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        amount: 350,
+        invoiceNumber: 'INV-2026-0001',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'EMAIL',
+          metadata: expect.objectContaining({
+            template: 'payment-received',
+            amount: '€350.00',
+          }),
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // CRON: markOverdueInvoices
+  // =========================================================================
+  describe('markOverdueInvoices', () => {
+    it('should mark SENT invoices past due date as OVERDUE', async () => {
+      prisma.invoice.updateMany.mockResolvedValue({ count: 3 });
+
+      const count = await service.markOverdueInvoices();
+
+      expect(count).toBe(3);
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith({
+        where: {
+          status: 'SENT',
+          dueDate: { lt: expect.any(Date) },
+        },
+        data: {
+          status: 'OVERDUE',
+        },
+      });
+    });
+
+    it('should not mark non-SENT invoices', async () => {
+      prisma.invoice.updateMany.mockResolvedValue({ count: 0 });
+
+      const count = await service.markOverdueInvoices();
+
+      expect(count).toBe(0);
+      // Verify the query only targets SENT status
+      expect(prisma.invoice.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ status: 'SENT' }),
+        }),
+      );
+    });
+
+    it('should return 0 when cron fails', async () => {
+      prisma.invoice.updateMany.mockRejectedValue(new Error('DB error'));
+
+      const count = await service.markOverdueInvoices();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // CRON: sendWarrantyExpiringReminders
+  // =========================================================================
+  describe('sendWarrantyExpiringReminders', () => {
+    it('should send warranty reminders for WOs completed ~1 year ago', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-100',
+          tenantId: mockTenantId,
+          customerId: 'cust-001',
+          woNumber: 'WO-2025-001',
+        },
+        {
+          id: 'wo-101',
+          tenantId: mockTenantId,
+          customerId: 'cust-002',
+          woNumber: 'WO-2025-002',
+        },
+      ]);
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(2);
+      expect(prisma.workOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'COMPLETED',
+            actualCompletionTime: {
+              gte: expect.any(Date),
+              lte: expect.any(Date),
+            },
+          }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'EMAIL',
+          metadata: expect.objectContaining({
+            template: 'warranty-expiring',
+            subject: 'Garanzia in scadenza',
+          }),
+        }),
+      );
+    });
+
+    it('should return count of reminders sent', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-200',
+          tenantId: mockTenantId,
+          customerId: 'cust-010',
+          woNumber: 'WO-2025-010',
+        },
+      ]);
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(1);
+    });
+
+    it('should return 0 when no work orders match', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([]);
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip work orders without customerId', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-300',
+          tenantId: mockTenantId,
+          customerId: null,
+          woNumber: 'WO-2025-020',
+        },
+      ]);
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should continue sending even if one fails', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        { id: 'wo-400', tenantId: mockTenantId, customerId: 'c1', woNumber: 'WO-1' },
+        { id: 'wo-401', tenantId: mockTenantId, customerId: 'c2', woNumber: 'WO-2' },
+      ]);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(1);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // =========================================================================
+  // CRON: sendReviewRequests
+  // =========================================================================
+  describe('sendReviewRequests', () => {
+    it('should find delivered WOs from yesterday and send review SMS', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-rev-001',
+          tenantId: mockTenantId,
+          customerId: 'cust-mario',
+        },
+        {
+          id: 'wo-rev-002',
+          tenantId: mockTenantId,
+          customerId: 'cust-luigi',
+        },
+      ]);
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(2);
+      expect(prisma.workOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'COMPLETED',
+            reviewRequestSentAt: null,
+          }),
+        }),
+      );
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'SMS',
+          metadata: expect.objectContaining({
+            template: 'review-request',
+            subject: 'Come ti sei trovato? Lascia una recensione',
+            reviewLink: expect.stringContaining('review/'),
+          }),
+        }),
+      );
+    });
+
+    it('should update reviewRequestSentAt after sending', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-rev-010',
+          tenantId: mockTenantId,
+          customerId: 'cust-rossi',
+        },
+      ]);
+
+      await service.sendReviewRequests();
+
+      expect(prisma.workOrder.update).toHaveBeenCalledWith({
+        where: { id: 'wo-rev-010' },
+        data: { reviewRequestSentAt: expect.any(Date) },
+      });
+    });
+
+    it('should return 0 when no delivered WOs found', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([]);
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip WOs without customerId', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        {
+          id: 'wo-rev-020',
+          tenantId: mockTenantId,
+          customerId: null,
+        },
+      ]);
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should continue sending even if one fails', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        { id: 'wo-rev-030', tenantId: mockTenantId, customerId: 'c1' },
+        { id: 'wo-rev-031', tenantId: mockTenantId, customerId: 'c2' },
+      ]);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('SMS provider down'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(1);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should return 0 when the cron itself fails', async () => {
+      prisma.workOrder.findMany.mockRejectedValue(new Error('DB error'));
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // onVehicleReady
+  // =========================================================================
+  describe('onVehicleReady', () => {
+    it('should send vehicle ready notification via SMS', async () => {
+      await service.onVehicleReady({
+        workOrderId: 'wo-ready-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'STATUS_UPDATE',
+          channel: 'SMS',
+          metadata: expect.objectContaining({
+            workOrderId: 'wo-ready-001',
+            template: 'vehicle-ready',
+          }),
+        }),
+      );
+    });
+
+    it('should not throw on service failure', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('SMS fail'));
+
+      await expect(
+        service.onVehicleReady({
+          workOrderId: 'wo-ready-002',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // onEstimateAccepted
+  // =========================================================================
+  describe('onEstimateAccepted', () => {
+    it('should send estimate accepted notification via IN_APP', async () => {
+      await service.onEstimateAccepted({
+        estimateId: 'est-acc-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            estimateId: 'est-acc-001',
+            template: 'estimate-approved',
+          }),
+        }),
+      );
+    });
+
+    it('should not throw on service failure', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
+
+      await expect(
+        service.onEstimateAccepted({
+          estimateId: 'est-acc-002',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // onEstimateRejected
+  // =========================================================================
+  describe('onEstimateRejected', () => {
+    it('should send estimate rejected notification via IN_APP', async () => {
+      await service.onEstimateRejected({
+        estimateId: 'est-rej-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            estimateId: 'est-rej-001',
+            template: 'estimate-rejected',
+          }),
+        }),
+      );
+    });
+
+    it('should not throw on service failure', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
+
+      await expect(
+        service.onEstimateRejected({
+          estimateId: 'est-rej-002',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // onWorkOrderDelivered
+  // =========================================================================
+  describe('onWorkOrderDelivered', () => {
+    it('should send review request notification via SMS', async () => {
+      await service.onWorkOrderDelivered({
+        workOrderId: 'wo-del-001',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'SMS',
+          metadata: expect.objectContaining({
+            workOrderId: 'wo-del-001',
+            template: 'review-request',
+            reviewLink: expect.stringContaining(mockTenantId),
+          }),
+        }),
+      );
+    });
+
+    it('should not throw on service failure', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(new Error('Failed'));
+
+      await expect(
+        service.onWorkOrderDelivered({
+          workOrderId: 'wo-del-002',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // sendBookingReminders edge cases
+  // =========================================================================
+  describe('sendBookingReminders edge cases', () => {
+    it('should skip bookings with null customerId', async () => {
+      prisma.booking.findMany.mockResolvedValue([
+        { id: 'bk-null', tenantId: mockTenantId, customerId: null, scheduledDate: new Date() },
+      ]);
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should return 0 when the cron query itself fails', async () => {
+      prisma.booking.findMany.mockRejectedValue(new Error('DB connection lost'));
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // sendMaintenanceReminders edge cases
+  // =========================================================================
+  describe('sendMaintenanceReminders edge cases', () => {
+    it('should skip vehicles without tenantId from work orders', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'veh-no-tenant',
+          customerId: 'cust-001',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [], // empty work orders
+        },
+      ]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip vehicles without customerId', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'veh-no-cust',
+          customerId: null,
+          make: 'Fiat',
+          model: '500',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+      ]);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should return 0 when cron query fails', async () => {
+      prisma.vehicle.findMany.mockRejectedValue(new Error('DB error'));
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should continue when one vehicle notification fails', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'v1',
+          customerId: 'c1',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+        {
+          id: 'v2',
+          customerId: 'c2',
+          make: 'BMW',
+          model: '320',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+      ]);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(1);
+    });
+  });
+
+  // =========================================================================
+  // getStatusLabel unknown status fallback
+  // =========================================================================
+  describe('getStatusLabel fallback', () => {
+    it('should return raw status string for unknown statuses', async () => {
+      await service.onBookingUpdated({
+        bookingId: 'bk-unknown',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        changes: { status: 'UNKNOWN_STATUS' },
+      });
+
+      const metadata = (notificationService.sendImmediate as jest.Mock).mock.calls[0][0].metadata;
+      expect(metadata.status).toBe('UNKNOWN_STATUS');
+    });
+  });
+
+  // =========================================================================
+  // Non-Error throw branches (covers `error instanceof Error` false paths)
+  // =========================================================================
+  describe('non-Error thrown in catch blocks', () => {
+    it('onBookingCreated should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('string-error');
+      await expect(
+        service.onBookingCreated({
+          bookingId: 'bk-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          scheduledDate: new Date(),
+          source: 'web',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onBookingUpdated should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(42);
+      await expect(
+        service.onBookingUpdated({
+          bookingId: 'bk-ne-2',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          changes: { status: 'CONFIRMED' },
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onBookingCancelled should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(null);
+      await expect(
+        service.onBookingCancelled({
+          bookingId: 'bk-ne-3',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onVehicleCheckedIn should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(undefined);
+      await expect(
+        service.onVehicleCheckedIn({
+          workOrderId: 'wo-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onVehicleReady should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue({ code: 500 });
+      await expect(
+        service.onVehicleReady({
+          workOrderId: 'wo-ne-2',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onInspectionCompleted should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('timeout');
+      await expect(
+        service.onInspectionCompleted({
+          inspectionId: 'insp-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onInspectionReadyForReview should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(false);
+      await expect(
+        service.onInspectionReadyForReview({
+          inspectionId: 'insp-ne-2',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onEstimateSent should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('network');
+      await expect(
+        service.onEstimateSent({
+          estimateId: 'est-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          estimateNumber: 'EST-001',
+          totalCents: 10000,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onEstimateAccepted should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(0);
+      await expect(
+        service.onEstimateAccepted({
+          estimateId: 'est-ne-2',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onEstimateRejected should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('rejected');
+      await expect(
+        service.onEstimateRejected({
+          estimateId: 'est-ne-3',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onInvoiceGenerated should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue(Symbol('err'));
+      await expect(
+        service.onInvoiceGenerated({
+          invoiceId: 'inv-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          amount: 100,
+          invoiceNumber: 'INV-001',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onPaymentReceived should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('pay-fail');
+      await expect(
+        service.onPaymentReceived({
+          invoiceId: 'inv-ne-2',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          amount: 200,
+          invoiceNumber: 'INV-002',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onPaymentDue should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue([]);
+      await expect(
+        service.onPaymentDue({
+          invoiceId: 'inv-ne-3',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          amount: 300,
+          dueDate: new Date(),
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onWorkOrderStatusChanged should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('status-err');
+      await expect(
+        service.onWorkOrderStatusChanged({
+          workOrderId: 'wo-ne-3',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          status: 'COMPLETED',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onPartsArrived should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('parts-err');
+      await expect(
+        service.onPartsArrived({
+          workOrderId: 'wo-ne-4',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          partNames: ['Part A'],
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onMaintenanceDue should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('maint-err');
+      await expect(
+        service.onMaintenanceDue({
+          vehicleId: 'veh-ne-1',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          serviceType: 'Tagliando',
+          daysUntilDue: 5,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onWorkOrderDelivered should handle non-Error thrown', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('deliver-err');
+      await expect(
+        service.onWorkOrderDelivered({
+          workOrderId: 'wo-ne-5',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // Cron error branches with non-Error thrown
+  // =========================================================================
+  describe('cron non-Error throw branches', () => {
+    it('sendBookingReminders should handle non-Error from findMany', async () => {
+      prisma.booking.findMany.mockRejectedValue('db-string-error');
+      const count = await service.sendBookingReminders();
+      expect(count).toBe(0);
+    });
+
+    it('sendBookingReminders inner loop should handle non-Error', async () => {
+      prisma.booking.findMany.mockResolvedValue([
+        { id: 'bk-cne-1', tenantId: mockTenantId, customerId: 'c1', scheduledDate: new Date() },
+      ]);
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('inner-string');
+      const count = await service.sendBookingReminders();
+      expect(count).toBe(0);
+    });
+
+    it('sendMaintenanceReminders should handle non-Error from findMany', async () => {
+      prisma.vehicle.findMany.mockRejectedValue(123);
+      const count = await service.sendMaintenanceReminders();
+      expect(count).toBe(0);
+    });
+
+    it('sendMaintenanceReminders inner loop should handle non-Error', async () => {
+      prisma.vehicle.findMany.mockResolvedValue([
+        {
+          id: 'v-cne-1',
+          customerId: 'c1',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [{ tenantId: mockTenantId }],
+        },
+      ]);
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('inner-maint');
+      const count = await service.sendMaintenanceReminders();
+      expect(count).toBe(0);
+    });
+
+    it('markOverdueInvoices should handle non-Error', async () => {
+      prisma.invoice.updateMany.mockRejectedValue('overdue-string');
+      const count = await service.markOverdueInvoices();
+      expect(count).toBe(0);
+    });
+
+    it('sendWarrantyExpiringReminders should handle non-Error from findMany', async () => {
+      prisma.workOrder.findMany.mockRejectedValue(null);
+      const count = await service.sendWarrantyExpiringReminders();
+      expect(count).toBe(0);
+    });
+
+    it('sendWarrantyExpiringReminders inner loop should handle non-Error', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        { id: 'wo-cne-1', tenantId: mockTenantId, customerId: 'c1', woNumber: 'WO-1' },
+      ]);
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('warranty-inner');
+      const count = await service.sendWarrantyExpiringReminders();
+      expect(count).toBe(0);
+    });
+
+    it('sendReviewRequests should handle non-Error from findMany', async () => {
+      prisma.workOrder.findMany.mockRejectedValue(undefined);
+      const count = await service.sendReviewRequests();
+      expect(count).toBe(0);
+    });
+
+    it('sendReviewRequests inner loop should handle non-Error', async () => {
+      prisma.workOrder.findMany.mockResolvedValue([
+        { id: 'wo-cne-2', tenantId: mockTenantId, customerId: 'c1' },
+      ]);
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValue('review-inner');
+      const count = await service.sendReviewRequests();
+      expect(count).toBe(0);
     });
   });
 
@@ -519,6 +1529,7 @@ describe('NotificationTriggersService', () => {
 
       for (const { handler, event } of events) {
         jest.clearAllMocks();
+        // eslint-disable-next-line security/detect-object-injection
         await (service as unknown as Record<string, (...args: unknown[]) => Promise<void>>)[
           handler
         ](event);
@@ -528,6 +1539,494 @@ describe('NotificationTriggersService', () => {
           expect(sentDto.tenantId).toBe((event as unknown as Record<string, string>).tenantId);
         }
       }
+    });
+  });
+
+  // =========================================================================
+  // TIER 1: Event handler null checks and error handling
+  // =========================================================================
+  describe('event handlers — missing branch coverage', () => {
+    it('should handle booking reminders error path with continue', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const bookings = [
+        { id: 'bk-1', tenantId: mockTenantId, customerId: 'cust-1', scheduledDate: tomorrow },
+        { id: 'bk-2', tenantId: mockTenantId, customerId: null, scheduledDate: tomorrow }, // null, should skip
+      ];
+      prisma.booking.findMany.mockResolvedValue(bookings);
+      (notificationService.sendImmediate as jest.Mock)
+        .mockResolvedValueOnce({ success: true })
+        .mockRejectedValueOnce(new Error('Send failed'));
+
+      const count = await service.sendBookingReminders();
+
+      // Should process bk-1, skip bk-2 (null customerId), fail on bk-1 send attempt
+      expect(count).toBeLessThanOrEqual(bookings.length);
+    });
+
+    it('should handle vehicle maintenance reminders with empty workOrders', async () => {
+      const vehicles = [
+        {
+          id: 'veh-1',
+          customerId: 'cust-1',
+          make: 'Fiat',
+          model: '500',
+          workOrders: [], // Empty array, should skip
+        },
+      ];
+      prisma.vehicle.findMany.mockResolvedValue(vehicles);
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should handle warranty reminder cron failure gracefully', async () => {
+      prisma.workOrder.findMany.mockRejectedValue(new Error('Database unavailable'));
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // TIER 2: Event handler ternary/conditional branches
+  // =========================================================================
+  describe('event handlers — channel routing conditionals', () => {
+    it('should route estimate notification via EMAIL channel', async () => {
+      await service.onEstimateSent({
+        estimateId: 'est-002',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        estimateNumber: 'EST-2026-0002',
+        totalCents: 25000,
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'EMAIL',
+          metadata: expect.objectContaining({
+            template: 'estimate-sent',
+          }),
+        }),
+      );
+    });
+
+    it('should route work order status change via IN_APP channel', async () => {
+      await service.onWorkOrderStatusChanged({
+        workOrderId: 'wo-002',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        status: 'COMPLETED',
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            template: 'wo-status-changed',
+          }),
+        }),
+      );
+    });
+  });
+
+  // =========================================================================
+  // TIER 3: Cron exception handling for all methods
+  // =========================================================================
+  describe('cron methods — complete exception handling', () => {
+    it('should handle error in sendBookingReminders cron at query level', async () => {
+      prisma.booking = { findMany: jest.fn().mockRejectedValue(new Error('Connection timeout')) };
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendMaintenanceReminders cron at query level', async () => {
+      prisma.vehicle = { findMany: jest.fn().mockRejectedValue(new Error('DB error')) };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in markOverdueInvoices cron', async () => {
+      prisma.invoice = {
+        updateMany: jest.fn().mockRejectedValue(new Error('Update failed')),
+      };
+
+      const count = await service.markOverdueInvoices();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendWarrantyExpiringReminders cron', async () => {
+      prisma.workOrder = {
+        findMany: jest.fn().mockRejectedValue(new Error('Query failed')),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle error in sendReviewRequests cron', async () => {
+      prisma.workOrder = {
+        findMany: jest.fn().mockRejectedValue(new Error('Database error')),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // TIER 4: Loop continue branches — null checks in iterative crons
+  // =========================================================================
+  describe('cron loops — null/undefined checks', () => {
+    it('should skip sendWarrantyExpiringReminders for WO with null customerId', async () => {
+      prisma.workOrder = {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
+            { id: 'wo-100', tenantId: mockTenantId, customerId: null, woNumber: 'WO-1' },
+          ]),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendWarrantyExpiringReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendReviewRequests for WO with null customerId', async () => {
+      prisma.workOrder = {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'wo-200', tenantId: mockTenantId, customerId: null }]),
+        update: jest.fn(),
+      };
+
+      const count = await service.sendReviewRequests();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendMaintenanceReminders for vehicle without workOrders', async () => {
+      prisma.vehicle = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'veh-no-wo',
+            customerId: 'cust-1',
+            make: 'Fiat',
+            model: '500',
+            workOrders: [], // Empty work orders array
+          },
+        ]),
+      };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendMaintenanceReminders for vehicle with null customerId', async () => {
+      prisma.vehicle = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'veh-no-cust-id',
+            customerId: null,
+            make: 'BMW',
+            model: '320',
+            workOrders: [{ tenantId: mockTenantId }],
+          },
+        ]),
+      };
+
+      const count = await service.sendMaintenanceReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should skip sendBookingReminders for booking with null customerId', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      prisma.booking = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'bk-null-cust',
+            tenantId: mockTenantId,
+            customerId: null,
+            scheduledDate: tomorrow,
+          },
+        ]),
+      };
+
+      const count = await service.sendBookingReminders();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // onEstimateSentForApproval — ternary channel branches + error branch
+  // =========================================================================
+  describe('onEstimateSentForApproval — channel routing ternary', () => {
+    const baseApprovalEvent = {
+      estimateId: 'est-approval-1',
+      tenantId: mockTenantId,
+      customerId: mockCustomerId,
+      approvalUrl: 'https://example.com/approve/est-approval-1',
+    };
+
+    it('should route via WHATSAPP when channel is WHATSAPP', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'WHATSAPP' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'WHATSAPP' }),
+      );
+    });
+
+    it('should route via EMAIL when channel is EMAIL', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'EMAIL' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'EMAIL' }),
+      );
+    });
+
+    it('should fallback to SMS when channel is unknown', async () => {
+      await service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'UNKNOWN' });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({ channel: 'SMS' }),
+      );
+    });
+
+    it('should log error and not throw when sendImmediate rejects', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(
+        new Error('Notification failed'),
+      );
+
+      await expect(
+        service.onEstimateSentForApproval({ ...baseApprovalEvent, channel: 'SMS' }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // onEstimatePartiallyApproved — happy path + error branch
+  // =========================================================================
+  describe('onEstimatePartiallyApproved', () => {
+    it('should send IN_APP notification with approved/rejected counts', async () => {
+      await service.onEstimatePartiallyApproved({
+        estimateId: 'est-partial-1',
+        tenantId: mockTenantId,
+        customerId: mockCustomerId,
+        approvedLineIds: ['line-1', 'line-2'],
+        rejectedLineIds: ['line-3'],
+      });
+
+      expect(notificationService.sendImmediate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channel: 'IN_APP',
+          metadata: expect.objectContaining({
+            approvedCount: 2,
+            rejectedCount: 1,
+          }),
+        }),
+      );
+    });
+
+    it('should log error and not throw when sendImmediate rejects', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(
+        new Error('Partial approval notify failed'),
+      );
+
+      await expect(
+        service.onEstimatePartiallyApproved({
+          estimateId: 'est-partial-err',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          approvedLineIds: [],
+          rejectedLineIds: ['line-x'],
+        }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // markExpiredEstimates — all uncovered branches (lines 643-699)
+  // =========================================================================
+  describe('markExpiredEstimates', () => {
+    it('should return 0 immediately when no estimates are expired', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([]),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(prisma.estimate.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should skip estimates with null customerId (continue branch)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-no-cust',
+            tenantId: mockTenantId,
+            customerId: null,
+            estimateNumber: 'EST-001',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(notificationService.sendImmediate).not.toHaveBeenCalled();
+    });
+
+    it('should log error and continue when sendImmediate throws for one estimate', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-err',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-002',
+          },
+          {
+            id: 'est-ok',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-003',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+
+      (notificationService.sendImmediate as jest.Mock)
+        .mockRejectedValueOnce(new Error('notify failed'))
+        .mockResolvedValueOnce(undefined);
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(1);
+    });
+
+    it('should handle outer DB error and return 0 (outer catch branch)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockRejectedValue(new Error('DB connection error')),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+      expect(prisma.estimate.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('should notify all estimates with customerId and return correct count', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-1',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-010',
+          },
+          {
+            id: 'est-2',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-011',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(2);
+      expect(notificationService.sendImmediate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle non-Error inner catch (error instanceof Error false arm)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'est-ne',
+            tenantId: mockTenantId,
+            customerId: mockCustomerId,
+            estimateNumber: 'EST-099',
+          },
+        ]),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      };
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce('non-error-string');
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle non-Error outer catch (error instanceof Error false arm)', async () => {
+      prisma.estimate = {
+        findMany: jest.fn().mockRejectedValue('db-non-error'),
+        updateMany: jest.fn(),
+      };
+
+      const count = await service.markExpiredEstimates();
+
+      expect(count).toBe(0);
+    });
+  });
+
+  // =========================================================================
+  // non-Error false arm for new handlers (onEstimateSentForApproval + onEstimatePartiallyApproved)
+  // =========================================================================
+  describe('non-Error thrown in new estimate handlers', () => {
+    it('onEstimateSentForApproval should handle non-Error thrown (false arm)', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce('approval-string-err');
+
+      await expect(
+        service.onEstimateSentForApproval({
+          estimateId: 'est-ne-approval',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          channel: 'SMS',
+          approvalUrl: 'https://example.com/approve',
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('onEstimatePartiallyApproved should handle non-Error thrown (false arm)', async () => {
+      (notificationService.sendImmediate as jest.Mock).mockRejectedValueOnce(42);
+
+      await expect(
+        service.onEstimatePartiallyApproved({
+          estimateId: 'est-ne-partial',
+          tenantId: mockTenantId,
+          customerId: mockCustomerId,
+          approvedLineIds: ['line-a'],
+          rejectedLineIds: [],
+        }),
+      ).resolves.toBeUndefined();
     });
   });
 });

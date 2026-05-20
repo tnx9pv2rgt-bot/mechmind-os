@@ -50,7 +50,7 @@ jest.mock('@/lib/auth/webauthn', () => ({
   },
 }))
 
-import { usePasskey } from '@/hooks/usePasskey'
+import { usePasskey, useConditionalPasskey, usePasskeySupport } from '@/hooks/usePasskey'
 
 describe('usePasskey', () => {
   beforeEach(() => {
@@ -437,5 +437,341 @@ describe('usePasskey', () => {
       expect(result.current.userPasskeys).toEqual([])
       consoleSpy.mockRestore()
     })
+  })
+
+  // =========================================================================
+  // authenticateConditional
+  // =========================================================================
+  describe('authenticateConditional', () => {
+    it('should return false immediately when WebAuthn is not supported', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(false)
+      const { result } = renderHook(() => usePasskey())
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(false)
+    })
+
+    it('should return false when conditional mediation is not available', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'macos',
+      })
+      mockIsConditionalMediationAvailable.mockResolvedValue(false)
+
+      const { result } = renderHook(() => usePasskey())
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(false)
+    })
+
+    it('should return false when authenticateWithConditionalPasskey returns null', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'macos',
+      })
+      mockIsConditionalMediationAvailable.mockResolvedValue(true)
+      mockFetchAuthenticationChallenge.mockResolvedValue('challenge')
+      mockAuthenticateWithConditionalPasskey.mockResolvedValue(null)
+
+      const { result } = renderHook(() => usePasskey())
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(false)
+    })
+
+    it('should return true and call onSuccess when authentication succeeds', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'macos',
+      })
+      mockIsConditionalMediationAvailable.mockResolvedValue(true)
+      mockFetchAuthenticationChallenge.mockResolvedValue('challenge')
+      mockAuthenticateWithConditionalPasskey.mockResolvedValue({ credentialId: 'c' })
+      mockVerifyPasskeyWithServer.mockResolvedValue({ success: true, token: 'tok', user: { id: '1' } })
+
+      const onSuccess = jest.fn()
+      const { result } = renderHook(() => usePasskey({ onSuccess }))
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(true)
+      expect(onSuccess).toHaveBeenCalledWith({ token: 'tok', user: { id: '1' } })
+    })
+
+    it('should return false when verify result.success is false', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'macos',
+      })
+      mockIsConditionalMediationAvailable.mockResolvedValue(true)
+      mockFetchAuthenticationChallenge.mockResolvedValue('challenge')
+      mockAuthenticateWithConditionalPasskey.mockResolvedValue({ credentialId: 'c' })
+      mockVerifyPasskeyWithServer.mockResolvedValue({ success: false })
+
+      const { result } = renderHook(() => usePasskey())
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(false)
+    })
+
+    it('should return false silently when an error is thrown (no onError callback)', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'macos',
+      })
+      mockIsConditionalMediationAvailable.mockResolvedValue(true)
+      mockFetchAuthenticationChallenge.mockRejectedValue(new Error('Network'))
+
+      const onError = jest.fn()
+      const { result } = renderHook(() => usePasskey({ onError }))
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      let success: boolean | undefined
+      await act(async () => {
+        success = await result.current.authenticateConditional()
+      })
+
+      expect(success).toBe(false)
+      expect(onError).not.toHaveBeenCalled()
+    })
+  })
+
+  // =========================================================================
+  // register — getDefaultDeviceName path
+  // =========================================================================
+  describe('register — getDefaultDeviceName', () => {
+    it('uses platform-based device name when deviceName is omitted', async () => {
+      mockIsWebAuthnSupported.mockReturnValue(true)
+      mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+      mockGetPasskeyBrowserInfo.mockResolvedValue({
+        isSupported: true,
+        isPlatformAuthenticatorAvailable: true,
+        userAgent: 'test',
+        platform: 'ios',
+      })
+      mockFetchRegistrationChallenge.mockResolvedValue('challenge')
+      mockRegisterPasskey.mockResolvedValue({
+        credentialId: 'c',
+        clientDataJSON: 'd',
+        attestationObject: 'o',
+      })
+      mockSavePasskeyToServer.mockResolvedValue(undefined)
+      mockFetchUserPasskeys.mockResolvedValue([])
+
+      const { result } = renderHook(() => usePasskey())
+      await waitFor(() => expect(result.current.isSupported).toBe(true))
+
+      await act(async () => {
+        await result.current.register('user-1', 'test@example.com')
+      })
+
+      expect(mockSavePasskeyToServer).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ deviceName: expect.stringContaining('iPhone') })
+      )
+    })
+  })
+})
+
+// =============================================================================
+// useConditionalPasskey
+// =============================================================================
+
+describe('useConditionalPasskey', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockIsConditionalMediationAvailable.mockResolvedValue(false)
+  })
+
+  it('starts with isAvailable=false and autoComplete=email', () => {
+    const { result } = renderHook(() => useConditionalPasskey(jest.fn()))
+    expect(result.current.isAvailable).toBe(false)
+    expect(result.current.autoComplete).toBe('email')
+  })
+
+  it('sets isAvailable=true and autoComplete=webauthn when mediation is available', async () => {
+    mockIsConditionalMediationAvailable.mockResolvedValue(true)
+    const { result } = renderHook(() => useConditionalPasskey(jest.fn()))
+    await waitFor(() => expect(result.current.isAvailable).toBe(true))
+    expect(result.current.autoComplete).toBe('webauthn')
+  })
+
+  it('returns an inputRef (initially null)', () => {
+    const { result } = renderHook(() => useConditionalPasskey(jest.fn()))
+    expect(result.current.inputRef).toBeDefined()
+    expect(result.current.inputRef.current).toBeNull()
+  })
+
+  it('calls onSuccess when inputRef is set before isAvailable resolves', async () => {
+    let resolveMeditation!: (v: boolean) => void
+    const deferred = new Promise<boolean>((res) => { resolveMeditation = res })
+    mockIsConditionalMediationAvailable.mockReturnValueOnce(deferred)
+    mockFetchAuthenticationChallenge.mockResolvedValue('challenge')
+    mockAuthenticateWithConditionalPasskey.mockResolvedValue({ credentialId: 'c' })
+    mockVerifyPasskeyWithServer.mockResolvedValue({ success: true, token: 'tok', user: { id: '1' } })
+
+    const onSuccess = jest.fn()
+    const { result } = renderHook(() => useConditionalPasskey(onSuccess))
+
+    // Attach ref before isAvailable becomes true so the guard passes
+    result.current.inputRef.current = document.createElement('input')
+
+    await act(async () => {
+      resolveMeditation(true)
+    })
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledWith({ token: 'tok', user: { id: '1' } })
+    })
+  })
+
+  it('does not call onSuccess when auth flow throws (fails silently)', async () => {
+    let resolveMeditation!: (v: boolean) => void
+    const deferred = new Promise<boolean>((res) => { resolveMeditation = res })
+    mockIsConditionalMediationAvailable.mockReturnValueOnce(deferred)
+    mockFetchAuthenticationChallenge.mockRejectedValue(new Error('fail'))
+
+    const onSuccess = jest.fn()
+    const { result } = renderHook(() => useConditionalPasskey(onSuccess))
+
+    result.current.inputRef.current = document.createElement('input')
+
+    await act(async () => {
+      resolveMeditation(true)
+    })
+
+    await waitFor(() => expect(result.current.isAvailable).toBe(true))
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+
+  it('skips auth flow when isAvailable is true but inputRef is null', async () => {
+    mockIsConditionalMediationAvailable.mockResolvedValue(true)
+    mockFetchAuthenticationChallenge.mockResolvedValue('challenge')
+
+    const onSuccess = jest.fn()
+    renderHook(() => useConditionalPasskey(onSuccess))
+
+    await waitFor(() => {
+      expect(mockIsConditionalMediationAvailable).toHaveBeenCalled()
+    })
+
+    // inputRef.current remains null → auth flow skipped
+    expect(mockFetchAuthenticationChallenge).not.toHaveBeenCalled()
+    expect(onSuccess).not.toHaveBeenCalled()
+  })
+})
+
+// =============================================================================
+// usePasskeySupport
+// =============================================================================
+
+describe('usePasskeySupport', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const origPublicKeyCredential = (global as any).PublicKeyCredential
+
+  afterEach(() => {
+    if (origPublicKeyCredential !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(global as any).PublicKeyCredential = origPublicKeyCredential
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (global as any).PublicKeyCredential
+    }
+    jest.clearAllMocks()
+  })
+
+  it('returns isLoading=false after check completes', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (global as any).PublicKeyCredential
+    const { result } = renderHook(() => usePasskeySupport())
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+  })
+
+  it('returns isSupported=false when PublicKeyCredential is not available', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (global as any).PublicKeyCredential
+
+    const { result } = renderHook(() => usePasskeySupport())
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.isSupported).toBe(false)
+    expect(result.current.isPlatformAvailable).toBe(false)
+    expect(result.current.isConditionalAvailable).toBe(false)
+    expect(mockIsPlatformAuthenticatorAvailable).not.toHaveBeenCalled()
+    expect(mockIsConditionalMediationAvailable).not.toHaveBeenCalled()
+  })
+
+  it('returns isSupported=true and calls platform/conditional checks when PublicKeyCredential is available', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(global as any).PublicKeyCredential = function PublicKeyCredential() {}
+    mockIsPlatformAuthenticatorAvailable.mockResolvedValue(true)
+    mockIsConditionalMediationAvailable.mockResolvedValue(true)
+
+    const { result } = renderHook(() => usePasskeySupport())
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.isSupported).toBe(true)
+    expect(result.current.isPlatformAvailable).toBe(true)
+    expect(result.current.isConditionalAvailable).toBe(true)
+  })
+
+  it('returns isPlatformAvailable=false and isConditionalAvailable=false when checks resolve false', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(global as any).PublicKeyCredential = function PublicKeyCredential() {}
+    mockIsPlatformAuthenticatorAvailable.mockResolvedValue(false)
+    mockIsConditionalMediationAvailable.mockResolvedValue(false)
+
+    const { result } = renderHook(() => usePasskeySupport())
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(result.current.isSupported).toBe(true)
+    expect(result.current.isPlatformAvailable).toBe(false)
+    expect(result.current.isConditionalAvailable).toBe(false)
   })
 })

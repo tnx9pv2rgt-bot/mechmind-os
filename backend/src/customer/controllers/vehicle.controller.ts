@@ -20,6 +20,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { VehicleService } from '../services/vehicle.service';
+import { VinDecoderService } from '../services/vin-decoder.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -31,7 +32,10 @@ import { CreateVehicleDto, UpdateVehicleDto, VehicleResponseDto } from '../dto/v
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('vehicles')
 export class VehicleController {
-  constructor(private readonly vehicleService: VehicleService) {}
+  constructor(
+    private readonly vehicleService: VehicleService,
+    private readonly vinDecoderService: VinDecoderService,
+  ) {}
 
   @Get()
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
@@ -70,9 +74,27 @@ export class VehicleController {
     };
   }
 
+  @Get('expiring')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get vehicles with expiring documents (revision, insurance, tax)' })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    description: 'Days window (default 60)',
+  })
+  async getExpiringVehicles(
+    @CurrentTenant() tenantId: string,
+    @Query('days') days?: string,
+  ): Promise<{ success: boolean; data: unknown; summary: unknown }> {
+    const result = await this.vehicleService.findExpiring(tenantId, days ? parseInt(days) : 60);
+    return { success: true, data: result.vehicles, summary: result.summary };
+  }
+
   @Get(':id')
   @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get vehicle by ID' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiParam({ name: 'id', description: 'Vehicle ID' })
   @ApiResponse({ status: 200, type: VehicleResponseDto })
   async getVehicle(
@@ -117,6 +139,15 @@ export class VehicleController {
       success: true,
       data: vehicle,
     };
+  }
+
+  @Get('decode-vin/:vin')
+  @Roles(UserRole.RECEPTIONIST, UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Decode a VIN using NHTSA API' })
+  @ApiParam({ name: 'vin', description: '17-character VIN' })
+  async decodeVin(@Param('vin') vin: string) {
+    const result = await this.vinDecoderService.decode(vin);
+    return { success: true, data: result };
   }
 
   @Delete(':id')

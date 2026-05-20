@@ -1,0 +1,57 @@
+{
+  "name": "@nexo/fix-coverage",
+  "version": "1.0.0",
+  "description": "World-class test generation orchestrator for NestJS projects with 10 quality gates",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "fix-coverage": "./dist/bin/fix-coverage.js"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bin/fix-coverage.js",
+    "dev": "ts-node bin/fix-coverage.ts",
+    "test": "jest --config jest.config.ts",
+    "test:unit": "jest --config jest.config.ts tests/unit",
+    "test:integration": "jest --config jest.config.ts tests/integration",
+    "test:coverage": "jest --config jest.config.ts --coverage",
+    "lint": "eslint src bin tests --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "commander": "^12.1.0",
+    "execa": "^9.5.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "proper-lockfile": "^4.1.2",
+    "ts-morph": "^24.0.0",
+    "p-limit": "^6.1.0",
+    "p-retry": "^6.2.0",
+    "zod": "^3.23.8",
+    "fast-glob": "^3.3.2",
+    "xmlbuilder2": "^3.1.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.0.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
+  }
+}

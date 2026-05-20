@@ -141,10 +141,10 @@ describe('WCAG 1.4.3 - Contrast (Minimum)', () => {
   it('All text elements should have sufficient contrast', async () => {
     const { container } = render(
       <Wrapper>
-        <div className="text-foreground bg-background">
+        <div className="text-[var(--text-primary)] bg-[var(--surface-primary)]">
           <h1>Title</h1>
           <p>Description text</p>
-          <button className="bg-primary text-primary-foreground">Action</button>
+          <button className="bg-[var(--brand)] text-[var(--text-on-brand)]">Action</button>
         </div>
       </Wrapper>
     );

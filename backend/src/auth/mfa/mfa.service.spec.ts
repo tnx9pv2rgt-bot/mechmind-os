@@ -846,6 +846,130 @@ describe('MfaService', () => {
   });
 
   // ============================================================
+  // MFA State Machine Transitions
+  // ============================================================
+  describe('MFA state machine transitions', () => {
+    it('should reject enroll when MFA is already enabled (invalid transition)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ totpEnabled: true });
+
+      await expect(service.enroll(userId, userEmail)).rejects.toThrow(BadRequestException);
+      await expect(service.enroll(userId, userEmail)).rejects.toThrow(
+        'MFA is already enabled for this user',
+      );
+    });
+
+    it('should reject verifyAndEnable when MFA secret not set (invalid source state)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpSecret: null,
+        totpEnabled: false,
+      });
+
+      await expect(service.verifyAndEnable(userId, '123456')).rejects.toThrow(BadRequestException);
+      await expect(service.verifyAndEnable(userId, '123456')).rejects.toThrow(
+        'MFA enrollment not initiated',
+      );
+    });
+
+    it('should reject verifyAndEnable when MFA already enabled (invalid transition)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpSecret: mockEncryptedSecret,
+        totpEnabled: true,
+      });
+
+      await expect(service.verifyAndEnable(userId, '123456')).rejects.toThrow(BadRequestException);
+      await expect(service.verifyAndEnable(userId, '123456')).rejects.toThrow(
+        'MFA is already enabled',
+      );
+    });
+
+    it('should reject disable when MFA is not enabled (invalid source state)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpEnabled: false,
+        passwordHash: 'hashed-password',
+      });
+
+      await expect(service.disable(userId, '123456', 'password')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.disable(userId, '123456', 'password')).rejects.toThrow(
+        'MFA is not enabled',
+      );
+    });
+
+    it('should reject regenerateBackupCodes when MFA is not enabled (invalid source state)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpEnabled: false,
+        totpSecret: null,
+      });
+
+      await expect(service.regenerateBackupCodes(userId, '123456')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.regenerateBackupCodes(userId, '123456')).rejects.toThrow(
+        'MFA is not enabled',
+      );
+    });
+
+    it('should transition from enrolled-not-verified to enabled via verifyAndEnable', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpSecret: mockEncryptedSecret,
+        totpEnabled: false,
+      });
+      (speakeasy.totp.verify as jest.Mock).mockReturnValue(true);
+      mockPrisma.user.update.mockResolvedValue({
+        totpEnabled: true,
+        totpVerifiedAt: new Date(),
+      });
+
+      const result = await service.verifyAndEnable(userId, '123456');
+
+      expect(result).toBe(true);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: expect.objectContaining({
+          totpEnabled: true,
+          totpVerifiedAt: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should transition from enabled to disabled via disable', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpEnabled: true,
+        totpSecret: mockEncryptedSecret,
+        passwordHash: 'hashed-password',
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (speakeasy.totp.verify as jest.Mock).mockReturnValue(true);
+
+      await service.disable(userId, '123456', 'correct-password');
+
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should allow MFA re-enrollment after disable', async () => {
+      // First, enroll
+      mockPrisma.user.findUnique.mockResolvedValue({ totpEnabled: false });
+      const enrollResult = await service.enroll(userId, userEmail);
+      expect(enrollResult.backupCodes).toHaveLength(10);
+
+      // Verify state is now "enrolled-not-verified"
+      mockPrisma.user.findUnique.mockResolvedValue({
+        totpSecret: mockEncryptedSecret,
+        totpEnabled: false,
+      });
+
+      // Clear mocks to allow re-enrollment after disable
+      mockPrisma.user.findUnique.mockClear();
+      mockPrisma.user.findUnique.mockResolvedValue({ totpEnabled: false });
+
+      // Should allow re-enroll
+      const newEnrollResult = await service.enroll(userId, userEmail);
+      expect(newEnrollResult.backupCodes).toHaveLength(10);
+    });
+  });
+
+  // ============================================================
   // Backup code generation security
   // ============================================================
   describe('backup code generation security', () => {

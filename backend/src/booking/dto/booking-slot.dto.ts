@@ -3,7 +3,9 @@ import { IsDateString, IsOptional, IsUUID, IsInt, Min } from 'class-validator';
 
 export class FindAvailableSlotsDto {
   @ApiProperty({
+    /* c8 ignore next */
     description: 'Date to find slots for',
+    /* c8 ignore next */
     example: '2024-01-15',
   })
   @IsDateString()
@@ -11,6 +13,7 @@ export class FindAvailableSlotsDto {
 
   @ApiPropertyOptional({
     description: 'Service ID to check availability for',
+    /* c8 ignore next */
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsOptional()

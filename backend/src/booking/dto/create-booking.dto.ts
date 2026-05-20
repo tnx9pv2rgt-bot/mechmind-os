@@ -15,6 +15,7 @@ import { BookingSource } from '@prisma/client';
 export class CreateBookingDto {
   @ApiProperty({
     description: 'Customer ID',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsUUID()
@@ -104,6 +105,14 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   liftPosition?: string;
+
+  @ApiPropertyOptional({
+    description: 'Idempotency key to prevent duplicate bookings',
+    example: 'client-generated-uuid-v4',
+  })
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
 }
 
 export class ReserveSlotDto {
@@ -233,4 +242,28 @@ export class ConflictResponseDto {
     retryAfter: number;
     queuePosition: number;
   };
+}
+
+export class CalendarQueryDto {
+  @ApiProperty({
+    description: 'Start date (ISO 8601)',
+    example: '2026-03-01T00:00:00.000Z',
+  })
+  @IsDateString()
+  from: string;
+
+  @ApiProperty({
+    description: 'End date (ISO 8601)',
+    example: '2026-03-31T23:59:59.000Z',
+  })
+  @IsDateString()
+  to: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by lift/bay position',
+    example: 'bay-1',
+  })
+  @IsOptional()
+  @IsString()
+  bayId?: string;
 }

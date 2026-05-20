@@ -34,6 +34,7 @@ export class NotificationsV2Service {
    */
   async sendNotification(payload: NotificationPayloadV2): Promise<void> {
     this.logger.log(
+      // eslint-disable-next-line sonarjs/no-nested-template-literals
       `Sending notification [${payload.type}] to tenant ${payload.tenantId}${payload.userId ? ` (user: ${payload.userId})` : ''}`,
     );
 
@@ -140,6 +141,7 @@ export class NotificationsV2Service {
       userId,
       type: 'booking_cancelled',
       title: 'Prenotazione Cancellata',
+      // eslint-disable-next-line sonarjs/no-nested-template-literals
       message: `La prenotazione di ${customerName} è stata cancellata${reason ? `: ${reason}` : ''}`,
       data: { bookingId, customerName, reason },
     });

@@ -1,5 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, Min, Max, Length, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+  Length,
+  IsIn,
+} from 'class-validator';
+import { FuelType, TransmissionType, DriveType } from '@prisma/client';
 
 export class CreateVehicleDto {
   @ApiProperty({
@@ -45,6 +56,7 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle notes',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: 'Previous accident on left side',
   })
   @IsOptional()
@@ -53,12 +65,12 @@ export class CreateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle status',
-    example: 'active',
-    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    example: 'ACTIVE',
+    enum: ['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  @IsIn(['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'])
   status?: string;
 
   @ApiPropertyOptional({
@@ -69,6 +81,56 @@ export class CreateVehicleDto {
   @IsInt()
   @Min(0)
   mileage?: number;
+
+  // Dati tecnici veicolo
+  @ApiPropertyOptional({ description: 'Tipo carburante', enum: FuelType })
+  @IsOptional()
+  @IsEnum(FuelType)
+  fuelType?: FuelType;
+
+  @ApiPropertyOptional({ description: 'Cilindrata in cc', example: 1248 })
+  @IsOptional()
+  @IsInt()
+  @Min(50)
+  @Max(10000)
+  engineDisplacement?: number;
+
+  @ApiPropertyOptional({ description: 'Potenza in kW', example: 55 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2000)
+  power?: number;
+
+  @ApiPropertyOptional({ description: 'Tipo cambio', enum: TransmissionType })
+  @IsOptional()
+  @IsEnum(TransmissionType)
+  transmissionType?: TransmissionType;
+
+  @ApiPropertyOptional({ description: 'Colore veicolo', example: 'Bianco' })
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @ApiPropertyOptional({ description: 'Tipo trazione', enum: DriveType })
+  @IsOptional()
+  @IsEnum(DriveType)
+  driveType?: DriveType;
+
+  @ApiPropertyOptional({ description: 'Data prima immatricolazione' })
+  @IsOptional()
+  @IsDateString()
+  registrationDate?: string;
+
+  @ApiPropertyOptional({ description: 'Scadenza assicurazione' })
+  @IsOptional()
+  @IsDateString()
+  insuranceExpiry?: string;
+
+  @ApiPropertyOptional({ description: 'Scadenza bollo auto' })
+  @IsOptional()
+  @IsDateString()
+  taxExpiry?: string;
 }
 
 export class UpdateVehicleDto {
@@ -104,12 +166,12 @@ export class UpdateVehicleDto {
 
   @ApiPropertyOptional({
     description: 'Vehicle status',
-    example: 'active',
-    enum: ['active', 'in_service', 'waiting_parts', 'ready'],
+    example: 'ACTIVE',
+    enum: ['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['active', 'in_service', 'waiting_parts', 'ready'])
+  @IsIn(['ACTIVE', 'IN_SERVICE', 'WAITING_PARTS', 'READY'])
   status?: string;
 
   @ApiPropertyOptional({
@@ -120,6 +182,61 @@ export class UpdateVehicleDto {
   @IsInt()
   @Min(0)
   mileage?: number;
+
+  // Dati tecnici veicolo
+  @ApiPropertyOptional({ enum: FuelType })
+  @IsOptional()
+  @IsEnum(FuelType)
+  fuelType?: FuelType;
+
+  @ApiPropertyOptional({ description: 'Cilindrata in cc' })
+  @IsOptional()
+  @IsInt()
+  @Min(50)
+  @Max(10000)
+  engineDisplacement?: number;
+
+  @ApiPropertyOptional({ description: 'Potenza in kW' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2000)
+  power?: number;
+
+  @ApiPropertyOptional({ enum: TransmissionType })
+  @IsOptional()
+  @IsEnum(TransmissionType)
+  transmissionType?: TransmissionType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @ApiPropertyOptional({ enum: DriveType })
+  @IsOptional()
+  @IsEnum(DriveType)
+  driveType?: DriveType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  registrationDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  insuranceExpiry?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  taxExpiry?: string;
+
+  @ApiPropertyOptional({ description: 'Scadenza revisione' })
+  @IsOptional()
+  @IsDateString()
+  revisionExpiry?: string;
 }
 
 export class VehicleResponseDto {
@@ -149,6 +266,24 @@ export class VehicleResponseDto {
 
   @ApiPropertyOptional({ example: 45000 })
   mileage?: number;
+
+  @ApiPropertyOptional({ enum: FuelType })
+  fuelType?: string;
+
+  @ApiPropertyOptional()
+  engineDisplacement?: number;
+
+  @ApiPropertyOptional()
+  power?: number;
+
+  @ApiPropertyOptional({ enum: TransmissionType })
+  transmissionType?: string;
+
+  @ApiPropertyOptional()
+  color?: string;
+
+  @ApiPropertyOptional({ enum: DriveType })
+  driveType?: string;
 
   @ApiProperty({ example: '2024-01-10T08:30:00Z' })
   createdAt: Date;

@@ -1,134 +1,88 @@
-/**
- * Portal Preferences API Route
- * GET: Get notification preferences
- * PUT: Update notification preferences
- */
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
+import { BACKEND_BASE } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
-
-interface PortalPreferences {
-  email?: Record<string, boolean>
-  sms?: Record<string, boolean>
-  whatsapp?: Record<string, boolean>
-  push?: Record<string, boolean>
-}
-
-const JWT_SECRET = new TextEncoder().encode(process.env.PORTAL_JWT_SECRET || process.env.JWT_SECRET || 'portal-secret-key-change-in-production')
-
-async function verifyAuth(request: NextRequest): Promise<string | null> {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
   try {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader?.startsWith('Bearer ')) return null
+    const cookieStore = await cookies();
+    const token = cookieStore.get('portal_token')?.value || cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Autenticazione richiesta' } },
+        { status: 401 },
+      );
+    }
 
-    const token = authHeader.substring(7)
-    const { payload } = await jwtVerify(token, JWT_SECRET)
-    return payload.customerId as string
-  } catch {
-    return null
+    const res = await fetch(`${BACKEND_BASE}/v1/portal/notification-preferences`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: 'Errore backend' }));
+      return NextResponse.json(data, { status: res.status });
+    }
+
+    return NextResponse.json(await res.json());
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: { code: 'BACKEND_COLD_START', message: 'Server in avvio, riprova...' } },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(
+      { error: { code: 'BACKEND_UNAVAILABLE', message: 'Backend non raggiungibile' } },
+      { status: 502 },
+    );
   }
 }
 
-// Mock preferences database
-const mockPreferences = new Map<string, PortalPreferences>([
-  ['1', {
-    email: {
-      enabled: true,
-      bookingReminders: true,
-      maintenanceAlerts: true,
-      inspectionReports: true,
-      promotions: false,
-      newsletter: false,
-    },
-    sms: {
-      enabled: true,
-      bookingReminders: true,
-      urgentAlerts: true,
-    },
-    whatsapp: {
-      enabled: false,
-      bookingReminders: false,
-      statusUpdates: false,
-    },
-    push: {
-      enabled: true,
-      all: true,
-    },
-  }],
-])
-
-// GET - Get preferences
-export async function GET(request: NextRequest) {
+export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    const customerId = await verifyAuth(request)
-    
-    if (!customerId) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('portal_token')?.value || cookieStore.get('auth_token')?.value;
+    if (!token) {
       return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      )
+        { error: { code: 'UNAUTHORIZED', message: 'Autenticazione richiesta' } },
+        { status: 401 },
+      );
     }
 
-    const preferences = mockPreferences.get(customerId) || {
-      email: { enabled: true, bookingReminders: true, maintenanceAlerts: true, inspectionReports: true, promotions: false, newsletter: false },
-      sms: { enabled: true, bookingReminders: true, urgentAlerts: true },
-      whatsapp: { enabled: false, bookingReminders: false, statusUpdates: false },
-      push: { enabled: true, all: true },
+    const body = await request.json();
+
+    const res = await fetch(`${BACKEND_BASE}/v1/portal/notification-preferences`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: 'Errore backend' }));
+      return NextResponse.json(data, { status: res.status });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: preferences,
-    })
-
+    return NextResponse.json(await res.json());
   } catch (error) {
-    console.error('Preferences API error:', error)
-    return NextResponse.json(
-      { error: { code: 'SERVER_ERROR', message: 'Failed to load preferences' } },
-      { status: 500 }
-    )
-  }
-}
-
-// PUT - Update preferences
-export async function PUT(request: NextRequest) {
-  try {
-    const customerId = await verifyAuth(request)
-    
-    if (!customerId) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
-      )
+        { error: { code: 'BACKEND_COLD_START', message: 'Server in avvio, riprova...' } },
+        { status: 503 },
+      );
     }
-
-    const body = await request.json() as PortalPreferences
-    const currentPreferences: PortalPreferences = (mockPreferences.get(customerId) || {}) as PortalPreferences
-
-    const updatedPreferences: PortalPreferences = {
-      ...currentPreferences,
-      ...body,
-      email: { ...(currentPreferences.email || {}), ...(body.email || {}) },
-      sms: { ...(currentPreferences.sms || {}), ...(body.sms || {}) },
-      whatsapp: { ...(currentPreferences.whatsapp || {}), ...(body.whatsapp || {}) },
-      push: { ...(currentPreferences.push || {}), ...(body.push || {}) },
-    }
-
-    mockPreferences.set(customerId, updatedPreferences)
-
-    return NextResponse.json({
-      success: true,
-      data: updatedPreferences,
-    })
-
-  } catch (error) {
-    console.error('Update preferences error:', error)
     return NextResponse.json(
-      { error: { code: 'SERVER_ERROR', message: 'Failed to update preferences' } },
-      { status: 500 }
-    )
+      { error: { code: 'BACKEND_UNAVAILABLE', message: 'Backend non raggiungibile' } },
+      { status: 502 },
+    );
   }
 }

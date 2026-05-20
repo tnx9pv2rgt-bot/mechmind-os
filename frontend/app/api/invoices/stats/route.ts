@@ -2,14 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-
-const BACKEND_URL = (
-  process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  'http://localhost:3000'
-)
-  .replace(/\/+$/, '')
-  .replace(/\/v1$/, '');
+import { BACKEND_BASE } from '@/lib/config';
 
 async function getToken(): Promise<string | undefined> {
   const cookieStore = await cookies();
@@ -22,7 +15,7 @@ async function proxyToBackend(path: string, options?: RequestInit): Promise<Next
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetch(`${BACKEND_BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

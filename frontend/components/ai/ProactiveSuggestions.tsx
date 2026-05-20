@@ -32,32 +32,32 @@ const typeStyles: Record<SuggestionType, {
   progressColor: string;
 }> = {
   autofill: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    border: 'border-blue-200 dark:border-blue-800',
-    iconBg: 'bg-blue-100 dark:bg-blue-900',
-    iconColor: 'text-blue-600 dark:text-blue-400',
-    progressColor: 'bg-blue-500',
+    bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40/30',
+    border: 'border-[var(--status-info)]/30 dark:border-[var(--status-info)]',
+    iconBg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info)]/40',
+    iconColor: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    progressColor: 'bg-[var(--status-info)]',
   },
   correction: {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-200 dark:border-amber-800',
-    iconBg: 'bg-amber-100 dark:bg-amber-900',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-    progressColor: 'bg-amber-500',
+    bg: 'bg-[var(--status-warning)]/5 dark:bg-[var(--status-warning)]/40/30',
+    border: 'border-[var(--status-warning)]/30 dark:border-[var(--status-warning)]',
+    iconBg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning)]/40',
+    iconColor: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    progressColor: 'bg-[var(--status-warning)]',
   },
   tip: {
-    bg: 'bg-gray-50 dark:bg-gray-900/50',
-    border: 'border-gray-200 dark:border-gray-700',
-    iconBg: 'bg-gray-100 dark:bg-gray-800',
-    iconColor: 'text-gray-600 dark:text-gray-400',
-    progressColor: 'bg-gray-500',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]/50',
+    border: 'border-[var(--border-default)] dark:border-[var(--border-default)]',
+    iconBg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-primary)]',
+    iconColor: 'text-[var(--text-secondary)] dark:text-[var(--text-secondary)]',
+    progressColor: 'bg-[var(--surface-secondary)]0',
   },
   optimization: {
-    bg: 'bg-green-50 dark:bg-green-950/30',
-    border: 'border-green-200 dark:border-green-800',
-    iconBg: 'bg-green-100 dark:bg-green-900',
-    iconColor: 'text-green-600 dark:text-green-400',
-    progressColor: 'bg-green-500',
+    bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40/30',
+    border: 'border-[var(--status-success)]/30 dark:border-[var(--status-success)]',
+    iconBg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success)]/40',
+    iconColor: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    progressColor: 'bg-[var(--status-success)]',
   },
 };
 
@@ -122,7 +122,7 @@ const SuggestionCard: React.FC<{
         </span>
         <button
           onClick={() => onDismiss(suggestion.id)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] transition-colors"
           aria-label="Ignora suggerimento"
         >
           <X className="w-4 h-4" />
@@ -140,7 +140,7 @@ const SuggestionCard: React.FC<{
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] leading-relaxed">
             {suggestion.message}
           </p>
 
@@ -155,10 +155,10 @@ const SuggestionCard: React.FC<{
                 }}
                 className={cn(
                   "text-xs gap-1",
-                  suggestion.type === 'autofill' && "bg-blue-600 hover:bg-blue-700",
-                  suggestion.type === 'correction' && "bg-amber-600 hover:bg-amber-700",
-                  suggestion.type === 'optimization' && "bg-green-600 hover:bg-green-700",
-                  suggestion.type === 'tip' && "bg-gray-600 hover:bg-gray-700"
+                  suggestion.type === 'autofill' && "bg-[var(--status-info)] hover:bg-[var(--status-info)]",
+                  suggestion.type === 'correction' && "bg-[var(--status-warning)] hover:bg-[var(--status-warning)]",
+                  suggestion.type === 'optimization' && "bg-[var(--status-success)] hover:bg-[var(--status-success)]",
+                  suggestion.type === 'tip' && "bg-[var(--surface-active)] hover:bg-[var(--surface-active)]"
                 )}
               >
                 <Check className="w-3 h-3" />
@@ -168,7 +168,7 @@ const SuggestionCard: React.FC<{
                 size="sm"
                 variant="ghost"
                 onClick={() => onDismiss(suggestion.id)}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
               >
                 Ignora
               </Button>
@@ -179,7 +179,7 @@ const SuggestionCard: React.FC<{
 
       {/* Confidence indicator */}
       <div className="mt-3 flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-[var(--border-default)] dark:bg-[var(--border-default)] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${confidencePercent}%` }}
@@ -187,14 +187,14 @@ const SuggestionCard: React.FC<{
             className={cn("h-full rounded-full", styles.progressColor)}
           />
         </div>
-        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+        <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] font-medium">
           {confidencePercent}%
         </span>
       </div>
 
       {/* Field indicator (opzionale) */}
       {suggestion.field && (
-        <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+        <div className="mt-2 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
           Campo: <span className="font-medium">{suggestion.field}</span>
         </div>
       )}
@@ -237,7 +237,7 @@ export const ProactiveSuggestions: React.FC<ProactiveSuggestionsProps> = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-xs text-gray-400 py-2"
+          className="text-center text-xs text-[var(--text-tertiary)] py-2"
         >
           +{suggestions.length - maxSuggestions} altri suggerimenti
         </motion.div>
@@ -271,7 +271,7 @@ export const InlineSuggestion: React.FC<{
       <span className={cn("flex-shrink-0", styles.iconColor)}>
         {TypeIcon[suggestion.type]}
       </span>
-      <span className="flex-1 text-gray-700 dark:text-gray-200 truncate">
+      <span className="flex-1 text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] truncate">
         {suggestion.message}
       </span>
       <button
@@ -287,7 +287,7 @@ export const InlineSuggestion: React.FC<{
       </button>
       <button
         onClick={onDismiss}
-        className="text-gray-400 hover:text-gray-600"
+        className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
       >
         <X className="w-4 h-4" />
       </button>

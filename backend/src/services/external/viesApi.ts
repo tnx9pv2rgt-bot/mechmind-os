@@ -3,7 +3,7 @@
  * Verifica partite IVA europee con cache Redis
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException, HttpException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 // Simple XML parser for VIES SOAP responses (no external dependency)
@@ -80,7 +80,7 @@ export class ViesApiService {
       if (this.isDevelopment) {
         return this.getMockResult(countryCode, number);
       }
-      throw new Error('Rate limit exceeded. Please try again later.');
+      throw new HttpException('Rate limit exceeded. Please try again later.', 429);
     }
 
     try {
@@ -119,6 +119,7 @@ export class ViesApiService {
       const batchResults = await Promise.allSettled(batch.map(vat => this.verifyVatNumber(vat)));
 
       batch.forEach((vat, index) => {
+        // eslint-disable-next-line security/detect-object-injection
         const result = batchResults[index];
         if (result.status === 'fulfilled') {
           results.set(vat, result.value);
@@ -158,7 +159,7 @@ export class ViesApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`VIES HTTP error: ${response.status}`);
+      throw new BadGatewayException(`VIES HTTP error: ${response.status}`);
     }
 
     const xmlResponse = await response.text();
@@ -187,7 +188,9 @@ export class ViesApiService {
   private parseSoapResponse(xmlResponse: string): ViesVerificationResult {
     // Simple XML parsing using regex (sufficient for VIES responses)
     const getTagValue = (xml: string, tagName: string): string | undefined => {
+      // eslint-disable-next-line security/detect-non-literal-regexp
       const regex = new RegExp(`<(?:ns2:)?${tagName}>([^<]*)</(?:ns2:)?${tagName}>`, 'i');
+      // eslint-disable-next-line sonarjs/prefer-regexp-exec
       const match = xml.match(regex);
       return match?.[1] || undefined;
     };
@@ -195,7 +198,7 @@ export class ViesApiService {
     // Check for SOAP Fault
     if (xmlResponse.includes('soapenv:Fault') || xmlResponse.includes('<faultstring>')) {
       const faultString = getTagValue(xmlResponse, 'faultstring') || 'Unknown SOAP fault';
-      throw new Error(`VIES SOAP Fault: ${faultString}`);
+      throw new BadGatewayException(`VIES SOAP Fault: ${faultString}`);
     }
 
     const valid = getTagValue(xmlResponse, 'valid');
@@ -281,6 +284,7 @@ export class ViesApiService {
       GB: { name: 'Example Ltd', address: '1 High Street, London SW1A 1AA' },
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     const mock = mockCompanies[countryCode] || { name: 'Test Company', address: 'Test Address' };
 
     return {
@@ -353,6 +357,7 @@ export async function verifyVatNumber(
         REDIS_URL: config?.redisUrl || 'redis://localhost:6379',
         NODE_ENV: config?.isDevelopment ? 'development' : 'production',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);

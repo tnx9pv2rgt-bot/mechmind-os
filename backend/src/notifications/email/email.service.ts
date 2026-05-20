@@ -70,6 +70,13 @@ export interface BookingCancelledData {
   cancellationReason?: string;
 }
 
+export interface EstimateApprovalData {
+  customerName: string;
+  customerEmail: string;
+  estimateId: string;
+  approvalUrl: string;
+}
+
 export interface EmailResult {
   success: boolean;
   messageId?: string;
@@ -94,7 +101,7 @@ export class EmailService {
       this.resend = new Resend(apiKey);
       this.logger.log('Resend client initialized');
     } else {
-      this.logger.warn('Resend API key not configured or email notifications disabled');
+      this.logger.debug('Resend API key not configured or email notifications disabled');
     }
   }
 
@@ -204,6 +211,31 @@ export class EmailService {
   }
 
   /**
+   * Send estimate approval request email with the public approval link
+   */
+  async sendEstimateApproval(data: EstimateApprovalData): Promise<EmailResult> {
+    const subject = '📋 Preventivo in attesa di approvazione';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0071e3;">📋 Preventivo da Approvare</h1>
+        <p>Gentile <strong>${data.customerName}</strong>,</p>
+        <p>Il tuo preventivo è pronto. Clicca il pulsante per visualizzarlo e approvarlo online.</p>
+        <p style="margin: 30px 0;">
+          <a href="${data.approvalUrl}" style="background: #0071e3; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-size: 16px; display: inline-block;">Visualizza e Approva Preventivo</a>
+        </p>
+        <p style="font-size: 13px; color: #666;">Il link è valido per 7 giorni. Ai sensi del D.Lgs. 206/2005, la tua firma digitale sarà richiesta per l'accettazione.</p>
+      </div>
+    `;
+
+    return await this.sendEmail({
+      to: data.customerEmail,
+      subject,
+      html,
+      tags: [{ name: 'category', value: 'estimate_approval' }],
+    });
+  }
+
+  /**
    * Send raw email (low level)
    */
   async sendRawEmail(options: {
@@ -241,6 +273,7 @@ export class EmailService {
       };
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Error getting email status: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       return null;

@@ -1,23 +1,12 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   FileText,
   Plus,
@@ -29,19 +18,21 @@ import {
   FileCheck,
   FileX,
   MoreHorizontal,
-  Clock,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
   ArrowLeft,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
   FileClock,
+  Loader2,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+
 // Types
-export type QuoteStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
+export type QuoteStatus =
+  | 'draft'
+  | 'sent'
+  | 'approved'
+  | 'rejected'
+  | 'expired'
+  | 'partially_approved';
 
 export interface Quote {
   id: string;
@@ -94,7 +85,14 @@ interface EstimateResponse {
   estimateNumber: string;
   customerId: string;
   vehicleId?: string | null;
-  status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'CONVERTED';
+  status:
+    | 'DRAFT'
+    | 'SENT'
+    | 'ACCEPTED'
+    | 'REJECTED'
+    | 'EXPIRED'
+    | 'CONVERTED'
+    | 'PARTIALLY_APPROVED';
   subtotalCents: string;
   vatCents: string;
   totalCents: string;
@@ -120,8 +118,9 @@ function mapStatus(backendStatus: EstimateResponse['status']): QuoteStatus {
     REJECTED: 'rejected',
     EXPIRED: 'expired',
     CONVERTED: 'approved',
+    PARTIALLY_APPROVED: 'partially_approved',
   };
-  return statusMap[backendStatus];
+  return statusMap[backendStatus] ?? 'draft';
 }
 
 /** Map backend EstimateLineType to frontend QuoteItem type */
@@ -144,7 +143,6 @@ function mapEstimateToQuote(estimate: EstimateResponse): Quote {
     ? new Date(estimate.validUntil).toISOString().split('T')[0]
     : '';
 
-  // Calculate validForDays from created to expiry
   let validForDays = 30;
   if (estimate.validUntil && estimate.createdAt) {
     const diffMs = new Date(estimate.validUntil).getTime() - new Date(estimate.createdAt).getTime();
@@ -156,10 +154,10 @@ function mapEstimateToQuote(estimate: EstimateResponse): Quote {
     number: estimate.estimateNumber,
     customer: {
       id: estimate.customerId,
-      name: estimate.customerId, // Backend doesn't include customer relation; ID used as fallback
+      name: estimate.customerId,
       email: '',
     },
-    vehicle: undefined, // Backend doesn't include vehicle relation
+    vehicle: undefined,
     date: createdDate,
     expiryDate,
     amount: totalCents / 100,
@@ -184,35 +182,47 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
     draft: {
       label: 'Bozza',
       icon: FileClock,
-      className: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+      className:
+        'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-primary)] dark:text-[var(--text-primary)]',
     },
     sent: {
       label: 'Inviato',
       icon: Send,
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      className:
+        'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
     },
     approved: {
       label: 'Approvato',
       icon: FileCheck,
-      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      className:
+        'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)] text-[var(--status-success)] dark:text-[var(--status-success)]',
     },
     rejected: {
       label: 'Rifiutato',
       icon: FileX,
-      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      className:
+        'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] text-[var(--status-error)] dark:text-[var(--status-error)]',
     },
     expired: {
       label: 'Scaduto',
       icon: AlertCircle,
-      className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+      className:
+        'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)] text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    partially_approved: {
+      label: 'Parz. Approvato',
+      icon: MoreHorizontal,
+      className:
+        'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)] text-[var(--status-info)] dark:text-[var(--status-info)]',
     },
   };
 
-  const { label, icon: Icon, className } = config[status];
+  const entry = config[status] ?? config.draft;
+  const { label, icon: Icon, className } = entry;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase ${className}`}
     >
       <Icon className='h-3.5 w-3.5' />
       {label}
@@ -231,55 +241,21 @@ function ExpiryBadge({ expiryDate, status }: { expiryDate: string; status: Quote
   );
 
   if (daysUntilExpiry < 0) {
-    return <span className='text-xs text-red-600 dark:text-red-400 font-medium'>Scaduto</span>;
+    return <span className='text-footnote text-[var(--status-error)] font-medium'>Scaduto</span>;
   }
 
   if (daysUntilExpiry <= 3) {
     return (
-      <span className='text-xs text-orange-600 dark:text-orange-400 font-medium'>
+      <span className='text-footnote text-[var(--status-warning)] font-medium'>
         Scade tra {daysUntilExpiry} gg
       </span>
     );
   }
 
   return (
-    <span className='text-xs text-gray-500 dark:text-gray-400'>
+    <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
       Valido ancora {daysUntilExpiry} gg
     </span>
-  );
-}
-
-// Stats Card Component
-function StatsCard({
-  title,
-  amount,
-  count,
-  icon: Icon,
-  color,
-}: {
-  title: string;
-  amount?: number;
-  count: number;
-  icon: React.ElementType;
-  color: string;
-}) {
-  return (
-    <div className='rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm'>
-      <div className='flex items-start justify-between'>
-        <div>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>{title}</p>
-          {amount !== undefined && (
-            <p className='mt-2 text-2xl font-bold text-gray-900 dark:text-white'>
-              {formatCurrency(amount)}
-            </p>
-          )}
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>{count} preventivi</p>
-        </div>
-        <div className={`rounded-lg p-3 ${color}`}>
-          <Icon className='h-5 w-5 text-white' />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -287,54 +263,40 @@ export default function QuotesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [totalQuotes, setTotalQuotes] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch quotes from API
-  const fetchQuotes = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== 'all') {
-        // Map frontend status to backend EstimateStatus
-        const backendStatusMap: Record<QuoteStatus, string> = {
-          draft: 'DRAFT',
-          sent: 'SENT',
-          approved: 'ACCEPTED',
-          rejected: 'REJECTED',
-          expired: 'EXPIRED',
-        };
-        params.set('status', backendStatusMap[statusFilter]);
-      }
-      params.set('limit', '50');
-
-      const res = await fetch(`/api/dashboard/quotes?${params.toString()}`);
-      if (!res.ok) {
-        throw new Error(`Errore nel caricamento dei preventivi (${res.status})`);
-      }
-
-      const json = await res.json();
-      const estimateData: EstimateResponse[] = json.data ?? json ?? [];
-      const mapped = (Array.isArray(estimateData) ? estimateData : []).map(mapEstimateToQuote);
-
-      setQuotes(mapped);
-      setTotalQuotes(json.meta?.total ?? mapped.length);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Errore sconosciuto';
-      setError(message);
-      setQuotes([]);
-    } finally {
-      setIsLoading(false);
+  // Build SWR key based on filters
+  const swrKey = useMemo(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== 'all') {
+      const backendStatusMap: Record<QuoteStatus, string> = {
+        draft: 'DRAFT',
+        sent: 'SENT',
+        approved: 'ACCEPTED',
+        rejected: 'REJECTED',
+        expired: 'EXPIRED',
+        partially_approved: 'PARTIALLY_APPROVED',
+      };
+      params.set('status', backendStatusMap[statusFilter]);
     }
+    params.set('limit', '50');
+    return `/api/dashboard/quotes?${params.toString()}`;
   }, [statusFilter]);
 
-  useEffect(() => {
-    fetchQuotes();
-  }, [fetchQuotes]);
+  const {
+    data: json,
+    isLoading,
+    mutate,
+  } = useSWR<{ data?: EstimateResponse[]; meta?: { total?: number } }>(swrKey, fetcher);
+
+  const quotes = useMemo(() => {
+    if (!json) return [];
+    const estimateData: EstimateResponse[] =
+      json.data ?? (json as unknown as EstimateResponse[]) ?? [];
+    return (Array.isArray(estimateData) ? estimateData : []).map(mapEstimateToQuote);
+  }, [json]);
+
+  const totalQuotes = json?.meta?.total ?? quotes.length;
 
   // Calculate stats from loaded quotes
   const stats = useMemo(() => {
@@ -357,7 +319,7 @@ export default function QuotesPage() {
     };
   }, [quotes]);
 
-  // Filter quotes by search query (status filtering is done server-side)
+  // Filter quotes by search query
   const filteredQuotes = useMemo(() => {
     if (!searchQuery) return quotes;
 
@@ -374,270 +336,343 @@ export default function QuotesPage() {
   }, [quotes, searchQuery]);
 
   const handleConvertToInvoice = async (quoteId: string) => {
-    // TODO: Create QuoteController endpoint in backend
-    const res = await fetch(`/api/invoices/quotes/${quoteId}/convert`, { method: 'POST' });
-    if (res.ok) router.push('/dashboard/invoices');
+    try {
+      const res = await fetch(`/api/invoices/quotes/${quoteId}/convert`, { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(`Errore nella conversione del preventivo (${res.status})`);
+      }
+      router.push('/dashboard/invoices');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Errore durante la conversione in fattura';
+      setError(message);
+    }
   };
 
-  const handleCreateQuote = async (data: Record<string, string | number | boolean>) => {
-    // TODO: Create QuoteController endpoint in backend
-    const res = await fetch('/api/invoices/quotes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) setIsCreateDialogOpen(false);
-  };
+  const statCards = [
+    {
+      label: 'In Bozza',
+      value: String(stats.draftCount),
+      icon: FileClock,
+      color: 'bg-[var(--surface-secondary)]0',
+    },
+    {
+      label: 'Inviati',
+      value: stats.sentCount > 0 ? formatCurrency(stats.totalPending) : '0',
+      icon: Send,
+      color: 'bg-[var(--brand)]',
+    },
+    {
+      label: 'Approvati',
+      value: stats.approvedCount > 0 ? formatCurrency(stats.approved) : '0',
+      icon: FileCheck,
+      color: 'bg-[var(--status-success)]',
+    },
+    {
+      label: 'Rifiutati',
+      value: String(stats.rejectedCount),
+      icon: FileX,
+      color: 'bg-[var(--status-error)]',
+    },
+    {
+      label: 'Scaduti',
+      value: String(stats.expiredCount),
+      icon: AlertCircle,
+      color: 'bg-[var(--status-warning)]',
+    },
+  ];
 
   return (
-    <div className='min-h-screen bg-gray-50 p-6 dark:bg-gray-900'>
+    <div>
       {/* Header */}
-      <div className='mb-8'>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='mb-2 -ml-2'
-          onClick={() => router.push('/dashboard/invoices')}
-        >
-          <ArrowLeft className='mr-2 h-4 w-4' />
-          Torna alle Fatture
-        </Button>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>Preventivi</h1>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
-          Gestisci preventivi e trasformali in fatture
-        </p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className='mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
-        <StatsCard title='In Bozza' count={stats.draftCount} icon={FileClock} color='bg-gray-500' />
-        <StatsCard
-          title='Inviati'
-          amount={stats.totalPending}
-          count={stats.sentCount}
-          icon={Send}
-          color='bg-blue-500'
-        />
-        <StatsCard
-          title='Approvati'
-          amount={stats.approved}
-          count={stats.approvedCount}
-          icon={FileCheck}
-          color='bg-green-500'
-        />
-        <StatsCard title='Rifiutati' count={stats.rejectedCount} icon={FileX} color='bg-red-500' />
-        <StatsCard
-          title='Scaduti'
-          count={stats.expiredCount}
-          icon={AlertCircle}
-          color='bg-orange-500'
-        />
-      </div>
-
-      {/* Actions Bar */}
-      <div className='mb-6 flex flex-wrap items-center justify-between gap-4'>
-        <div className='flex flex-wrap items-center gap-3'>
-          {/* Search */}
-          <div className='relative'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
-            <Input
-              placeholder='Cerca preventivo...'
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className='w-64 pl-10'
-            />
-          </div>
-
-          {/* Status Filter */}
-          <Select
-            value={statusFilter}
-            onValueChange={v => setStatusFilter(v as QuoteStatus | 'all')}
-          >
-            <SelectTrigger className='w-40'>
-              <Filter className='mr-2 h-4 w-4' />
-              <SelectValue placeholder='Stato' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tutti gli stati</SelectItem>
-              <SelectItem value='draft'>Bozza</SelectItem>
-              <SelectItem value='sent'>Inviato</SelectItem>
-              <SelectItem value='approved'>Approvato</SelectItem>
-              <SelectItem value='rejected'>Rifiutato</SelectItem>
-              <SelectItem value='expired'>Scaduto</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className='mr-2 h-4 w-4' />
-          Nuovo Preventivo
-        </Button>
-      </div>
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className='rounded-xl bg-white shadow-sm dark:bg-gray-800 py-16 text-center'>
-          <div className='mx-auto h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-500' />
-          <p className='mt-4 text-gray-500 dark:text-gray-400'>Caricamento preventivi...</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {!isLoading && error && (
-        <div className='rounded-xl bg-white shadow-sm dark:bg-gray-800 py-12 text-center'>
-          <AlertCircle className='mx-auto h-12 w-12 text-red-400' />
-          <p className='mt-4 text-red-600 dark:text-red-400 font-medium'>{error}</p>
-          <Button variant='outline' className='mt-4' onClick={fetchQuotes}>
-            Riprova
-          </Button>
-        </div>
-      )}
-
-      {/* Quotes Table */}
-      {!isLoading && !error && (
-        <div className='rounded-xl bg-white shadow-sm dark:bg-gray-800'>
-          <div className='overflow-x-auto'>
-            <table className='w-full text-left text-sm'>
-              <thead className='bg-gray-50 dark:bg-gray-700/50'>
-                <tr>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>Numero</th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>
-                    Cliente
-                  </th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>
-                    Veicolo
-                  </th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>Data</th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>
-                    Scadenza
-                  </th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300 text-right'>
-                    Importo
-                  </th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300'>Stato</th>
-                  <th className='px-6 py-4 font-medium text-gray-700 dark:text-gray-300 text-center'>
-                    Azioni
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
-                {filteredQuotes.map(quote => (
-                  <tr
-                    key={quote.id}
-                    className='hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'
-                  >
-                    <td className='px-6 py-4'>
-                      <span className='font-medium text-gray-900 dark:text-white'>
-                        {quote.number}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <div>
-                        <p className='font-medium text-gray-900 dark:text-white'>
-                          {quote.customer.name}
-                        </p>
-                        <p className='text-xs text-gray-500 dark:text-gray-400'>
-                          {quote.customer.email}
-                        </p>
-                      </div>
-                    </td>
-                    <td className='px-6 py-4'>
-                      {quote.vehicle ? (
-                        <div>
-                          <p className='text-gray-900 dark:text-white'>
-                            {quote.vehicle.make} {quote.vehicle.model}
-                          </p>
-                          <p className='text-xs text-gray-500 dark:text-gray-400'>
-                            {quote.vehicle.licensePlate}
-                          </p>
-                        </div>
-                      ) : (
-                        <span className='text-gray-400'>-</span>
-                      )}
-                    </td>
-                    <td className='px-6 py-4 text-gray-600 dark:text-gray-400'>
-                      {formatDate(quote.date)}
-                    </td>
-                    <td className='px-6 py-4'>
-                      <div className='flex flex-col gap-1'>
-                        <span
-                          className={`text-gray-600 dark:text-gray-400 ${
-                            quote.status === 'expired' ? 'text-red-600 dark:text-red-400' : ''
-                          }`}
-                        >
-                          {formatDate(quote.expiryDate)}
-                        </span>
-                        <ExpiryBadge expiryDate={quote.expiryDate} status={quote.status} />
-                      </div>
-                    </td>
-                    <td className='px-6 py-4 text-right'>
-                      <span className='font-semibold text-gray-900 dark:text-white'>
-                        {formatCurrency(quote.amount)}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4'>
-                      <StatusBadge status={quote.status} />
-                    </td>
-                    <td className='px-6 py-4'>
-                      <div className='flex items-center justify-center gap-2'>
-                        <Button variant='ghost' size='icon-sm' title='Visualizza'>
-                          <Eye className='h-4 w-4' />
-                        </Button>
-                        <Button variant='ghost' size='icon-sm' title='Scarica PDF'>
-                          <Download className='h-4 w-4' />
-                        </Button>
-                        {quote.status === 'sent' && (
-                          <Button
-                            variant='ghost'
-                            size='icon-sm'
-                            title='Converti in fattura'
-                            onClick={() => handleConvertToInvoice(quote.id)}
-                          >
-                            <FileCheck className='h-4 w-4' />
-                          </Button>
-                        )}
-                        {quote.status === 'draft' && (
-                          <Button variant='ghost' size='icon-sm' title='Invia'>
-                            <Send className='h-4 w-4' />
-                          </Button>
-                        )}
-                        <Button variant='ghost' size='icon-sm' title='Altro'>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredQuotes.length === 0 && (
-            <div className='py-12 text-center'>
-              <FileText className='mx-auto h-12 w-12 text-gray-300 dark:text-gray-600' />
-              <p className='mt-4 text-gray-500 dark:text-gray-400'>Nessun preventivo trovato</p>
-              <p className='text-sm text-gray-400 dark:text-gray-500'>
-                Prova a modificare i filtri o crea un nuovo preventivo
-              </p>
+      <header>
+        <div className='px-8 py-5 flex items-center justify-between'>
+          <div>
+            <div className='flex items-center gap-2 mb-1'>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                icon={<ArrowLeft className='h-4 w-4' />}
+                onClick={() => router.push('/dashboard/invoices')}
+              >
+                Fatture
+              </AppleButton>
             </div>
-          )}
-
-          {/* Pagination */}
-          <div className='flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-700'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Mostrando {filteredQuotes.length} di {totalQuotes} preventivi
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+              Preventivi
+            </h1>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
+              Gestisci preventivi e trasformali in fatture
             </p>
-            <div className='flex items-center gap-2'>
-              <Button variant='outline' size='sm' disabled>
-                <ChevronLeft className='h-4 w-4' />
-              </Button>
-              <Button variant='outline' size='sm' disabled>
-                <ChevronRight className='h-4 w-4' />
-              </Button>
-            </div>
           </div>
+          <AppleButton
+            icon={<Plus className='h-4 w-4' />}
+            onClick={() => router.push('/dashboard/estimates/new')}
+          >
+            Nuovo Preventivo
+          </AppleButton>
         </div>
-      )}
+      </header>
+
+      <div className='p-8 space-y-6'>
+        {/* Stats Cards */}
+        <div className='grid grid-cols-2 lg:grid-cols-5 gap-bento'>
+          {statCards.map(stat => (
+            <AppleCard key={stat.label} hover={false}>
+              <AppleCardContent>
+                <div className='flex items-center justify-between mb-3'>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}
+                  >
+                    <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
+                  </div>
+                </div>
+                <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  {isLoading ? '...' : stat.value}
+                </p>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  {stat.label}
+                </p>
+              </AppleCardContent>
+            </AppleCard>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <AppleCard hover={false}>
+          <AppleCardContent>
+            <div className='flex flex-col sm:flex-row gap-4'>
+              <div className='relative flex-1'>
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
+                <Input
+                  placeholder='Cerca preventivo...'
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className='pl-10'
+                />
+              </div>
+              <div className='relative'>
+                <Filter className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)] pointer-events-none' />
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value as QuoteStatus | 'all')}
+                  className='h-10 pl-10 pr-4 rounded-md border border-[var(--border-default)] dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue appearance-none cursor-pointer'
+                >
+                  <option value='all'>Tutti gli stati</option>
+                  <option value='draft'>Bozza</option>
+                  <option value='sent'>Inviato</option>
+                  <option value='approved'>Approvato</option>
+                  <option value='rejected'>Rifiutato</option>
+                  <option value='expired'>Scaduto</option>
+                  <option value='partially_approved'>Parz. Approvato</option>
+                </select>
+              </div>
+            </div>
+          </AppleCardContent>
+        </AppleCard>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className='flex items-center justify-center py-12'>
+            <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
+          </div>
+        )}
+
+        {/* Error State */}
+        {!isLoading && error && (
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='flex flex-col items-center justify-center py-12 text-center'>
+                <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                <p className='text-body text-[var(--status-error)] font-medium'>{error}</p>
+                <AppleButton variant='ghost' className='mt-4' onClick={() => mutate()}>
+                  Riprova
+                </AppleButton>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+        )}
+
+        {/* Quotes Table */}
+        {!isLoading && !error && (
+          <AppleCard hover={false}>
+            <AppleCardContent>
+              <div className='overflow-x-auto'>
+                <table className='w-full text-left text-body'>
+                  <thead>
+                    <tr className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]'>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Numero
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Cliente
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Veicolo
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Data
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Scadenza
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-right'>
+                        Importo
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        Stato
+                      </th>
+                      <th className='px-4 py-3 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] text-center'>
+                        Azioni
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredQuotes.map(quote => (
+                      <tr
+                        key={quote.id}
+                        className='border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)]/50 last:border-b-0 hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-hover)] transition-colors'
+                      >
+                        <td className='px-4 py-3'>
+                          <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            {quote.number}
+                          </span>
+                        </td>
+                        <td className='px-4 py-3'>
+                          <div>
+                            <p className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                              {quote.customer.name}
+                            </p>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                              {quote.customer.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className='px-4 py-3'>
+                          {quote.vehicle ? (
+                            <div>
+                              <p className='text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                {quote.vehicle.make} {quote.vehicle.model}
+                              </p>
+                              <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                {quote.vehicle.licensePlate}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className='text-[var(--text-tertiary)]'>-</span>
+                          )}
+                        </td>
+                        <td className='px-4 py-3 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                          {formatDate(quote.date)}
+                        </td>
+                        <td className='px-4 py-3'>
+                          <div className='flex flex-col gap-1'>
+                            <span
+                              className={`text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ${
+                                quote.status === 'expired' ? 'text-[var(--status-error)]' : ''
+                              }`}
+                            >
+                              {formatDate(quote.expiryDate)}
+                            </span>
+                            <ExpiryBadge expiryDate={quote.expiryDate} status={quote.status} />
+                          </div>
+                        </td>
+                        <td className='px-4 py-3 text-right'>
+                          <span className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            {formatCurrency(quote.amount)}
+                          </span>
+                        </td>
+                        <td className='px-4 py-3'>
+                          <StatusBadge status={quote.status} />
+                        </td>
+                        <td className='px-4 py-3'>
+                          <div className='flex items-center justify-center gap-1'>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => router.push(`/dashboard/estimates/${quote.id}`)}
+                            >
+                              <Eye className='h-4 w-4' />
+                            </AppleButton>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`/api/estimates/${quote.id}/pdf`);
+                                  if (!res.ok) throw new Error('Errore PDF');
+                                  const blob = await res.blob();
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `preventivo-${quote.number}.pdf`;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                } catch {
+                                  setError('Errore durante il download del PDF');
+                                }
+                              }}
+                            >
+                              <Download className='h-4 w-4' />
+                            </AppleButton>
+                            {quote.status === 'sent' && (
+                              <AppleButton
+                                variant='ghost'
+                                size='sm'
+                                onClick={() => handleConvertToInvoice(quote.id)}
+                              >
+                                <FileCheck className='h-4 w-4' />
+                              </AppleButton>
+                            )}
+                            {quote.status === 'draft' && (
+                              <AppleButton
+                                variant='ghost'
+                                size='sm'
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/estimates/${quote.id}/send`, {
+                                      method: 'POST',
+                                    });
+                                    if (!res.ok) throw new Error('Errore invio');
+                                    mutate();
+                                  } catch {
+                                    setError("Errore durante l'invio del preventivo");
+                                  }
+                                }}
+                              >
+                                <Send className='h-4 w-4' />
+                              </AppleButton>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {filteredQuotes.length === 0 && !isLoading && (
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                    Nessun preventivo trovato
+                  </p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                    Prova a modificare i filtri o crea un nuovo preventivo
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              <div className='flex items-center justify-between border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)] px-4 py-4 mt-4'>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  Mostrando {filteredQuotes.length} di {totalQuotes} preventivi
+                </p>
+              </div>
+            </AppleCardContent>
+          </AppleCard>
+        )}
+      </div>
     </div>
   );
 }

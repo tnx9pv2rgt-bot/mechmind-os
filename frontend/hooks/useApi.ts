@@ -26,6 +26,21 @@ interface DashboardStats {
   recentBookings: Booking[];
   alerts: Alert[];
   tenantName: string;
+  // Efficiency & conversion metrics
+  efficiency: number;
+  efficiencyChange: number;
+  conversion: number;
+  conversionChange: number;
+  // Financial metrics
+  unpaidAmount: number;
+  overdueAmount: number;
+  grossMargin: number;
+  cashFlow7d: number;
+  revenueTarget: number;
+  // 2026 Compliance KPIs
+  scorteInAllarme: number;
+  preventiviInScadenza: number;
+  rightToRepairPct: number;
 }
 
 interface Alert {
@@ -139,6 +154,12 @@ interface CreateVehicleInput {
   mileage?: number;
 }
 
+interface BookingStats {
+  total: number;
+  byStatus: Record<string, number>;
+  bySource: Record<string, number>;
+}
+
 interface TenantSettings {
   name: string;
   address?: string;
@@ -146,6 +167,7 @@ interface TenantSettings {
   email?: string;
   vatNumber?: string;
   logo?: string;
+  hourlyRate?: number;
   openingHours?: Record<string, string>;
   notificationPreferences?: Record<string, boolean>;
   team?: TeamMember[];
@@ -171,8 +193,11 @@ export function useDashboardStats() {
       const raw = res.data;
       return 'data' in raw && raw.data ? raw.data : (raw as DashboardStats);
     },
-    staleTime: 60_000,
-    retry: 2,
+    staleTime: Infinity,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    retry: 0,
   });
 }
 
@@ -195,17 +220,29 @@ export function useBookings(params?: {
         params as Record<string, string | number>
       );
       const raw = res.data;
+      const normalize = (b: Record<string, unknown>): Booking => ({
+        ...(b as unknown as Booking),
+        scheduledAt: (b.scheduledAt ??
+          b.scheduledDate ??
+          (b.slot as { startTime?: string } | undefined)?.startTime ??
+          '') as string,
+      });
       if ('data' in raw && Array.isArray(raw.data)) {
         return {
-          data: raw.data,
+          data: (raw.data as unknown as Record<string, unknown>[]).map(normalize),
           total: raw.data.length,
           page: params?.page || 1,
           limit: params?.limit || 20,
         };
       }
+      const paged = raw as unknown as PaginatedResponse<Record<string, unknown>>;
+      if (Array.isArray(paged.data)) {
+        return { ...paged, data: paged.data.map(normalize) } as PaginatedResponse<Booking>;
+      }
       return raw as PaginatedResponse<Booking>;
     },
     staleTime: 30_000,
+    retry: 0,
   });
 }
 
@@ -215,7 +252,11 @@ export function useBooking(id: string | undefined) {
     queryFn: async () => {
       const res = await api.get<Booking | { data: Booking }>(`/bookings/${id}`);
       const raw = res.data;
-      return 'data' in raw && raw.data ? raw.data : (raw as Booking);
+      const b = ('data' in raw && raw.data ? raw.data : raw) as Record<string, unknown>;
+      return {
+        ...(b as unknown as Booking),
+        scheduledAt: (b.scheduledAt ?? b.scheduledDate ?? '') as string,
+      };
     },
     enabled: !!id,
   });
@@ -263,6 +304,21 @@ export function useCancelBooking() {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
+  });
+}
+
+export function useBookingStats(params?: { fromDate?: string; toDate?: string }) {
+  return useQuery<BookingStats>({
+    queryKey: ['bookings', 'stats', params],
+    queryFn: async () => {
+      const res = await api.get<BookingStats | { data: BookingStats }>(
+        '/bookings/calendar/stats',
+        params as Record<string, string>
+      );
+      const raw = res.data;
+      return 'data' in raw && raw.data ? raw.data : (raw as BookingStats);
+    },
+    staleTime: 30_000,
   });
 }
 
@@ -324,6 +380,7 @@ export function useCustomers(params?: { page?: number; limit?: number; search?: 
       return raw as PaginatedResponse<Customer>;
     },
     staleTime: 30_000,
+    retry: 0,
   });
 }
 
@@ -386,6 +443,20 @@ export function useUpdateCustomer() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['customers', variables.id] });
+    },
+  });
+}
+
+export function useDeleteCustomer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete<{ success: boolean }>(`/customers/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -599,9 +670,18 @@ interface Part {
   retailPrice?: number;
   minStockLevel?: number;
   currentStock?: number;
+  stockQuantity?: number;
+  reservedQuantity?: number;
+  availableQuantity?: number;
+  isLowStock?: boolean;
   supplierId?: string;
   supplierName?: string;
   supplier?: Supplier;
+  // EU Right to Repair 2024/1799
+  partType?: 'GENUINE' | 'AFTERMARKET' | 'REGENERATED' | 'USED';
+  warrantyMonths?: number;
+  originCode?: string;
+  barcode?: string;
   createdAt: string;
 }
 
@@ -700,6 +780,57 @@ export function useCreatePart() {
 }
 
 // =============================================================================
+// Work Orders
+// =============================================================================
+
+interface WorkOrder {
+  id: string;
+  orderNumber?: string;
+  status: string;
+  customerId?: string;
+  customerName?: string;
+  vehicleId?: string;
+  vehiclePlate?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  description?: string;
+  totalAmount?: number;
+  estimatedCompletion?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function useWorkOrders(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  sort?: string;
+}) {
+  return useQuery<PaginatedResponse<WorkOrder>>({
+    queryKey: ['work-orders', params],
+    queryFn: async () => {
+      const res = await api.get<PaginatedResponse<WorkOrder> | { data: WorkOrder[] }>(
+        '/work-orders',
+        params as Record<string, string | number>
+      );
+      const raw = res.data;
+      if ('data' in raw && Array.isArray(raw.data)) {
+        return {
+          data: raw.data,
+          total: raw.data.length,
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+        };
+      }
+      return raw as PaginatedResponse<WorkOrder>;
+    },
+    staleTime: 30_000,
+    retry: 0,
+  });
+}
+
+// =============================================================================
 // Re-export types for pages
 // =============================================================================
 
@@ -720,4 +851,5 @@ export type {
   ApiError,
   Supplier,
   Part,
+  WorkOrder,
 };

@@ -6,11 +6,13 @@
  * channel preferences. Supersedes v1 for direct Twilio integration.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@common/services/prisma.service';
 import { EncryptionService } from '@common/services/encryption.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EmailService } from '../email/email.service';
+import { NotificationsGateway } from '../gateways/notifications.gateway';
 import twilio from 'twilio';
 import type { Twilio } from 'twilio';
 import {
@@ -69,6 +71,8 @@ export class NotificationV2Service {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly encryption: EncryptionService,
+    private readonly emailService: EmailService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
@@ -80,7 +84,7 @@ export class NotificationV2Service {
       this.twilioClient = twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized for Notification v2');
     } else {
-      this.logger.warn('Twilio not configured or SMS notifications disabled');
+      this.logger.debug('Twilio not configured or SMS notifications disabled');
     }
   }
 
@@ -99,7 +103,7 @@ export class NotificationV2Service {
 
     const formattedPhone = this.formatPhoneNumber(phone);
     if (!formattedPhone) {
-      throw new Error('Invalid phone number format');
+      throw new BadRequestException('Invalid phone number format');
     }
 
     try {
@@ -114,6 +118,7 @@ export class NotificationV2Service {
       return result.sid;
     } catch (error) {
       this.logger.error(
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         `Failed to send SMS: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
@@ -131,7 +136,7 @@ export class NotificationV2Service {
 
     const formattedPhone = this.formatPhoneNumber(phone);
     if (!formattedPhone) {
-      throw new Error('Invalid phone number format');
+      throw new BadRequestException('Invalid phone number format');
     }
 
     try {
@@ -159,11 +164,11 @@ export class NotificationV2Service {
     // Generate message if not provided
     const message = data.message;
     if (!message) {
-      const customer = await this.prisma.customer.findUnique({
-        where: { id: data.customerId },
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: data.customerId, tenantId: data.tenantId },
       });
       if (!customer) {
-        throw new Error(`Customer ${data.customerId} not found`);
+        throw new NotFoundException(`Customer ${data.customerId} not found`);
       }
       // Message will be generated during processing
     }
@@ -195,8 +200,8 @@ export class NotificationV2Service {
   async sendImmediate(data: CreateNotificationDTO): Promise<NotificationResult> {
     try {
       // Get customer data
-      const customer = await this.prisma.customer.findUnique({
-        where: { id: data.customerId },
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: data.customerId, tenantId: data.tenantId },
       });
 
       if (!customer) {
@@ -237,6 +242,49 @@ export class NotificationV2Service {
         case NotificationChannel.WHATSAPP:
           messageId = await this.sendWhatsApp(phone, message);
           break;
+        case NotificationChannel.IN_APP: {
+          const notification = await this.prisma.notification.create({
+            data: {
+              customerId: data.customerId,
+              tenantId: data.tenantId,
+              type: data.type,
+              channel: data.channel,
+              status: NotificationStatus.DELIVERED,
+              message,
+              sentAt: new Date(),
+              metadata: (data.metadata || {}) as Prisma.InputJsonValue,
+            },
+          });
+          this.notificationsGateway.broadcastToTenant(data.tenantId, 'notification:new', {
+            id: notification.id,
+            type: data.type,
+            message,
+            metadata: data.metadata,
+            createdAt: notification.createdAt,
+          });
+          // eslint-disable-next-line sonarjs/no-duplicate-string
+          this.eventEmitter.emit('notification.sent', notification);
+          return { success: true, notificationId: notification.id, messageId: notification.id };
+        }
+        case NotificationChannel.EMAIL: {
+          const customerEmail = await this.decryptEmail(customer.encryptedEmail);
+          if (!customerEmail) {
+            return { success: false, error: 'Customer email not available' };
+          }
+          const customerName = await this.getCustomerName(customer);
+          const approvalUrl = data.metadata?.approvalUrl as string | undefined;
+          const emailResult = await this.emailService.sendEstimateApproval({
+            customerName,
+            customerEmail,
+            estimateId: (data.metadata?.estimateId as string) || '',
+            approvalUrl: approvalUrl || '',
+          });
+          if (!emailResult.success) {
+            return { success: false, error: emailResult.error };
+          }
+          messageId = emailResult.messageId || 'email-' + Date.now();
+          break;
+        }
         default:
           return { success: false, error: 'Unsupported channel' };
       }
@@ -291,7 +339,8 @@ export class NotificationV2Service {
   }
 
   /**
-   * Process pending notifications (called by cron job)
+   * Process pending notifications (called by cron job).
+   * INTENTIONALLY cross-tenant: cron processes all pending notifications system-wide.
    */
   async processPending(): Promise<{ processed: number; failed: number }> {
     const pendingNotifications = await this.prisma.notification.findMany({
@@ -357,6 +406,7 @@ export class NotificationV2Service {
     lang: string = 'it',
   ): (vars: NotificationTemplateData) => string {
     const templates = lang === 'en' ? this.getEnglishTemplates() : this.getItalianTemplates();
+    // eslint-disable-next-line security/detect-object-injection
     return templates[type] || templates.STATUS_UPDATE;
   }
 
@@ -437,9 +487,9 @@ export class NotificationV2Service {
   /**
    * Retry failed notification
    */
-  async retryNotification(notificationId: string): Promise<NotificationResult> {
-    const notification = await this.prisma.notification.findUnique({
-      where: { id: notificationId },
+  async retryNotification(tenantId: string, notificationId: string): Promise<NotificationResult> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id: notificationId, tenantId },
       include: { customer: true },
     });
 
@@ -469,25 +519,58 @@ export class NotificationV2Service {
    * Get notification history for customer
    */
   async getHistory(
+    tenantId: string,
     customerId: string,
     options?: { limit?: number; offset?: number; type?: NotificationType },
   ): Promise<{ notifications: Notification[]; total: number }> {
+    const where = {
+      tenantId,
+      customerId,
+      ...(options?.type && { type: options.type }),
+    };
     const [notifications, total] = await Promise.all([
       this.prisma.notification.findMany({
-        where: {
-          customerId,
-          ...(options?.type && { type: options.type }),
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: options?.limit || 50,
         skip: options?.offset || 0,
       }),
-      this.prisma.notification.count({
-        where: { customerId },
-      }),
+      this.prisma.notification.count({ where }),
     ]);
 
     return { notifications, total };
+  }
+
+  // ==========================================
+  // SINGLE NOTIFICATION OPERATIONS
+  // ==========================================
+
+  /**
+   * Get a notification by ID
+   */
+  async getNotificationById(tenantId: string, id: string): Promise<Notification | null> {
+    return this.prisma.notification.findFirst({
+      where: { id, tenantId },
+    });
+  }
+
+  /**
+   * Soft-delete a notification by setting status and deletedAt.
+   * Uses $executeRaw to support the deletedAt field added to schema
+   * before Prisma client regeneration.
+   */
+  async deleteNotification(tenantId: string, id: string): Promise<void> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification ${id} not found`);
+    }
+
+    await this.prisma.notification.delete({
+      where: { id },
+    });
   }
 
   // ==========================================
@@ -570,7 +653,7 @@ export class NotificationV2Service {
         messageId = await this.sendWhatsApp(phone, message);
         break;
       default:
-        throw new Error('Unsupported channel');
+        throw new BadRequestException('Unsupported channel');
     }
 
     // Update notification
@@ -656,6 +739,16 @@ export class NotificationV2Service {
     }
   }
 
+  private async decryptEmail(encryptedEmail: string | null | undefined): Promise<string | null> {
+    if (!encryptedEmail) return null;
+    try {
+      return this.encryption.decrypt(encryptedEmail);
+    } catch {
+      this.logger.warn('Failed to decrypt email');
+      return null;
+    }
+  }
+
   private async getCustomerName(customer: Customer): Promise<string> {
     const encrypted = (customer as Record<string, unknown>).encryptedFirstName as string | null;
     if (!encrypted) {
@@ -678,12 +771,15 @@ export class NotificationV2Service {
   > {
     return {
       [NotificationType.BOOKING_REMINDER]: v =>
+        // eslint-disable-next-line sonarjs/no-nested-template-literals, sonarjs/no-duplicate-string
         `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.BOOKING_CONFIRMATION]: v =>
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
         `Ciao ${v.customerName}, appuntamento confermato per ${v.date} alle ${v.time}${v.workshopName ? ` da ${v.workshopName}` : ''}${v.bookingCode ? ` (Codice: ${v.bookingCode})` : ''}. Ti aspettiamo!`,
 
       [NotificationType.STATUS_UPDATE]: v =>
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
         `Ciao ${v.customerName}, aggiornamento: ${v.status || 'in lavorazione'}. ${v.link ? `Dettagli: ${v.link}` : ''}`,
 
       [NotificationType.INVOICE_READY]: v =>
@@ -693,38 +789,50 @@ export class NotificationV2Service {
         `Ciao ${v.customerName}, ${v.service || 'manutenzione'} dovuta tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.INSPECTION_COMPLETE]: v =>
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
         `Ciao ${v.customerName}, ispezione completata!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
 
       [NotificationType.PAYMENT_REMINDER]: v =>
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
         `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.io/portal'}`,
     };
   }
 
+  /**
+   * English templates kept as mirror of Italian ones for API consumers
+   * that explicitly request lang='en'. All customer-facing SMS/WhatsApp
+   * defaults to Italian (lang='it').
+   */
   private getEnglishTemplates(): Record<
     NotificationType,
     (vars: NotificationTemplateData) => string
   > {
     return {
       [NotificationType.BOOKING_REMINDER]: v =>
-        `Hi ${v.customerName}, reminder: your appointment is tomorrow ${v.date} at ${v.time}${v.location ? ` at ${v.location}` : ''}. Confirm or modify: ${v.link || 'https://mechmind.io/portal'}`,
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
+        `Ciao ${v.customerName}, ti ricordiamo l'appuntamento domani ${v.date} alle ${v.time}${v.location ? ` presso ${v.location}` : ''}. Conferma o modifica: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.BOOKING_CONFIRMATION]: v =>
-        `Hi ${v.customerName}, appointment confirmed for ${v.date} at ${v.time}${v.workshopName ? ` at ${v.workshopName}` : ''}${v.bookingCode ? ` (Code: ${v.bookingCode})` : ''}. See you soon!`,
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
+        `Ciao ${v.customerName}, appuntamento confermato per ${v.date} alle ${v.time}${v.workshopName ? ` da ${v.workshopName}` : ''}${v.bookingCode ? ` (Codice: ${v.bookingCode})` : ''}. Ti aspettiamo!`,
 
       [NotificationType.STATUS_UPDATE]: v =>
-        `Hi ${v.customerName}, status update: ${v.status || 'in progress'}. ${v.link ? `Details: ${v.link}` : ''}`,
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
+        `Ciao ${v.customerName}, aggiornamento: ${v.status || 'in lavorazione'}. ${v.link ? `Dettagli: ${v.link}` : ''}`,
 
       [NotificationType.INVOICE_READY]: v =>
-        `Hi ${v.customerName}, your invoice is ready. Amount: ${v.amount || 'N/A'}. View: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, la tua fattura è pronta. Importo: ${v.amount || 'N/D'}. Visualizza: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.MAINTENANCE_DUE]: v =>
-        `Hi ${v.customerName}, ${v.service || 'maintenance'} due in ${v.days || 'a few'} days. Book: ${v.link || 'https://mechmind.io/portal'}`,
+        `Ciao ${v.customerName}, promemoria: ${v.service || 'manutenzione'} in scadenza tra ${v.days || 'pochi'} giorni. Prenota: ${v.link || 'https://mechmind.io/portal'}`,
 
       [NotificationType.INSPECTION_COMPLETE]: v =>
-        `Hi ${v.customerName}, inspection completed!${v.score ? ` Score: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
+        `Ciao ${v.customerName}, ispezione completata!${v.score ? ` Punteggio: ${v.score}/10` : ''}${v.link ? `. Report: ${v.link}` : ''}`,
 
       [NotificationType.PAYMENT_REMINDER]: v =>
-        `Hi ${v.customerName}, payment reminder${v.amount ? ` for ${v.amount}` : ''}. Pay here: ${v.link || 'https://mechmind.io/portal'}`,
+        // eslint-disable-next-line sonarjs/no-nested-template-literals
+        `Ciao ${v.customerName}, promemoria pagamento fattura ${v.amount ? `di ${v.amount}` : ''}. Paga qui: ${v.link || 'https://mechmind.io/portal'}`,
     };
   }
 }

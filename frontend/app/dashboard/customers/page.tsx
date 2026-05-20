@@ -1,287 +1,432 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card'
-import { AppleButton } from '@/components/ui/apple-button'
-import { Input } from '@/components/ui/input'
-import { Users, Search, Plus, Mail, Phone, Star, TrendingUp, Gift, Download, Trash2, AlertTriangle } from 'lucide-react'
-import Link from 'next/link'
-import { useCustomers, useGdprExport, useGdprDelete } from '@/hooks/useApi'
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  Users,
+  Search,
+  Plus,
+  Mail,
+  Phone,
+  MoreHorizontal,
+  Eye,
+  Pencil,
+  Trash2,
+  Upload,
+  AlertCircle,
+  Download,
+  Loader2,
+} from 'lucide-react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { AppleButton } from '@/components/ui/apple-button';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
+import { useCustomers, useDeleteCustomer, useGdprExport } from '@/hooks/useApi';
+import { formatPhone, timeAgo } from '@/lib/utils/format';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
+type CustomerType = 'all' | 'private' | 'business';
+
+const PAGE_SIZE = 20;
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
-}
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+  },
+};
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } }
-}
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+};
 
-const headerVariants = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
-}
+export default function CustomersPage(): React.ReactElement {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('q') || '';
+  const initialPage = parseInt(searchParams.get('page') || '1', 10);
 
-const loyaltyColors: Record<string, string> = {
-  'Bronze': 'bg-amber-700',
-  'Silver': 'bg-slate-400',
-  'Gold': 'bg-amber-400',
-  'Platinum': 'bg-gradient-to-r from-slate-300 to-white',
-}
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [customerType, setCustomerType] = useState<CustomerType>('all');
+  const [page, setPage] = useState(initialPage);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-function GdprDeleteDialog({ customerName, customerId, onClose }: { customerName: string; customerId: string; onClose: () => void }) {
-  const [confirmText, setConfirmText] = useState('')
-  const gdprDelete = useGdprDelete()
+  const deleteCustomer = useDeleteCustomer();
+  const gdprExport = useGdprExport();
 
-  const expectedText = `ELIMINA ${customerName.toUpperCase()}`
-  const canDelete = confirmText === expectedText
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <h3 className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec] dark:text-[#ececec]">Elimina dati cliente</h3>
-            <p className="text-footnote text-apple-gray dark:text-[#636366]">Azione irreversibile — GDPR Art. 17</p>
-          </div>
-        </div>
+  // Sync URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (page > 1) params.set('page', String(page));
+    const qs = params.toString();
+    const newUrl = qs ? `?${qs}` : '/dashboard/customers';
+    window.history.replaceState(null, '', newUrl);
+  }, [debouncedSearch, page]);
 
-        <p className="text-body text-apple-gray dark:text-[#636366] mb-4">
-          Tutti i dati personali di <strong>{customerName}</strong> verranno eliminati permanentemente.
-          Questa azione non può essere annullata.
-        </p>
+  const {
+    data: customersData,
+    isLoading,
+    error,
+    refetch,
+  } = useCustomers({
+    search: debouncedSearch || undefined,
+    page,
+    limit: PAGE_SIZE,
+  });
 
-        <div className="mb-4">
-          <label className="text-caption text-apple-gray dark:text-[#636366] dark:text-[#636366] uppercase tracking-wider block mb-1">
-            Digita <strong>{expectedText}</strong> per confermare
-          </label>
-          <Input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder={expectedText}
-            className="h-12 rounded-xl border-2 border-red-200 dark:border-red-700/30 bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/30"
-          />
-        </div>
+  const customers = customersData?.data ?? [];
+  const total = customersData?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-        <div className="flex gap-3">
-          <AppleButton variant="secondary" className="flex-1" onClick={onClose}>
-            Annulla
-          </AppleButton>
-          <AppleButton
-            className="flex-1 bg-red-600 hover:bg-red-700"
-            disabled={!canDelete || gdprDelete.isPending}
-            onClick={async () => {
-              await gdprDelete.mutateAsync(customerId)
-              onClose()
-            }}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            {gdprDelete.isPending ? 'Eliminazione...' : 'Elimina'}
-          </AppleButton>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
+  // Filter by type client-side (until backend supports it)
+  const filteredCustomers = customerType === 'all'
+    ? customers
+    : customers.filter((c) => {
+        const raw = c as unknown as Record<string, unknown>;
+        const notes = typeof raw.notes === 'string' ? raw.notes : undefined;
+        if (customerType === 'business') {
+          return notes?.includes('"customerType":"business"') || raw.companyName;
+        }
+        return !notes?.includes('"customerType":"business"');
+      });
 
-export default function CustomersPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-  const { data: customersData, isLoading, error } = useCustomers({ search: searchQuery || undefined })
-  const gdprExport = useGdprExport()
+  const handleDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteCustomer.mutateAsync(deleteTarget.id);
+      toast.success(`Cliente "${deleteTarget.name}" eliminato`);
+      setDeleteTarget(null);
+    } catch {
+      toast.error('Errore durante l\'eliminazione del cliente');
+    }
+  }, [deleteTarget, deleteCustomer]);
 
-  const customers = customersData?.data ?? []
-  const total = customersData?.total ?? 0
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
     <div>
-      {deleteTarget && (
-        <GdprDeleteDialog
-          customerName={deleteTarget.name}
-          customerId={deleteTarget.id}
-          onClose={() => setDeleteTarget(null)}
-        />
-      )}
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title='Eliminare il cliente?'
+        description={`Stai per eliminare definitivamente il cliente "${deleteTarget?.name || ''}" e tutti i suoi dati associati. Questa azione non può essere annullata (GDPR Art. 17).`}
+        confirmLabel='Elimina'
+        variant='danger'
+        onConfirm={handleDelete}
+        loading={deleteCustomer.isPending}
+      />
 
-      <header className="bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50">
-        <div className="px-8 py-5 flex items-center justify-between">
+      {/* Header */}
+      <header className="">
+        <div className="px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-headline text-apple-dark dark:text-[#ececec]">Clienti</h1>
-            <p className="text-apple-gray dark:text-[#636366] text-body mt-1">Gestisci il tuo database clienti</p>
+            <h1 className="text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+              Clienti
+            </h1>
+            <p className="text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1">
+              {isLoading ? 'Caricamento...' : `${total} clienti totali`}
+            </p>
           </div>
-          <Link href="/dashboard/customers/new">
-            <AppleButton icon={<Plus className="h-4 w-4" />}>
-              Nuovo Cliente
-            </AppleButton>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/customers/import">
+              <AppleButton variant="secondary" icon={<Upload className="h-4 w-4" />}>
+                <span className="hidden sm:inline">Importa CSV</span>
+                <span className="sm:hidden">Importa</span>
+              </AppleButton>
+            </Link>
+            <Link href="/dashboard/customers/new/step1">
+              <AppleButton variant="primary" icon={<Plus className="h-4 w-4" />}>
+                <span className="hidden sm:inline">Nuovo Cliente</span>
+                <span className="sm:hidden">Nuovo</span>
+              </AppleButton>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="p-8 space-y-6">
-        {/* Stats */}
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-4 gap-bento">
-          {[
-            { label: 'Clienti Totali', value: isLoading ? '—' : String(total), icon: Users, color: 'bg-apple-blue' },
-            { label: 'Nuovi questo mese', value: isLoading ? '—' : '—', icon: TrendingUp, color: 'bg-apple-green' },
-            { label: 'Clienti VIP', value: isLoading ? '—' : '—', icon: Star, color: 'bg-apple-purple' },
-            { label: 'Programma Fedeltà', value: isLoading ? '—' : '—', icon: Gift, color: 'bg-apple-orange' },
-          ].map((stat) => (
-            <motion.div key={stat.label} variants={cardVariants}>
-              <AppleCard>
-                <AppleCardContent className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl ${stat.color} flex items-center justify-center`}>
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-apple-gray dark:text-[#636366] text-sm">{stat.label}</p>
-                    <p className="text-title-1 font-semibold text-apple-dark dark:text-[#ececec]">{stat.value}</p>
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Search */}
-        <motion.div variants={cardVariants} initial="hidden" animate="visible">
-          <AppleCard>
+      <motion.div
+        className="p-4 sm:p-8 space-y-6"
+        initial={false}
+        animate="visible"
+        variants={containerVariants}
+      >
+        {/* Search + Filter */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
             <AppleCardContent>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
-                <Input
-                  placeholder="Cerca clienti per nome, email o telefono..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]"
-                />
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
+                  <Input
+                    type="text"
+                    placeholder="Cerca clienti per nome, email o telefono..."
+                    aria-label="Cerca clienti"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {/* Filter Chips */}
+                <div className="flex items-center justify-center flex-wrap gap-2">
+                  {[
+                    { value: 'all' as const, label: 'Tutti' },
+                    { value: 'private' as const, label: 'Privati' },
+                    { value: 'business' as const, label: 'Aziende' },
+                  ].map((filter) => (
+                    <AppleButton
+                      key={filter.value}
+                      variant={customerType === filter.value ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => { setCustomerType(filter.value); setPage(1); }}
+                    >
+                      {filter.label}
+                    </AppleButton>
+                  ))}
+                </div>
               </div>
             </AppleCardContent>
           </AppleCard>
         </motion.div>
 
-        {/* Customers Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <AppleCard key={i}>
-                <AppleCardContent>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-[#424242] animate-pulse" />
-                    <div>
-                      <div className="w-32 h-4 bg-gray-200 dark:bg-[#424242] rounded animate-pulse mb-2" />
-                      <div className="w-16 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
-                    </div>
+        {/* Content */}
+        <motion.div variants={listItemVariants}>
+          <AppleCard hover={false}>
+            <AppleCardHeader>
+              <h2 className="text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                Elenco Clienti
+              </h2>
+            </AppleCardHeader>
+            <AppleCardContent>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-[var(--brand)]" />
+                </div>
+              ) : error ? (
+                <div role="alert" className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-[var(--status-error)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Impossibile caricare i clienti
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => refetch()}
+                  >
+                    Riprova
+                  </AppleButton>
+                </div>
+              ) : filteredCustomers.length === 0 && !debouncedSearch ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Users className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Nessun cliente ancora. Aggiungi il primo cliente per iniziare.
+                  </p>
+                  <Link href="/dashboard/customers/new/step1">
+                    <AppleButton variant="ghost" className="mt-4">
+                      Aggiungi Cliente
+                    </AppleButton>
+                  </Link>
+                </div>
+              ) : filteredCustomers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-12 w-12 text-[var(--text-tertiary)]/40 mb-4" />
+                  <p className="text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                    Nessun cliente trovato per &quot;{debouncedSearch}&quot;
+                  </p>
+                  <AppleButton
+                    variant="ghost"
+                    className="mt-4"
+                    onClick={() => { setSearchQuery(''); setCustomerType('all'); }}
+                  >
+                    Cancella filtri
+                  </AppleButton>
+                </div>
+              ) : (
+                <motion.div
+                  className="space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]">
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">Nome</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden md:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Email</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden lg:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Telefono</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden sm:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Veicoli</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium hidden xl:table-cell text-[var(--text-primary)] dark:text-[var(--text-primary)]">Ultimo Servizio</th>
+                          <th className="px-4 sm:px-6 py-4 text-xs font-medium text-right text-[var(--text-primary)] dark:text-[var(--text-primary)]">Azioni</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredCustomers.map((customer) => {
+                          const fullName = `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Senza nome';
+                          const initials = `${customer.firstName?.[0] || ''}${customer.lastName?.[0] || ''}`.toUpperCase() || '??';
+                          const vehicleCount = customer.vehicles?.length ?? 0;
+
+                          return (
+                            <motion.tr
+                              key={customer.id}
+                              variants={listItemVariants}
+                              className="border-b border-[var(--border-default)]/10 dark:border-[var(--border-default)] last:border-0 transition-colors cursor-pointer group hover:bg-[var(--surface-secondary)]/30 dark:hover:bg-[var(--surface-active)]"
+                            >
+                              <td className="px-4 sm:px-6 py-4">
+                                <Link
+                                  href={`/dashboard/customers/${customer.id}`}
+                                  className="flex items-center gap-3"
+                                >
+                                  <div className="w-10 h-10 rounded-full bg-[var(--brand)]/10 flex items-center justify-center text-sm font-medium flex-shrink-0 text-[var(--brand)]">
+                                    {initials}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-body font-medium truncate text-[var(--text-primary)] dark:text-[var(--text-primary)]">
+                                      {fullName}
+                                    </p>
+                                    {customer.loyaltyTier && (
+                                      <span className="text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                        {customer.loyaltyTier}
+                                      </span>
+                                    )}
+                                  </div>
+                                </Link>
+                              </td>
+                              <td className="px-4 sm:px-6 py-4 hidden md:table-cell">
+                                <div className="flex items-center gap-2 truncate text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                  <span className="truncate">{customer.email || '—'}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 sm:px-6 py-4 hidden lg:table-cell">
+                                <div className="flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                  <Phone className="h-4 w-4 flex-shrink-0" />
+                                  <span>{customer.phone ? formatPhone(customer.phone) : '—'}</span>
+                                </div>
+                              </td>
+                              <td
+                                className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell text-body text-[var(--text-primary)] dark:text-[var(--text-primary)]"
+                                style={{ fontVariantNumeric: 'tabular-nums' }}
+                              >
+                                {vehicleCount}
+                              </td>
+                              <td className="px-4 sm:px-6 py-4 hidden xl:table-cell text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
+                                {customer.updatedAt ? timeAgo(customer.updatedAt) : 'Mai'}
+                              </td>
+                              <td className="px-4 sm:px-6 py-4 text-right">
+                                <div className="relative inline-block">
+                                  <AppleButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenMenuId(openMenuId === customer.id ? null : customer.id);
+                                    }}
+                                    aria-label="Azioni cliente"
+                                    icon={<MoreHorizontal className="h-4 w-4" />}
+                                  />
+                                  {openMenuId === customer.id && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setOpenMenuId(null)}
+                                      />
+                                      <div className="absolute right-0 top-full mt-1 z-50 rounded-xl shadow-apple border border-[var(--border-default)]/20 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] py-1 min-w-[180px]">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            router.push(`/dashboard/customers/${customer.id}`);
+                                          }}
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                          Vedi dettaglio
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            router.push(`/dashboard/customers/${customer.id}?tab=anagrafica&edit=true`);
+                                          }}
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                          Modifica
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            gdprExport.mutate(customer.id, {
+                                              onSuccess: () => toast.success('Export GDPR avviato'),
+                                              onError: () => toast.error('Errore durante l\'export'),
+                                            });
+                                          }}
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
+                                        >
+                                          <Download className="h-4 w-4" />
+                                          Esporta dati (GDPR)
+                                        </button>
+                                        <div className="my-1 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]" />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setOpenMenuId(null);
+                                            setDeleteTarget({ id: customer.id, name: fullName });
+                                          }}
+                                          className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-[var(--status-error)] transition-colors hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                          Elimina
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </motion.tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
-                    <div className="w-3/4 h-3 bg-gray-200 dark:bg-[#424242] rounded animate-pulse" />
-                  </div>
-                </AppleCardContent>
-              </AppleCard>
-            ))}
-          </div>
-        ) : error ? (
-          <div className="text-center py-12 text-apple-gray dark:text-[#636366]">
-            <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Impossibile caricare i clienti. Riprova.</p>
-          </div>
-        ) : customers.length === 0 ? (
-          <div className="text-center py-12 text-apple-gray dark:text-[#636366]">
-            <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nessun cliente trovato</p>
-          </div>
-        ) : (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-bento">
-            {customers.map((customer) => {
-              const fullName = `${customer.firstName} ${customer.lastName}`
-              const initials = `${customer.firstName?.[0] || ''}${customer.lastName?.[0] || ''}`
-              return (
-                <motion.div key={customer.id} variants={cardVariants}>
-                  <AppleCard hover className="animate-fade-in">
-                    <AppleCardContent>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center text-white font-semibold text-lg">
-                            {initials}
-                          </div>
-                          <div>
-                            <h3 className="text-body font-semibold text-apple-dark dark:text-[#ececec]">{fullName}</h3>
-                            {customer.loyaltyTier && (
-                              <>
-                                <span className={`inline-block w-3 h-3 rounded-full ${loyaltyColors[customer.loyaltyTier] || 'bg-gray-300'} mt-1`} />
-                                <span className="text-footnote text-apple-gray dark:text-[#636366] ml-2">{customer.loyaltyTier}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366]">
-                          <Mail className="h-4 w-4" />
-                          <span className="truncate">{customer.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-footnote text-apple-gray dark:text-[#636366]">
-                          <Phone className="h-4 w-4" />
-                          <span>{customer.phone}</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2 pt-4 border-t border-apple-border/20 dark:border-[#424242]">
-                        <div className="text-center">
-                          <p className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">{customer.vehicles?.length ?? 0}</p>
-                          <p className="text-caption text-apple-gray dark:text-[#636366]">Veicoli</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">{customer.visitCount ?? 0}</p>
-                          <p className="text-caption text-apple-gray dark:text-[#636366]">Visite</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-title-3 font-semibold text-apple-dark dark:text-[#ececec]">
-                            {customer.totalSpent ? `€${customer.totalSpent.toLocaleString('it-IT')}` : '—'}
-                          </p>
-                          <p className="text-caption text-apple-gray dark:text-[#636366]">Totale</p>
-                        </div>
-                      </div>
-
-                      {/* GDPR Actions + Detail */}
-                      <div className="mt-4 pt-4 border-t border-apple-border/20 dark:border-[#424242] flex items-center justify-between">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => gdprExport.mutate(customer.id)}
-                            disabled={gdprExport.isPending}
-                            className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-apple-gray dark:text-[#636366] hover:text-apple-blue transition-colors"
-                            title="Esporta dati (GDPR)"
-                          >
-                            <Download className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTarget({ id: customer.id, name: fullName })}
-                            className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-apple-gray dark:text-[#636366] hover:text-red-600 transition-colors"
-                            title="Elimina dati (GDPR Art. 17)"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <AppleButton variant="ghost" size="sm">Dettagli</AppleButton>
-                      </div>
-                    </AppleCardContent>
-                  </AppleCard>
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
                 </motion.div>
-              )
-            })}
-          </motion.div>
-        )}
-      </div>
+              )}
+            </AppleCardContent>
+          </AppleCard>
+        </motion.div>
+      </motion.div>
     </div>
-  )
+  );
 }

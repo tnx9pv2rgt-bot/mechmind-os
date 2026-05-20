@@ -9,6 +9,10 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
-    "test:db": "cd backend && npx prisma db pull"
+    "test:db": "cd backend && npx prisma db pull",
+    "gen:tests": "node scripts/generate-tests.mjs"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
   }
 }

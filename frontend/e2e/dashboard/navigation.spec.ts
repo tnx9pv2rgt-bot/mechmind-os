@@ -10,6 +10,7 @@ test.describe('Dashboard Layout', () => {
   
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should display dashboard header', async ({ page }) => {
@@ -64,6 +65,7 @@ test.describe('Sidebar Navigation', () => {
   
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should navigate to bookings page', async ({ page }) => {
@@ -170,6 +172,7 @@ test.describe('User Menu', () => {
   
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should open user menu', async ({ page }) => {
@@ -211,6 +214,7 @@ test.describe('Notifications', () => {
   
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/dashboard');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should open notification panel', async ({ page }) => {

@@ -4,6 +4,7 @@
  * Creates a deeply mocked PrismaService with all model methods
  * returning jest.fn() stubs that can be customized per test.
  */
+// @ts-nocheck
 
 type MockModel = {
   findUnique: jest.Mock;

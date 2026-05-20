@@ -1,0 +1,119 @@
+rules:
+  - id: eval-forbidden
+    patterns:
+      - pattern-either:
+          - pattern: eval($CODE)
+          - pattern: new Function($ARGS)
+    message: >
+      eval()/new Function() vietati — rischio code injection critico.
+      Fix: rimuovi esecuzione dinamica di codice.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code'
+      owasp: 'A03:2021 - Injection'
+
+  - id: query-raw-unsafe
+    pattern: this.prisma.$queryRawUnsafe($QUERY, ...)
+    message: >
+      $queryRawUnsafe rilevato — SQL injection risk.
+      Fix: usa this.prisma.$queryRaw`SELECT ... WHERE id = ${id}` con tagged template Prisma.sql.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-89: SQL Injection'
+      owasp: 'A03:2021 - Injection'
+
+  - id: jwt-hardcoded-secret
+    patterns:
+      - pattern-either:
+          - pattern: jwt.sign($P, "$S", ...)
+          - pattern: jwt.verify($T, "$S", ...)
+          - pattern: JwtModule.register({ secret: "$S", ... })
+          - pattern: JwtModule.registerAsync({ useFactory: () => ({ secret: "$S", ... }) })
+    message: >
+      JWT secret hardcoded nel codice sorgente.
+      Fix: usa process.env.JWT_SECRET e non committare mai il valore reale.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-798: Hardcoded Credentials'
+      confidence: HIGH
+
+  - id: hardcoded-api-key
+    patterns:
+      - pattern: const $VAR = "$VALUE"
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: '(?i).*(apikey|api_key|api_secret|access_token|private_key|encryption_key|webhook_secret).*'
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: '^[A-Za-z0-9+/=_\-]{20,}$'
+    message: >
+      Possibile credential hardcoded in `$VAR`.
+      Fix: usa process.env.$VAR o un secrets manager.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: 'CWE-798: Hardcoded Credentials'
+
+  - id: process-exit-in-business-logic
+    pattern: process.exit($CODE)
+    message: >
+      process.exit() vietato in business logic.
+      Fix: lancia un'eccezione NestJS (InternalServerErrorException) o usa lifecycle hooks.
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+        - '**/main.ts'
+
+  - id: insecure-random
+    pattern: Math.random()
+    message: >
+      Math.random() non è crittograficamente sicuro.
+      Fix: usa crypto.randomBytes() o crypto.randomUUID() per token/ID sensibili.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      cwe: 'CWE-338: Use of Cryptographically Weak Pseudo-Random Number Generator'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: cors-wildcard
+    patterns:
+      - pattern-either:
+          - pattern: app.enableCors({ origin: '*', ... })
+          - pattern: app.enableCors({ origin: true, ... })
+    message: >
+      CORS con origin wildcard (*) vietato in produzione.
+      Fix: specifica i domini esatti consentiti.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: 'CWE-942: Overly Permissive Cross-domain Whitelist'
+
+  - id: redirect-open-redirect
+    patterns:
+      - pattern: res.redirect($URL)
+      - pattern-not: res.redirect("/...")
+      - pattern-not: res.redirect($SAFE_URL)
+      - metavariable-regex:
+          metavariable: $URL
+          regex: '^\$'
+    message: >
+      redirect() con URL non validata — rischio open redirect.
+      Fix: valida che l'URL sia relativa o appartenga al dominio autorizzato.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      cwe: 'CWE-601: URL Redirection to Untrusted Site'

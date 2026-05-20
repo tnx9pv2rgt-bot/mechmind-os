@@ -1,79 +1,45 @@
 /**
  * Portal Maintenance API Route
- * GET: List customer maintenance schedules
+ * GET: List customer maintenance schedules — proxies to NestJS backend
  */
 
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { jwtVerify } from 'jose';
+import { cookies } from 'next/headers';
+import { BACKEND_BASE } from '@/lib/config';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.PORTAL_JWT_SECRET ||
-    process.env.JWT_SECRET ||
-    'portal-secret-key-change-in-production'
-);
-
-async function verifyAuth(request: NextRequest): Promise<string | null> {
+export async function GET(): Promise<NextResponse> {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return null;
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value || cookieStore.get('portal_token')?.value;
 
-    const token = authHeader.substring(7);
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    return payload.customerId as string;
-  } catch {
-    return null;
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const customerId = await verifyAuth(request);
-
-    if (!customerId) {
+    if (!token) {
       return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
-        { status: 401 }
+        { error: { code: 'UNAUTHORIZED', message: 'Autenticazione richiesta' } },
+        { status: 401 },
       );
     }
 
-    // Proxy to backend maintenance API filtered by customer
-    const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:3000';
+    const res = await fetch(`${BACKEND_BASE}/v1/portal/maintenance`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      signal: AbortSignal.timeout(10000),
+    });
 
-    try {
-      const response = await fetch(`${backendUrl}/api/maintenance?customerId=${customerId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return NextResponse.json({
-          success: true,
-          data: result.data || result,
-          meta: {
-            total: Array.isArray(result.data) ? result.data.length : 0,
-          },
-        });
-      }
-    } catch {
-      // Backend not available, return empty array
+    if (!res.ok) {
+      const data: unknown = await res.json().catch(() => ({ error: 'Errore backend' }));
+      return NextResponse.json(data, { status: res.status });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: [],
-      meta: { total: 0 },
-    });
-  } catch (error) {
-    console.error('Portal Maintenance API error:', error);
+    const json = await res.json();
+    return NextResponse.json({ success: true, data: json.data || json || [] });
+  } catch {
     return NextResponse.json(
-      { error: { code: 'SERVER_ERROR', message: 'Failed to load maintenance data' } },
-      { status: 500 }
+      { error: { code: 'BACKEND_UNAVAILABLE', message: 'Backend non raggiungibile' } },
+      { status: 502 },
     );
   }
 }

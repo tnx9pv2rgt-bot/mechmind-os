@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import { BookingFormComplete } from '@/components/bookings/booking-form-complete'
+import { BookingFormComplete } from '@/components/bookings/booking-form-complete';
 
-export default function NewBookingPage() {
-  return <BookingFormComplete />
+export default function NewBookingPage(): React.JSX.Element {
+  return <BookingFormComplete />;
 }

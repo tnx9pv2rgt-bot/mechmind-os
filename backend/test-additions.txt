@@ -1,0 +1,12 @@
+# Test additions for vehicle-twin to reach 90/90 branches coverage
+
+These tests focus on uncovered conditional branches:
+
+1. mapEventTypeToStatus mapping for INSPECTION, REPLACEMENT
+2. calculateDamageHealthImpact severity multipliers (MINOR 10, MODERATE 25, SEVERE 50)
+3. getPredictiveAlerts DTC severity paths (CRITICAL, HIGH)  
+4. Wear threshold paths (50%, 75%, 90%)
+5. getVisualizationConfig cache vs default vs existing config
+6. DTC prefix mapping (P0/P1 → engine, C0/C1 → brakes)
+7. updateComponentStatus partial updates
+8. OBD reading selection logic

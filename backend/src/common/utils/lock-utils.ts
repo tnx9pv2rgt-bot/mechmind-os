@@ -3,6 +3,8 @@
  * Deadlock prevention through consistent lock ordering
  */
 
+import { ConflictException } from '@nestjs/common';
+
 /**
  * Represents a lock identifier with tenant and slot IDs
  */
@@ -76,6 +78,7 @@ export function validateLockOrder(locks: LockIdentifier[]): LockIdentifier[] {
   // Check if original order matches sorted order
   const isOrdered = locks.every(
     (lock, index) =>
+      // eslint-disable-next-line security/detect-object-injection
       lock.tenantId === sorted[index].tenantId && lock.slotId === sorted[index].slotId,
   );
 
@@ -122,7 +125,7 @@ export function computeLockIdSafe(
   const lockId = computeLockId(tenantId, slotId);
 
   if (existingLocks.has(lockId)) {
-    throw new Error(`Duplicate lock detected for tenant ${tenantId}, slot ${slotId}`);
+    throw new ConflictException(`Duplicate lock detected for tenant ${tenantId}, slot ${slotId}`);
   }
 
   return lockId;

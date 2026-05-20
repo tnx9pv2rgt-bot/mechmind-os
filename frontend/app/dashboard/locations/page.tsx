@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
+import { Pagination } from '@/components/ui/pagination';
 import { AppleButton } from '@/components/ui/apple-button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
 import {
   Building2,
   MapPin,
@@ -16,11 +17,18 @@ import {
   Plus,
   Search,
   ArrowRight,
+  ArrowLeft,
   MoreHorizontal,
   CheckCircle2,
   Euro,
   Wrench,
+  AlertCircle,
+  Loader2,
+  ChevronRight,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useLocationDialog } from '@/components/locations/location-dialog';
+import Link from 'next/link';
 
 interface LocationData {
   id: string;
@@ -36,110 +44,51 @@ interface LocationData {
   technicians: number;
 }
 
-// Animation variants
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-};
-
-const fadeInDown = {
-  initial: { opacity: 0, y: -20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 20 },
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const cardVariants = {
-  initial: { opacity: 0, y: 20, scale: 0.95 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 15,
-    },
-  },
-  hover: {
-    scale: 1.02,
-    transition: {
-      type: 'spring',
-      stiffness: 400,
-      damping: 25,
-    },
-  },
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 
 const statsCardVariants = {
-  initial: { opacity: 0, y: 20, scale: 0.9 },
-  animate: {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 15,
-    },
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
   },
 };
 
-const detailCardVariants = {
-  initial: { opacity: 0, scale: 0.95, y: 30 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: 'spring',
-      stiffness: 80,
-      damping: 20,
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: -20,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
-
-const comparisonItemVariants = {
-  initial: { opacity: 0, x: -20 },
-  animate: {
+const listItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
     opacity: 1,
     x: 0,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 15,
-    },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] },
   },
 };
 
 export default function LocationsPage() {
+  const router = useRouter();
   const [locations, setLocations] = useState<LocationData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<'locations' | 'comparison' | 'inventory'>('locations');
+  const PAGE_SIZE = 20;
+  const { openDialog, LocationDialog } = useLocationDialog();
 
-  useEffect(() => {
-    fetch('/api/locations')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data || json || [];
+  const fetchLocations = useCallback(() => {
+    setIsLoading(true);
+    api
+      .get<Record<string, unknown>[] | { data: Record<string, unknown>[] }>('/locations')
+      .then(res => {
+        const raw = res.data;
+        const data = Array.isArray(raw)
+          ? raw
+          : (raw as { data: Record<string, unknown>[] }).data || [];
         const mapped: LocationData[] = Array.isArray(data)
           ? data.map((loc: Record<string, unknown>) => ({
               id: (loc.id as string) || '',
@@ -156,11 +105,20 @@ export default function LocationsPage() {
             }))
           : [];
         setLocations(mapped);
+        setLoadError(false);
         if (mapped.length > 0) setSelectedLocation(mapped[0]);
       })
-      .catch(() => setLocations([]))
+      .catch(() => {
+        setLocations([]);
+        setLoadError(true);
+        toast.error('Impossibile caricare le sedi');
+      })
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
 
   const filteredLocations = locations.filter(
     loc =>
@@ -168,57 +126,45 @@ export default function LocationsPage() {
       loc.city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const tabs = [
+    { key: 'locations' as const, label: 'Sedi' },
+    { key: 'comparison' as const, label: 'Confronto' },
+    { key: 'inventory' as const, label: 'Magazzino' },
+  ];
+
   return (
     <div>
       {/* Header */}
-      <header className='bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-b border-apple-border/20 dark:border-[#424242]/50'>
-        <div className='px-8 py-5 flex items-center justify-between'>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-          >
-            <h1 className='text-headline text-apple-dark dark:text-[#ececec]'>Location</h1>
-            <p className='text-apple-gray dark:text-[#636366] text-body mt-1'>
-              Gestisci le tue sedi
-            </p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
-            <AppleButton icon={<Plus className='h-4 w-4' />}>Nuova Sede</AppleButton>
-          </motion.div>
+      <header>
+        <div className='px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div>
+            <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>Sedi</h1>
+            <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-body mt-1'>Gestisci le tue sedi</p>
+          </div>
+          <div className='flex items-center gap-3'>
+            <AppleButton variant='primary' icon={<Plus className='h-4 w-4' />} onClick={() => openDialog()}>
+              Nuova Sede
+            </AppleButton>
+          </div>
         </div>
       </header>
 
-      <div className='p-8 space-y-6'>
+      <motion.div className='p-4 sm:p-8 space-y-6' initial='hidden' animate='visible' variants={containerVariants}>
         {/* Stats Overview */}
-        <motion.div
-          className='grid grid-cols-1 sm:grid-cols-4 gap-bento'
-          variants={staggerContainer}
-          initial='initial'
-          animate='animate'
-        >
+        <motion.div className='grid grid-cols-2 lg:grid-cols-4 gap-bento' variants={containerVariants}>
           {[
-            {
-              label: 'Sedi Totali',
-              value: String(locations.length),
-              icon: Building2,
-              color: 'bg-apple-blue',
-            },
+            { label: 'Sedi Totali', value: String(locations.length), icon: Building2, color: 'bg-[var(--brand)]' },
             {
               label: 'Fatturato Totale',
-              value: `€${(locations.reduce((s, l) => s + l.revenue.month, 0) / 1000).toFixed(1)}k`,
+              value: `\u20AC${(locations.reduce((s, l) => s + l.revenue.month, 0) / 1000).toFixed(1)}k`,
               icon: Euro,
-              color: 'bg-apple-green',
+              color: 'bg-[var(--status-success)]',
             },
             {
               label: 'Tecnici',
               value: String(locations.reduce((s, l) => s + l.technicians, 0)),
               icon: Users,
-              color: 'bg-apple-purple',
+              color: 'bg-[var(--brand)]',
             },
             {
               label: 'Veicoli/gg',
@@ -229,83 +175,55 @@ export default function LocationsPage() {
                 )
               ),
               icon: Car,
-              color: 'bg-apple-orange',
+              color: 'bg-[var(--status-warning)]',
             },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              variants={statsCardVariants}
-              custom={index}
-              whileHover={{
-                scale: 1.03,
-                transition: { type: 'spring', stiffness: 400, damping: 25 },
-              }}
-            >
-              <AppleCard>
-                <AppleCardContent className='flex items-center gap-4'>
-                  <motion.div
-                    className={`w-12 h-12 rounded-2xl ${stat.color} flex items-center justify-center`}
-                    whileHover={{ rotate: 5 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <stat.icon className='h-6 w-6 text-white' />
-                  </motion.div>
-                  <div>
-                    <p className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
-                      {stat.value}
-                    </p>
-                    <p className='text-apple-gray dark:text-[#636366] text-sm'>{stat.label}</p>
+          ].map(stat => (
+            <motion.div key={stat.label} variants={statsCardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                      <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
+                    </div>
                   </div>
+                  <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                    {stat.value}
+                  </p>
+                  <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{stat.label}</p>
                 </AppleCardContent>
               </AppleCard>
             </motion.div>
           ))}
         </motion.div>
 
-        <Tabs defaultValue='locations' className='w-full'>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.3 }}
-          >
-            <TabsList className='mb-6 bg-white dark:bg-[#2f2f2f] p-1 rounded-2xl border border-apple-border/30 dark:border-[#424242] w-fit'>
-              <TabsTrigger
-                value='locations'
-                className='rounded-xl data-[state=active]:bg-apple-blue data-[state=active]:text-white px-6'
-              >
-                Sedi
-              </TabsTrigger>
-              <TabsTrigger
-                value='comparison'
-                className='rounded-xl data-[state=active]:bg-apple-blue data-[state=active]:text-white px-6'
-              >
-                Confronto
-              </TabsTrigger>
-              <TabsTrigger
-                value='inventory'
-                className='rounded-xl data-[state=active]:bg-apple-blue data-[state=active]:text-white px-6'
-              >
-                Magazzino
-              </TabsTrigger>
-            </TabsList>
-          </motion.div>
-
-          <TabsContent value='locations' className='mt-0 space-y-6'>
-            {/* Search */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
+        {/* Tabs */}
+        <motion.div variants={listItemVariants} className='flex justify-center flex-wrap gap-2'>
+          {tabs.map(tab => (
+            <AppleButton
+              key={tab.key}
+              variant={activeTab === tab.key ? 'primary' : 'ghost'}
+              onClick={() => setActiveTab(tab.key)}
             >
-              <AppleCard>
+              {tab.label}
+            </AppleButton>
+          ))}
+        </motion.div>
+
+        {/* Tab: Locations */}
+        {activeTab === 'locations' && (
+          <>
+            {/* Search */}
+            <motion.div variants={listItemVariants}>
+              <AppleCard hover={false}>
                 <AppleCardContent>
                   <div className='relative'>
-                    <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
-                    <Input
-                      placeholder='Cerca sede per nome o città...'
+                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]' />
+                    <input
+                      placeholder='Cerca sede per nome o citta...'
+                      aria-label='Cerca sedi'
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className='pl-12 h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-gray-900 dark:text-[#ececec] placeholder:text-gray-400 dark:placeholder:text-[#6e6e6e] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                      className='w-full pl-10 pr-4 h-10 rounded-md border border-[var(--border-default)]/30 dark:border-[var(--border-default)] bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-body text-[var(--text-primary)] dark:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-apple-blue'
                     />
                   </div>
                 </AppleCardContent>
@@ -313,327 +231,282 @@ export default function LocationsPage() {
             </motion.div>
 
             {/* Locations Grid */}
-            <motion.div
-              className='grid grid-cols-1 lg:grid-cols-3 gap-bento'
-              variants={staggerContainer}
-              initial='initial'
-              animate='animate'
-            >
-              {filteredLocations.map((location, index) => (
-                <motion.div
-                  key={location.id}
-                  variants={cardVariants}
-                  custom={index}
-                  whileHover='hover'
-                  layoutId={`location-${location.id}`}
-                >
-                  <AppleCard
-                    hover
-                    className={selectedLocation?.id === location.id ? 'ring-2 ring-apple-blue' : ''}
+            {isLoading ? (
+              <div className='flex items-center justify-center py-12'>
+                <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
+              </div>
+            ) : loadError ? (
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Impossibile caricare le sedi
+                    </p>
+                    <AppleButton
+                      variant='ghost'
+                      className='mt-4'
+                      onClick={() => fetchLocations()}
+                    >
+                      Riprova
+                    </AppleButton>
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
+            ) : filteredLocations.length === 0 ? (
+              <AppleCard hover={false}>
+                <AppleCardContent>
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <Building2 className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                    <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      Nessuna sede trovata. Aggiungi la prima sede per iniziare.
+                    </p>
+                  </div>
+                </AppleCardContent>
+              </AppleCard>
+            ) : (
+              <motion.div
+                className='grid grid-cols-1 lg:grid-cols-3 gap-4'
+                variants={containerVariants}
+                initial='hidden'
+                animate='visible'
+              >
+                {filteredLocations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((location, index) => (
+                  <motion.div
+                    key={location.id}
+                    variants={listItemVariants}
+                    custom={index}
+                    whileHover={{ scale: 1.005, x: 4 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <AppleCardContent>
-                      <div className='flex items-start justify-between mb-4'>
-                        <div className='flex items-center gap-3'>
-                          <motion.div
-                            className='w-12 h-12 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center'
-                            whileHover={{ rotate: 5, scale: 1.1 }}
-                            transition={{ type: 'spring', stiffness: 300 }}
-                          >
-                            <Building2 className='h-6 w-6 text-white' />
-                          </motion.div>
-                          <div>
-                            <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                              {location.name}
-                            </h3>
-                            <p className='text-footnote text-apple-gray dark:text-[#636366] flex items-center gap-1'>
-                              <MapPin className='h-3 w-3' />
-                              {location.city}
-                            </p>
-                          </div>
-                        </div>
-                        <motion.div
-                          className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-apple-green' : 'bg-apple-gray'}`}
-                          animate={
-                            location.isActive
-                              ? {
-                                  scale: [1, 1.2, 1],
-                                  opacity: [1, 0.7, 1],
-                                }
-                              : {}
-                          }
-                          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                        />
-                      </div>
-
-                      {/* Revenue Mini Stats */}
-                      <div className='grid grid-cols-3 gap-2 mb-4'>
-                        <motion.div
-                          className='text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Oggi</p>
-                          <p className='text-callout font-semibold text-apple-dark dark:text-[#ececec]'>
-                            €{location.revenue.today.toLocaleString()}
-                          </p>
-                        </motion.div>
-                        <motion.div
-                          className='text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Sett.</p>
-                          <p className='text-callout font-semibold text-apple-dark dark:text-[#ececec]'>
-                            €{(location.revenue.week / 1000).toFixed(1)}k
-                          </p>
-                        </motion.div>
-                        <motion.div
-                          className='text-center p-2 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl'
-                          whileHover={{ scale: 1.05 }}
-                        >
-                          <p className='text-caption text-apple-gray dark:text-[#636366]'>Mese</p>
-                          <p className='text-callout font-semibold text-apple-dark dark:text-[#ececec]'>
-                            €{(location.revenue.month / 1000).toFixed(1)}k
-                          </p>
-                        </motion.div>
-                      </div>
-
-                      {/* Car Count */}
-                      <div className='flex items-center gap-4 mb-4'>
-                        <div className='flex items-center gap-2'>
-                          <Car className='h-4 w-4 text-apple-blue' />
-                          <span className='text-footnote text-apple-dark dark:text-[#ececec]'>
-                            {location.carCount.inService} in servizio
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          <Star className='h-4 w-4 text-apple-orange' />
-                          <span className='text-footnote text-apple-dark dark:text-[#ececec]'>
-                            {location.satisfaction} ★
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className='pt-4 border-t border-apple-border/20 dark:border-[#424242]'>
-                        <AppleButton
-                          variant='secondary'
-                          fullWidth
+                    <AppleCard hover={false}>
+                      <AppleCardContent>
+                        <div
+                          className='cursor-pointer'
                           onClick={() => setSelectedLocation(location)}
                         >
-                          {selectedLocation?.id === location.id ? 'Selezionata' : 'Seleziona'}
-                        </AppleButton>
-                      </div>
-                    </AppleCardContent>
-                  </AppleCard>
-                </motion.div>
-              ))}
-            </motion.div>
+                          <div className='flex items-start justify-between mb-4'>
+                            <div className='flex items-center gap-3'>
+                              <div className='w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                                <Building2 className='h-6 w-6 text-[var(--brand)]' />
+                              </div>
+                              <div>
+                                <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                  {location.name}
+                                </h3>
+                                <p className='text-footnote flex items-center gap-1 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                  <MapPin className='h-3 w-3' />
+                                  {location.city}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className={`w-2 h-2 rounded-full ${location.isActive ? 'bg-[var(--status-success)]' : 'bg-[var(--text-tertiary)]'}`}
+                            />
+                          </div>
+
+                          {/* Revenue Mini Stats */}
+                          <div className='grid grid-cols-3 gap-2 mb-4'>
+                            {[
+                              { label: 'Oggi', value: `\u20AC${location.revenue.today.toLocaleString()}` },
+                              { label: 'Sett.', value: `\u20AC${(location.revenue.week / 1000).toFixed(1)}k` },
+                              { label: 'Mese', value: `\u20AC${(location.revenue.month / 1000).toFixed(1)}k` },
+                            ].map(rev => (
+                              <div
+                                key={rev.label}
+                                className='text-center p-2 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
+                              >
+                                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{rev.label}</p>
+                                <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                                  {rev.value}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Car Count */}
+                          <div className='flex items-center gap-4 mb-4'>
+                            <div className='flex items-center gap-2'>
+                              <Car className='h-4 w-4 text-[var(--brand)]' />
+                              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                {location.carCount.inService} in servizio
+                              </span>
+                            </div>
+                            <div className='flex items-center gap-2'>
+                              <Star className='h-4 w-4 text-[var(--status-warning)]' />
+                              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                                {location.satisfaction} &#9733;
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className='pt-4 border-t border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 flex gap-2'>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              className='flex-1'
+                              onClick={e => {
+                                e.stopPropagation();
+                                router.push(`/dashboard/locations/${location.id}`);
+                              }}
+                            >
+                              Vedi
+                            </AppleButton>
+                            <AppleButton
+                              variant='ghost'
+                              size='sm'
+                              className='flex-1'
+                              onClick={e => {
+                                e.stopPropagation();
+                                setSelectedLocation(location);
+                              }}
+                            >
+                              Seleziona
+                            </AppleButton>
+                          </div>
+                        </div>
+                      </AppleCardContent>
+                    </AppleCard>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+            <Pagination page={page} totalPages={Math.ceil(filteredLocations.length / PAGE_SIZE)} onPageChange={setPage} />
 
             {/* Selected Location Detail */}
             {selectedLocation && (
               <motion.div
                 key={selectedLocation.id}
-                variants={detailCardVariants}
-                initial='initial'
-                animate='animate'
-                exit='exit'
-                layoutId={`detail-${selectedLocation.id}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                <AppleCard featured>
+                <AppleCard hover={false}>
                   <AppleCardContent>
                     <div className='flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6'>
-                      <motion.div
-                        className='flex items-center gap-4'
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2, duration: 0.4 }}
-                      >
-                        <motion.div
-                          className='w-16 h-16 rounded-2xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center'
-                          whileHover={{ rotate: 10, scale: 1.1 }}
-                          transition={{ type: 'spring', stiffness: 200 }}
-                        >
-                          <Building2 className='h-8 w-8 text-white' />
-                        </motion.div>
+                      <div className='flex items-center gap-4'>
+                        <div className='w-16 h-16 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center'>
+                          <Building2 className='h-8 w-8 text-[var(--brand)]' />
+                        </div>
                         <div>
-                          <h2 className='text-title-1 font-semibold text-apple-dark dark:text-[#ececec]'>
+                          <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {selectedLocation.name}
                           </h2>
-                          <p className='text-body text-apple-gray dark:text-[#636366]'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
                             {selectedLocation.address}
                           </p>
                         </div>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3, duration: 0.4 }}
-                      >
-                        <AppleButton>Modifica Sede</AppleButton>
-                      </motion.div>
+                      </div>
+                      <AppleButton variant='primary'>
+                        Modifica Sede
+                      </AppleButton>
                     </div>
 
-                    <motion.div
-                      className='grid grid-cols-2 md:grid-cols-4 gap-4'
-                      variants={staggerContainer}
-                      initial='initial'
-                      animate='animate'
-                    >
+                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
                       {[
-                        { label: 'ARO Medio', value: `€${selectedLocation.aro}` },
-                        { label: 'Soddisfazione', value: `${selectedLocation.satisfaction} ★` },
+                        { label: 'ARO Medio', value: `\u20AC${selectedLocation.aro}` },
+                        { label: 'Soddisfazione', value: `${selectedLocation.satisfaction} \u2605` },
                         { label: 'Tecnici', value: selectedLocation.technicians.toString() },
                         { label: 'Pronti', value: selectedLocation.carCount.ready.toString() },
-                      ].map((item, index) => (
-                        <motion.div
+                      ].map(item => (
+                        <div
                           key={item.label}
-                          className='p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-2xl text-center'
-                          variants={statsCardVariants}
-                          custom={index}
-                          whileHover={{ scale: 1.05 }}
+                          className='p-4 rounded-2xl text-center bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'
                         >
-                          <p className='text-caption text-apple-gray dark:text-[#636366] mb-1'>
+                          <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
                             {item.label}
                           </p>
-                          <p className='text-title-2 font-bold text-apple-dark dark:text-[#ececec]'>
+                          <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
                             {item.value}
                           </p>
-                        </motion.div>
+                        </div>
                       ))}
-                    </motion.div>
+                    </div>
                   </AppleCardContent>
                 </AppleCard>
               </motion.div>
             )}
-          </TabsContent>
+          </>
+        )}
 
-          <TabsContent value='comparison' className='mt-0'>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <AppleCard>
-                <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Confronto Performance
-                  </h2>
-                </AppleCardHeader>
-                <AppleCardContent>
-                  <motion.div
-                    className='space-y-4'
-                    variants={staggerContainer}
-                    initial='initial'
-                    animate='animate'
-                  >
-                    {locations.map((location, index) => (
-                      <motion.div
-                        key={location.id}
-                        className='p-4 rounded-2xl bg-apple-light-gray/30 dark:bg-[#353535]'
-                        variants={comparisonItemVariants}
-                        custom={index}
-                        whileHover={{ scale: 1.01 }}
-                        transition={{ type: 'spring', stiffness: 300 }}
-                      >
-                        <div className='flex items-center justify-between mb-3'>
-                          <h3 className='text-body font-semibold text-apple-dark dark:text-[#ececec]'>
-                            {location.name}
-                          </h3>
-                          <motion.span
-                            className='text-title-3 font-bold text-apple-blue'
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
-                          >
-                            €{location.revenue.month.toLocaleString()}/mese
-                          </motion.span>
-                        </div>
-                        <div className='grid grid-cols-4 gap-4 text-center'>
-                          {[
-                            { label: 'ARO', value: `€${location.aro}` },
-                            { label: 'Soddisfazione', value: location.satisfaction.toString() },
-                            { label: 'Veicoli', value: location.carCount.inService.toString() },
-                            { label: 'Tecnici', value: location.technicians.toString() },
-                          ].map((stat, statIndex) => (
-                            <motion.div
-                              key={stat.label}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.4 + index * 0.1 + statIndex * 0.05 }}
-                            >
-                              <p className='text-caption text-apple-gray dark:text-[#636366]'>
-                                {stat.label}
-                              </p>
-                              <p className='text-callout font-semibold text-apple-dark dark:text-[#ececec]'>
-                                {stat.value}
-                              </p>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          </TabsContent>
+        {/* Tab: Comparison */}
+        {activeTab === 'comparison' && (
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  Confronto Performance
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <motion.div className='space-y-3' variants={containerVariants} initial='hidden' animate='visible'>
+                  {locations.map((location, index) => (
+                    <motion.div
+                      key={location.id}
+                      className='p-4 rounded-2xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)] hover:shadow-apple transition-all duration-300'
+                      variants={listItemVariants}
+                      custom={index}
+                      whileHover={{ scale: 1.005, x: 4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className='flex items-center justify-between mb-3'>
+                        <h3 className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                          {location.name}
+                        </h3>
+                        <span className='text-body font-semibold text-[var(--brand)]'>
+                          {'\u20AC'}{location.revenue.month.toLocaleString()}/mese
+                        </span>
+                      </div>
+                      <div className='grid grid-cols-4 gap-4 text-center'>
+                        {[
+                          { label: 'ARO', value: `\u20AC${location.aro}` },
+                          { label: 'Soddisfazione', value: location.satisfaction.toString() },
+                          { label: 'Veicoli', value: location.carCount.inService.toString() },
+                          { label: 'Tecnici', value: location.technicians.toString() },
+                        ].map(stat => (
+                          <div key={stat.label}>
+                            <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                              {stat.label}
+                            </p>
+                            <p className='text-body font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                              {stat.value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
 
-          <TabsContent value='inventory' className='mt-0'>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <AppleCard>
-                <AppleCardHeader>
-                  <h2 className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec]'>
-                    Magazzino Condiviso
-                  </h2>
-                </AppleCardHeader>
-                <AppleCardContent>
-                  <motion.div
-                    className='text-center py-12'
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                  >
-                    <motion.div
-                      className='w-20 h-20 rounded-2xl bg-apple-light-gray dark:bg-[#353535] flex items-center justify-center mx-auto mb-4'
-                      animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                      <Wrench className='h-10 w-10 text-apple-gray' />
-                    </motion.div>
-                    <motion.h3
-                      className='text-title-2 font-semibold text-apple-dark dark:text-[#ececec] mb-2'
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      Gestione Magazzino
-                    </motion.h3>
-                    <motion.p
-                      className='text-body text-apple-gray dark:text-[#636366] max-w-md mx-auto'
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      Visualizza e trasferisci ricambi tra le tue sedi in tempo reale.
-                    </motion.p>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <AppleButton className='mt-6'>Visualizza Magazzino</AppleButton>
-                    </motion.div>
-                  </motion.div>
-                </AppleCardContent>
-              </AppleCard>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
-      </div>
+        {/* Tab: Inventory */}
+        {activeTab === 'inventory' && (
+          <motion.div variants={listItemVariants}>
+            <AppleCard hover={false}>
+              <AppleCardHeader>
+                <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  Magazzino Condiviso
+                </h2>
+              </AppleCardHeader>
+              <AppleCardContent>
+                <div className='flex flex-col items-center justify-center py-12 text-center'>
+                  <Wrench className='h-12 w-12 text-[var(--text-tertiary)]/40 mb-4' />
+                  <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] max-w-md'>
+                    Visualizza e trasferisci ricambi tra le tue sedi in tempo reale.
+                  </p>
+                  <AppleButton variant='ghost' className='mt-4'>
+                    Visualizza Magazzino
+                  </AppleButton>
+                </div>
+              </AppleCardContent>
+            </AppleCard>
+          </motion.div>
+        )}
+      </motion.div>
+
+      <LocationDialog onSuccess={fetchLocations} />
     </div>
   );
 }

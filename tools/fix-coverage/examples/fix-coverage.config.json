@@ -1,0 +1,19 @@
+{
+  "projectRoot": "../backend",
+  "sourceGlobs": [
+    "src/**/*.service.ts",
+    "src/**/*.controller.ts"
+  ],
+  "parallelism": 2,
+  "maxAttempts": 3,
+  "claude": {
+    "model": "claude-opus-4-7",
+    "sourceTokenBudget": 60000
+  },
+  "gates": {
+    "coverage": {
+      "statementsThreshold": 90,
+      "branchesThreshold": 90
+    }
+  }
+}

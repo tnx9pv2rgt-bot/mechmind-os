@@ -1,0 +1,142 @@
+rules:
+  # ── console.log ──────────────────────────────────────────────────────────────
+  - id: no-console-log
+    pattern: console.log(...)
+    message: >
+      console.log vietato in produzione.
+      Fix: usa this.logger.log(...) o this.logger.debug(...).
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+        - 'frontend/app/**'
+        - 'frontend/components/**'
+      exclude:
+        - '**/*.spec.ts'
+        - '**/*.test.ts'
+        - '**/scripts/**'
+
+  - id: no-console-error
+    pattern: console.error(...)
+    message: >
+      console.error vietato in produzione.
+      Fix: usa this.logger.error(...).
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  # ── TypeScript safety ────────────────────────────────────────────────────────
+  - id: no-ts-ignore
+    pattern: "// @ts-ignore"
+    message: >
+      @ts-ignore vietato.
+      Fix: risolvi il tipo TypeScript correttamente. Non sopprimere gli errori.
+    languages: [typescript]
+    severity: ERROR
+
+  - id: no-ts-expect-error-in-prod
+    pattern: "// @ts-expect-error"
+    message: >
+      @ts-expect-error vietato fuori dai test.
+      Fix: risolvi il tipo TypeScript correttamente.
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+        - 'frontend/**'
+      exclude:
+        - '**/*.spec.ts'
+        - '**/*.test.ts'
+
+  # ── Error handling ───────────────────────────────────────────────────────────
+  - id: throw-string-literal
+    pattern: throw "$MSG"
+    message: >
+      Throw di stringa literal vietato.
+      Fix: usa throw new BadRequestException(...) o una domain exception specifica.
+    languages: [typescript]
+    severity: ERROR
+
+  - id: empty-catch-block
+    pattern: |
+      try { ... } catch ($ERR) {}
+    message: >
+      Catch block vuoto — errore silenzioso.
+      Fix: logga l'errore o rilancia con this.logger.error(err.message, err.stack).
+    languages: [typescript]
+    severity: ERROR
+
+  - id: catch-ignores-error
+    pattern: |
+      } catch (_) {
+        ...
+      }
+    message: >
+      Catch che ignora l'errore con underscore.
+      Fix: usa catch (err) e logga o rilancia l'errore.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  # ── Code hygiene ─────────────────────────────────────────────────────────────
+  - id: fixme-in-code
+    pattern: "// FIXME$..."
+    message: >
+      FIXME presente nel codice — risolvi prima del commit o apri un issue tracciato.
+    languages: [typescript]
+    severity: ERROR
+
+  - id: todo-in-code
+    pattern: "// TODO$..."
+    message: >
+      TODO nel codice — implementa o apri un issue. Non lasciare TODO in produzione.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: while-true-no-break
+    patterns:
+      - pattern: while (true) { ... }
+      - pattern-not: |
+          while (true) {
+            ...
+            break;
+            ...
+          }
+      - pattern-not: |
+          while (true) {
+            ...
+            return $_;
+            ...
+          }
+    message: >
+      while(true) senza break o return esplicito — rischio loop infinito.
+    languages: [typescript]
+    severity: WARNING
+
+  - id: no-delete-operator
+    pattern: delete $OBJ.$PROP
+    message: >
+      Operatore delete su proprietà oggetto — impatto sulle ottimizzazioni V8.
+      Fix: usa destrutturazione con rest: const { $PROP, ...rest } = $OBJ.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'

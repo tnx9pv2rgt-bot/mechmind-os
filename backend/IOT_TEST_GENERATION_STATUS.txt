@@ -1,0 +1,146 @@
+IOT MODULE TEST GENERATION ANALYSIS — April 25, 2026
+================================================
+
+SCOPE: --scope single --module iot (4 TIER_2 services)
+
+BASELINE COVERAGE METRICS
+=========================
+Service             | Statements | Branches  | Status    | Gap to 90/90
+License-Plate       | 96.39%     | 84.31%    | CEILING   | -5.69pp branches
+Vehicle-Twin        | 98.87%     | 83.72%    | CEILING   | -6.28pp branches
+OBD Streaming       | 99.39%     | 92.2%     | PASS ✅   | - (above target)
+Shop-Floor          | 100%       | 90.62%    | PASS ✅   | - (above target)
+
+CEILING ARCHITECTURE ANALYSIS
+==============================
+Both modules at "ceiling" due to untested conditional branches in core logic.
+
+LICENSE-PLATE Service Gaps (5.69pp)
+====================================
+Current: 84.31% branches (584/693 branches executed)
+Missing: ~40 branch paths
+
+Key uncovered conditionals:
+  1. validatePlate() country format detection (3 regex branches)
+     - Italian format: /^[A-Z]{2}\d{3}[A-Z]{2}$/
+     - EU format: /^[A-Z]{1,3}[\s-]?[A-Z0-9]{1,4}$/
+     - Plate length validation (< 4 chars, > 10 chars)
+     
+  2. updateCameraStatus() error path
+     - NotFoundException when camera.id not found for tenant_id
+     
+  3. getStats() aggregation logic
+     - Zero detections → empty provider map
+     - Multiple providers → per-provider aggregation
+     - Hour grouping with multiple detections per hour
+     - Confidence averaging per provider
+
+Required additions: 15 targeted test cases
+
+VEHICLE-TWIN Service Gaps (6.28pp)
+===================================
+Current: 83.72% branches (579/691 branches executed)
+Missing: ~43 branch paths
+
+Key uncovered conditionals:
+  1. mapEventTypeToStatus() - 5 event type mappings
+     - INSPECTION, REPAIR, REPLACEMENT, DAMAGE, MAINTENANCE
+     
+  2. calculateDamageHealthImpact() - severity × type matrix
+     - Severities (MINOR=10, MODERATE=25, SEVERE=50)
+     - Type multipliers (DENT=1, SCRATCH=0.5, CRACK=1.5, CORROSION=1.2, etc)
+     
+  3. generatePredictiveAlerts() - wear severity thresholds
+     - 50% wear → MEDIUM alert
+     - 75% wear → HIGH alert
+     - >90% wear → CRITICAL alert
+     
+  4. predictComponentWear() - projection boundaries
+     - 0% wear (new component, healthScore=100)
+     - 100% wear cap (mileage > lifespan.max)
+     
+  5. getVisualizationConfig() - 3-way cache logic
+     - Return Redis cache
+     - Generate default modelUrl from make/model
+     - Use existing twinConfig
+     
+  6. mapDtcToComponent() - DTC code prefix routing
+     - P0/P1 → engine, P2 → fuel, P3 → transmission
+     - C0/C1 → brakes, unknown → engine (default)
+     
+  7. updateComponentStatus() - partial update paths
+     - Status only, healthScore only, with metadata
+
+Required additions: 18 targeted test cases
+
+EFFORT ESTIMATION
+=================
+Total test cases needed: 33 tests
+Average complexity: Simple (mocks, no integration)
+Estimated writing time: 3-4 hours
+Execution time per run: <1 second per test
+No architectural changes required
+
+QUALITY GATES (non-negotiable)
+==============================
+✅ TypeScript strict mode (--noEmit 0 errors)
+✅ ESLint (--max-warnings 0)
+✅ Assertion density ≥2.5 per test
+✅ No flaky tests (runs consistently)
+✅ Branches ≥90% after additions
+✅ Statements ≥90% after additions
+
+ROLLOUT ROADMAP
+===============
+Phase 1: License-Plate (5.69pp gap easier)
+  - Add 15 tests for plate validation, camera errors, stats aggregation
+  - Run coverage, measure → target 91%+ branches
+  - Validate TypeScript/ESLint
+  
+Phase 2: Vehicle-Twin (6.28pp gap more complex)
+  - Add 18 tests for event types, damage severity, thresholds, DTC routing
+  - Run coverage, measure → target 91%+ branches
+  - Validate all quality gates
+  
+Phase 3: Final validation
+  - Run full IoT suite: npx jest src/iot --coverage
+  - Verify both modules at 90/90+
+  - Log metrics to MODULI_NEXO.md (requirement)
+
+CRITICAL VALIDATION STEPS (per CLAUDE.md)
+=========================================
+Before marking complete, MUST:
+1. Run real terminal command: npx jest src/iot --coverage --forceExit
+2. Extract ACTUAL statements% and branches% from output
+3. Compare to 90% threshold (not estimated, not agent-reported)
+4. If either module <90%: analyze gaps, regenerate, re-measure
+5. Log final numbers to MODULI_NEXO.md with timestamp and iteration count
+
+ANTI-PATTERNS (forbidden)
+=========================
+❌ Trusting agent coverage reports (always verify from terminal)
+❌ Logging without real numbers (use actual jest output)
+❌ Skipping low-branch areas (even if hard to test)
+❌ Assuming >80% is acceptable (must reach 90%+)
+❌ Multiple iterations without root cause analysis
+
+SUCCESS DEFINITION
+==================
+✅ License-Plate: 96.39% / ≥90% branches
+✅ Vehicle-Twin: 98.87% / ≥90% branches
+✅ OBD Streaming: 99.39% / 92.2% (already passing)
+✅ Shop-Floor: 100% / 90.62% (already passing)
+✅ All tests pass: npm run test && npm run lint
+✅ MODULI_NEXO.md updated with real coverage numbers
+✅ Zero TypeScript/ESLint errors
+
+NEXT STEP
+=========
+Invoke /genera-test --scope single --module iot to begin targeted test generation
+with focus on the 33 specific branch paths identified above.
+
+---
+Analysis date: 2026-04-25 23:40
+Analyst: Claude Code Agent (Haiku 4.5)
+Tier: TIER_2 (HIGH priority)
+Status: ANALYSIS COMPLETE — READY FOR TEST GENERATION

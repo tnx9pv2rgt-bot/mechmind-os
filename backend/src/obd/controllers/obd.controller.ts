@@ -46,12 +46,25 @@ export class ObdController {
 
   @Get('devices')
   @ApiOperation({ summary: 'List OBD devices' })
-  @ApiResponse({ status: 200, type: [ObdDeviceResponseDto] })
+  @ApiResponse({ status: 200 })
   async listDevices(
     @CurrentUser('tenantId') tenantId: string,
     @Query('vehicleId') vehicleId?: string,
-  ): Promise<ObdDeviceResponseDto[]> {
-    return this.obdService.listDevices(tenantId, vehicleId);
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: ObdDeviceResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    return this.obdService.listDevices(
+      tenantId,
+      vehicleId,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get('devices/:id')
@@ -107,17 +120,24 @@ export class ObdController {
 
   @Get('readings')
   @ApiOperation({ summary: 'Get OBD readings' })
-  @ApiResponse({ status: 200, type: [ObdReadingResponseDto] })
+  @ApiResponse({ status: 200 })
   async getReadings(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: ReadingQueryDto,
-  ): Promise<ObdReadingResponseDto[]> {
+  ): Promise<{
+    data: ObdReadingResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     return this.obdService.getReadings(tenantId, {
       deviceId: query.deviceId,
       vehicleId: query.vehicleId,
       from: query.from ? new Date(query.from) : undefined,
       to: query.to ? new Date(query.to) : undefined,
       limit: query.limit,
+      page: query.page,
     });
   }
 
@@ -133,17 +153,27 @@ export class ObdController {
 
   @Get('trouble-codes')
   @ApiOperation({ summary: 'Get trouble codes' })
-  @ApiResponse({ status: 200, type: [TroubleCodeResponseDto] })
+  @ApiResponse({ status: 200 })
   async getTroubleCodes(
     @CurrentUser('tenantId') tenantId: string,
     @Query('deviceId') deviceId?: string,
     @Query('vehicleId') vehicleId?: string,
     @Query('active') active?: string,
-  ): Promise<TroubleCodeResponseDto[]> {
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{
+    data: TroubleCodeResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     return this.obdService.getTroubleCodes(tenantId, {
       deviceId,
       vehicleId,
       active: active !== undefined ? active === 'true' : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 

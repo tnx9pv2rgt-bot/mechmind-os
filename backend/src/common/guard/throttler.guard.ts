@@ -30,15 +30,22 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
   }
 
   /**
-   * Get tracker identifier (IP + User ID if authenticated)
+   * Get tracker identifier (tenantId > userId > IP)
+   * Per-tenant tracking ensures fair rate limiting across tenants
    */
   protected async getTracker(req: Request): Promise<string> {
     const ip = this.getClientIp(req);
 
-    // If user is authenticated, include user ID for per-user limiting
-    const userId = (req as Request & { user?: { sub?: string } }).user?.sub;
-    if (userId) {
-      return `user:${userId}`;
+    const user = (req as Request & { user?: { sub?: string; tenantId?: string } }).user;
+
+    // Per-tenant tracking: isolate rate limits between tenants
+    if (user?.tenantId) {
+      return `tenant:${user.tenantId}:${user.sub || ip}`;
+    }
+
+    // If user is authenticated but no tenant context, use user ID
+    if (user?.sub) {
+      return `user:${user.sub}`;
     }
 
     return `ip:${ip}`;
@@ -65,6 +72,11 @@ export class AdvancedThrottlerGuard extends NestThrottlerGuard {
    * Define rate limits per endpoint type
    */
   private getLimitsForPath(path: string, _method: string): { ttl: number; limit: number } {
+    // Load test mode: disable rate limiting
+    if (process.env.LOAD_TEST === 'true') {
+      return { ttl: 60, limit: 1000000 };
+    }
+
     // Authentication endpoints - stricter limits
     if (path.includes('/auth/login') || path.includes('/auth/verify-2fa')) {
       return { ttl: 60, limit: 5 }; // 5 attempts per minute

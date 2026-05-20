@@ -1,0 +1,210 @@
+{
+  "bugs": [],
+  "performance": [
+    {
+      "url": "/dashboard",
+      "ttfb": 120,
+      "fcp": 304,
+      "lcp": 2060,
+      "cls": 0,
+      "domLoad": 275,
+      "fullLoad": 1054
+    },
+    {
+      "url": "/dashboard/bookings",
+      "ttfb": 121,
+      "fcp": 316,
+      "lcp": 2072,
+      "cls": 0,
+      "domLoad": 287,
+      "fullLoad": 1066
+    },
+    {
+      "url": "/dashboard/customers",
+      "ttfb": 137,
+      "fcp": 324,
+      "lcp": 2072,
+      "cls": 0,
+      "domLoad": 285,
+      "fullLoad": 1053
+    },
+    {
+      "url": "/dashboard/invoices",
+      "ttfb": 133,
+      "fcp": 308,
+      "lcp": 2064,
+      "cls": 0,
+      "domLoad": 278,
+      "fullLoad": 1056
+    },
+    {
+      "url": "/dashboard/analytics",
+      "ttfb": 101,
+      "fcp": 232,
+      "lcp": 1864,
+      "cls": 0,
+      "domLoad": 226,
+      "fullLoad": 904
+    },
+    {
+      "url": "/dashboard/work-orders",
+      "ttfb": 102,
+      "fcp": 240,
+      "lcp": 1924,
+      "cls": 0,
+      "domLoad": 235,
+      "fullLoad": 935
+    },
+    {
+      "url": "/dashboard/settings",
+      "ttfb": 103,
+      "fcp": 264,
+      "lcp": 1916,
+      "cls": 0,
+      "domLoad": 257,
+      "fullLoad": 935
+    },
+    {
+      "url": "/dashboard/bookings/new",
+      "ttfb": 31,
+      "fcp": 100,
+      "lcp": 1136,
+      "cls": 0,
+      "domLoad": 88,
+      "fullLoad": 239
+    }
+  ],
+  "a11y": [
+    {
+      "url": "/dashboard",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/vehicles",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/customers/new",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/customers",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/work-orders",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/bookings",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/invoices",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/bookings/new",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/analytics",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/invoices/new",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/settings",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/settings/team",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    {
+      "url": "/dashboard/gdpr/export",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    }
+  ],
+  "security": [
+    {
+      "url": "/dashboard",
+      "missingHeaders": [],
+      "cookieIssues": [],
+      "xssReflected": false
+    },
+    {
+      "url": "/dashboard/bookings/new",
+      "missingHeaders": [],
+      "cookieIssues": [],
+      "xssReflected": false
+    },
+    {
+      "url": "/dashboard/invoices",
+      "missingHeaders": [],
+      "cookieIssues": [],
+      "xssReflected": false
+    },
+    {
+      "url": "/dashboard/customers",
+      "missingHeaders": [],
+      "cookieIssues": [],
+      "xssReflected": false
+    }
+  ],
+  "lastUpdated": "2026-05-09T17:41:13.503Z"
+}

@@ -42,19 +42,25 @@ export const useFormFunnel = (options: UseFormFunnelOptions) => {
     funnelRef.current = new FormFunnel(options);
   }
 
-  const trackStepStart = useCallback((step: number, stepName?: string) => {
-    funnelRef.current?.trackStepStart(step, stepName);
-    options.onStepChange?.(step, stepName);
-  }, [options.onStepChange]);
+  const trackStepStart = useCallback(
+    (step: number, stepName?: string) => {
+      funnelRef.current?.trackStepStart(step, stepName);
+      options.onStepChange?.(step, stepName);
+    },
+    [options.onStepChange]
+  );
 
-  const trackStepComplete = useCallback((step: number, stepName?: string) => {
-    funnelRef.current?.trackStepComplete(step, stepName);
-    
-    if (step === options.totalSteps) {
-      isCompleteRef.current = true;
-      options.onComplete?.();
-    }
-  }, [options.totalSteps, options.onComplete]);
+  const trackStepComplete = useCallback(
+    (step: number, stepName?: string) => {
+      funnelRef.current?.trackStepComplete(step, stepName);
+
+      if (step === options.totalSteps) {
+        isCompleteRef.current = true;
+        options.onComplete?.();
+      }
+    },
+    [options.totalSteps, options.onComplete]
+  );
 
   const trackFieldInteraction = useCallback((fieldName: string) => {
     lastFieldRef.current = fieldName;
@@ -74,10 +80,7 @@ export const useFormFunnel = (options: UseFormFunnelOptions) => {
     return () => {
       if (!isCompleteRef.current && funnelRef.current) {
         funnelRef.current.trackAbandonment(lastFieldRef.current);
-        options.onAbandon?.(
-          funnelRef.current.getCurrentStep(),
-          lastFieldRef.current
-        );
+        options.onAbandon?.(funnelRef.current.getCurrentStep(), lastFieldRef.current);
       }
     };
   }, [options.onAbandon]);
@@ -205,8 +208,8 @@ export const useRealtimeAnalytics = (options: UseRealtimeAnalyticsOptions) => {
     if (!enabled) return;
 
     fetcherRef.current = new RealtimeMetricsFetcher(formId);
-    
-    const unsubscribe = fetcherRef.current.subscribe((newMetrics) => {
+
+    const unsubscribe = fetcherRef.current.subscribe(newMetrics => {
       setMetrics(newMetrics);
     });
 
@@ -262,29 +265,29 @@ export const usePerformanceMonitor = (enabled: boolean = true) => {
     }));
   }, []);
 
-  const measureApiCall = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+  const measureApiCall = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
     const start = performance.now();
-    
+
     try {
       const result = await fn();
       const latency = performance.now() - start;
-      
+
       setMetrics(prev => ({
         ...prev,
         apiCalls: prev.apiCalls + 1,
         apiLatency: [...prev.apiLatency, latency].slice(-10), // Keep last 10
       }));
-      
+
       return result;
     } catch (error) {
       const latency = performance.now() - start;
-      
+
       setMetrics(prev => ({
         ...prev,
         apiCalls: prev.apiCalls + 1,
         apiLatency: [...prev.apiLatency, latency].slice(-10),
       }));
-      
+
       throw error;
     }
   }, []);
@@ -395,9 +398,8 @@ export const useFormAnalytics = (options: UseFormAnalyticsOptions): UseFormAnaly
     formId,
   });
 
-  const abTest = abTestConfig
-    ? useABTest({ experimentId: formId, config: abTestConfig })
-    : null;
+  const abTestResult = useABTest({ experimentId: formId, config: abTestConfig });
+  const abTest = abTestConfig ? abTestResult : null;
 
   const realtimeMetrics = useRealtimeAnalytics({
     formId,

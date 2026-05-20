@@ -1,7 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import * as AWS from 'aws-sdk';
+import { EmailService } from '../email/email.service';
 
 interface EmailJobData {
   tenantId: string;
@@ -15,17 +15,9 @@ interface EmailJobData {
 @Processor('email-queue')
 export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
-  private readonly ses: AWS.SES;
 
-  constructor() {
+  constructor(private readonly emailService: EmailService) {
     super();
-    this.ses = new AWS.SES({
-      region: process.env.AWS_REGION || 'eu-west-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-      },
-    });
   }
 
   async process(job: Job<EmailJobData>): Promise<void> {
@@ -34,45 +26,14 @@ export class EmailProcessor extends WorkerHost {
     );
 
     const { to, subject, template, variables } = job.data;
+    const html = this.renderTemplate(template, variables);
 
-    try {
-      // Generate HTML content from template
-      const htmlBody = this.renderTemplate(template, variables);
-
-      // Send via AWS SES
-      const result = await this.ses
-        .sendEmail({
-          Source: process.env.SES_FROM_EMAIL || 'noreply@mechmind.io',
-          Destination: {
-            ToAddresses: [to],
-          },
-          Message: {
-            Subject: {
-              Data: subject,
-              Charset: 'UTF-8',
-            },
-            Body: {
-              Html: {
-                Data: htmlBody,
-                Charset: 'UTF-8',
-              },
-              Text: {
-                Data: this.stripHtml(htmlBody),
-                Charset: 'UTF-8',
-              },
-            },
-          },
-          ConfigurationSetName: process.env.SES_CONFIGURATION_SET,
-        })
-        .promise();
-
-      this.logger.log(`Email sent successfully: ${result.MessageId}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-      throw error; // Trigger retry
+    const result = await this.emailService.sendRawEmail({ to, subject, html });
+    if (!result.success) {
+      throw new Error(result.error ?? 'Email send failed');
     }
+
+    this.logger.log(`Email sent via Resend: ${result.messageId}`);
   }
 
   @OnWorkerEvent('completed')
@@ -86,7 +47,6 @@ export class EmailProcessor extends WorkerHost {
   }
 
   private renderTemplate(template: string, variables: Record<string, unknown>): string {
-    // Simple template rendering - in production use a proper template engine
     const templates: Record<string, string> = {
       booking_confirmation: `
         <html>
@@ -125,12 +85,13 @@ export class EmailProcessor extends WorkerHost {
       `,
     };
 
+    // eslint-disable-next-line security/detect-object-injection
     let html = templates[template] || templates.booking_confirmation;
 
-    // Replace variables with HTML-escaped values
     Object.entries(variables).forEach(([key, value]) => {
       const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedValue = this.escapeHtml(String(value));
+      // eslint-disable-next-line security/detect-non-literal-regexp
       html = html.replace(new RegExp(`\\{\\{${escapedKey}\\}\\}`, 'g'), escapedValue);
     });
 
@@ -144,12 +105,5 @@ export class EmailProcessor extends WorkerHost {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
-  }
-
-  private stripHtml(html: string): string {
-    return html
-      .replace(/<[^>]*>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
   }
 }

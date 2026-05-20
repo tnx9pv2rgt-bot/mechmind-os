@@ -141,6 +141,10 @@ class AnalyticsEngine {
     event.sessionId = getSessionId();
     event.timestamp = Date.now();
 
+    if (this.eventQueue.length >= this.maxBatchSize * 10) {
+      this.eventQueue = this.eventQueue.slice(-this.maxBatchSize);
+    }
+
     this.eventQueue.push(event);
 
     if (this.eventQueue.length >= this.maxBatchSize) {
@@ -169,14 +173,12 @@ class AnalyticsEngine {
   }
 
   private flushSync(): void {
-    // Synchronous flush for beforeunload
+    // Use sendBeacon for reliable delivery during page unload
     const events = [...this.eventQueue];
 
     try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', this.apiEndpoint, false); // Synchronous
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify({ events }));
+      const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
+      navigator.sendBeacon(this.apiEndpoint, blob);
     } catch (error) {
       console.warn('Sync analytics flush failed:', error);
     }
@@ -550,7 +552,9 @@ export class RealtimeMetricsFetcher {
     // Try WebSocket first
     if (typeof WebSocket !== 'undefined') {
       try {
-        this.ws = new WebSocket(`wss://api.mechmind.com/analytics?formId=${this.formId}`);
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHost = process.env.NEXT_PUBLIC_WS_URL || `${wsProtocol}//${window.location.host}`;
+        this.ws = new WebSocket(`${wsHost}/analytics?formId=${this.formId}`);
 
         this.ws.onmessage = event => {
           const data = JSON.parse(event.data);

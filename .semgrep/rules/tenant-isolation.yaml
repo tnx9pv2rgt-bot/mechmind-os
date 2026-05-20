@@ -1,0 +1,87 @@
+rules:
+  - id: prisma-query-missing-tenant-id
+    patterns:
+      - pattern: this.prisma.$MODEL.$METHOD({ where: { $...ARGS }, ... })
+      - pattern-not: this.prisma.$MODEL.$METHOD({ where: { tenantId: $_, $...ARGS }, ... })
+      - pattern-not: this.prisma.$MODEL.$METHOD({ where: { ...$SPREAD, $...ARGS }, ... })
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: '^(findMany|findFirst|findUnique|update|updateMany|delete|deleteMany|count|aggregate|upsert)$'
+    message: >
+      Query Prisma $MODEL.$METHOD senza tenantId nel where.
+      RISCHIO CRITICO: data leak cross-tenant — violazione GDPR/RLS.
+      Fix: aggiungi `tenantId` nel where clause.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-284: Improper Access Control'
+      owasp: 'A01:2021 - Broken Access Control'
+      confidence: HIGH
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+        - '**/*.test.ts'
+
+  - id: prisma-create-missing-tenant-id
+    patterns:
+      - pattern: this.prisma.$MODEL.create({ data: { $...ARGS }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { tenantId: $_, $...ARGS }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { ...$SPREAD, $...ARGS }, ... })
+    message: >
+      Record creato in $MODEL senza tenantId nel data.
+      Fix: includi `tenantId` nel data object.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-284: Improper Access Control'
+      confidence: HIGH
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+        - '**/*.test.ts'
+
+  - id: prisma-update-missing-tenant-where
+    patterns:
+      - pattern: this.prisma.$MODEL.update({ where: { id: $_, ... }, data: $D, ... })
+      - pattern-not: this.prisma.$MODEL.update({ where: { id: $_, tenantId: $_, ... }, data: $D, ... })
+      - pattern-not: this.prisma.$MODEL.update({ where: { ...$SPREAD, ... }, data: $D, ... })
+    message: >
+      update Prisma su $MODEL senza tenantId nel where.
+      Un attaccante con id noto può modificare record di altri tenant.
+      Fix: aggiungi `tenantId` nel where oltre a `id`.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-639: Authorization Bypass Through User-Controlled Key'
+      confidence: HIGH
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: prisma-delete-missing-tenant-where
+    patterns:
+      - pattern: this.prisma.$MODEL.delete({ where: { id: $_, ... }, ... })
+      - pattern-not: this.prisma.$MODEL.delete({ where: { id: $_, tenantId: $_, ... }, ... })
+      - pattern-not: this.prisma.$MODEL.delete({ where: { ...$SPREAD, ... }, ... })
+    message: >
+      delete Prisma su $MODEL senza tenantId nel where.
+      Fix: aggiungi `tenantId` nel where oltre a `id`.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-639: Authorization Bypass Through User-Controlled Key'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'

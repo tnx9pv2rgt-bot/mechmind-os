@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-
-// Normalize: ensure BACKEND_URL always ends with /v1
-const RAW_BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/v1';
-const BACKEND_URL = RAW_BACKEND_URL.replace(/\/+$/, '').endsWith('/v1')
-  ? RAW_BACKEND_URL.replace(/\/+$/, '')
-  : `${RAW_BACKEND_URL.replace(/\/+$/, '')}/v1`;
+import { BACKEND_URL } from '@/lib/config';
 
 /** Timeout in ms for backend requests (Render free tier cold start ~30s) */
 const BACKEND_TIMEOUT_MS = 30_000;
@@ -129,8 +124,9 @@ export async function proxyAuthToBackend(
         if (parts.length === 3) {
           const payload = JSON.parse(
             Buffer.from(parts[1], 'base64url').toString('utf-8'),
-          ) as { tenantId?: string; sub?: string };
+          ) as { tenantId?: string; tenantSlug?: string; sub?: string };
           tenantId = payload.tenantId || '';
+          tenantSlug = payload.tenantSlug || '';
           // sub format is "userId:tenantId" — extract tenantId as fallback
           if (!tenantId && payload.sub) {
             const subParts = payload.sub.split(':');
@@ -139,9 +135,15 @@ export async function proxyAuthToBackend(
         }
       } catch { /* ignore decode errors */ }
 
-      // If we got tenantId, look up slug from the login request body
+      // Fallback: look up slug from the login request body or response data
       if (!tenantSlug && options.body && 'tenantSlug' in options.body) {
         tenantSlug = options.body.tenantSlug as string;
+      }
+      if (!tenantSlug && data.tenantSlug) {
+        tenantSlug = data.tenantSlug as string;
+      }
+      if (!tenantSlug && data.tenant && typeof data.tenant === 'object') {
+        tenantSlug = (data.tenant as Record<string, unknown>).slug as string || '';
       }
 
       const response = NextResponse.json({
@@ -191,6 +193,7 @@ export async function proxyAuthToBackend(
         requiresMFA: true,
         tempToken: data.tempToken,
         methods: data.methods,
+        riskLevel: data.riskLevel,
       });
     }
 

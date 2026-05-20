@@ -23,7 +23,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import express from 'express';
 
 import { AppModule } from './app.module';
@@ -114,8 +114,9 @@ export const handler = async (
 if (require.main === module) {
   bootstrap().then(app => {
     app.listen(PORT, HOST, () => {
-      console.log(`🚀 MechMind OS API running on http://${HOST}:${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      const logger = new Logger('Bootstrap');
+      logger.log(`MechMind OS API running on http://${HOST}:${PORT}`);
+      logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   });
 }

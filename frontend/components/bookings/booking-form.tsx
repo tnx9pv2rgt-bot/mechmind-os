@@ -1,4 +1,4 @@
 /**
- * Re-export from BookingForm for kebab-case imports
+ * Re-export BookingFormComplete as BookingForm for backward compatibility
  */
-export { BookingForm } from './BookingForm';
+export { BookingFormComplete as BookingForm } from './booking-form-complete';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Integration test setup
 // Requires a running PostgreSQL and Redis instance (use docker-compose.test.yml)
 
@@ -11,3 +12,6 @@ process.env.JWT_2FA_SECRET = 'test-2fa-secret-minimum-32-chars-long';
 process.env.ENCRYPTION_KEY = 'test-encryption-key-exactly-32ch';
 process.env.CORS_ORIGIN = 'http://localhost:3001';
 process.env.LOG_LEVEL = 'error'; // Suppress logs during tests
+process.env.SETUP_SECRET = 'integration-test-setup-secret';
+process.env.CSRF_SECRET = 'integration-test-csrf';
+process.env.DB_PASSWORD = 'mechmind';

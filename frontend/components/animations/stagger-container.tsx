@@ -155,12 +155,12 @@ export function AnimatedPage({ children, title, subtitle, className = '' }: Anim
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="bg-white/80 backdrop-blur-apple sticky top-0 z-40 border-b border-apple-border/20"
+        className="bg-[var(--surface-secondary)] backdrop-blur-apple sticky top-0 z-40 border-b border-[var(--border-default)]/20"
       >
         <div className="px-8 py-5">
-          <h1 className="text-headline text-apple-dark">{title}</h1>
+          <h1 className="text-headline text-[var(--text-primary)]">{title}</h1>
           {subtitle && (
-            <p className="text-apple-gray text-body mt-1">{subtitle}</p>
+            <p className="text-[var(--text-tertiary)] text-body mt-1">{subtitle}</p>
           )}
         </div>
       </motion.header>
@@ -273,7 +273,7 @@ export function AnimatedSkeleton({ count = 3, className = '' }: { count?: number
             repeat: Infinity, 
             delay: i * 0.2 
           }}
-          className="h-20 bg-apple-light-gray rounded-2xl mb-4"
+          className="h-20 bg-[var(--surface-secondary)] rounded-2xl mb-4"
         />
       ))}
     </div>

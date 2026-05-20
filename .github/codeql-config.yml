@@ -1,0 +1,11 @@
+name: "Nexo CodeQL Config"
+paths:
+  - backend/src
+  - frontend/src
+paths-ignore:
+  - '**/node_modules'
+  - '**/dist'
+  - '**/coverage'
+  - '**/.claude/scans'
+  - '**/e2e-screenshots'
+  - '**/playwright-report'

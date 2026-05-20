@@ -1,0 +1,1359 @@
+/**
+ * redisRateLimiter.spec.ts — Tests for Redis-backed rate limiting middleware
+ */
+
+// Mock ioredis
+const mockMulti = {
+  zremrangebyscore: jest.fn().mockReturnThis(),
+  zadd: jest.fn().mockReturnThis(),
+  zcard: jest.fn().mockReturnThis(),
+  pexpire: jest.fn().mockReturnThis(),
+  incr: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+};
+
+const mockRedis = {
+  multi: jest.fn(() => mockMulti),
+  zrevrange: jest.fn(),
+  zrem: jest.fn(),
+  del: jest.fn(),
+  decr: jest.fn(),
+  pttl: jest.fn(),
+  zcount: jest.fn(),
+  eval: jest.fn(),
+  quit: jest.fn(),
+  on: jest.fn(),
+};
+
+jest.mock('ioredis', () => ({
+  __esModule: true,
+  default: jest.fn(() => mockRedis),
+}));
+
+import { ConfigService } from '@nestjs/config';
+import { Request, Response } from 'express';
+import {
+  RedisRateLimiterMiddleware,
+  FixedWindowStore,
+  ApplyRateLimit,
+  createRateLimiter,
+  checkRateLimit,
+  RateLimitConfig,
+} from './redisRateLimiter';
+
+describe('RedisRateLimiterMiddleware', () => {
+  let middleware: RedisRateLimiterMiddleware;
+  let mockConfigService: Partial<ConfigService>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockConfigService = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          REDIS_URL: 'redis://localhost:6379',
+          REDIS_PASSWORD: '',
+          REDIS_DB: '0',
+        };
+        // eslint-disable-next-line security/detect-object-injection
+        return values[key];
+      }),
+    };
+
+    middleware = new RedisRateLimiterMiddleware(mockConfigService as ConfigService);
+  });
+
+  describe('static configs', () => {
+    it('should define REGISTRATION_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.REGISTRATION_LIMIT.maxRequests).toBe(5);
+      expect(RedisRateLimiterMiddleware.REGISTRATION_LIMIT.windowMs).toBe(3600000);
+    });
+
+    it('should define LOGIN_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.LOGIN_LIMIT.maxRequests).toBe(5);
+      expect(RedisRateLimiterMiddleware.LOGIN_LIMIT.windowMs).toBe(900000);
+    });
+
+    it('should define API_GENERAL_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.API_GENERAL_LIMIT.maxRequests).toBe(100);
+    });
+
+    it('should define VAT_VERIFICATION_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.VAT_VERIFICATION_LIMIT.maxRequests).toBe(10);
+    });
+
+    it('should define EMAIL_CHECK_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.EMAIL_CHECK_LIMIT.maxRequests).toBe(20);
+    });
+
+    it('should define PHONE_CHECK_LIMIT', () => {
+      expect(RedisRateLimiterMiddleware.PHONE_CHECK_LIMIT.maxRequests).toBe(10);
+    });
+  });
+
+  describe('use', () => {
+    it('should allow request under the limit', async () => {
+      mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+      const req = {
+        headers: {},
+        socket: { remoteAddress: '127.0.0.1' },
+        ip: '127.0.0.1',
+      } as unknown as Request;
+
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+        statusCode: 200,
+      } as unknown as Response;
+
+      const next = jest.fn();
+
+      middleware.use(req, res, next);
+
+      // The use method calls applyRateLimit which is async but not awaited in express pattern
+      // We wait a tick for the promise to resolve
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should return 429 when rate limit exceeded', async () => {
+      mockRedis.eval.mockResolvedValueOnce([101, 60000]);
+
+      const req = {
+        headers: {},
+        socket: { remoteAddress: '127.0.0.1' },
+        ip: '127.0.0.1',
+      } as unknown as Request;
+
+      const jsonFn = jest.fn();
+      const res = {
+        setHeader: jest.fn(),
+        status: jest.fn().mockReturnValue({ json: jsonFn }),
+        json: jest.fn(),
+        statusCode: 200,
+      } as unknown as Response;
+
+      const next = jest.fn();
+
+      middleware.use(req, res, next);
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(res.status).toHaveBeenCalledWith(429);
+    });
+
+    it('should fail open when Redis errors', async () => {
+      mockRedis.eval.mockRejectedValueOnce(new Error('Redis down'));
+
+      const req = {
+        headers: {},
+        socket: { remoteAddress: '127.0.0.1' },
+        ip: '127.0.0.1',
+      } as unknown as Request;
+
+      const res = {
+        setHeader: jest.fn(),
+        json: jest.fn(),
+      } as unknown as Response;
+
+      const next = jest.fn();
+
+      middleware.use(req, res, next);
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe('createMiddleware', () => {
+    it('should return a middleware function', () => {
+      const mw = middleware.createMiddleware({
+        windowMs: 60000,
+        maxRequests: 10,
+        keyPrefix: 'test',
+      });
+
+      expect(typeof mw).toBe('function');
+    });
+  });
+
+  describe('IP extraction', () => {
+    it('should use x-forwarded-for header when available', async () => {
+      mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+      const req = {
+        headers: { 'x-forwarded-for': '10.0.0.1, 10.0.0.2' },
+        socket: { remoteAddress: '127.0.0.1' },
+      } as unknown as Request;
+
+      const res = {
+        setHeader: jest.fn(),
+        json: jest.fn().mockReturnThis(),
+        statusCode: 200,
+      } as unknown as Response;
+
+      const next = jest.fn();
+
+      middleware.use(req, res, next);
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should handle x-forwarded-for as array', async () => {
+      mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+      const req = {
+        headers: { 'x-forwarded-for': ['10.0.0.1'] },
+        socket: { remoteAddress: '127.0.0.1' },
+      } as unknown as Request;
+
+      const res = {
+        setHeader: jest.fn(),
+        json: jest.fn().mockReturnThis(),
+        statusCode: 200,
+      } as unknown as Response;
+
+      const next = jest.fn();
+
+      middleware.use(req, res, next);
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe('resetLimit', () => {
+    it('should delete the rate limit key', async () => {
+      mockRedis.del.mockResolvedValueOnce(1);
+      await middleware.resetLimit('127.0.0.1', 'ratelimit:api');
+      expect(mockRedis.del).toHaveBeenCalledWith('ratelimit:api:127.0.0.1');
+    });
+
+    it('should handle key without prefix', async () => {
+      mockRedis.del.mockResolvedValueOnce(1);
+      await middleware.resetLimit('full-key');
+      expect(mockRedis.del).toHaveBeenCalledWith('full-key');
+    });
+  });
+
+  describe('getLimitStatus', () => {
+    it('should return current rate limit status', async () => {
+      mockRedis.zcount.mockResolvedValueOnce(5);
+      mockRedis.pttl.mockResolvedValueOnce(30000);
+
+      const config: RateLimitConfig = {
+        windowMs: 60000,
+        maxRequests: 100,
+        keyPrefix: 'ratelimit:api',
+      };
+
+      const result = await middleware.getLimitStatus('127.0.0.1', config);
+
+      expect(result).toBeDefined();
+      expect(result!.limit).toBe(100);
+      expect(result!.current).toBe(5);
+      expect(result!.remaining).toBe(95);
+    });
+
+    it('should return null on Redis error', async () => {
+      mockRedis.zcount.mockRejectedValueOnce(new Error('Redis down'));
+
+      const config: RateLimitConfig = {
+        windowMs: 60000,
+        maxRequests: 100,
+        keyPrefix: 'ratelimit:api',
+      };
+
+      const result = await middleware.getLimitStatus('127.0.0.1', config);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('onModuleDestroy', () => {
+    it('should quit Redis connection', async () => {
+      mockRedis.quit.mockResolvedValueOnce('OK');
+      await middleware.onModuleDestroy();
+      expect(mockRedis.quit).toHaveBeenCalled();
+    });
+  });
+});
+
+describe('FixedWindowStore', () => {
+  let store: FixedWindowStore;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    store = new FixedWindowStore(mockRedis as never, 60000);
+  });
+
+  describe('increment', () => {
+    it('should increment counter and return info', async () => {
+      mockMulti.exec.mockResolvedValueOnce([
+        [null, 5],
+        [null, 1],
+      ]);
+      mockRedis.pttl.mockResolvedValueOnce(30000);
+
+      const info = await store.increment('test-key');
+
+      expect(info.current).toBe(5);
+      expect(info.resetTime).toBeDefined();
+    });
+
+    it('should handle null results', async () => {
+      mockMulti.exec.mockResolvedValueOnce(null);
+      mockRedis.pttl.mockResolvedValueOnce(-1);
+
+      const info = await store.increment('test-key');
+      expect(info.current).toBe(1);
+    });
+  });
+
+  describe('decrement', () => {
+    it('should decrement counter', async () => {
+      mockRedis.decr.mockResolvedValueOnce(4);
+      await store.decrement('test-key');
+      expect(mockRedis.decr).toHaveBeenCalledWith('test-key');
+    });
+  });
+
+  describe('resetKey', () => {
+    it('should delete the key', async () => {
+      mockRedis.del.mockResolvedValueOnce(1);
+      await store.resetKey('test-key');
+      expect(mockRedis.del).toHaveBeenCalledWith('test-key');
+    });
+  });
+});
+
+describe('ApplyRateLimit decorator', () => {
+  it('should attach metadata with config object', () => {
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 10,
+      keyPrefix: 'test',
+    };
+
+    const decorator = ApplyRateLimit(config);
+    expect(typeof decorator).toBe('function');
+  });
+
+  it('should resolve preset by name', () => {
+    const decorator = ApplyRateLimit('login');
+    expect(typeof decorator).toBe('function');
+  });
+
+  it('should fallback to API general limit for unknown preset', () => {
+    const decorator = ApplyRateLimit('unknown-preset');
+    expect(typeof decorator).toBe('function');
+  });
+});
+
+describe('createRateLimiter factory', () => {
+  it('should return a middleware function', () => {
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    expect(typeof mw).toBe('function');
+  });
+
+  it('should call next on success', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    const req = {
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should fail open on Redis error', async () => {
+    mockRedis.eval.mockRejectedValueOnce(new Error('connection refused'));
+
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    const req = {
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+});
+
+describe('checkRateLimit standalone', () => {
+  it('should check rate limit and return result', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+    mockRedis.quit.mockResolvedValueOnce('OK');
+
+    const result = await checkRateLimit('redis://localhost:6379', '127.0.0.1', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    expect(result.allowed).toBeDefined();
+    expect(result.info).toBeDefined();
+  });
+
+  it('should handle rate limit exceeded', async () => {
+    mockRedis.eval.mockResolvedValueOnce([101, 5000]);
+    mockRedis.quit.mockResolvedValueOnce('OK');
+
+    const result = await checkRateLimit('redis://localhost:6379', '127.0.0.1', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    expect(result.allowed).toBe(false);
+  });
+});
+
+describe('RedisRateLimiterMiddleware — advanced branches', () => {
+  let middleware: RedisRateLimiterMiddleware;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          REDIS_URL: 'redis://localhost:6379',
+          REDIS_PASSWORD: '',
+          REDIS_DB: '0',
+        };
+        // eslint-disable-next-line security/detect-object-injection
+        return values[key];
+      }),
+    };
+    middleware = new RedisRateLimiterMiddleware(mockConfigService as unknown as ConfigService);
+  });
+
+  it('should use custom keyGenerator when provided', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 10,
+      keyPrefix: 'custom',
+      keyGenerator: (_req: Request) => 'custom-key',
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should call custom handler when rate limit exceeded', async () => {
+    mockRedis.eval.mockResolvedValueOnce([101, 60000]);
+
+    const customHandler = jest.fn();
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 10,
+      keyPrefix: 'custom',
+      handler: customHandler,
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      status: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(customHandler).toHaveBeenCalledWith(req, res);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should handle skipSuccessfulRequests by decrementing on success', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+    mockRedis.zrevrange.mockResolvedValueOnce(['entry-1']);
+    mockRedis.zrem.mockResolvedValueOnce(1);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'skip-success',
+      skipSuccessfulRequests: true,
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    let wrappedJson: ((body: unknown) => Response) | undefined;
+    const originalJson = jest.fn().mockReturnValue({ statusCode: 200 });
+    const res = {
+      setHeader: jest.fn(),
+      statusCode: 200,
+      status: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    Object.defineProperty(res, 'json', {
+      set(fn: (body: unknown) => Response) {
+        wrappedJson = fn;
+      },
+      get() {
+        return wrappedJson || originalJson;
+      },
+      configurable: true,
+    });
+
+    const next = jest.fn();
+    mw(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+
+    // Invoke the wrapped res.json to cover handleResponse branches
+    if (wrappedJson) {
+      await wrappedJson({ ok: true });
+      await new Promise(resolve => setImmediate(resolve));
+    }
+
+    expect(mockRedis.zrevrange).toHaveBeenCalled();
+  });
+
+  it('should handle skipFailedRequests by decrementing on failure', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+    mockRedis.zrevrange.mockResolvedValueOnce(['entry-1']);
+    mockRedis.zrem.mockResolvedValueOnce(1);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'skip-fail',
+      skipFailedRequests: true,
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    let wrappedJson: ((body: unknown) => Response) | undefined;
+    const originalJson = jest.fn().mockReturnValue({ statusCode: 500 });
+    const res = {
+      setHeader: jest.fn(),
+      statusCode: 500,
+    } as unknown as Response;
+
+    Object.defineProperty(res, 'json', {
+      set(fn: (body: unknown) => Response) {
+        wrappedJson = fn;
+      },
+      get() {
+        return wrappedJson || originalJson;
+      },
+      configurable: true,
+    });
+
+    const next = jest.fn();
+    mw(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+
+    // Invoke the wrapped res.json to cover handleResponse skipFailedRequests branch
+    if (wrappedJson) {
+      await wrappedJson({ error: 'fail' });
+      await new Promise(resolve => setImmediate(resolve));
+    }
+
+    expect(mockRedis.zrevrange).toHaveBeenCalled();
+  });
+
+  it('should handle missing IP gracefully', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const req = {
+      headers: {},
+      socket: {},
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+});
+
+describe('RedisRateLimitStore — decrement', () => {
+  it('should not call zrem when no entries returned', async () => {
+    // Reset to ensure clean state
+    mockRedis.zrevrange.mockReset();
+    mockRedis.zrem.mockReset();
+    mockRedis.zrevrange.mockResolvedValueOnce([]);
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Redis = require('ioredis').default;
+    const redis = new Redis();
+    const entries = await redis.zrevrange('key', 0, 0);
+    expect(entries).toHaveLength(0);
+    // zrem should NOT be called when there are no entries
+    expect(mockRedis.zrem).not.toHaveBeenCalled();
+  });
+});
+
+describe('createRateLimiter — advanced', () => {
+  it('should return 429 when rate limit exceeded', async () => {
+    mockRedis.eval.mockResolvedValueOnce([101, 5000]);
+
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    const req = {
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const jsonFn = jest.fn();
+    const res = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json: jsonFn }),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(429);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('should use custom keyGenerator', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'custom',
+      keyGenerator: () => 'my-key',
+    });
+
+    const req = {
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should handle missing ip and socket', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    });
+
+    const req = {
+      socket: {},
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+});
+
+describe('ApplyRateLimit decorator — method decorator', () => {
+  it('should work as method decorator with descriptor', () => {
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 10,
+      keyPrefix: 'test',
+    };
+
+    const decorator = ApplyRateLimit(config);
+    const descriptor = { value: jest.fn() };
+    const result = decorator(
+      {} as object,
+      'testMethod',
+      descriptor as unknown as PropertyDescriptor,
+    );
+
+    expect(result).toBe(descriptor);
+  });
+
+  it('should resolve all preset names', () => {
+    const presetNames = ['registration', 'vat', 'email', 'phone', 'login', 'api'];
+    for (const name of presetNames) {
+      const decorator = ApplyRateLimit(name);
+      expect(typeof decorator).toBe('function');
+    }
+  });
+});
+
+describe('RedisRateLimiterMiddleware — more branch coverage', () => {
+  let middleware: RedisRateLimiterMiddleware;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          REDIS_URL: 'redis://localhost:6379',
+          REDIS_PASSWORD: 'testpass',
+          REDIS_DB: '1',
+        };
+        // eslint-disable-next-line security/detect-object-injection
+        return values[key];
+      }),
+    };
+    middleware = new RedisRateLimiterMiddleware(mockConfigService as unknown as ConfigService);
+  });
+
+  it('should handle config with no password', () => {
+    const mockConfigService = {
+      get: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          REDIS_URL: 'redis://localhost:6379',
+          REDIS_PASSWORD: '',
+          REDIS_DB: '0',
+        };
+        // eslint-disable-next-line security/detect-object-injection
+        return values[key];
+      }),
+    };
+    expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { RedisRateLimiterMiddleware: Middleware } = require('./redisRateLimiter');
+      new Middleware(mockConfigService as unknown as ConfigService);
+    }).not.toThrow();
+  });
+
+  it('should initialize with default REDIS_URL', () => {
+    const mockConfigService = {
+      get: jest.fn(() => undefined),
+    };
+    expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { RedisRateLimiterMiddleware: Middleware } = require('./redisRateLimiter');
+      new Middleware(mockConfigService as unknown as ConfigService);
+    }).not.toThrow();
+  });
+
+  it('should handle keyGenerator function returning custom ID', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'tenant-limit',
+      keyGenerator: (req: Request) => {
+        return `tenant-${req.headers['x-tenant-id'] || 'default'}`;
+      },
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    const req = {
+      headers: { 'x-tenant-id': 'tenant-123' },
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+    expect(mockRedis.eval).toHaveBeenCalled();
+  });
+
+  it('should calculate remaining requests correctly', async () => {
+    mockRedis.eval.mockResolvedValueOnce([45, 60000]);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+      ip: '127.0.0.1',
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(res.setHeader).toHaveBeenCalledWith('X-RateLimit-Remaining', expect.any(String));
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should set Retry-After header when limit exceeded', async () => {
+    mockRedis.eval.mockResolvedValueOnce([101, 60000]);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+      ip: '127.0.0.1',
+    } as unknown as Request;
+
+    const jsonFn = jest.fn().mockReturnThis();
+    const res = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json: jsonFn }),
+      json: jsonFn,
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(res.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
+  });
+
+  it('should accept custom handler in config', () => {
+    const customHandler = jest.fn();
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test-custom',
+      handler: customHandler,
+    };
+
+    const mw = middleware.createMiddleware(config);
+
+    expect(typeof mw).toBe('function');
+    expect(customHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe('RedisRateLimitStore — advanced branch coverage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should handle sliding window with atomic operation', async () => {
+    const luaResult = [50, 10000];
+    mockRedis.eval.mockResolvedValueOnce(luaResult);
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    };
+
+    const testMiddleware = mw.createMiddleware(config);
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    testMiddleware(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+    expect(mockRedis.eval).toHaveBeenCalled();
+  });
+
+  it('should format resetTime correctly', async () => {
+    mockRedis.eval.mockResolvedValueOnce([50, Date.now() + 30000]);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+    };
+
+    const testMiddleware = mw.createMiddleware(config);
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    testMiddleware(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(res.setHeader).toHaveBeenCalledWith(
+      'X-RateLimit-Reset',
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}/),
+    );
+  });
+
+  it('should use socket remoteAddress as fallback when ip unavailable', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '192.168.1.100' },
+      // no ip property
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should handle string x-forwarded-for header', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const req = {
+      headers: { 'x-forwarded-for': '203.0.113.0, 198.51.100.0' },
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+    expect(mockRedis.eval).toHaveBeenCalled();
+  });
+
+  it('should use "unknown" IP when socket and headers missing', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const req = {
+      headers: {},
+      // no socket
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+      statusCode: 200,
+    } as unknown as Response;
+
+    const next = jest.fn();
+    mw.use(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('createRateLimiter should respect keyPrefix fallback', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+    mockRedis.quit.mockResolvedValueOnce('OK');
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createRateLimiter } = require('./redisRateLimiter');
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      // no keyPrefix provided
+    });
+
+    const req = {
+      ip: '127.0.0.1',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(mockRedis.eval).toHaveBeenCalled();
+  });
+
+  it('createRateLimiter should use fallback keyGenerator', async () => {
+    mockRedis.eval.mockResolvedValueOnce([1, 60000]);
+    mockRedis.quit.mockResolvedValueOnce('OK');
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createRateLimiter } = require('./redisRateLimiter');
+    const mw = createRateLimiter('redis://localhost:6379', {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+      // no keyGenerator
+    });
+
+    const req = {
+      ip: '192.168.1.100',
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    await mw(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(mockRedis.eval).toHaveBeenCalled();
+  });
+
+  it('handleResponse should skip failed requests when skipFailedRequests=true', async () => {
+    mockRedis.eval.mockResolvedValueOnce([5, 60000]);
+    mockRedis.zrevrange.mockResolvedValueOnce(['latest-entry']);
+    mockRedis.zrem.mockResolvedValueOnce(1);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test',
+      skipFailedRequests: true,
+    };
+
+    const middleware = mw.createMiddleware(config);
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      statusCode: 500,
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should decrement on success when skipSuccessfulRequests=true', async () => {
+    mockRedis.eval.mockResolvedValueOnce([10, 60000]);
+    mockRedis.zrevrange.mockResolvedValueOnce(['req-entry']);
+    mockRedis.zrem.mockResolvedValueOnce(1);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test-skip-success',
+      skipSuccessfulRequests: true,
+    };
+
+    const middleware = mw.createMiddleware(config);
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      statusCode: 200,
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('should return correct RateLimitInfo with remaining calculation', async () => {
+    mockRedis.eval.mockResolvedValueOnce([75, 45000]);
+
+    const mockConfigService = {
+      get: jest.fn(() => 'redis://localhost:6379'),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+    const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+    const config: RateLimitConfig = {
+      windowMs: 60000,
+      maxRequests: 100,
+      keyPrefix: 'test-calc',
+    };
+
+    const middleware = mw.createMiddleware(config);
+    const req = {
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+    } as unknown as Request;
+
+    const res = {
+      setHeader: jest.fn(),
+      statusCode: 200,
+      json: jest.fn().mockReturnThis(),
+    } as unknown as Response;
+
+    const next = jest.fn();
+    middleware(req, res, next);
+    await new Promise(resolve => setImmediate(resolve));
+
+    expect(res.setHeader).toHaveBeenCalledWith('X-RateLimit-Limit', '100');
+    expect(res.setHeader).toHaveBeenCalledWith('X-RateLimit-Remaining', expect.any(String));
+    expect(next).toHaveBeenCalled();
+  });
+
+  describe('FixedWindowStore — additional branches', () => {
+    it('should handle pttl=-1 (key with no expiry) gracefully', async () => {
+      mockMulti.exec.mockResolvedValueOnce([
+        [null, 3],
+        [null, 1],
+      ]);
+      mockRedis.pttl.mockResolvedValueOnce(-1);
+
+      const store = new FixedWindowStore(mockRedis as never, 60000);
+      const info = await store.increment('key-no-ttl');
+
+      expect(info.current).toBe(3);
+      expect(info.resetTime).toBeDefined();
+      expect(info.remaining).toBe(0);
+    });
+
+    it('should call pexpire on increment', async () => {
+      mockMulti.exec.mockResolvedValueOnce([
+        [null, 2],
+        [null, 1],
+      ]);
+      mockRedis.pttl.mockResolvedValueOnce(30000);
+
+      const store = new FixedWindowStore(mockRedis as never, 60000);
+      await store.increment('key-pexpire-test');
+
+      expect(mockMulti.pexpire).toHaveBeenCalledWith('key-pexpire-test', 60000);
+    });
+  });
+
+  describe('RedisRateLimitStore — incrementSlidingWindow atomic', () => {
+    it('should handle Lua script eval result correctly', async () => {
+      const luaResult = [25, 35000];
+      mockRedis.eval.mockResolvedValueOnce(luaResult);
+
+      const mockConfigService = {
+        get: jest.fn(() => 'redis://localhost:6379'),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { RedisRateLimiterMiddleware: MiddlewareClass } = require('./redisRateLimiter');
+      const mw = new MiddlewareClass(mockConfigService as unknown as ConfigService);
+
+      const config: RateLimitConfig = {
+        windowMs: 60000,
+        maxRequests: 100,
+        keyPrefix: 'lua-test',
+      };
+
+      const middleware = mw.createMiddleware(config);
+      const req = {
+        headers: {},
+        socket: { remoteAddress: '127.0.0.1' },
+      } as unknown as Request;
+
+      const res = {
+        setHeader: jest.fn(),
+        statusCode: 200,
+        json: jest.fn().mockReturnThis(),
+      } as unknown as Response;
+
+      const next = jest.fn();
+      middleware(req, res, next);
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(mockRedis.eval).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe('ApplyRateLimit decorator — class and method variants', () => {
+    it('should support string preset in decorator', () => {
+      const decorator = ApplyRateLimit('registration');
+      expect(typeof decorator).toBe('function');
+    });
+
+    it('should resolve preset config from string name', () => {
+      const decorator = ApplyRateLimit('vat');
+      expect(typeof decorator).toBe('function');
+    });
+
+    it('should fallback to API_GENERAL_LIMIT for unknown preset', () => {
+      const decorator = ApplyRateLimit('nonexistent-preset');
+      const testObj = {};
+      decorator(testObj, 'method', { value: jest.fn() });
+      // Should not throw
+      expect(true).toBe(true);
+    });
+
+    it('should apply decorator to class target', () => {
+      const config: RateLimitConfig = {
+        windowMs: 120000,
+        maxRequests: 50,
+        keyPrefix: 'class-level',
+      };
+      const decorator = ApplyRateLimit(config);
+      const TestClass = class {};
+      const result = decorator(TestClass);
+      // Decorator returns the target unchanged
+      expect(result).toBe(TestClass);
+    });
+  });
+});

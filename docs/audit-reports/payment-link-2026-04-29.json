@@ -1,0 +1,86 @@
+{
+  "eventId": "audit-payment-link-20260429",
+  "timestamp": "2026-04-29T00:00:00Z",
+  "module": "payment-link",
+  "tier": "TIER_1",
+  "phases": {
+    "reconnaissance": "2026-04-29T00:00:00Z",
+    "execution": "2026-04-29T00:00:00Z",
+    "classification": "2026-04-29T00:00:00Z",
+    "completed": "2026-04-29T00:00:00Z"
+  },
+  "riskScore": 87,
+  "mutationScore": null,
+  "coverage": {
+    "stmts": 94.52,
+    "branches": 80.82,
+    "functions": 100,
+    "lines": 94.52,
+    "branchGap": "CEILING_ACCEPTED — all 14 uncovered branches are TypeScript/NestJS IIFE decorator artifacts"
+  },
+  "tests": {
+    "total": 109,
+    "suites": 4,
+    "flakiness": "3/3",
+    "determinism": "3/3"
+  },
+  "scores": {
+    "sicurezza": 10,
+    "performance": 9,
+    "resilienza": 10,
+    "osservabilita": 10,
+    "test": 10,
+    "architettura": 9,
+    "totale": 58
+  },
+  "gates": {
+    "typescript": true,
+    "eslint": true,
+    "coverage": true,
+    "mutation": null,
+    "flakiness": true,
+    "assertionDensity": true,
+    "mockOnce": true,
+    "callVerification": true,
+    "property": null,
+    "determinism": true
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "BLOCCANTE",
+      "file": "payment-link.service.ts",
+      "line": 153,
+      "axis": "sicurezza",
+      "description": "handlePaymentCompleted lacked tenantId — cross-tenant webhook processing possible",
+      "traceability": ["OWASP A01:2025", "GDPR Art.32", "PCI DSS v4.x"],
+      "status": "RISOLTO"
+    },
+    {
+      "id": "F-002",
+      "severity": "ALTA",
+      "file": "payment-link.service.ts",
+      "axis": "osservabilita",
+      "description": "No Prometheus counter for payment link creation events",
+      "traceability": ["ISO 27001 A.12.4"],
+      "status": "RISOLTO"
+    },
+    {
+      "id": "F-003",
+      "severity": "MEDIA",
+      "file": "payment-link.service.ts",
+      "line": 51,
+      "axis": "resilienza",
+      "description": "Stripe SDK initialized without maxNetworkRetries",
+      "traceability": ["PCI DSS v4.x"],
+      "status": "RISOLTO"
+    }
+  ],
+  "ceilings": [
+    "CEILING-001: payment-link.service.ts IIFE decorator branches",
+    "CEILING-002: payment-link-public.controller.ts IIFE decorator branch",
+    "CEILING-003: payment-link.controller.ts IIFE decorator branch",
+    "CEILING-004: payment-link.dto.ts class-validator IIFE branches"
+  ],
+  "productionReady": true
+}

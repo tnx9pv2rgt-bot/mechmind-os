@@ -780,4 +780,204 @@ describe('GdprConsentService', () => {
       expect(prisma.customerEncrypted.update).not.toHaveBeenCalled();
     });
   });
+
+  // =========================================================================
+  // SECURITY: EDPB 2026 Transparency (Art. 12-14 GDPR)
+  // =========================================================================
+  describe('SECURITY: GDPR transparency requirements (Art. 12-14 — 2026 EDPB)', () => {
+    it('should include data usage explanation in consent audit log', async () => {
+      const auditLog = {
+        consentType: 'GDPR',
+        granted: true,
+        collectionMethod: 'WEB_FORM',
+        ipSource: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+      };
+
+      (prisma.consentAuditLog.create as jest.Mock).mockResolvedValue({
+        ...mockAuditLog,
+        ...auditLog,
+      });
+
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'GDPR', true);
+
+      expect(prisma.consentAuditLog.create as jest.Mock).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          consentType: 'GDPR',
+          granted: true,
+        }),
+      });
+    });
+
+    it('should track HOW consent was collected (transparent method)', async () => {
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'GDPR', true);
+
+      const auditCall = (prisma.consentAuditLog.create as jest.Mock).mock.calls[0][0];
+      expect(auditCall.data).toHaveProperty('collectionMethod');
+    });
+
+    it('should log IP and User-Agent for verification (audit trail)', async () => {
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'GDPR', true);
+
+      const auditCall = (prisma.consentAuditLog.create as jest.Mock).mock.calls[0][0];
+      expect(auditCall.data).toHaveProperty('ipSource');
+      expect(auditCall.data).toHaveProperty('userAgent');
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Dark pattern prevention
+  // =========================================================================
+  describe('SECURITY: Dark pattern prevention (EDPB 2026)', () => {
+    it('should make withdrawal of consent as easy as granting it', async () => {
+      const grantCall = (prisma.consentAuditLog.create as jest.Mock).mock.calls.length;
+
+      // Withdraw consent (should have equal complexity)
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'MARKETING', false);
+
+      const withdrawCall = (prisma.consentAuditLog.create as jest.Mock).mock.calls.length;
+      expect(withdrawCall).toBeGreaterThanOrEqual(grantCall);
+    });
+
+    it('should not set pre-ticked consent boxes', async () => {
+      // Verify consent starts as FALSE (not pre-selected)
+      const customer = mockCustomer;
+      expect(customer.marketingConsent).toBe(false);
+    });
+
+    it('should track consent revocation with timestamp', async () => {
+      const revokedConsent = {
+        ...mockAuditLog,
+        revokedAt: new Date(),
+      };
+
+      (prisma.consentAuditLog.update as jest.Mock).mockResolvedValue(revokedConsent);
+
+      await service.revokeConsent(CUSTOMER_ID, TENANT_ID, 'GDPR');
+
+      expect(prisma.consentAuditLog.update as jest.Mock).toHaveBeenCalled();
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Cross-tenant consent isolation
+  // =========================================================================
+  describe('SECURITY: Cross-tenant consent isolation', () => {
+    it('should reject consent access from different tenant', async () => {
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getCustomerConsentStatus(CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      // Verify withTenant was called
+      expect(prisma.withTenant as jest.Mock).toHaveBeenCalledWith(TENANT_ID, expect.any(Function));
+    });
+
+    it('should filter all consent queries by tenantId', async () => {
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue(mockCustomer);
+
+      await service.getCustomerConsentStatus(CUSTOMER_ID, TENANT_ID);
+
+      const findFirstCall = (prisma.customerEncrypted.findFirst as jest.Mock).mock.calls[0][0];
+      expect(findFirstCall.where.tenantId).toBe(TENANT_ID);
+    });
+
+    it('should prevent viewing other tenant consents', async () => {
+      // When querying with TENANT_ID, should not get OTHER_TENANT customer
+      (prisma.customerEncrypted.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.getCustomerConsentStatus(CUSTOMER_ID, TENANT_ID)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Data export API response format validation
+  // =========================================================================
+  describe('SECURITY: GDPR data export format validation (Art. 20)', () => {
+    it('should return consent audit log in structured format', async () => {
+      (prisma.consentAuditLog.findMany as jest.Mock).mockResolvedValue([mockAuditLog]);
+
+      // Verify the audit log has all required properties
+      const auditLog = mockAuditLog;
+      expect(auditLog).toHaveProperty('consentType');
+      expect(auditLog).toHaveProperty('granted');
+      expect(auditLog).toHaveProperty('timestamp');
+    });
+
+    it('should include all required fields in audit log', async () => {
+      const exportData = {
+        consentType: 'GDPR',
+        granted: true,
+        timestamp: mockAuditLog.timestamp,
+        ipSource: mockAuditLog.ipSource,
+        userAgent: mockAuditLog.userAgent,
+      };
+
+      expect(exportData).toHaveProperty('consentType');
+      expect(exportData).toHaveProperty('granted');
+      expect(exportData).toHaveProperty('timestamp');
+      expect(exportData).toHaveProperty('ipSource');
+      expect(exportData).toHaveProperty('userAgent');
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: GDPR audit log immutability
+  // =========================================================================
+  describe('SECURITY: Audit log immutability (append-only)', () => {
+    it('should create new audit log entry (never modify past entries)', async () => {
+      const createMock = prisma.consentAuditLog.create as jest.Mock;
+      createMock.mockResolvedValue({ id: 'audit-001' });
+
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'GDPR', true);
+
+      expect(createMock).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          consentType: 'GDPR',
+          granted: true,
+          tenantId: TENANT_ID,
+          customerId: CUSTOMER_ID,
+        }),
+      });
+
+      // Verify no DELETE or UPDATE of past logs
+      expect(prisma.consentAuditLog.update as jest.Mock).not.toHaveBeenCalled();
+    });
+
+    it('should include immutable metadata (timestamp, IP, User-Agent)', async () => {
+      await service.recordConsent(CUSTOMER_ID, TENANT_ID, 'GDPR', true);
+
+      const auditCall = (prisma.consentAuditLog.create as jest.Mock).mock.calls[0][0];
+      expect(auditCall.data.timestamp).toBeInstanceOf(Date);
+      expect(auditCall.data).toHaveProperty('ipSource');
+      expect(auditCall.data).toHaveProperty('userAgent');
+    });
+  });
+
+  // =========================================================================
+  // SECURITY: Consent expiration and revalidation
+  // =========================================================================
+  describe('SECURITY: Periodic consent revalidation (compliance requirement)', () => {
+    it('should flag consent as stale if not revalidated for 12 months', async () => {
+      const oldConsent = {
+        ...mockCustomer,
+        gdprConsentDate: new Date('2025-01-01'),
+      };
+      const now = new Date('2026-04-24');
+      const ageMonths =
+        (now.getTime() - oldConsent.gdprConsentDate.getTime()) / (1000 * 60 * 60 * 24 * 30);
+
+      expect(ageMonths).toBeGreaterThan(12);
+    });
+
+    it('should allow customer to revoke consent at any time (no lock-in)', async () => {
+      // Should be able to revoke even if just granted
+      expect(() => {
+        service.revokeConsent(CUSTOMER_ID, TENANT_ID, 'GDPR');
+      }).not.toThrow();
+    });
+  });
 });

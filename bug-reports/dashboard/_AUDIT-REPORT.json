@@ -1,0 +1,367 @@
+{
+  "timestamp": "2026-05-11T19:16:37.556Z",
+  "baseUrl": "http://localhost:3000",
+  "demoLoginSuccess": true,
+  "firstImpact": {
+    "ttfb": 104,
+    "fcpApprox": 2181,
+    "ttiApprox": 2182,
+    "perfMetrics": {
+      "ttfb": 56.70000000298023,
+      "domContentLoaded": 155.20000000298023,
+      "loadComplete": 1121.3999999910593,
+      "domInteractive": 155.20000000298023,
+      "firstPaint": 140,
+      "firstContentfulPaint": 164,
+      "transferSize": 10660,
+      "encodedBodySize": 10360
+    },
+    "lcp": 1352,
+    "cls": 0.07848852872848511,
+    "consoleErrors": [],
+    "consoleWarnings": [],
+    "failedRequests": [],
+    "consoleErrorsTotal": 0,
+    "consoleWarningsTotal": 0,
+    "failedRequestsTotal": 0
+  },
+  "heading": {
+    "h1": "Buonasera, Admin",
+    "dateFound": "MechMindCerca...⌘KOperativitàDashboardOrdini di LavoroCalendarioPreventiviIspezioniPrenotazioniClien"
+  },
+  "widgets": [
+    {
+      "title": "Appuntamenti di oggi",
+      "chars": 159,
+      "hasEmpty": true
+    },
+    {
+      "title": "Andamento Fatturato",
+      "chars": 66,
+      "hasEmpty": false
+    },
+    {
+      "title": "Stato Lavori",
+      "chars": 84,
+      "hasEmpty": false
+    },
+    {
+      "title": "Ordini Recenti",
+      "chars": 70,
+      "hasEmpty": false
+    },
+    {
+      "title": "Oggi",
+      "chars": 57,
+      "hasEmpty": true
+    },
+    {
+      "title": "Finanze",
+      "chars": 125,
+      "hasEmpty": false
+    }
+  ],
+  "englishStrings": [],
+  "formats": {
+    "hasItalianCurrency": true,
+    "hasEnglishCurrency": true,
+    "hasItalianDate": false,
+    "hasHHMM": false
+  },
+  "logoutVisible": {
+    "found": true,
+    "w": 0,
+    "h": 0,
+    "method": "testid"
+  },
+  "appointmentsWidget": {
+    "found": true,
+    "y": 169,
+    "title": "Appuntamenti di oggi"
+  },
+  "touchTargets1024": {
+    "totalVisible": 34,
+    "undersized44": 3,
+    "smallSamples": [
+      {
+        "tag": "A",
+        "w": 1,
+        "h": 1,
+        "text": "Vai al contenuto principale",
+        "aria": null,
+        "x": 15,
+        "y": 15
+      },
+      {
+        "tag": "A",
+        "w": 120,
+        "h": 32,
+        "text": "MechMind",
+        "aria": null,
+        "x": 16,
+        "y": 12
+      },
+      {
+        "tag": "BUTTON",
+        "w": 216,
+        "h": 40,
+        "text": "Cerca...⌘K",
+        "aria": "Cerca",
+        "x": 12,
+        "y": 64
+      }
+    ]
+  },
+  "primaryActions1024": [
+    {
+      "text": "Nuovo",
+      "x": 854,
+      "y": 190,
+      "inThumbZone": false
+    },
+    {
+      "text": "Nuovo",
+      "x": 854,
+      "y": 190,
+      "inThumbZone": false
+    },
+    {
+      "text": "Crea appuntamento",
+      "x": 538,
+      "y": 434,
+      "inThumbZone": false
+    },
+    {
+      "text": "Crea appuntamento",
+      "x": 538,
+      "y": 434,
+      "inThumbZone": false
+    },
+    {
+      "text": "Nuovo OdL",
+      "x": 305,
+      "y": 971,
+      "inThumbZone": true
+    },
+    {
+      "text": "Nuovo OdL",
+      "x": 305,
+      "y": 971,
+      "inThumbZone": true
+    },
+    {
+      "text": "Nuova Fattura",
+      "x": 430,
+      "y": 971,
+      "inThumbZone": true
+    },
+    {
+      "text": "Nuova Fattura",
+      "x": 430,
+      "y": 971,
+      "inThumbZone": true
+    },
+    {
+      "text": "Nuovo Cliente",
+      "x": 570,
+      "y": 971,
+      "inThumbZone": true
+    },
+    {
+      "text": "Nuovo Cliente",
+      "x": 570,
+      "y": 971,
+      "inThumbZone": true
+    }
+  ],
+  "mobile375": {
+    "visibleCount": 32,
+    "undersizedCount": 2,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "viewportWidth": 375
+  },
+  "axe": {
+    "totalViolations": 2,
+    "critical": 0,
+    "serious": 1,
+    "moderate": 1,
+    "minor": 0,
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=playwright",
+        "nodeCount": 12,
+        "samples": [
+          {
+            "html": "<h2 class=\"text-center text-3xl font-normal text-[var(--text-on-brand)]\">Accedi</h2>",
+            "target": [
+              "h2"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #ffffff, background color: #f4f4f4, font size: 22.5pt (30px), font weight: normal). Expected contrast rat"
+          },
+          {
+            "html": "<div class=\"flex items-center justify-center gap-2\">",
+            "target": [
+              ".transition-all.disabled\\:cursor-not-allowed.disabled\\:opacity-50:nth-child(1) > .gap-2.justify-center.items-center"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #ffffff, background color: #f4f4f4, font size: 12.0pt (16px), font weight: normal). Expected contrast rat"
+          },
+          {
+            "html": "<div class=\"flex items-center justify-center gap-2\">",
+            "target": [
+              ".transition-all.disabled\\:cursor-not-allowed.disabled\\:opacity-50:nth-child(3) > .gap-2.justify-center.items-center"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 1.09 (foreground color: #ffffff, background color: #f4f4f4, font size: 12.0pt (16px), font weight: normal). Expected contrast rat"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/region?application=playwright",
+        "nodeCount": 9,
+        "samples": [
+          {
+            "html": "<h2 class=\"text-center text-3xl font-normal text-[var(--text-on-brand)]\">Accedi</h2>",
+            "target": [
+              "h2"
+            ],
+            "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "html": "<p class=\"mb-2 px-4 text-center text-base text-[var(--text-secondary)]\">Gestisci officina, fatture e prenotazioni da un unico pannello.</p>",
+            "target": [
+              ".mb-2"
+            ],
+            "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          },
+          {
+            "html": "<div class=\"my-1 grid grid-cols-[1fr_max-content_1fr] items-center\"><div class=\"h-px bg-[var(--border-strong)]\"></div><div class=\"mx-6 text-[13px] font-medium uppercase text-[var(--text-tertiary)]\">Op",
+            "target": [
+              ".my-1"
+            ],
+            "failureSummary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  "audit6LoginSuccess": false,
+  "audit6MeBeforeBlock": {
+    "ok": true,
+    "hasUser": false
+  },
+  "stateBackendDown": {
+    "hasItalianError": false,
+    "hasEnglishError": false,
+    "hasAlertBanner": false,
+    "hasAlertRole": false,
+    "hasRetryButton": false,
+    "isOnLoginPage": true,
+    "isBlank": false,
+    "textLength": 538,
+    "sample": "✕ Accedi Gestisci officina, fatture e prenotazioni da un unico pannello. Continua con Google Continua con Apple Presto Accedi con magic link Oppure Indirizzo e-mail Password Mostra Ricordami Password dimenticata? Accedi Non hai un account?   Registrati Prova la demo gratuita Condizioni d'uso · Priva",
+    "consoleErrorsCount": 0,
+    "consoleErrorsSample": []
+  },
+  "stateBackendSlow": {
+    "tAt1500": 1643,
+    "skeletons": {
+      "total": 0,
+      "breakdown": [
+        {
+          "selector": "[class*=\"skeleton\" i]",
+          "count": 0
+        },
+        {
+          "selector": "[aria-busy=\"true\"]",
+          "count": 0
+        },
+        {
+          "selector": "[data-loading=\"true\"]",
+          "count": 0
+        },
+        {
+          "selector": "[class*=\"shimmer\" i]",
+          "count": 0
+        },
+        {
+          "selector": "[class*=\"pulse\" i]",
+          "count": 0
+        }
+      ],
+      "hasSpinnerOrLoader": false
+    }
+  },
+  "stateEmpty": {
+    "hasHelpfulEmpty": false,
+    "hasNaNorUndefined": false,
+    "visibleSample": "✕ Accedi Gestisci officina, fatture e prenotazioni da un unico pannello. Continua con Google Continua con Apple Presto Accedi con magic link Oppure Indirizzo e-mail Password Mostra Ricordami Password dimenticata? Accedi Non hai un account?   Registrati Prova la demo gratuita Condizioni d'uso · Privacy Utilizziamo cookie tecnici necessari per il funzionamento del servizio e cookie analitici per migliorare la tua esperienza. Per maggiori informazioni consulta la nostra   Informativa Privacy . Pers"
+  },
+  "keyboard": {
+    "elementsFocused": 29,
+    "withoutVisibleFocus": 29,
+    "sample": [
+      {
+        "tag": "BUTTON",
+        "text": "✕",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Continua con Google",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accedi con magic link",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "INPUT",
+        "text": "",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "A",
+        "text": "Password dimenticata?",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Accedi",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "A",
+        "text": "Registrati",
+        "hasVisibleFocus": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Prova la demo gratuita",
+        "hasVisibleFocus": false
+      }
+    ]
+  },
+  "throttled4g": {
+    "tDcl": 790,
+    "tIdle": 4213,
+    "firstPaint": 788,
+    "firstContentfulPaint": 844
+  }
+}

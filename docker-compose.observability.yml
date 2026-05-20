@@ -1,0 +1,107 @@
+version: '3.8'
+
+# MechMind OS — Observability Stack
+# Usage: docker-compose -f docker-compose.observability.yml up -d
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: mechmind-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:3.4.0
+    container_name: mechmind-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - observability
+
+  promtail:
+    image: grafana/promtail:3.4.0
+    container_name: mechmind-promtail
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - observability
+
+  tempo:
+    image: grafana/tempo:2.7.0
+    container_name: mechmind-tempo
+    restart: unless-stopped
+    ports:
+      - "4318:4318"   # OTLP HTTP
+      - "3200:3200"   # Tempo query
+    volumes:
+      - ./monitoring/tempo/tempo-config.yml:/etc/tempo/config.yml
+      - tempo-data:/var/tempo
+    command: -config.file=/etc/tempo/config.yml
+    networks:
+      - observability
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: mechmind-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: mechmind-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=mechmind2026
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_FEATURE_TOGGLES_ENABLE=traceToLogs
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - observability
+
+volumes:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:
+
+networks:
+  observability:
+    driver: bridge

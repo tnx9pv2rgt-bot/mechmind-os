@@ -64,7 +64,11 @@ export class ShopFloorService {
    * Add sensor to bay
    * Note: BaySensor model needs to be added to Prisma schema
    */
-  async addBaySensor(bayId: string, sensor: Omit<BaySensor, 'id'>): Promise<BaySensor> {
+  async addBaySensor(
+    _tenantId: string,
+    bayId: string,
+    sensor: Omit<BaySensor, 'id'>,
+  ): Promise<BaySensor> {
     this.logger.warn(`Adding sensor to bay ${bayId} - BaySensor model not in schema yet`);
 
     return {
@@ -81,7 +85,7 @@ export class ShopFloorService {
    * Process sensor reading
    * Note: SensorReading model needs to be added to Prisma schema
    */
-  async processSensorReading(reading: SensorReading): Promise<void> {
+  async processSensorReading(_tenantId: string, reading: SensorReading): Promise<void> {
     this.logger.debug(`Processing sensor reading: ${reading.sensorId}`);
 
     // Process based on sensor type
@@ -113,6 +117,7 @@ export class ShopFloorService {
    * Note: ServiceBay, WorkOrder models need bay-related fields in Prisma schema
    */
   async assignVehicleToBay(
+    tenantId: string,
     bayId: string,
     vehicleId: string,
     workOrderId: string,
@@ -133,13 +138,13 @@ export class ShopFloorService {
     // Invalidate cache
     await this.redis.del(`bay:${bayId}`);
 
-    return this.getBay(bayId);
+    return this.getBay(tenantId, bayId);
   }
 
   /**
    * Release bay
    */
-  async releaseBay(bayId: string): Promise<ServiceBay> {
+  async releaseBay(tenantId: string, bayId: string): Promise<ServiceBay> {
     this.logger.warn(`Releasing bay ${bayId} - Shop floor models not in schema yet`);
 
     // Create exit event
@@ -152,13 +157,13 @@ export class ShopFloorService {
     // Invalidate cache
     await this.redis.del(`bay:${bayId}`);
 
-    return this.getBay(bayId);
+    return this.getBay(tenantId, bayId);
   }
 
   /**
    * Get bay status
    */
-  async getBay(bayId: string): Promise<ServiceBay> {
+  async getBay(_tenantId: string, bayId: string): Promise<ServiceBay> {
     const cached = await this.redis.get(`bay:${bayId}`);
     if (cached) {
       return JSON.parse(cached) as ServiceBay;
@@ -196,6 +201,7 @@ export class ShopFloorService {
    * Note: Technician model needs location fields in Prisma schema
    */
   async updateTechnicianLocation(
+    tenantId: string,
     technicianId: string,
     location: {
       x: number;
@@ -205,8 +211,8 @@ export class ShopFloorService {
     },
   ): Promise<TechnicianLocation> {
     // Check if user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: technicianId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: technicianId, tenantId },
     });
 
     if (!user) {
@@ -243,6 +249,7 @@ export class ShopFloorService {
   async getActiveTechnicians(tenantId: string): Promise<TechnicianLocation[]> {
     const users = await this.prisma.user.findMany({
       where: { tenantId, isActive: true },
+      take: 200,
     });
 
     const locations: TechnicianLocation[] = [];
@@ -261,7 +268,7 @@ export class ShopFloorService {
    * Get work order progress
    * Note: WorkOrder model needs service tracking fields in Prisma schema
    */
-  async getWorkOrderProgress(workOrderId: string): Promise<WorkOrderProgress> {
+  async getWorkOrderProgress(_tenantId: string, workOrderId: string): Promise<WorkOrderProgress> {
     this.logger.warn(
       `Getting work order progress for ${workOrderId} - WorkOrder services not in schema yet`,
     );
@@ -274,7 +281,11 @@ export class ShopFloorService {
   /**
    * Update job status
    */
-  async updateJobStatus(workOrderId: string, status: JobStatus): Promise<WorkOrderProgress> {
+  async updateJobStatus(
+    tenantId: string,
+    workOrderId: string,
+    status: JobStatus,
+  ): Promise<WorkOrderProgress> {
     this.logger.warn(`Updating job status for ${workOrderId} - WorkOrder status not in schema yet`);
 
     // Create status change event
@@ -285,7 +296,7 @@ export class ShopFloorService {
       toStatus: status,
     });
 
-    return this.getWorkOrderProgress(workOrderId);
+    return this.getWorkOrderProgress(tenantId, workOrderId);
   }
 
   /**

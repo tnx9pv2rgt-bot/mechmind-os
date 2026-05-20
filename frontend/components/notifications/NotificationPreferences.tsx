@@ -65,24 +65,24 @@ const channelConfig = [
     label: 'SMS',
     description: 'Ricevi notifiche via SMS',
     icon: Smartphone,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
+    color: 'text-[var(--status-info)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
   },
   {
     channel: NotificationChannel.WHATSAPP,
     label: 'WhatsApp',
     description: 'Ricevi notifiche via WhatsApp',
     icon: MessageSquare,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
   },
   {
     channel: NotificationChannel.EMAIL,
     label: 'Email',
     description: 'Ricevi notifiche via Email',
     icon: Mail,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--brand-subtle)]',
   },
 ];
 
@@ -252,7 +252,7 @@ export function NotificationPreferences({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
   }
@@ -274,15 +274,15 @@ export function NotificationPreferences({
           {channelConfig.map(({ channel, label, description, icon: Icon, color, bgColor }) => (
             <div
               key={channel}
-              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-[var(--surface-secondary)] transition-colors"
             >
               <div className="flex items-center gap-4">
                 <div className={cn('p-2 rounded-lg', bgColor)}>
                   <Icon className={cn('w-5 h-5', color)} />
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900">{label}</h4>
-                  <p className="text-sm text-gray-500">{description}</p>
+                  <h4 className="font-medium text-[var(--text-primary)]">{label}</h4>
+                  <p className="text-sm text-[var(--text-tertiary)]">{description}</p>
                 </div>
               </div>
               <Switch
@@ -342,11 +342,11 @@ export function NotificationPreferences({
           {typeConfig.map(({ type, label, description }) => (
             <div
               key={type}
-              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-[var(--surface-secondary)] transition-colors"
             >
               <div>
-                <h4 className="font-medium text-gray-900">{label}</h4>
-                <p className="text-sm text-gray-500">{description}</p>
+                <h4 className="font-medium text-[var(--text-primary)]">{label}</h4>
+                <p className="text-sm text-[var(--text-tertiary)]">{description}</p>
               </div>
               <Switch
                 checked={isTypeEnabled(type)}
@@ -391,34 +391,34 @@ export function NotificationPreferences({
           {/* Quiet Hours */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Moon className="w-5 h-5 text-indigo-600" />
+              <Moon className="w-5 h-5 text-[var(--brand)]" />
               <Label>Orario di Quietazione</Label>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--text-tertiary)]">
               Durante queste ore non riceverai notifiche non urgenti
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm text-gray-500">Dalle</Label>
+                <Label className="text-sm text-[var(--text-tertiary)]">Dalle</Label>
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gray-400" />
+                  <Clock className="w-4 h-4 text-[var(--text-tertiary)]" />
                   <input
                     type="time"
                     value={localPrefs?.quietHoursStart || ''}
                     onChange={(e) => handleQuietHoursChange('quietHoursStart', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-[var(--surface-primary)] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[var(--text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm text-gray-500">Alle</Label>
+                <Label className="text-sm text-[var(--text-tertiary)]">Alle</Label>
                 <div className="flex items-center gap-2">
-                  <Sun className="w-4 h-4 text-gray-400" />
+                  <Sun className="w-4 h-4 text-[var(--text-tertiary)]" />
                   <input
                     type="time"
                     value={localPrefs?.quietHoursEnd || ''}
                     onChange={(e) => handleQuietHoursChange('quietHoursEnd', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-[var(--surface-primary)] px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-[var(--text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-default)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -465,7 +465,7 @@ export function NotificationPreferences({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-2"
+            className="bg-[var(--status-error-subtle)] text-[var(--status-error)] p-4 rounded-lg flex items-center gap-2"
           >
             <AlertCircle className="w-5 h-5" />
             Errore durante il salvataggio. Riprova.
@@ -480,7 +480,7 @@ export function NotificationPreferences({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-green-50 text-green-600 p-4 rounded-lg flex items-center gap-2"
+            className="bg-[var(--status-success-subtle)] text-[var(--status-success)] p-4 rounded-lg flex items-center gap-2"
           >
             <Check className="w-5 h-5" />
             Preferenze salvate con successo!

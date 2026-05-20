@@ -137,10 +137,10 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
           I tuoi dati personali
         </h2>
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           Inserisci le informazioni richieste per completare il tuo profilo
         </p>
       </div>
@@ -163,18 +163,18 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
+                {field.required && <span className="text-[var(--status-error)] ml-1">*</span>}
               </label>
               
               <div className="relative">
                 <div
                   className={cn(
                     'absolute left-3 top-1/2 -translate-y-1/2 transition-colors',
-                    isFocused ? 'text-blue-500' : 'text-gray-400',
-                    showError && 'text-red-400',
-                    showSuccess && 'text-green-500'
+                    isFocused ? 'text-[var(--status-info)]' : 'text-[var(--text-tertiary)]',
+                    showError && 'text-[var(--status-error)]',
+                    showSuccess && 'text-[var(--status-success)]'
                   )}
                 >
                   <Icon className="w-5 h-5" />
@@ -190,10 +190,10 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
                   className={cn(
                     'w-full pl-10 pr-4 py-3 rounded-xl border-2 transition-all duration-200',
                     'focus:outline-none',
-                    isFocused && 'border-blue-500 ring-4 ring-blue-100',
-                    showError && 'border-red-300 bg-red-50',
-                    showSuccess && 'border-green-300 bg-green-50',
-                    !isFocused && !showError && !showSuccess && 'border-gray-200 hover:border-gray-300'
+                    isFocused && 'border-[var(--status-info)] ring-4 ring-[var(--status-info)]/10',
+                    showError && 'border-[var(--status-error)]/30 bg-[var(--status-error-subtle)]',
+                    showSuccess && 'border-[var(--status-success)]/30 bg-[var(--status-success-subtle)]',
+                    !isFocused && !showError && !showSuccess && 'border-[var(--border-default)] hover:border-[var(--border-strong)]'
                   )}
                 />
 
@@ -205,7 +205,7 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 500 }}
                   >
-                    <Check className="w-5 h-5 text-green-500" />
+                    <Check className="w-5 h-5 text-[var(--status-success)]" />
                   </motion.div>
                 )}
               </div>
@@ -213,7 +213,7 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
               {/* Error message */}
               {showError && (
                 <motion.p
-                  className="mt-1 text-sm text-red-600"
+                  className="mt-1 text-sm text-[var(--status-error)]"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
@@ -234,7 +234,7 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-[var(--text-tertiary)]">
           <span className="font-medium">
             {fields.filter((f) => isFieldValid(f)).length}
           </span>
@@ -244,7 +244,7 @@ export const PersonalDataStep: React.FC<PersonalDataStepProps> = ({
 
         {allRequiredValid && (
           <motion.div
-            className="flex items-center gap-1 text-sm text-green-600 font-medium"
+            className="flex items-center gap-1 text-sm text-[var(--status-success)] font-medium"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
           >

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -163,7 +163,9 @@ export class DataRetentionService {
         'DataRetentionService',
       );
     } catch (error) {
-      this.logger.error(`Scheduled retention enforcement failed: ${error.message}`);
+      this.logger.error(
+        `Scheduled retention enforcement failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Alert on-call team for manual intervention
     }
   }
@@ -191,7 +193,9 @@ export class DataRetentionService {
 
       this.loggerService.log('Weekly deep cleanup completed', 'DataRetentionService');
     } catch (error) {
-      this.logger.error(`Weekly deep cleanup failed: ${error.message}`);
+      this.logger.error(
+        `Weekly deep cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -250,8 +254,9 @@ export class DataRetentionService {
       const optOutResult = await this.processOptOutCustomers(tenantId);
       customersAnonymized += optOutResult.count;
     } catch (error) {
-      this.logger.error(`Retention enforcement error: ${error.message}`);
-      errors.push(error.message);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Retention enforcement error: ${errorMsg}`);
+      errors.push(errorMsg);
     }
 
     const completedAt = new Date();
@@ -348,7 +353,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to anonymize customer ${customer.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to anonymize customer ${customer.id}: ${errorMsg}`);
       }
     }
 
@@ -418,9 +424,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(
-          `Failed to process opt-out for customer ${log.customer.id}: ${error.message}`,
-        );
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to process opt-out for customer ${log.customer.id}: ${errorMsg}`);
       }
     }
 
@@ -467,8 +472,7 @@ export class DataRetentionService {
     const now = new Date();
 
     // Find recordings past retention
-    // @ts-expect-error - callRecordings model name may differ in schema
-    const recordingsToDelete = await this.prisma.callRecordings.findMany({
+    const recordingsToDelete = await this.prisma.callRecording.findMany({
       where: {
         ...(tenantId && { tenantId }),
         retentionUntil: {
@@ -489,8 +493,7 @@ export class DataRetentionService {
     for (const recording of recordingsToDelete) {
       try {
         await this.prisma.withTenant(recording.tenantId, async prisma => {
-          // @ts-expect-error - callRecordings model name may differ in schema
-          await prisma.callRecordings.update({
+          await prisma.callRecording.update({
             where: { id: recording.id },
             data: {
               deletedAt: now,
@@ -502,7 +505,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to delete recording ${recording.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to delete recording ${recording.id}: ${errorMsg}`);
       }
     }
 
@@ -567,7 +571,8 @@ export class DataRetentionService {
       return { count: result };
     } catch (error) {
       // Table may not exist yet
-      this.logger.debug(`Webhook events cleanup skipped: ${error.message}`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.debug(`Webhook events cleanup skipped: ${errorMsg}`);
       return { count: 0 };
     }
   }
@@ -614,7 +619,8 @@ export class DataRetentionService {
 
         count++;
       } catch (error) {
-        this.logger.error(`Failed to clean snapshot for request ${request.id}: ${error.message}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to clean snapshot for request ${request.id}: ${errorMsg}`);
       }
     }
 
@@ -680,7 +686,7 @@ export class DataRetentionService {
     });
 
     if (!tenant) {
-      throw new Error(`Tenant ${tenantId} not found`);
+      throw new NotFoundException(`Tenant ${tenantId} not found`);
     }
 
     const policy = this.getRetentionPolicy();
@@ -705,8 +711,7 @@ export class DataRetentionService {
           },
         },
       }),
-      // @ts-expect-error - callRecordings model name may differ in schema
-      this.prisma.callRecordings.count({
+      this.prisma.callRecording.count({
         where: {
           tenantId,
           retentionUntil: {
@@ -717,8 +722,10 @@ export class DataRetentionService {
       }),
     ]);
 
-    // @ts-expect-error - dataRetentionDays may be in settings JSON
-    const retentionDays = tenant.dataRetentionDays ?? this.DEFAULT_RETENTION.customerDataDays;
+    const tenantSettings = (tenant.settings ?? {}) as Record<string, unknown>;
+    const retentionDays =
+      (tenantSettings.dataRetentionDays as number | undefined) ??
+      this.DEFAULT_RETENTION.customerDataDays;
     return {
       tenantId,
       tenantName: tenant.name,
@@ -738,7 +745,7 @@ export class DataRetentionService {
     const maxDays = 3650; // 10 years
 
     if (days < minDays || days > maxDays) {
-      throw new Error(`Retention days must be between ${minDays} and ${maxDays}`);
+      throw new BadRequestException(`Retention days must be between ${minDays} and ${maxDays}`);
     }
 
     // Store dataRetentionDays in tenant settings JSON field

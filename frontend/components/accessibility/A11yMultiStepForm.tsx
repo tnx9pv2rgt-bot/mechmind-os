@@ -163,7 +163,7 @@ export function A11yMultiStepForm({
             </h1>
           )}
           {description && (
-            <p id="form-description" className="text-muted-foreground">
+            <p id="form-description" className="text-[var(--text-tertiary)]">
               {description}
             </p>
           )}
@@ -195,14 +195,14 @@ export function A11yMultiStepForm({
                   disabled={!isClickable}
                   className={`
                     flex items-center gap-2 px-3 py-2 rounded-md
-                    transition-colors focus:outline-none focus:ring-2 focus:ring-ring
+                    transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--border-default)]
                     ${isCurrent 
-                      ? 'bg-primary text-primary-foreground' 
+                      ? 'bg-[var(--brand)] text-[var(--text-on-brand)]' 
                       : isCompleted
-                        ? 'bg-primary/20 text-primary'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-[var(--brand)]/20 text-primary'
+                        : 'bg-muted text-[var(--text-tertiary)]'
                     }
-                    ${!isClickable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-accent'}
+                    ${!isClickable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-[var(--brand)]'}
                   `}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
@@ -210,8 +210,8 @@ export function A11yMultiStepForm({
                     className={`
                       flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium
                       ${isCurrent || isCompleted
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-muted-foreground/20 text-muted-foreground'
+                        ? 'bg-[var(--brand)]-foreground text-primary'
+                        : 'bg-muted-foreground/20 text-[var(--text-tertiary)]'
                       }
                     `}
                     aria-hidden="true"
@@ -228,7 +228,7 @@ export function A11yMultiStepForm({
                 </button>
 
                 {index < steps.length - 1 && (
-                  <ChevronRight className="w-5 h-5 mx-2 text-muted-foreground" aria-hidden="true" />
+                  <ChevronRight className="w-5 h-5 mx-2 text-[var(--text-tertiary)]" aria-hidden="true" />
                 )}
               </li>
             );
@@ -245,7 +245,7 @@ export function A11yMultiStepForm({
           aria-label={t('form:step.title', { current: currentStep, total: steps.length })}
         >
           <div
-            className="h-full bg-primary transition-all duration-300"
+            className="h-full bg-[var(--brand)] transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -255,14 +255,14 @@ export function A11yMultiStepForm({
       <div
         id={`step-${currentStep}-content`}
         tabIndex={-1}
-        className="bg-card border rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-ring"
+        className="bg-card border rounded-lg p-6 focus:outline-none focus:ring-2 focus:ring-[var(--border-default)]"
         aria-labelledby={`step-${currentStep}-title`}
       >
         <h2 id={`step-${currentStep}-title`} className="text-xl font-semibold mb-2">
           {currentStepData.title}
         </h2>
         {currentStepData.description && (
-          <p className="text-muted-foreground mb-6">
+          <p className="text-[var(--text-tertiary)] mb-6">
             {currentStepData.description}
           </p>
         )}
@@ -279,9 +279,9 @@ export function A11yMultiStepForm({
           disabled={isFirstStep}
           className={`
             flex items-center gap-2 px-4 py-2 rounded-md
-            border border-input bg-background
-            hover:bg-accent hover:text-accent-foreground
-            focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+            border border-input bg-[var(--surface-primary)]
+            hover:bg-[var(--brand)] hover:text-accent-foreground
+            focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
         >
@@ -295,9 +295,9 @@ export function A11yMultiStepForm({
               onClick={onCancel}
               className="
                 px-4 py-2 rounded-md
-                border border-input bg-background
-                hover:bg-accent hover:text-accent-foreground
-                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                border border-input bg-[var(--surface-primary)]
+                hover:bg-[var(--brand)] hover:text-accent-foreground
+                focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
               "
             >
               {t('common:actions.cancel')}
@@ -310,9 +310,9 @@ export function A11yMultiStepForm({
               disabled={isSubmitting}
               className="
                 flex items-center gap-2 px-4 py-2 rounded-md
-                bg-primary text-primary-foreground
-                hover:bg-primary/90
-                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                bg-[var(--brand)] text-[var(--text-on-brand)]
+                hover:bg-[var(--brand)]/90
+                focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
@@ -330,9 +330,9 @@ export function A11yMultiStepForm({
               onClick={handleNext}
               className="
                 flex items-center gap-2 px-4 py-2 rounded-md
-                bg-primary text-primary-foreground
-                hover:bg-primary/90
-                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                bg-[var(--brand)] text-[var(--text-on-brand)]
+                hover:bg-[var(--brand)]/90
+                focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
               "
             >
               {t('common:actions.next')}

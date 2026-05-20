@@ -23,9 +23,27 @@ import {
   ComponentWearPrediction,
 } from '../interfaces/vehicle-twin.interface';
 
+/** Prisma delegate accessor for dynamically-registered models whose fields differ from generated types */
+type PrismaDelegate = {
+  findMany: (args: Record<string, unknown>) => Promise<Record<string, unknown>[]>;
+  findUnique: (args: Record<string, unknown>) => Promise<Record<string, unknown> | null>;
+  create: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  createMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
+  upsert: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+};
+
 @Injectable()
 export class VehicleTwinService {
   private readonly logger = new Logger(VehicleTwinService.name);
+
+  /**
+   * Access Prisma model delegates whose runtime fields differ from generated schema types.
+   * Centralizes the single unsafe cast so all call-sites remain type-safe.
+   */
+  private delegate(name: string): PrismaDelegate {
+    // eslint-disable-next-line security/detect-object-injection
+    return (this.prisma as unknown as Record<string, PrismaDelegate>)[name];
+  }
 
   // Component lifespan estimates (in km) by category
   private readonly LIFESPAN_ESTIMATES: Record<string, { min: number; max: number }> = {
@@ -50,16 +68,16 @@ export class VehicleTwinService {
   /**
    * Initialize or get vehicle twin
    */
-  async getOrCreateTwin(vehicleId: string): Promise<VehicleTwinState> {
+  async getOrCreateTwin(tenantId: string, vehicleId: string): Promise<VehicleTwinState> {
     // Check cache first
     const cached = await this.redis.get(`twin:${vehicleId}`);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    // Get vehicle data
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    // Get vehicle data filtered by tenant
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         customer: true,
         obdDevices: {
@@ -80,6 +98,7 @@ export class VehicleTwinService {
     });
 
     if (!vehicle) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Vehicle not found');
     }
 
@@ -96,6 +115,7 @@ export class VehicleTwinService {
    * Update component status
    */
   async updateComponentStatus(
+    tenantId: string,
     vehicleId: string,
     componentId: string,
     update: {
@@ -105,8 +125,7 @@ export class VehicleTwinService {
     },
   ): Promise<VehicleComponent> {
     // Update in database
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).vehicleTwinComponent.upsert({
+    await this.delegate('vehicleTwinComponent').upsert({
       where: { id: componentId },
       create: {
         vehicleId,
@@ -132,11 +151,11 @@ export class VehicleTwinService {
    * Record component history event
    */
   async recordComponentHistory(
+    tenantId: string,
     vehicleId: string,
     history: Omit<ComponentHistory, 'id'>,
   ): Promise<ComponentHistory> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const record = await (this.prisma as any).componentHistory.create({
+    const record = await this.delegate('componentHistory').create({
       data: {
         vehicleId,
         componentId: history.componentId,
@@ -154,7 +173,7 @@ export class VehicleTwinService {
 
     // Update component status based on event type
     const status = this.mapEventTypeToStatus(history.eventType);
-    await this.updateComponentStatus(vehicleId, history.componentId, {
+    await this.updateComponentStatus(tenantId, vehicleId, history.componentId, {
       status,
       metadata: {
         lastServiceDate: history.date,
@@ -165,7 +184,7 @@ export class VehicleTwinService {
     await this.redis.del(`twin:${vehicleId}`);
 
     return {
-      id: record.id,
+      id: record.id as string,
       ...history,
     };
   }
@@ -173,9 +192,12 @@ export class VehicleTwinService {
   /**
    * Record damage
    */
-  async recordDamage(vehicleId: string, damage: Omit<DamageRecord, 'id'>): Promise<DamageRecord> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const record = await (this.prisma as any).vehicleDamage.create({
+  async recordDamage(
+    tenantId: string,
+    vehicleId: string,
+    damage: Omit<DamageRecord, 'id'>,
+  ): Promise<DamageRecord> {
+    const record = await this.delegate('vehicleDamage').create({
       data: {
         vehicleId,
         componentId: damage.componentId,
@@ -195,7 +217,7 @@ export class VehicleTwinService {
     const healthImpact = this.calculateDamageHealthImpact(damage.type, damage.severity);
     const component = await this.getComponent(vehicleId, damage.componentId);
 
-    await this.updateComponentStatus(vehicleId, damage.componentId, {
+    await this.updateComponentStatus(tenantId, vehicleId, damage.componentId, {
       status: damage.severity === 'SEVERE' ? 'CRITICAL' : 'WARNING',
       healthScore: Math.max(0, component.healthScore - healthImpact),
     });
@@ -204,7 +226,7 @@ export class VehicleTwinService {
     await this.redis.del(`twin:${vehicleId}`);
 
     return {
-      id: record.id,
+      id: record.id as string,
       ...damage,
     };
   }
@@ -212,9 +234,9 @@ export class VehicleTwinService {
   /**
    * Get predictive alerts for vehicle
    */
-  async getPredictiveAlerts(vehicleId: string): Promise<PredictiveAlert[]> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+  async getPredictiveAlerts(tenantId: string, vehicleId: string): Promise<PredictiveAlert[]> {
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         workOrders: {
           include: { services: true },
@@ -240,11 +262,12 @@ export class VehicleTwinService {
    * Get component wear prediction
    */
   async getWearPrediction(
+    tenantId: string,
     vehicleId: string,
     componentId: string,
   ): Promise<ComponentWearPrediction> {
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: {
         workOrders: {
           where: {
@@ -276,14 +299,17 @@ export class VehicleTwinService {
   /**
    * Get or create 3D visualization config
    */
-  async getVisualizationConfig(vehicleId: string): Promise<TwinVisualizationConfig> {
+  async getVisualizationConfig(
+    tenantId: string,
+    vehicleId: string,
+  ): Promise<TwinVisualizationConfig> {
     const cached = await this.redis.get(`twin:config:${vehicleId}`);
     if (cached) {
       return JSON.parse(cached);
     }
 
-    const vehicle = await this.prisma.vehicle.findUnique({
-      where: { id: vehicleId },
+    const vehicle = await this.prisma.vehicle.findFirst({
+      where: { id: vehicleId, customer: { tenantId } },
       include: { twinConfig: true },
     });
 
@@ -292,8 +318,8 @@ export class VehicleTwinService {
     }
 
     // Default config based on make/model
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const config: TwinVisualizationConfig = (vehicle as Record<string, any>).twinConfig || {
+    const config: TwinVisualizationConfig = ((vehicle as Record<string, unknown>)
+      .twinConfig as TwinVisualizationConfig) || {
       vehicleId,
       modelFormat: 'GLB',
       modelUrl: `/models/vehicles/${vehicle.make.toLowerCase()}_${vehicle.model.toLowerCase()}.glb`,
@@ -311,11 +337,11 @@ export class VehicleTwinService {
    * Update visualization config
    */
   async updateVisualizationConfig(
+    tenantId: string,
     vehicleId: string,
     config: Partial<TwinVisualizationConfig>,
   ): Promise<TwinVisualizationConfig> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).vehicleTwinConfig.upsert({
+    await this.delegate('vehicleTwinConfig').upsert({
       where: { vehicleId },
       create: {
         vehicleId,
@@ -339,19 +365,19 @@ export class VehicleTwinService {
     // Invalidate cache
     await this.redis.del(`twin:config:${vehicleId}`);
 
-    return this.getVisualizationConfig(vehicleId);
+    return this.getVisualizationConfig(tenantId, vehicleId);
   }
 
   /**
    * Get health trend over time
    */
   async getHealthTrend(
+    tenantId: string,
     vehicleId: string,
     from: Date,
     to: Date,
   ): Promise<{ date: Date; overallHealth: number; componentHealth: Record<string, number> }[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const history = await (this.prisma as any).vehicleHealthHistory.findMany({
+    const history = await this.delegate('vehicleHealthHistory').findMany({
       where: {
         vehicleId,
         recordedAt: { gte: from, lte: to },
@@ -379,18 +405,17 @@ export class VehicleTwinService {
     const components = await this.getOrInitializeComponents(vehicle);
 
     // Get component history
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const history = await (this.prisma as any).componentHistory.findMany({
+    const history = await this.delegate('componentHistory').findMany({
       where: { vehicleId: vehicle.id },
       orderBy: { date: 'desc' },
       take: 20,
     });
 
     // Get damage records
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const damageRecords = await (this.prisma as any).vehicleDamage.findMany({
+    const damageRecords = await this.delegate('vehicleDamage').findMany({
       where: { vehicleId: vehicle.id },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
 
     // Calculate overall health
@@ -435,7 +460,7 @@ export class VehicleTwinService {
           componentId: h.componentId,
           eventType: h.eventType as ComponentHistory['eventType'],
           date: h.date,
-          description: h.description,
+          description: h.description ?? '',
           technicianId: h.technicianId || undefined,
           cost: h.cost || undefined,
           partsUsed: h.partsUsed as string[],
@@ -479,8 +504,7 @@ export class VehicleTwinService {
   private async getOrInitializeComponents(
     vehicle: Record<string, unknown>,
   ): Promise<VehicleComponent[]> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const existing = await (this.prisma as any).vehicleTwinComponent.findMany({
+    const existing = await this.delegate('vehicleTwinComponent').findMany({
       where: { vehicleId: vehicle.id },
     });
 
@@ -519,8 +543,7 @@ export class VehicleTwinService {
     // Initialize default components
     const defaultComponents = this.getDefaultComponents(vehicle);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (this.prisma as any).vehicleTwinComponent.createMany({
+    await this.delegate('vehicleTwinComponent').createMany({
       data: defaultComponents.map(c => ({
         vehicleId: vehicle.id,
         componentId: c.id,
@@ -636,8 +659,7 @@ export class VehicleTwinService {
   }
 
   private async getComponent(vehicleId: string, componentId: string): Promise<VehicleComponent> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const component = await (this.prisma as any).vehicleTwinComponent.findUnique({
+    const component = await this.delegate('vehicleTwinComponent').findUnique({
       where: {
         vehicleId_componentId: {
           vehicleId,
@@ -651,16 +673,20 @@ export class VehicleTwinService {
     }
 
     return {
-      id: component.componentId,
-      name: component.name,
+      id: component.componentId as string,
+      name: component.name as string,
       category: component.category as VehicleComponent['category'],
       status: component.status as VehicleComponent['status'],
-      healthScore: component.healthScore,
-      lastServiceDate: component.lastServiceDate || undefined,
-      nextServiceDue: component.nextServiceDue || undefined,
-      estimatedLifespan: component.estimatedLifespan || undefined,
-      position: { x: component.positionX, y: component.positionY, z: component.positionZ },
-      modelPartId: component.modelPartId || undefined,
+      healthScore: component.healthScore as number,
+      lastServiceDate: (component.lastServiceDate as Date) || undefined,
+      nextServiceDue: (component.nextServiceDue as Date) || undefined,
+      estimatedLifespan: (component.estimatedLifespan as number) || undefined,
+      position: {
+        x: component.positionX as number,
+        y: component.positionY as number,
+        z: component.positionZ as number,
+      },
+      modelPartId: (component.modelPartId as string) || undefined,
       metadata: component.metadata as Record<string, unknown>,
     };
   }
@@ -709,15 +735,13 @@ export class VehicleTwinService {
     }
 
     // Analyze wear patterns from service history
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const components = await (this.prisma as any).vehicleTwinComponent.findMany({
+    const components = await this.delegate('vehicleTwinComponent').findMany({
       where: { vehicleId: vehicle.id },
     });
 
     // Batch fetch all component histories in a single query
-    const componentIds = components.map((c: { componentId: string }) => c.componentId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allHistories = await (this.prisma as any).componentHistory.findMany({
+    const componentIds = components.map((c: Record<string, unknown>) => c.componentId as string);
+    const allHistories = await this.delegate('componentHistory').findMany({
       where: {
         vehicleId: vehicle.id,
         componentId: { in: componentIds },
@@ -736,7 +760,7 @@ export class VehicleTwinService {
     }
 
     for (const component of components) {
-      const serviceHistory = historiesByComponent.get(component.componentId) || [];
+      const serviceHistory = historiesByComponent.get(component.componentId as string) || [];
 
       const prediction = this.predictComponentFailure(
         component,
@@ -747,8 +771,8 @@ export class VehicleTwinService {
       if (prediction.shouldAlert) {
         alerts.push({
           id: `pred:${component.componentId}:${Date.now()}`,
-          componentId: component.componentId,
-          componentName: component.name,
+          componentId: component.componentId as string,
+          componentName: component.name as string,
           severity: prediction.severity,
           predictedFailureDate: prediction.failureDate,
           confidence: prediction.confidence,
@@ -790,6 +814,7 @@ export class VehicleTwinService {
 
     const componentCategory = component.category as string;
     const componentName = component.name as string;
+    // eslint-disable-next-line security/detect-object-injection
     const lifespan = this.LIFESPAN_ESTIMATES[componentCategory];
     if (lifespan) {
       const serviceMileage = lastService?.odometer || 0;
@@ -899,6 +924,7 @@ export class VehicleTwinService {
       C1: 'suspension_front',
       U0: 'engine',
     };
+    // eslint-disable-next-line security/detect-object-injection
     return mappings[prefix] || 'engine';
   }
 
@@ -910,6 +936,7 @@ export class VehicleTwinService {
       DAMAGE: 'CRITICAL',
       MAINTENANCE: 'HEALTHY',
     };
+    // eslint-disable-next-line security/detect-object-injection
     return mappings[eventType] || 'HEALTHY';
   }
 
@@ -940,6 +967,7 @@ export class VehicleTwinService {
       P07: 800, // Transmission
       P08: 1000, // Transmission
     };
+    // eslint-disable-next-line security/detect-object-injection
     return baseCosts[prefix] || 200;
   }
 
@@ -955,6 +983,7 @@ export class VehicleTwinService {
       FUEL: 500,
       EXHAUST: 800,
     };
+    // eslint-disable-next-line security/detect-object-injection
     return costs[category] || 500;
   }
 

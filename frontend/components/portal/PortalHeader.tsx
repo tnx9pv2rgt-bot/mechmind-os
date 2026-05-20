@@ -56,19 +56,19 @@ export function PortalHeader({
     : 'Utente'
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-apple border-b border-apple-border/50">
+    <header className="sticky top-0 z-40 bg-[var(--surface-secondary)] backdrop-blur-apple border-b border-[var(--border-default)]/50">
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         {/* Left: Menu Button (Mobile) */}
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 -ml-2 rounded-xl hover:bg-apple-light-gray transition-colors"
+            className="lg:hidden p-2 -ml-2 rounded-xl hover:bg-[var(--surface-secondary)] transition-colors"
           >
-            <Menu className="h-5 w-5 text-apple-dark" />
+            <Menu className="h-5 w-5 text-[var(--text-primary)]" />
           </button>
 
           <Link href="/portal/dashboard" className="hidden sm:block">
-            <span className="font-semibold text-apple-dark">Customer Portal</span>
+            <span className="font-semibold text-[var(--text-primary)]">Customer Portal</span>
           </Link>
         </div>
 
@@ -81,11 +81,11 @@ export function PortalHeader({
                 setShowNotifications(!showNotifications)
                 setShowProfileMenu(false)
               }}
-              className="relative p-2 rounded-xl hover:bg-apple-light-gray transition-colors"
+              className="relative p-2 rounded-xl hover:bg-[var(--surface-secondary)] transition-colors"
             >
-              <Bell className="h-5 w-5 text-apple-dark" />
+              <Bell className="h-5 w-5 text-[var(--text-primary)]" />
               {notificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-apple-red rounded-full" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[var(--status-error)] rounded-full" />
               )}
             </button>
 
@@ -97,18 +97,18 @@ export function PortalHeader({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-apple-lg border border-apple-border/30 overflow-hidden"
+                  className="absolute right-0 mt-2 w-80 bg-[var(--surface-secondary)] rounded-2xl shadow-apple-lg border border-[var(--border-default)]/30 overflow-hidden"
                 >
-                  <div className="flex items-center justify-between p-4 border-b border-apple-border/30">
-                    <h3 className="font-semibold text-apple-dark">Notifiche</h3>
+                  <div className="flex items-center justify-between p-4 border-b border-[var(--border-default)]/30">
+                    <h3 className="font-semibold text-[var(--text-primary)]">Notifiche</h3>
                     <button
                       onClick={() => setShowNotifications(false)}
-                      className="p-1 rounded-lg hover:bg-apple-light-gray transition-colors"
+                      className="p-1 rounded-lg hover:bg-[var(--surface-secondary)] transition-colors"
                     >
-                      <X className="h-4 w-4 text-apple-gray" />
+                      <X className="h-4 w-4 text-[var(--text-tertiary)]" />
                     </button>
                   </div>
-                  <div className="p-4 text-center text-apple-gray">
+                  <div className="p-4 text-center text-[var(--text-tertiary)]">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">Nessuna notifica</p>
                   </div>
@@ -124,15 +124,15 @@ export function PortalHeader({
                 setShowProfileMenu(!showProfileMenu)
                 setShowNotifications(false)
               }}
-              className="flex items-center gap-2 sm:gap-3 p-2 pr-3 sm:pr-4 rounded-2xl hover:bg-apple-light-gray transition-colors"
+              className="flex items-center gap-2 sm:gap-3 p-2 pr-3 sm:pr-4 rounded-2xl hover:bg-[var(--surface-secondary)] transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center text-white text-xs font-medium">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center text-[var(--text-on-brand)] text-xs font-medium">
                 {customerInitials}
               </div>
-              <span className="hidden sm:block text-sm font-medium text-apple-dark">
+              <span className="hidden sm:block text-sm font-medium text-[var(--text-primary)]">
                 {customerFullName}
               </span>
-              <ChevronDown className="h-4 w-4 text-apple-gray hidden sm:block" />
+              <ChevronDown className="h-4 w-4 text-[var(--text-tertiary)] hidden sm:block" />
             </button>
 
             {/* Profile Menu Dropdown */}
@@ -143,18 +143,18 @@ export function PortalHeader({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-apple-lg border border-apple-border/30 overflow-hidden"
+                  className="absolute right-0 mt-2 w-64 bg-[var(--surface-secondary)] rounded-2xl shadow-apple-lg border border-[var(--border-default)]/30 overflow-hidden"
                 >
-                  <div className="p-4 border-b border-apple-border/30">
-                    <p className="font-semibold text-apple-dark">{customerFullName}</p>
-                    <p className="text-sm text-apple-gray truncate">{customer?.email}</p>
+                  <div className="p-4 border-b border-[var(--border-default)]/30">
+                    <p className="font-semibold text-[var(--text-primary)]">{customerFullName}</p>
+                    <p className="text-sm text-[var(--text-tertiary)] truncate">{customer?.email}</p>
                   </div>
 
                   <div className="p-2">
                     <Link
                       href="/portal/settings"
                       onClick={() => setShowProfileMenu(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-apple-dark hover:bg-apple-light-gray transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors"
                     >
                       <User className="h-4 w-4" />
                       <span>Profilo</span>
@@ -162,17 +162,17 @@ export function PortalHeader({
                     <Link
                       href="/portal/settings"
                       onClick={() => setShowProfileMenu(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-apple-dark hover:bg-apple-light-gray transition-colors"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors"
                     >
                       <Settings className="h-4 w-4" />
                       <span>Impostazioni</span>
                     </Link>
                   </div>
 
-                  <div className="p-2 border-t border-apple-border/30">
+                  <div className="p-2 border-t border-[var(--border-default)]/30">
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-apple-red hover:bg-red-50 transition-colors"
+                      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Esci</span>

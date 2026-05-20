@@ -40,6 +40,7 @@ class QuickBooksProvider implements AccountingProviderInterface {
     );
   }
 
+  // eslint-disable-next-line sonarjs/no-identical-functions
   async syncCustomer(
     _tenantId: string,
     _customerId: string,
@@ -62,6 +63,7 @@ class XeroProvider implements AccountingProviderInterface {
     );
   }
 
+  // eslint-disable-next-line sonarjs/no-identical-functions
   async syncCustomer(
     _tenantId: string,
     _customerId: string,
@@ -84,6 +86,7 @@ class FattureInCloudProvider implements AccountingProviderInterface {
     );
   }
 
+  // eslint-disable-next-line sonarjs/no-identical-functions
   async syncCustomer(
     _tenantId: string,
     _customerId: string,
@@ -270,6 +273,7 @@ export class AccountingService {
     entityType: string,
     entityId: string,
   ): Promise<AccountingSync[]> {
+    // Internal: bounded query — sync records scoped to single entity
     return this.prisma.accountingSync.findMany({
       where: {
         tenantId,

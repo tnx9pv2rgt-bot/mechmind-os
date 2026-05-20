@@ -62,25 +62,25 @@ const statusConfig = {
     label: "In Servizio",
     color: "#3b82f6",
     icon: Car,
-    bg: "bg-status-info",
+    bg: "bg-[var(--status-info)]",
   },
   waiting: {
     label: "In Attesa",
     color: "#f97316",
     icon: Hourglass,
-    bg: "bg-status-warning",
+    bg: "bg-[var(--status-warning)]",
   },
   ready: {
     label: "Pronti",
     color: "#22c55e",
     icon: CheckCircle2,
-    bg: "bg-status-ready",
+    bg: "bg-[var(--status-success)]",
   },
   completed: {
     label: "Completati",
     color: "#6b7280",
     icon: CheckCircle2,
-    bg: "bg-gray-500",
+    bg: "bg-[var(--surface-secondary)]0",
   },
 };
 
@@ -97,8 +97,8 @@ function CustomTooltip({
     const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0);
 
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-        <p className="mb-2 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] p-3 shadow-lg dark:border-[var(--border-default)] dark:bg-[var(--surface-primary)]">
+        <p className="mb-2 text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]">
           {label}
         </p>
         <div className="space-y-1">
@@ -115,24 +115,24 @@ function CustomTooltip({
                     className="h-2 w-2 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                     {config.label}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                     {entry.value}
                   </span>
-                  <span className="text-xs text-gray-400">({percentage}%)</span>
+                  <span className="text-xs text-[var(--text-tertiary)]">({percentage}%)</span>
                 </div>
               </div>
             );
           })}
         </div>
-        <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-700">
+        <div className="mt-2 border-t border-[var(--border-default)] pt-2 dark:border-[var(--border-default)]">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Totale</span>
-            <span className="font-bold text-gray-900 dark:text-white">{total}</span>
+            <span className="text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">Totale</span>
+            <span className="font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]">{total}</span>
           </div>
         </div>
       </div>
@@ -176,16 +176,16 @@ export function CarCountChart({ dateRange }: CarCountChartProps) {
       {/* Header */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
             Flusso Veicoli
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
             Breakdown per stato giornaliero
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-2 dark:bg-orange-900/20">
-          <Clock className="h-4 w-4 text-status-warning" />
-          <span className="text-sm text-status-warning">
+        <div className="flex items-center gap-2 rounded-lg bg-[var(--status-warning)]/5 px-3 py-2 dark:bg-[var(--status-warning)]/40/20">
+          <Clock className="h-4 w-4 text-[var(--status-warning)]" />
+          <span className="text-sm text-[var(--status-warning)]">
             <strong>Picco:</strong> {peakHour.day} ({peakHour.total} veicoli)
           </span>
         </div>
@@ -199,16 +199,16 @@ export function CarCountChart({ dateRange }: CarCountChartProps) {
           return (
             <div
               key={key}
-              className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50"
+              className="flex items-center gap-3 rounded-lg bg-[var(--surface-secondary)] p-3 dark:bg-[var(--surface-primary)]/50"
             >
               <div className={cn("rounded-lg p-2", config.bg)}>
-                <Icon className="h-4 w-4 text-white" />
+                <Icon className="h-4 w-4 text-[var(--text-on-brand)]" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                   {config.label}
                 </p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]">
                   {value}
                 </p>
               </div>
@@ -219,7 +219,7 @@ export function CarCountChart({ dateRange }: CarCountChartProps) {
 
       {/* Peak Alert */}
       {peakHour.total > 20 && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-[var(--status-warning)]/10 p-3 text-sm text-[var(--status-warning)] dark:bg-[var(--status-warning)]/20 dark:text-[var(--status-warning)]">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>
             Picco di attività rilevato {dateRange === "today" ? "alle" : "il"}{" "}
@@ -263,7 +263,7 @@ export function CarCountChart({ dateRange }: CarCountChartProps) {
             <Legend
               wrapperStyle={{ paddingTop: "1rem" }}
               formatter={(value) => (
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-secondary)]">
                   {value}
                 </span>
               )}
@@ -312,12 +312,12 @@ export function CarCountChart({ dateRange }: CarCountChartProps) {
       </div>
 
       {/* Insight */}
-      <div className="mt-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+      <div className="mt-4 rounded-lg bg-[var(--status-info-subtle)] p-3 text-sm text-[var(--status-info)] dark:bg-[var(--status-info-subtle)] dark:text-[var(--status-info)]">
         <div className="flex items-start gap-2">
           <Car className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <div>
             <p className="font-medium">Analisi Flusso</p>
-            <p className="mt-1 text-blue-700 dark:text-blue-300">
+            <p className="mt-1 text-[var(--status-info)] dark:text-[var(--status-info)]">
               Media di {avgDaily} veicoli/giorno. I weekend mostrano un calo del{" "}
               {Math.round((1 - (data.filter((d) => d.day === "Sab" || d.day === "Dom")
                 .reduce((acc, d) => acc + d.inService + d.waiting + d.ready, 0) /

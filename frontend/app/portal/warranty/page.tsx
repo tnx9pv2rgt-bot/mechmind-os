@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
 import { Shield, Plus } from 'lucide-react';
 import { AppleButton } from '@/components/ui/apple-button';
 import { PortalPageWrapper } from '@/components/portal';
@@ -14,33 +16,21 @@ import { WarrantyInfo, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalWarrantyPage() {
-  const [warranties, setWarranties] = useState<WarrantyInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/warranty');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+    mutate,
+  } = useSWR<{ data: WarrantyInfo[] }>('/api/portal/warranty', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load warranties (${response.status})`);
-        }
-
-        const result = await response.json();
-        const data = (result.data || []) as WarrantyInfo[];
-        setWarranties(data);
-      } catch (err) {
-        console.error('Warranty load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento delle garanzie');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  const warranties = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento delle garanzie'
+    : null;
 
   const router = useRouter();
 
@@ -59,7 +49,7 @@ export default function PortalWarrantyPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -70,10 +60,10 @@ export default function PortalWarrantyPage() {
     return (
       <PortalPageWrapper title='Garanzia' customer={customer || undefined}>
         <div className='text-center py-16'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className='text-apple-blue hover:underline'
+            onClick={() => mutate()}
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -97,17 +87,17 @@ export default function PortalWarrantyPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className='mb-6 p-5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/50'
+        className='mb-6 p-5 bg-gradient-to-r from-[var(--status-info)]/5 to-[var(--brand)]/5 dark:from-[var(--status-info)]/40/20 dark:to-[var(--brand)]/40/20 rounded-2xl border border-[var(--status-info)]/10 dark:border-[var(--status-info)]/50'
       >
         <div className='flex items-start gap-4'>
-          <div className='w-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f] flex items-center justify-center shadow-sm'>
-            <Shield className='h-6 w-6 text-apple-blue' />
+          <div className='w-12 h-12 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] flex items-center justify-center shadow-sm'>
+            <Shield className='h-6 w-6 text-[var(--brand)]' />
           </div>
           <div className='flex-1'>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-1'>
+            <h3 className='font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1'>
               Copertura Garanzia
             </h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <p className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
               Le garanzie coprono i difetti di fabbricazione e i guasti meccanici. Per i reclami,
               contattaci con il numero di polizza.
             </p>

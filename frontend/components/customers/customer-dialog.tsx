@@ -65,7 +65,7 @@ export function CustomerDialog({ onSuccess, trigger, className }: CustomerDialog
       <DialogContent
         className={cn(
           'max-w-2xl max-h-[90vh] overflow-y-auto p-0',
-          'border-0 bg-white/80 dark:bg-gray-900/90',
+          'border-0 bg-[var(--surface-elevated)]',
           'backdrop-blur-2xl shadow-apple-xl',
           'rounded-[28px]'
         )}
@@ -121,7 +121,7 @@ export function CustomerDialogInline({
       <DialogContent
         className={cn(
           'max-w-2xl max-h-[90vh] overflow-y-auto p-0',
-          'border-0 bg-white/80 dark:bg-gray-900/90',
+          'border-0 bg-[var(--surface-elevated)]',
           'backdrop-blur-2xl shadow-apple-xl',
           'rounded-[28px]'
         )}
@@ -151,27 +151,27 @@ export function CustomerSuccessToast({
       <div
         className={cn(
           'flex items-center gap-4 rounded-2xl p-4 pr-6',
-          'bg-white/90 dark:bg-gray-900/90',
+          'bg-[var(--surface-elevated)]',
           'backdrop-blur-xl shadow-apple-xl',
-          'border border-green-200 dark:border-green-800'
+          'border border-[var(--status-success)]/20'
         )}
       >
-        <div className='flex h-10 w-10 items-center justify-center rounded-full bg-green-500 text-white'>
+        <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[var(--status-success)] text-[var(--text-on-brand)]'>
           <svg className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
           </svg>
         </div>
         <div>
-          <p className='font-semibold text-gray-900 dark:text-white'>Cliente creato!</p>
-          <p className='text-sm text-gray-500 dark:text-gray-400'>
+          <p className='font-semibold text-[var(--text-primary)]'>Cliente creato!</p>
+          <p className='text-sm text-[var(--text-secondary)]'>
             {String(customer.nome ?? '')} {String(customer.cognome ?? '')} è stato aggiunto
           </p>
         </div>
         <button
           onClick={onClose}
-          className='ml-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800'
+          className='ml-2 rounded-full p-1 hover:bg-[var(--surface-hover)]'
         >
-          <X className='h-4 w-4 text-gray-400' />
+          <X className='h-4 w-4 text-[var(--text-tertiary)]' />
         </button>
       </div>
     </div>

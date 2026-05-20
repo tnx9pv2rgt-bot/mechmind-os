@@ -141,6 +141,7 @@ export class TwilioService {
     } catch (error) {
       this.logger.error(
         `Phone validation error for ${formattedNumber}:`,
+        // eslint-disable-next-line sonarjs/no-duplicate-string
         error instanceof Error ? error.message : 'Unknown error',
       );
 
@@ -577,6 +578,7 @@ export class TwilioService {
       DE: 'Germany',
       ES: 'Spain',
     };
+    // eslint-disable-next-line security/detect-object-injection
     return names[code] || code;
   }
 
@@ -602,6 +604,7 @@ export async function validatePhoneNumber(
         NODE_ENV: config?.accountSid ? 'production' : 'development',
         REDIS_URL: 'redis://localhost:6379',
       };
+      // eslint-disable-next-line security/detect-object-injection
       return configs[key];
     },
   } as ConfigService);

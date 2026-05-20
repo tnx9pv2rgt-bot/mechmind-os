@@ -13,7 +13,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
     replace: jest.fn(),
     back: jest.fn(),
     prefetch: jest.fn(),
@@ -60,6 +60,8 @@ jest.mock('next/link', () => {
   }
 })
 
+const mockPush = jest.fn()
+
 const mockFetch = jest.fn()
 global.fetch = mockFetch
 
@@ -82,16 +84,14 @@ describe('ForgotPasswordPage', () => {
 
     it('should render email input', () => {
       render(<ForgotPasswordPage />)
-      expect(screen.getByPlaceholderText('nome@officina.it')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Email aziendale')).toBeInTheDocument()
     })
 
-    it('should render back to login link', () => {
+    it('should render password recovery form', () => {
       render(<ForgotPasswordPage />)
-      expect(screen.getByText('Torna al login')).toBeInTheDocument()
-      expect(screen.getByText('Torna al login').closest('a')).toHaveAttribute(
-        'href',
-        '/auth'
-      )
+      expect(screen.getByText(/Ricordi la password/i)).toBeInTheDocument()
+      const accediLink = screen.getByText('Accedi')
+      expect(accediLink.closest('a')).toHaveAttribute('href', '/auth')
     })
 
     it('should render the submit button', () => {
@@ -99,9 +99,9 @@ describe('ForgotPasswordPage', () => {
       expect(screen.getByText(/Invia link di reset/i)).toBeInTheDocument()
     })
 
-    it('should render the support link', () => {
+    it('should render login link', () => {
       render(<ForgotPasswordPage />)
-      expect(screen.getByText('Contatta il supporto')).toBeInTheDocument()
+      expect(screen.getByText('Accedi')).toBeInTheDocument()
     })
 
     it('should have submit button disabled when email is empty', () => {
@@ -124,7 +124,7 @@ describe('ForgotPasswordPage', () => {
     it('should show error for invalid email format on submit', async () => {
       const { container } = render(<ForgotPasswordPage />)
 
-      const emailInput = screen.getByPlaceholderText('nome@officina.it')
+      const emailInput = screen.getByPlaceholderText('Email aziendale')
       fireEvent.change(emailInput, { target: { value: 'invalid-email' } })
 
       const form = container.querySelector('form')!
@@ -150,7 +150,7 @@ describe('ForgotPasswordPage', () => {
 
       const { container } = render(<ForgotPasswordPage />)
 
-      const emailInput = screen.getByPlaceholderText('nome@officina.it')
+      const emailInput = screen.getByPlaceholderText('Email aziendale')
       fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
 
       const form = container.querySelector('form')!
@@ -167,9 +167,9 @@ describe('ForgotPasswordPage', () => {
       })
 
       await waitFor(() => {
-        expect(screen.getByText('Email inviata!')).toBeInTheDocument()
+        expect(screen.getByText('Controlla la tua email')).toBeInTheDocument()
         expect(
-          screen.getByText(/Controlla la tua casella di posta/i)
+          screen.getByText(/Se esiste un account con l'email/i)
         ).toBeInTheDocument()
       })
     })
@@ -183,7 +183,7 @@ describe('ForgotPasswordPage', () => {
 
       const { container } = render(<ForgotPasswordPage />)
 
-      const emailInput = screen.getByPlaceholderText('nome@officina.it')
+      const emailInput = screen.getByPlaceholderText('Email aziendale')
       fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
 
       const form = container.querySelector('form')!
@@ -203,7 +203,7 @@ describe('ForgotPasswordPage', () => {
 
       const { container } = render(<ForgotPasswordPage />)
 
-      const emailInput = screen.getByPlaceholderText('nome@officina.it')
+      const emailInput = screen.getByPlaceholderText('Email aziendale')
       fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
 
       const form = container.querySelector('form')!
@@ -226,7 +226,7 @@ describe('ForgotPasswordPage', () => {
 
       const { container } = render(<ForgotPasswordPage />)
 
-      const emailInput = screen.getByPlaceholderText('nome@officina.it')
+      const emailInput = screen.getByPlaceholderText('Email aziendale')
       fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
 
       const form = container.querySelector('form')!
@@ -242,6 +242,18 @@ describe('ForgotPasswordPage', () => {
         )
         expect(loginLink).toBeTruthy()
       })
+    })
+  })
+
+  // =========================================================================
+  // Back navigation (onBack prop — line 90)
+  // =========================================================================
+  describe('back navigation', () => {
+    it('should call router.push("/auth") when back button is clicked', () => {
+      render(<ForgotPasswordPage />)
+      const backButton = screen.getByRole('button', { name: 'Indietro' })
+      fireEvent.click(backButton)
+      expect(mockPush).toHaveBeenCalledWith('/auth')
     })
   })
 })

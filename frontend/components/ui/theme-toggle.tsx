@@ -18,20 +18,20 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={`relative inline-flex h-[24px] w-[44px] shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none ${
-        isDark ? 'bg-[#34c759]' : 'bg-[#e5e5ea]'
+        isDark ? 'bg-[var(--brand)]' : 'bg-[var(--surface-active)]'
       }`}
       title={isDark ? 'Passa a light mode' : 'Passa a dark mode'}
       aria-label="Toggle theme"
     >
       <motion.span
-        className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-white shadow-sm"
+        className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[var(--surface-secondary)] shadow-sm"
         animate={{ x: isDark ? 22 : 2 }}
         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       >
         {isDark ? (
-          <Moon className="h-3 w-3 text-[#1d1d1f]" />
+          <Moon className="h-3 w-3 text-[var(--text-primary)]" />
         ) : (
-          <Sun className="h-3 w-3 text-[#ff9500]" />
+          <Sun className="h-3 w-3 text-[var(--status-warning)]" />
         )}
       </motion.span>
     </button>

@@ -12,7 +12,10 @@ import {
   HttpStatus,
   UseGuards,
   ParseUUIDPipe,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
@@ -50,6 +53,7 @@ import {
  * - Deletion requests
  * - Retention policy management
  */
+@ApiTags('GDPR')
 @Controller('gdpr')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class GdprController {
@@ -73,6 +77,12 @@ export class GdprController {
   @Post('requests')
   @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Crea una nuova richiesta dati soggetto' })
+  @ApiResponse({ status: 201, description: 'Richiesta creata con successo' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
   async createRequest(
     @Body() dto: CreateDataSubjectRequestDto,
     @CurrentUser('tenantId') tenantId: string,
@@ -94,8 +104,12 @@ export class GdprController {
    */
   @Get('requests')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Elenca le richieste dati soggetto' })
+  @ApiResponse({ status: 200, description: 'Lista richieste restituita' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
   async listRequests(
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Query('status') status?: string,
     @Query('type') type?: string,
   ) {
@@ -111,7 +125,11 @@ export class GdprController {
    */
   @Get('requests/pending')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
-  async getPendingRequests(@Query('tenantId') tenantId?: string) {
+  @ApiOperation({ summary: 'Ottieni richieste in attesa (scadute, urgenti, normali)' })
+  @ApiResponse({ status: 200, description: 'Richieste in attesa restituite' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async getPendingRequests(@CurrentUser('tenantId') tenantId: string) {
     return this.requestService.getPendingRequests(tenantId);
   }
 
@@ -122,9 +140,15 @@ export class GdprController {
    */
   @Get('requests/:requestId')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Ottieni una richiesta specifica per ID' })
+  @ApiResponse({ status: 200, description: 'Richiesta restituita' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async getRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.requestService.getRequest(requestId, tenantId);
   }
@@ -137,9 +161,14 @@ export class GdprController {
    */
   @Patch('requests/:requestId/status')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Aggiorna lo stato di una richiesta' })
+  @ApiResponse({ status: 200, description: 'Stato aggiornato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async updateRequestStatus(
     @Param('requestId', ParseUUIDPipe) requestId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body() dto: UpdateRequestStatusDto,
   ) {
     return this.requestService.updateStatus(
@@ -158,9 +187,14 @@ export class GdprController {
    */
   @Post('requests/:requestId/verify')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Verifica identità del richiedente' })
+  @ApiResponse({ status: 201, description: 'Identità verificata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async verifyIdentity(
     @Param('requestId', ParseUUIDPipe) requestId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body() dto: VerifyIdentityDto,
   ) {
     return this.requestService.verifyIdentity(requestId, tenantId, dto);
@@ -174,9 +208,14 @@ export class GdprController {
    */
   @Post('requests/:requestId/assign')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Assegna una richiesta a un utente' })
+  @ApiResponse({ status: 201, description: 'Richiesta assegnata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async assignRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body('userId') userId: string,
   ) {
     return this.requestService.assignRequest(requestId, tenantId, userId);
@@ -190,9 +229,14 @@ export class GdprController {
    */
   @Post('requests/:requestId/reject')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Rifiuta una richiesta' })
+  @ApiResponse({ status: 201, description: 'Richiesta rifiutata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async rejectRequest(
     @Param('requestId', ParseUUIDPipe) requestId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body() body: { reason: string; legalBasis?: string },
   ) {
     return this.requestService.rejectRequest(requestId, tenantId, body.reason, body.legalBasis);
@@ -204,7 +248,12 @@ export class GdprController {
    */
   @Get('requests/stats')
   @Roles(UserRole.ADMIN)
-  async getRequestStats(@Query('tenantId') tenantId?: string) {
+  @ApiOperation({ summary: 'Ottieni statistiche delle richieste' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  @ApiResponse({ status: 200, description: 'Statistiche restituite' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async getRequestStats(@CurrentUser('tenantId') tenantId: string) {
     return this.requestService.getStatistics(tenantId);
   }
 
@@ -221,9 +270,14 @@ export class GdprController {
    */
   @Get('customers/:customerId/export')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Esporta dati cliente (Diritto di accesso - Art. 15)' })
+  @ApiResponse({ status: 200, description: 'Dati esportati' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async exportCustomerData(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Query('format') format: ExportFormat = 'JSON',
     @Query('requestId') requestId?: string,
   ) {
@@ -237,11 +291,36 @@ export class GdprController {
    */
   @Get('customers/:customerId/portability')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Esporta dati portabili (Art. 20)' })
+  @ApiResponse({ status: 200, description: 'Dati portabili esportati' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async exportPortableData(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.exportService.exportPortableData(customerId, tenantId);
+  }
+
+  /**
+   * Full tenant data export as ZIP (EU Data Act Art. 20)
+   * @param tenantId Tenant ID from JWT
+   * @param res Express response (streamed ZIP)
+   */
+  @Get('export-full')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Esporta tutti i dati tenant in ZIP (EU Data Act Art. 20)' })
+  @ApiResponse({ status: 200, description: 'ZIP scaricato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async exportFull(@CurrentUser('tenantId') tenantId: string, @Res() res: Response): Promise<void> {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="nexo-export-${tenantId}-${Date.now()}.zip"`,
+    );
+    await this.exportService.streamFullTenantExport(tenantId, res);
   }
 
   /**
@@ -252,9 +331,14 @@ export class GdprController {
    */
   @Post('customers/:customerId/export')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Genera e accoda job di esportazione' })
+  @ApiResponse({ status: 201, description: 'Job di esportazione creato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async generateExport(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body('format') format: ExportFormat = 'JSON',
   ) {
     return this.exportService.generateExport(customerId, tenantId, format);
@@ -273,9 +357,16 @@ export class GdprController {
   @Post('customers/:customerId/delete')
   @Roles(UserRole.ADMIN)
   @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @ApiOperation({
+    summary: 'Accoda cancellazione dati cliente (Diritto alla cancellazione - Art. 17)',
+  })
+  @ApiResponse({ status: 201, description: 'Cancellazione accodata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async queueDeletion(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body()
     body: {
       requestId: string;
@@ -294,6 +385,11 @@ export class GdprController {
    */
   @Get('deletion-jobs/:jobId')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Ottieni stato del job di cancellazione' })
+  @ApiResponse({ status: 200, description: 'Stato del job restituito' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async getDeletionJobStatus(@Param('jobId') jobId: string) {
     return this.deletionService.getJobStatus(jobId);
   }
@@ -305,6 +401,11 @@ export class GdprController {
    */
   @Post('deletion-jobs/:jobId/cancel')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Annulla un job di cancellazione in attesa' })
+  @ApiResponse({ status: 201, description: 'Cancellazione annullata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async cancelDeletion(@Param('jobId') jobId: string, @Body('reason') reason: string) {
     return this.deletionService.cancelDeletion(jobId, reason);
   }
@@ -314,6 +415,10 @@ export class GdprController {
    */
   @Get('deletion-jobs/stats')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Ottieni statistiche coda di cancellazione' })
+  @ApiResponse({ status: 200, description: 'Statistiche restituite' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
   async getDeletionQueueStats() {
     return this.deletionService.getQueueStats();
   }
@@ -331,9 +436,14 @@ export class GdprController {
    */
   @Post('customers/:customerId/consent')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Registra consenso del cliente' })
+  @ApiResponse({ status: 201, description: 'Consenso registrato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async recordConsent(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Body() dto: CreateConsentDto,
     @Headers('x-forwarded-for') forwardedFor?: string,
     @Headers('user-agent') userAgent?: string,
@@ -364,9 +474,14 @@ export class GdprController {
    */
   @Delete('customers/:customerId/consent/:consentType')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Revoca consenso del cliente' })
+  @ApiResponse({ status: 200, description: 'Consenso revocato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async revokeConsent(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
     @Param('consentType') consentType: string,
     @Body() body: { reason?: string; revokedBy?: string },
   ) {
@@ -386,9 +501,14 @@ export class GdprController {
    */
   @Get('customers/:customerId/consent')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Ottieni stato consenso del cliente' })
+  @ApiResponse({ status: 200, description: 'Stato consenso restituito' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async getConsentStatus(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.consentService.getCustomerConsentStatus(customerId, tenantId);
   }
@@ -400,9 +520,14 @@ export class GdprController {
    */
   @Get('customers/:customerId/consent/history')
   @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Ottieni cronologia audit consenso' })
+  @ApiResponse({ status: 200, description: 'Cronologia restituita' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  @ApiResponse({ status: 404, description: 'Risorsa non trovata' })
   async getConsentHistory(
     @Param('customerId', ParseUUIDPipe) customerId: string,
-    @Query('tenantId') tenantId: string,
+    @CurrentUser('tenantId') tenantId: string,
   ) {
     return this.consentService.getConsentAuditTrail(customerId, tenantId);
   }
@@ -416,6 +541,10 @@ export class GdprController {
    */
   @Get('retention/policy')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Ottieni configurazione policy di retention' })
+  @ApiResponse({ status: 200, description: 'Policy restituita' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
   async getRetentionPolicy() {
     return this.retentionService.getRetentionPolicy();
   }
@@ -426,7 +555,11 @@ export class GdprController {
    */
   @Get('retention/stats')
   @Roles(UserRole.ADMIN)
-  async getRetentionStats(@Query('tenantId') tenantId: string) {
+  @ApiOperation({ summary: 'Ottieni statistiche retention per tenant' })
+  @ApiResponse({ status: 200, description: 'Statistiche restituite' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async getRetentionStats(@CurrentUser('tenantId') tenantId: string) {
     return this.retentionService.getTenantRetentionStats(tenantId);
   }
 
@@ -437,7 +570,14 @@ export class GdprController {
    */
   @Patch('retention/policy')
   @Roles(UserRole.ADMIN)
-  async updateRetentionPolicy(@Query('tenantId') tenantId: string, @Body('days') days: number) {
+  @ApiOperation({ summary: 'Aggiorna policy retention del tenant' })
+  @ApiResponse({ status: 200, description: 'Policy aggiornata' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async updateRetentionPolicy(
+    @CurrentUser('tenantId') tenantId: string,
+    @Body('days') days: number,
+  ) {
     return this.retentionService.updateTenantRetentionPolicy(tenantId, days);
   }
 
@@ -447,7 +587,11 @@ export class GdprController {
    */
   @Post('retention/enforce')
   @Roles(UserRole.ADMIN)
-  async enforceRetention(@Query('tenantId') tenantId?: string) {
+  @ApiOperation({ summary: 'Avvia enforcement manuale della retention' })
+  @ApiResponse({ status: 201, description: 'Enforcement avviato' })
+  @ApiResponse({ status: 401, description: 'Non autenticato' })
+  @ApiResponse({ status: 403, description: 'Accesso negato' })
+  async enforceRetention(@CurrentUser('tenantId') tenantId: string) {
     return this.retentionService.queueRetentionEnforcement(tenantId);
   }
 }

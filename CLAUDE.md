@@ -1,77 +1,62 @@
-# MechMind OS v10
+## PROGETTO
 
-See @backend/package.json for dependencies. See @backend/prisma/schema.prisma for DB models.
+ERP multi-tenant automotive (officine, fleet, gommisti). Stack: NestJS + Next.js
+14 + Prisma + PostgreSQL 15 + Redis 7 + BullMQ. Backend :3002, Frontend :3000.
 
-## ⚠️ CHECKLIST — Prima di OGNI modifica:
-1. **Cosa fai?** (una frase in italiano)
-2. **Quali file tocchi?**
-3. **Cosa rischi di rompere?**
-4. **C'è un modo più sicuro?**
-5. **Rollback plan?**
-6. **Hai letto i file coinvolti?**
+## REGOLE NON NEGOZIABILI
 
-## REGOLE INVIOLABILI
+- tenantId in OGNI query Prisma (`where: { tenantId }`). Mancante → data leak
+  GDPR/OWASP A01.
+- PII solo via EncryptionService (AES-256-CBC). Mai in chiaro nei
+  log/DB/risposte.
+- Booking: `acquireAdvisoryLock` + `withSerializableTransaction`. Mai senza.
+- State change: `validateTransition(currentStatus, newStatus, transitions)`. Mai
+  stati arbitrari.
+- Webhook esterni: verifica HMAC-SHA256 prima di toccare il payload.
+- JWT: `jti` obbligatorio, secret da env. Mai hardcoded.
+- Frontend `app/api/*/route.ts`: solo `proxyToNestJS({ backendPath })`. Mai
+  mock/demo/fake.
+- TS strict: zero `any`, zero `@ts-ignore`, return type espliciti.
+- 500/404/warning visibili = bug → fixare prima di chiudere il task.
 
-### Multi-Tenancy — CRITICAL
-- JWT payload: `userId:tenantId`. `TenantContextMiddleware` imposta `app.current_tenant` su PostgreSQL
-- RLS isola i dati tra tenant — **NEVER query senza contesto tenant**
-- Tutti gli 80 modelli hanno `tenantId` — **NEVER creare un modello senza**
+## TEST
 
-### Sicurezza Dati — CRITICAL
-- PII crittografati SOLO tramite `EncryptionService` (AES-256-CBC) — **NEVER crittografare manualmente**
-- Campi: `encryptedPhone`, `encryptedEmail`, nome/cognome + hash per ricerca
-- **NEVER leggere/scrivere `.env`**
-- Secret obbligatori: `JWT_SECRET`, `ENCRYPTION_KEY`, `DATABASE_URL`, `REDIS_URL`
+- Soglia: Statements ≥90% AND Branches ≥90% (misurata con
+  `npx jest src/<modulo> --coverage --forceExit`, mai numeri stimati).
+- Skill unica: `/audit-modulo <NOME>` (assorbe fix-coverage, deprecato).
+- Log su `MODULI_NEXO.md`:
+  `| YYYY-MM-DD HH:MM | backend | <mod> | audit-modulo | X% / Y% | ✅ |`.
 
-### Database
-- Tutte le tabelle: `tenantId`, `createdAt`, `updatedAt`
-- Soft delete con `deletedAt DateTime?` per dati personali
-- Transazioni per mutazioni multi-modello
+## RISORSE
 
-### DOPO OGNI SESSIONE CHE RIMUOVE FILE, PACCHETTI O PROVIDER
+Mac mini 8GB → max 4 processi pesanti paralleli (Agent/jest/tsc/build).
+Read/Grep paralleli illimitati.
 
-Esegui SEMPRE questi 5 step nell'ordine esatto prima di dichiarare
-la sessione completata:
+## OUTPUT
 
-1. `rm -rf .next`          → pulisce cache webpack (evita runtime crash)
-2. `npm run lint`          → rileva import rotti verso file eliminati
-3. `npx tsc --noEmit`      → rileva errori TypeScript
-4. `npm run build`         → build pulita da zero
-5. `npm run dev` + apri browser → zero errori runtime in console
+Italiano, diretto. Vietato "Sure!"/"I'll help"/riepiloghi. Usa ✅/❌/⚠️. Fine
+task ≤6 righe.
 
-Se uno dei 5 step fallisce: non dichiarare la sessione completata.
-Risolvi prima di andare avanti.
+## SUBAGENT
 
-MOTIVO: la cache `.next` contiene riferimenti ai moduli eliminati.
-TypeScript non la vede, ma il browser crasha con:
-`TypeError: undefined is not an object (evaluating 'originalFactory.call')`
+Specifica sempre `model:`. Default: `haiku` (ricerca/grep), `sonnet`
+(codice/test), `opus` (security/arch). Worktree isolation per batch
+indipendenti.
 
-## Architettura Backend (14 moduli attivi)
+## MEMORIA PROGETTO
 
-```
-CommonModule (@Global) — PrismaService, EncryptionService, RedisService, QueueService, LoggerService, S3Service, AdvisoryLockService
-```
+- **Stato completo + roadmap + bug aperti**: `.claude/teams/PROJECT-MEMORY.md`
+  (leggere a inizio sessione)
+- **Coverage frontend E2E reale**: `frontend/e2e/COVERAGE-REAL.md`
+- **Coverage backend (fonte di verità)**: `MODULI_NEXO.md`
 
-Dipendenze critiche:
-- **AuthModule** → CommonModule, NotificationsModule (JWT, MFA, Passkey, OAuth, Magic Link)
-- **BookingModule** → CommonModule, CustomerModule (advisory lock + SERIALIZABLE)
-- **GdprModule** → CommonModule, CustomerModule, ScheduleModule (BullMQ: gdpr-deletion, gdpr-retention, gdpr-export)
-- **SubscriptionModule** → CommonModule, AuthModule (FeatureGuard, LimitGuard, Stripe)
-- **NotificationsModule** → ConfigModule, BullModule (email-queue, notification-queue)
-- **IotModule** → CommonModule, AuthModule, NotificationsModule, RedisModule
-- **VoiceModule** → CommonModule, CustomerModule, BookingModule
-- CustomerModule, DviModule, ObdModule, PartsModule, AnalyticsModule, AdminModule → CommonModule
+## ON-DEMAND (leggi solo se rilevante al task)
 
-## ⚠️ Punti Fragili
-
-1. **CommonModule** — PrismaService o EncryptionService down = tutto il backend crolla
-2. **RLS Policies** — Errore = data leak tra tenant. Verificare SEMPRE dopo modifiche schema
-3. **ENCRYPTION_KEY** — Se cambia, tutti i PII crittografati diventano illeggibili. Zero key rotation
-4. **Redis** — SPOF: BullMQ, cache, pub/sub, rate limiting tutti dipendono da Redis
-5. **Booking concurrency** — Advisory lock + SERIALIZABLE: toccare = rischio deadlock
-6. **`mechmind-os/`** — Mirror del progetto. **NEVER modificare**
-
-## Compact Instructions
-Preserve: test output, code changes, file paths, architectural decisions, current task context, error messages, checklist answers.
-
-IMPORTANT: NEVER query senza contesto tenant. NEVER PII senza EncryptionService.
+- State machines & errori per modulo: `docs/09-ERROR-CATALOG.md`
+- Domain enums: `prisma/schema.prisma` o `docs/05-DOMAIN-GLOSSARY.md`
+- Caller graph dei service core (PrismaService, EncryptionService, RedisService,
+  QueueService): `docs/11-DEPENDENCY-MAP.md`
+- Ramdisk + c8 per `/audit-modulo`: `.claude/rules/ramdisk-c8.md`
+- Path-scoped: `backend/CLAUDE.md`, `frontend/CLAUDE.md` (se esistenti)
+- Audit storici: `docs/audit-reports/<modulo>-YYYY-MM-DD.md`
+- Indice docs completo: `docs/README.md` (NON auto-importare, è 300 righe)

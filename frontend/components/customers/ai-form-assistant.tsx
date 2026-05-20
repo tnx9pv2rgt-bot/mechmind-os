@@ -223,25 +223,25 @@ const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({ onTranscript, class
       onClick={toggleRecording}
       className={cn(
         'relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300',
-        'bg-white/80 hover:bg-white border border-gray-200 hover:border-apple-blue',
-        isRecording && 'border-red-500 bg-red-50',
+        'bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] border border-[var(--border-default)] hover:border-[var(--brand)]',
+        isRecording && 'border-[var(--status-error)] bg-[var(--status-error-subtle)]',
         className
       )}
       whileTap={{ scale: 0.95 }}
     >
       {isRecording ? (
         <>
-          <MicOff className='w-4 h-4 text-red-500' />
+          <MicOff className='w-4 h-4 text-[var(--status-error)]' />
           {/* Sound wave animation */}
-          <span className='absolute inset-0 rounded-full bg-red-500/20 animate-ping' />
+          <span className='absolute inset-0 rounded-full bg-[var(--status-error-subtle)]0/20 animate-ping' />
           <motion.span
-            className='absolute inset-[-4px] rounded-full border-2 border-red-400'
+            className='absolute inset-[-4px] rounded-full border-2 border-[var(--status-error)]/40'
             animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
             transition={{ repeat: Infinity, duration: 1.5 }}
           />
         </>
       ) : (
-        <Mic className='w-4 h-4 text-apple-gray' />
+        <Mic className='w-4 h-4 text-[var(--text-tertiary)]' />
       )}
     </motion.button>
   );
@@ -305,29 +305,29 @@ const SmartAddressInput: React.FC<SmartAddressInputProps> = ({
     <div className={cn('relative', className)}>
       <div className='relative flex items-center gap-2'>
         <div className='relative flex-1'>
-          <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray' />
+          <MapPin className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
           <Input
             type='text'
             value={value}
             onChange={e => onChange(e.target.value)}
             placeholder='Via Roma 123, 20121 Milano (MI)'
             className={cn(
-              'pl-12 pr-24 h-14 bg-white/50 border-apple-border rounded-apple-lg',
-              'focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20',
-              status === 'success' && 'border-green-500 pr-28'
+              'pl-12 pr-24 h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg',
+              'focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20',
+              status === 'success' && 'border-[var(--status-success)] pr-28'
             )}
           />
           <div className='absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1'>
             {status === 'thinking' && (
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
-                <Sparkles className='w-4 h-4 text-apple-blue' />
+                <Sparkles className='w-4 h-4 text-[var(--brand)]' />
               </motion.div>
             )}
             {status === 'success' && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className='flex items-center gap-1 text-green-600'
+                className='flex items-center gap-1 text-[var(--status-success)]'
               >
                 <Check className='w-4 h-4' />
                 <span className='text-xs'>OK</span>
@@ -351,8 +351,8 @@ const SmartAddressInput: React.FC<SmartAddressInputProps> = ({
           }}
           className={cn(
             'px-4 h-14 rounded-apple-lg border transition-all duration-300',
-            'bg-white/50 border-apple-border hover:border-apple-blue',
-            showParser && 'bg-apple-blue text-white border-apple-blue'
+            'bg-[var(--surface-secondary)] border-[var(--border-default)] hover:border-[var(--brand)]',
+            showParser && 'bg-[var(--brand)] text-[var(--text-on-brand)] border-[var(--brand)]'
           )}
         >
           <Wand2 className='w-5 h-5' />
@@ -366,31 +366,31 @@ const SmartAddressInput: React.FC<SmartAddressInputProps> = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className='mt-3 p-4 bg-blue-50/50 backdrop-blur rounded-apple-lg border border-blue-100'
+            className='mt-3 p-4 bg-[var(--status-info-subtle)]/50 backdrop-blur rounded-apple-lg border border-[var(--status-info)]/10'
           >
-            <div className='flex items-center gap-2 mb-2 text-sm text-apple-blue'>
+            <div className='flex items-center gap-2 mb-2 text-sm text-[var(--brand)]'>
               <Sparkles className='w-4 h-4' />
               <span className='font-medium'>Indirizzo analizzato dall&apos;AI</span>
             </div>
             <div className='grid grid-cols-3 gap-2 text-sm'>
-              <div className='bg-white/70 p-2 rounded-lg'>
-                <span className='text-apple-gray text-xs'>Via</span>
+              <div className='bg-[var(--surface-secondary)]/70 p-2 rounded-lg'>
+                <span className='text-[var(--text-tertiary)] text-xs'>Via</span>
                 <p className='font-medium truncate'>{parseAddressHeuristic(value).street}</p>
               </div>
-              <div className='bg-white/70 p-2 rounded-lg'>
-                <span className='text-apple-gray text-xs'>Civico</span>
+              <div className='bg-[var(--surface-secondary)]/70 p-2 rounded-lg'>
+                <span className='text-[var(--text-tertiary)] text-xs'>Civico</span>
                 <p className='font-medium'>{parseAddressHeuristic(value).number}</p>
               </div>
-              <div className='bg-white/70 p-2 rounded-lg'>
-                <span className='text-apple-gray text-xs'>CAP</span>
+              <div className='bg-[var(--surface-secondary)]/70 p-2 rounded-lg'>
+                <span className='text-[var(--text-tertiary)] text-xs'>CAP</span>
                 <p className='font-medium'>{parseAddressHeuristic(value).zip}</p>
               </div>
-              <div className='bg-white/70 p-2 rounded-lg'>
-                <span className='text-apple-gray text-xs'>Città</span>
+              <div className='bg-[var(--surface-secondary)]/70 p-2 rounded-lg'>
+                <span className='text-[var(--text-tertiary)] text-xs'>Città</span>
                 <p className='font-medium'>{parseAddressHeuristic(value).city}</p>
               </div>
-              <div className='bg-white/70 p-2 rounded-lg'>
-                <span className='text-apple-gray text-xs'>Provincia</span>
+              <div className='bg-[var(--surface-secondary)]/70 p-2 rounded-lg'>
+                <span className='text-[var(--text-tertiary)] text-xs'>Provincia</span>
                 <p className='font-medium'>{parseAddressHeuristic(value).province}</p>
               </div>
             </div>
@@ -455,18 +455,18 @@ const CompanyIntelligence: React.FC<CompanyIntelligenceProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'p-4 rounded-apple-lg border bg-gradient-to-r from-blue-50/50 to-indigo-50/50 backdrop-blur',
-        status === 'success' ? 'border-green-200' : 'border-blue-100',
+        'p-4 rounded-apple-lg border bg-gradient-to-r from-[var(--status-info)]/5/50 to-[var(--brand)]/5/50 backdrop-blur',
+        status === 'success' ? 'border-[var(--status-success-subtle)]' : 'border-[var(--status-info)]/10',
         className
       )}
     >
       <div className='flex items-start gap-3'>
-        <div className='w-10 h-10 rounded-xl bg-white/80 flex items-center justify-center shrink-0'>
-          <Building2 className='w-5 h-5 text-apple-blue' />
+        <div className='w-10 h-10 rounded-xl bg-[var(--surface-secondary)] flex items-center justify-center shrink-0'>
+          <Building2 className='w-5 h-5 text-[var(--brand)]' />
         </div>
         <div className='flex-1 min-w-0'>
-          <p className='text-sm font-medium text-apple-dark'>Dominio aziendale rilevato</p>
-          <p className='text-xs text-apple-gray truncate'>@{domain}</p>
+          <p className='text-sm font-medium text-[var(--text-primary)]'>Dominio aziendale rilevato</p>
+          <p className='text-xs text-[var(--text-tertiary)] truncate'>@{domain}</p>
 
           {status === 'idle' && (
             <Button
@@ -474,7 +474,7 @@ const CompanyIntelligence: React.FC<CompanyIntelligenceProps> = ({
               variant='ghost'
               size='sm'
               onClick={() => enrichCompanyData(domain)}
-              className='mt-2 h-8 text-xs text-apple-blue hover:text-apple-blue-hover'
+              className='mt-2 h-8 text-xs text-[var(--brand)] hover:text-[var(--brand)]-hover'
             >
               <Sparkles className='w-3 h-3 mr-1' />
               Arricchisci dati aziendali
@@ -482,7 +482,7 @@ const CompanyIntelligence: React.FC<CompanyIntelligenceProps> = ({
           )}
 
           {status === 'thinking' && (
-            <div className='mt-2 flex items-center gap-2 text-xs text-apple-gray'>
+            <div className='mt-2 flex items-center gap-2 text-xs text-[var(--text-tertiary)]'>
               <Loader2 className='w-3 h-3 animate-spin' />
               Ricerca informazioni...
             </div>
@@ -495,17 +495,17 @@ const CompanyIntelligence: React.FC<CompanyIntelligenceProps> = ({
               className='mt-3 space-y-2'
             >
               <div className='flex items-center gap-2'>
-                <Check className='w-4 h-4 text-green-600' />
+                <Check className='w-4 h-4 text-[var(--status-success)]' />
                 <span className='text-sm font-medium'>{companyData.companyName}</span>
               </div>
               {companyData.vat && (
-                <p className='text-xs text-apple-gray'>P.IVA: {companyData.vat}</p>
+                <p className='text-xs text-[var(--text-tertiary)]'>P.IVA: {companyData.vat}</p>
               )}
               <Button
                 type='button'
                 size='sm'
                 onClick={() => onEnrich(companyData)}
-                className='mt-2 h-8 text-xs bg-apple-blue hover:bg-apple-blue-hover'
+                className='mt-2 h-8 text-xs bg-[var(--brand)] hover:bg-[var(--brand)]-hover'
               >
                 Applica dati al form
               </Button>
@@ -626,16 +626,16 @@ const PredictiveInput: React.FC<PredictiveInputProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className='absolute z-50 w-full mt-1 bg-white/90 backdrop-blur-xl rounded-apple-lg border border-apple-border shadow-lg overflow-hidden'
+            className='absolute z-50 w-full mt-1 bg-[var(--surface-secondary)]/90 backdrop-blur-xl rounded-apple-lg border border-[var(--border-default)] shadow-lg overflow-hidden'
           >
             {filteredSuggestions.map((suggestion, index) => (
               <button
                 key={index}
                 type='button'
                 onClick={() => handleSelect(suggestion)}
-                className='w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center gap-2'
+                className='w-full px-4 py-3 text-left hover:bg-[var(--status-info-subtle)]/50 transition-colors flex items-center gap-2'
               >
-                <Sparkles className='w-3 h-3 text-apple-blue' />
+                <Sparkles className='w-3 h-3 text-[var(--brand)]' />
                 <span className='text-sm'>{suggestion}</span>
               </button>
             ))}
@@ -713,7 +713,7 @@ const AIValidationMessage: React.FC<{ field: string; value: string }> = ({ field
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'flex items-center gap-2 mt-1 text-xs',
-        status === 'error' ? 'text-red-500' : 'text-green-600'
+        status === 'error' ? 'text-[var(--status-error)]' : 'text-[var(--status-success)]'
       )}
     >
       {status === 'error' ? <AlertCircle className='w-3 h-3' /> : <Check className='w-3 h-3' />}
@@ -872,29 +872,29 @@ const AIChat: React.FC<AIChatProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className='fixed bottom-24 right-6 w-[380px] max-h-[500px] bg-white/90 backdrop-blur-3xl rounded-[32px] shadow-2xl border border-white/50 overflow-hidden z-50'
+          className='fixed bottom-24 right-6 w-[380px] max-h-[500px] bg-[var(--surface-secondary)]/90 backdrop-blur-3xl rounded-[32px] shadow-2xl border border-[var(--border-default)]/50 overflow-hidden z-50'
         >
           {/* Header */}
-          <div className='bg-gradient-to-r from-slate-50 to-gray-100 p-4 border-b border-gray-100 flex items-center justify-between'>
+          <div className='bg-gradient-to-r from-[var(--surface-secondary)] to-[var(--surface-secondary)] p-4 border-b border-[var(--border-default)] flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-apple-blue to-blue-600 flex items-center justify-center'>
+              <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center'>
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ repeat: Infinity, duration: 3 }}
                 >
-                  <Sparkles className='w-5 h-5 text-white' />
+                  <Sparkles className='w-5 h-5 text-[var(--text-on-brand)]' />
                 </motion.div>
               </div>
               <div>
-                <h3 className='font-semibold text-apple-dark'>AI Assistant</h3>
-                <p className='text-xs text-apple-gray'>Sempre pronto ad aiutarti</p>
+                <h3 className='font-semibold text-[var(--text-primary)]'>AI Assistant</h3>
+                <p className='text-xs text-[var(--text-tertiary)]'>Sempre pronto ad aiutarti</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className='w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors'
+              className='w-8 h-8 rounded-full bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] flex items-center justify-center transition-colors'
             >
-              <X className='w-4 h-4 text-apple-gray' />
+              <X className='w-4 h-4 text-[var(--text-tertiary)]' />
             </button>
           </div>
 
@@ -914,22 +914,22 @@ const AIChat: React.FC<AIChatProps> = ({
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center shrink-0',
                     message.role === 'user'
-                      ? 'bg-apple-blue'
-                      : 'bg-gradient-to-br from-purple-500 to-blue-500'
+                      ? 'bg-[var(--brand)]'
+                      : 'bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)]'
                   )}
                 >
                   {message.role === 'user' ? (
-                    <User className='w-4 h-4 text-white' />
+                    <User className='w-4 h-4 text-[var(--text-on-brand)]' />
                   ) : (
-                    <Bot className='w-4 h-4 text-white' />
+                    <Bot className='w-4 h-4 text-[var(--text-on-brand)]' />
                   )}
                 </div>
                 <div
                   className={cn(
                     'max-w-[75%] p-3 rounded-2xl text-sm',
                     message.role === 'user'
-                      ? 'bg-apple-blue text-white rounded-br-md'
-                      : 'bg-white/70 backdrop-blur border border-gray-100 rounded-bl-md'
+                      ? 'bg-[var(--brand)] text-[var(--text-on-brand)] rounded-br-md'
+                      : 'bg-[var(--surface-secondary)]/70 backdrop-blur border border-[var(--border-default)] rounded-bl-md'
                   )}
                 >
                   {message.content}
@@ -947,9 +947,9 @@ const AIChat: React.FC<AIChatProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.1 }}
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className='px-3 py-1.5 bg-white/70 hover:bg-white border border-gray-200 hover:border-apple-blue rounded-full text-xs text-apple-dark transition-all duration-200 flex items-center gap-1'
+                    className='px-3 py-1.5 bg-[var(--surface-secondary)]/70 hover:bg-[var(--surface-secondary)] border border-[var(--border-default)] hover:border-[var(--brand)] rounded-full text-xs text-[var(--text-primary)] transition-all duration-200 flex items-center gap-1'
                   >
-                    <Lightbulb className='w-3 h-3 text-apple-blue' />
+                    <Lightbulb className='w-3 h-3 text-[var(--brand)]' />
                     {suggestion}
                   </motion.button>
                 ))}
@@ -958,24 +958,24 @@ const AIChat: React.FC<AIChatProps> = ({
 
             {isTyping && (
               <div className='flex items-center gap-2 ml-10'>
-                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center'>
-                  <Bot className='w-4 h-4 text-white' />
+                <div className='w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center'>
+                  <Bot className='w-4 h-4 text-[var(--text-on-brand)]' />
                 </div>
-                <div className='bg-white/70 p-3 rounded-2xl rounded-bl-md flex items-center gap-1'>
+                <div className='bg-[var(--surface-secondary)]/70 p-3 rounded-2xl rounded-bl-md flex items-center gap-1'>
                   <motion.span
                     animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{ repeat: Infinity, duration: 0.8 }}
-                    className='w-2 h-2 bg-apple-gray rounded-full'
+                    className='w-2 h-2 bg-[var(--text-tertiary)] rounded-full'
                   />
                   <motion.span
                     animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
-                    className='w-2 h-2 bg-apple-gray rounded-full'
+                    className='w-2 h-2 bg-[var(--text-tertiary)] rounded-full'
                   />
                   <motion.span
                     animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }}
-                    className='w-2 h-2 bg-apple-gray rounded-full'
+                    className='w-2 h-2 bg-[var(--text-tertiary)] rounded-full'
                   />
                 </div>
               </div>
@@ -984,7 +984,7 @@ const AIChat: React.FC<AIChatProps> = ({
           </div>
 
           {/* Input */}
-          <div className='p-4 border-t border-gray-100 bg-white/50'>
+          <div className='p-4 border-t border-[var(--border-default)] bg-[var(--surface-secondary)]'>
             <div className='flex items-center gap-2'>
               <Input
                 type='text'
@@ -992,14 +992,14 @@ const AIChat: React.FC<AIChatProps> = ({
                 onChange={e => setInputValue(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 placeholder='Scrivi un messaggio...'
-                className='flex-1 bg-white/70 border-gray-200 rounded-full px-4 h-10'
+                className='flex-1 bg-[var(--surface-secondary)]/70 border-[var(--border-default)] rounded-full px-4 h-10'
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSend}
                 disabled={!inputValue.trim()}
-                className='w-10 h-10 rounded-full bg-apple-blue hover:bg-apple-blue-hover text-white flex items-center justify-center disabled:opacity-50 transition-colors'
+                className='w-10 h-10 rounded-full bg-[var(--brand)] hover:bg-[var(--brand)]-hover text-[var(--text-on-brand)] flex items-center justify-center disabled:opacity-50 transition-colors'
               >
                 <Send className='w-4 h-4' />
               </motion.button>
@@ -1040,9 +1040,9 @@ export const AIFormAssistant: React.FC<AIFormAssistantProps> = ({
         }}
         className={cn(
           'fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50',
-          'bg-gradient-to-br from-apple-blue to-blue-600 hover:from-blue-600 hover:to-blue-700',
-          'border-2 border-white/20 backdrop-blur-xl',
-          isChatOpen && 'bg-gray-800'
+          'bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] hover:from-[var(--status-info)] hover:to-[var(--status-info)]',
+          'border-2 border-[var(--border-default)]/20 backdrop-blur-xl',
+          isChatOpen && 'bg-[var(--surface-primary)]'
         )}
       >
         <AnimatePresence mode='wait'>
@@ -1053,7 +1053,7 @@ export const AIFormAssistant: React.FC<AIFormAssistantProps> = ({
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: 90, opacity: 0 }}
             >
-              <X className='w-6 h-6 text-white' />
+              <X className='w-6 h-6 text-[var(--text-on-brand)]' />
             </motion.div>
           ) : (
             <motion.div
@@ -1063,9 +1063,9 @@ export const AIFormAssistant: React.FC<AIFormAssistantProps> = ({
               exit={{ rotate: -90, opacity: 0 }}
               className='relative'
             >
-              <MessageSquare className='w-6 h-6 text-white' />
+              <MessageSquare className='w-6 h-6 text-[var(--text-on-brand)]' />
               {hasUnreadSuggestions && (
-                <span className='absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white' />
+                <span className='absolute -top-1 -right-1 w-3 h-3 bg-[var(--status-error-subtle)]0 rounded-full border-2 border-[var(--border-default)]' />
               )}
             </motion.div>
           )}

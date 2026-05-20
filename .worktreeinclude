@@ -1,0 +1,4 @@
+# Files to copy into git worktrees (normally .gitignored)
+backend/.env
+backend/.env.local
+frontend/.env.local

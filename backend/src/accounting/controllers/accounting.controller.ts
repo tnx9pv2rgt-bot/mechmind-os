@@ -1,6 +1,15 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Query, Res, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { Response } from 'express';
 import { AccountingService } from '../services/accounting.service';
+import { QuickBooksService } from '../services/quickbooks.service';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard, UserRole } from '@auth/guards/roles.guard';
 import { Roles } from '@auth/decorators/roles.decorator';
@@ -17,7 +26,10 @@ import {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('accounting')
 export class AccountingController {
-  constructor(private readonly accountingService: AccountingService) {}
+  constructor(
+    private readonly accountingService: AccountingService,
+    private readonly quickBooksService: QuickBooksService,
+  ) {}
 
   @Post('sync/invoice')
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
@@ -141,5 +153,31 @@ export class AccountingController {
   ): Promise<{ success: boolean; data: AccountingSyncResponseDto[] }> {
     const records = await this.accountingService.getStatus(tenantId, entityType, entityId);
     return { success: true, data: records };
+  }
+
+  // ==================== QUICKBOOKS EXPORT ====================
+
+  @Get('export/quickbooks')
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Export invoices in QuickBooks-compatible CSV format' })
+  @ApiQuery({ name: 'from', required: true, description: 'Start date (ISO)' })
+  @ApiQuery({ name: 'to', required: true, description: 'End date (ISO)' })
+  async exportQuickBooks(
+    @CurrentTenant() tenantId: string,
+    @Res() res: Response,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ): Promise<void> {
+    const csv = await this.quickBooksService.exportInvoicesForQuickBooks(
+      tenantId,
+      new Date(from),
+      new Date(to),
+    );
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="quickbooks-export-${from}-${to}.csv"`,
+    );
+    res.send(csv);
   }
 }

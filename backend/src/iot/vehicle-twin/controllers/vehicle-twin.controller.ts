@@ -7,6 +7,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
 import { Roles } from '../../../auth/decorators/roles.decorator';
+import { CurrentUser } from '../../../auth/decorators/current-user.decorator';
 import { VehicleTwinService } from '../services/vehicle-twin.service';
 import {
   UpdateComponentDto,
@@ -37,8 +38,11 @@ export class VehicleTwinController {
   @Get(':vehicleId')
   @ApiOperation({ summary: 'Get vehicle twin state' })
   @ApiResponse({ status: 200, type: VehicleTwinStateDto })
-  async getTwinState(@Param('vehicleId') vehicleId: string): Promise<VehicleTwinState> {
-    return await this.vehicleTwinService.getOrCreateTwin(vehicleId);
+  async getTwinState(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('vehicleId') vehicleId: string,
+  ): Promise<VehicleTwinState> {
+    return await this.vehicleTwinService.getOrCreateTwin(tenantId, vehicleId);
   }
 
   @Patch(':vehicleId/components/:componentId')
@@ -46,11 +50,17 @@ export class VehicleTwinController {
   @ApiOperation({ summary: 'Update component status' })
   @ApiResponse({ status: 200, type: ComponentResponseDto })
   async updateComponent(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('componentId') componentId: string,
     @Body() dto: UpdateComponentDto,
   ): Promise<ComponentResponseDto> {
-    return await this.vehicleTwinService.updateComponentStatus(vehicleId, componentId, dto);
+    return await this.vehicleTwinService.updateComponentStatus(
+      tenantId,
+      vehicleId,
+      componentId,
+      dto,
+    );
   }
 
   @Post(':vehicleId/history')
@@ -58,6 +68,7 @@ export class VehicleTwinController {
   @ApiOperation({ summary: 'Record component history event' })
   @ApiResponse({ status: 201 })
   async recordHistory(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Body() dto: RecordHistoryDto,
   ): Promise<ComponentHistory> {
@@ -68,7 +79,7 @@ export class VehicleTwinController {
       photos: dto.photos || [],
       documents: dto.documents || [],
     };
-    return await this.vehicleTwinService.recordComponentHistory(vehicleId, history);
+    return await this.vehicleTwinService.recordComponentHistory(tenantId, vehicleId, history);
   }
 
   @Post(':vehicleId/damage')
@@ -76,6 +87,7 @@ export class VehicleTwinController {
   @ApiOperation({ summary: 'Record damage' })
   @ApiResponse({ status: 201 })
   async recordDamage(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Body() dto: RecordDamageDto,
   ): Promise<DamageRecord> {
@@ -85,33 +97,38 @@ export class VehicleTwinController {
       photos: dto.photos || [],
       reportedAt: dto.reportedAt ? new Date(dto.reportedAt) : new Date(),
     };
-    return await this.vehicleTwinService.recordDamage(vehicleId, damage);
+    return await this.vehicleTwinService.recordDamage(tenantId, vehicleId, damage);
   }
 
   @Get(':vehicleId/alerts')
   @ApiOperation({ summary: 'Get predictive alerts' })
   @ApiResponse({ status: 200, type: [PredictiveAlertDto] })
-  async getPredictiveAlerts(@Param('vehicleId') vehicleId: string): Promise<PredictiveAlertDto[]> {
-    return await this.vehicleTwinService.getPredictiveAlerts(vehicleId);
+  async getPredictiveAlerts(
+    @CurrentUser('tenantId') tenantId: string,
+    @Param('vehicleId') vehicleId: string,
+  ): Promise<PredictiveAlertDto[]> {
+    return await this.vehicleTwinService.getPredictiveAlerts(tenantId, vehicleId);
   }
 
   @Get(':vehicleId/components/:componentId/wear-prediction')
   @ApiOperation({ summary: 'Get component wear prediction' })
   @ApiResponse({ status: 200, type: WearPredictionDto })
   async getWearPrediction(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Param('componentId') componentId: string,
   ): Promise<WearPredictionDto> {
-    return await this.vehicleTwinService.getWearPrediction(vehicleId, componentId);
+    return await this.vehicleTwinService.getWearPrediction(tenantId, vehicleId, componentId);
   }
 
   @Get(':vehicleId/visualization-config')
   @ApiOperation({ summary: 'Get 3D visualization config' })
   @ApiResponse({ status: 200 })
   async getVisualizationConfig(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
   ): Promise<TwinVisualizationConfig> {
-    return await this.vehicleTwinService.getVisualizationConfig(vehicleId);
+    return await this.vehicleTwinService.getVisualizationConfig(tenantId, vehicleId);
   }
 
   @Patch(':vehicleId/visualization-config')
@@ -119,20 +136,23 @@ export class VehicleTwinController {
   @ApiOperation({ summary: 'Update visualization config' })
   @ApiResponse({ status: 200 })
   async updateVisualizationConfig(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Body() dto: UpdateVisualizationConfigDto,
   ): Promise<TwinVisualizationConfig> {
-    return await this.vehicleTwinService.updateVisualizationConfig(vehicleId, dto);
+    return await this.vehicleTwinService.updateVisualizationConfig(tenantId, vehicleId, dto);
   }
 
   @Get(':vehicleId/health-trend')
   @ApiOperation({ summary: 'Get health trend over time' })
   @ApiResponse({ status: 200 })
   async getHealthTrend(
+    @CurrentUser('tenantId') tenantId: string,
     @Param('vehicleId') vehicleId: string,
     @Query() query: HealthTrendQueryDto,
   ): Promise<{ date: Date; overallHealth: number; componentHealth: Record<string, number> }[]> {
     return await this.vehicleTwinService.getHealthTrend(
+      tenantId,
       vehicleId,
       new Date(query.from),
       new Date(query.to),

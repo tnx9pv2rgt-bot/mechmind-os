@@ -19,3 +19,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const body = await request.json()
   return proxyToNestJS({ backendPath: `v1/customers/${id}`, method: 'PATCH', body })
 }
+
+/** DELETE /api/customers/:id → POST /v1/gdpr/customers/:id/delete */
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
+  return proxyToNestJS({ backendPath: `v1/gdpr/customers/${id}/delete`, method: 'POST' })
+}

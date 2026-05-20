@@ -87,7 +87,7 @@ interface ABTestResult {
 
 // Colori per i grafici
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-const ERROR_COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
+const ERROR_COLORS = ['var(--status-error)', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
 
 export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: string }) {
   const { metrics: historicalMetrics } = useFunnelMetrics(formId);
@@ -243,7 +243,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
       />
 
       {/* Grafico Orario */}
-      <div className="col-span-full lg:col-span-2 bg-white rounded-lg shadow p-4">
+      <div className="col-span-full lg:col-span-2 bg-[var(--surface-secondary)] rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4">Attività Oraria</h3>
         <ResponsiveContainer width="100%" height={250}>
           <AreaChart data={realTimeMetrics?.hourlyData || []}>
@@ -269,7 +269,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
       </div>
 
       {/* Device Breakdown */}
-      <div className="col-span-full lg:col-span-2 bg-white rounded-lg shadow p-4">
+      <div className="col-span-full lg:col-span-2 bg-[var(--surface-secondary)] rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4">Dispositivi</h3>
         <ResponsiveContainer width="100%" height={250}>
           <PieChart>
@@ -296,7 +296,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
 
   const renderFunnel = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4">Funnel di Conversione</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={realTimeMetrics?.stepStats || []} layout="vertical">
@@ -313,14 +313,14 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Step Metrics */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-4">Metriche per Step</h3>
           <div className="space-y-3">
             {realTimeMetrics?.stepStats.map((step) => (
-              <div key={step.step} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <div key={step.step} className="flex items-center justify-between p-3 bg-[var(--surface-secondary)] rounded">
                 <div>
                   <span className="font-medium">Step {step.step}</span>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[var(--text-tertiary)]">
                     {(step.avgTime / 1000).toFixed(1)}s avg
                   </p>
                 </div>
@@ -328,7 +328,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
                   <span className="text-lg font-semibold">
                     {((step.completions / step.visitors) * 100).toFixed(1)}%
                   </span>
-                  <p className="text-sm text-gray-500">completamento</p>
+                  <p className="text-sm text-[var(--text-tertiary)]">completamento</p>
                 </div>
               </div>
             ))}
@@ -336,7 +336,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
         </div>
 
         {/* Entry Points */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-4">Fonti di Traffico</h3>
           <div className="space-y-3">
             {Object.entries(historicalMetrics.entryPointBreakdown)
@@ -345,15 +345,15 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
                 <div key={source} className="flex items-center justify-between">
                   <span className="capitalize">{source}</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div className="w-32 bg-[var(--border-default)] rounded-full h-2">
                       <div
-                        className="bg-blue-500 rounded-full h-2"
+                        className="bg-[var(--status-info-subtle)]0 rounded-full h-2"
                         style={{
                           width: `${(count / historicalMetrics.totalSessions) * 100}%`,
                         }}
                       />
                     </div>
-                    <span className="text-sm text-gray-500 w-12 text-right">{count}</span>
+                    <span className="text-sm text-[var(--text-tertiary)] w-12 text-right">{count}</span>
                   </div>
                 </div>
               ))}
@@ -365,9 +365,9 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
 
   const renderHeatmap = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
         <h3 className="text-lg font-semibold mb-4">Heatmap Interazioni</h3>
-        <div className="relative h-64 bg-gray-100 rounded overflow-hidden">
+        <div className="relative h-64 bg-[var(--surface-secondary)] rounded overflow-hidden">
           {heatmapData?.points.map((point, index) => (
             <div
               key={index}
@@ -375,7 +375,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
               style={{
                 left: `${(point.x / window.innerWidth) * 100}%`,
                 top: `${(point.y / window.innerHeight) * 100}%`,
-                backgroundColor: point.type === 'click' ? '#ef4444' : 
+                backgroundColor: point.type === 'click' ? 'var(--status-error)' : 
                                  point.type === 'focus' ? '#3b82f6' : '#22c55e',
               }}
               title={`${point.type} at ${point.x},${point.y}`}
@@ -386,22 +386,22 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Field Analytics */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-4">Analytics Campi</h3>
           <div className="space-y-3">
             {heatmapData?.fieldData.slice(0, 5).map((field) => (
-              <div key={field.fieldName} className="p-3 bg-gray-50 rounded">
+              <div key={field.fieldName} className="p-3 bg-[var(--surface-secondary)] rounded">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">{field.fieldName}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[var(--text-tertiary)]">
                     {(field.focusTime / 1000).toFixed(1)}s
                   </span>
                 </div>
                 <div className="flex gap-4 text-sm">
-                  <span className="text-blue-500">{field.clicks} clicks</span>
-                  <span className="text-green-500">{field.hovers} hovers</span>
+                  <span className="text-[var(--status-info)]">{field.clicks} clicks</span>
+                  <span className="text-[var(--status-success)]">{field.hovers} hovers</span>
                   {field.errors > 0 && (
-                    <span className="text-red-500">{field.errors} errors</span>
+                    <span className="text-[var(--status-error)]">{field.errors} errors</span>
                   )}
                 </div>
               </div>
@@ -410,7 +410,7 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
         </div>
 
         {/* Scroll Depth */}
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-4">Scroll Depth</h3>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={[
@@ -435,15 +435,15 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
   const renderABTests = () => (
     <div className="space-y-6">
       {abTests.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500">Nessun test A/B attivo</p>
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-8 text-center">
+          <p className="text-[var(--text-tertiary)]">Nessun test A/B attivo</p>
         </div>
       ) : (
         abTests.map((test) => (
-          <div key={test.experimentId} className="bg-white rounded-lg shadow p-4">
+          <div key={test.experimentId} className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">{test.name}</h3>
-              <span className="text-sm text-gray-500">{test.experimentId}</span>
+              <span className="text-sm text-[var(--text-tertiary)]">{test.experimentId}</span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -452,20 +452,20 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
                   key={variant.variant}
                   className={`p-4 rounded-lg border-2 ${
                     variant.conversionRate === Math.max(...test.variantResults.map(v => v.conversionRate))
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200'
+                      ? 'border-[var(--status-success)] bg-[var(--status-success-subtle)]'
+                      : 'border-[var(--border-default)]'
                   }`}
                 >
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium capitalize">{variant.variant}</span>
                     {variant.conversionRate === Math.max(...test.variantResults.map(v => v.conversionRate)) && (
-                      <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">WINNER</span>
+                      <span className="text-xs bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)] px-2 py-1 rounded">WINNER</span>
                     )}
                   </div>
                   <div className="text-2xl font-bold">
                     {variant.conversionRate.toFixed(2)}%
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-[var(--text-tertiary)]">
                     {variant.visitors} visitatori · {variant.conversions} conversioni
                   </div>
                 </div>
@@ -494,31 +494,31 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--status-info)]">
               {performanceMetrics.lcp ? `${performanceMetrics.lcp.toFixed(0)}ms` : 'N/A'}
             </div>
-            <div className="text-sm text-gray-500">LCP</div>
+            <div className="text-sm text-[var(--text-tertiary)]">LCP</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--status-success)]">
               {performanceMetrics.fid ? `${performanceMetrics.fid.toFixed(0)}ms` : 'N/A'}
             </div>
-            <div className="text-sm text-gray-500">FID</div>
+            <div className="text-sm text-[var(--text-tertiary)]">FID</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--brand)]">
               {performanceMetrics.cls ? performanceMetrics.cls.toFixed(3) : 'N/A'}
             </div>
-            <div className="text-sm text-gray-500">CLS</div>
+            <div className="text-sm text-[var(--text-tertiary)]">CLS</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{errorCount}</div>
-            <div className="text-sm text-gray-500">Errori Totali</div>
+          <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4 text-center">
+            <div className="text-2xl font-bold text-[var(--status-error)]">{errorCount}</div>
+            <div className="text-sm text-[var(--text-tertiary)]">Errori Totali</div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-[var(--surface-secondary)] rounded-lg shadow p-4">
           <h3 className="text-lg font-semibold mb-4">Errori per Campo</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={realTimeMetrics?.commonErrors || []}>
@@ -539,13 +539,13 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-[var(--surface-secondary)] min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold">Form Analytics Dashboard</h1>
-            <p className="text-gray-500">
+            <p className="text-[var(--text-tertiary)]">
               Ultimo aggiornamento: {lastUpdate.toLocaleTimeString()}
             </p>
           </div>
@@ -558,8 +558,8 @@ export function FormAnalyticsDashboard({ formId = 'default-form' }: { formId?: s
                 onClick={() => setSelectedView(view)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedView === view
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-[var(--status-info)] text-[var(--text-on-brand)]'
+                    : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]'
                 }`}
               >
                 {view === 'overview' && 'Panoramica'}
@@ -600,18 +600,18 @@ function MetricCard({
   color: 'blue' | 'green' | 'purple' | 'red';
 }) {
   const colorClasses = {
-    blue: 'bg-blue-50 border-blue-200',
-    green: 'bg-green-50 border-green-200',
-    purple: 'bg-purple-50 border-purple-200',
-    red: 'bg-red-50 border-red-200',
+    blue: 'bg-[var(--status-info-subtle)] border-[var(--status-info)]/30',
+    green: 'bg-[var(--status-success-subtle)] border-[var(--status-success)]/30',
+    purple: 'bg-[var(--brand)]/5 border-[var(--brand)]/20',
+    red: 'bg-[var(--status-error-subtle)] border-[var(--status-error)]/30',
   };
 
   return (
     <div className={`rounded-lg shadow p-4 border ${colorClasses[color]}`}>
-      <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+      <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-1">{title}</h3>
       <div className="text-3xl font-bold mb-1">{value}</div>
-      <p className="text-sm text-gray-500">{subtitle}</p>
-      <div className={`mt-2 text-sm font-medium ${trendUp ? 'text-green-600' : 'text-red-600'}`}>
+      <p className="text-sm text-[var(--text-tertiary)]">{subtitle}</p>
+      <div className={`mt-2 text-sm font-medium ${trendUp ? 'text-[var(--status-success)]' : 'text-[var(--status-error)]'}`}>
         {trend}
       </div>
     </div>

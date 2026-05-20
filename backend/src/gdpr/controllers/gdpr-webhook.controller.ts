@@ -6,24 +6,23 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
+import * as crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { GdprRequestService, DataSubjectRequestType } from '../services/gdpr-request.service';
 import { LoggerService } from '@common/services/logger.service';
 
-/**
- * GDPR Webhook Controller
- *
- * Handles incoming webhooks for GDPR-related events:
- * - Data subject requests from external forms
- * - Third-party consent updates
- * - Sub-processor notifications
- * - Automated deletion confirmations
- */
+@ApiTags('GDPR Webhooks')
 @Controller('webhooks/gdpr')
 export class GdprWebhookController {
   constructor(
     private readonly requestService: GdprRequestService,
     private readonly loggerService: LoggerService,
+    private readonly configService: ConfigService,
   ) {}
 
   /**
@@ -34,6 +33,11 @@ export class GdprWebhookController {
    */
   @Post('requests')
   @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Ricevi richiesta data subject da form esterno' })
+  @ApiResponse({ status: 202, description: 'Richiesta accettata e in coda' })
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
+  @ApiResponse({ status: 401, description: 'Firma webhook non valida' })
   async handleDataSubjectRequest(
     @Body()
     body: {
@@ -45,8 +49,16 @@ export class GdprWebhookController {
       message?: string;
       source: string;
     },
+    @Req() req: Request,
     @Headers('x-webhook-signature') _signature?: string,
   ) {
+    const rawBody = JSON.stringify(body);
+    const signature = req.headers['x-webhook-signature'] as string;
+    const secret = this.configService.get<string>('GDPR_WEBHOOK_SECRET');
+    if (!signature || !secret || !this.verifyWebhookSignature(rawBody, signature, secret)) {
+      throw new UnauthorizedException('Invalid GDPR webhook signature');
+    }
+
     if (!body?.tenantId || !body?.requestType || !body?.source) {
       throw new BadRequestException('Missing required fields: tenantId, requestType, source');
     }
@@ -81,6 +93,9 @@ export class GdprWebhookController {
    */
   @Post('consent')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Ricevi aggiornamento consenso da fonte esterna' })
+  @ApiResponse({ status: 200, description: 'Consenso aggiornato' })
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
   async handleConsentUpdate(
     @Body()
     body: {
@@ -114,6 +129,9 @@ export class GdprWebhookController {
    */
   @Post('deletion-confirmation')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Conferma cancellazione dati da sub-processor' })
+  @ApiResponse({ status: 200, description: 'Conferma registrata' })
+  @ApiResponse({ status: 400, description: 'Campi obbligatori mancanti' })
   async handleDeletionConfirmation(
     @Body()
     body: {
@@ -140,11 +158,13 @@ export class GdprWebhookController {
   }
 
   /**
-   * Verify webhook signature (placeholder)
+   * Verify webhook signature using HMAC-SHA256 with timing-safe comparison.
    */
-  private verifyWebhookSignature(_payload: string, signature?: string): boolean {
-    if (!signature) return false;
-    // In production: Implement HMAC verification
-    return true;
+  private verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const sig = Buffer.from(signature);
+    const exp = Buffer.from(expected);
+    if (sig.length !== exp.length) return false;
+    return crypto.timingSafeEqual(sig, exp);
   }
 }

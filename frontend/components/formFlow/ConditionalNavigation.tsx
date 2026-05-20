@@ -63,7 +63,7 @@ export const ConditionalNavigation: React.FC<ConditionalNavigationProps> = ({
   const PrimaryIcon = isLastStep ? Check : ArrowRight;
 
   return (
-    <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+    <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-[var(--border-default)]">
       {/* Back Button */}
       <motion.button
         type="button"
@@ -71,10 +71,10 @@ export const ConditionalNavigation: React.FC<ConditionalNavigationProps> = ({
         disabled={!canGoBack || isLoading}
         className={cn(
           'flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all duration-200',
-          'focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2',
+          'focus:outline-none focus:ring-2 focus:ring-[var(--border-strong)] focus:ring-offset-2',
           canGoBack && !isLoading
-            ? 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-            : 'text-gray-400 cursor-not-allowed opacity-50'
+            ? 'text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]'
+            : 'text-[var(--text-tertiary)] cursor-not-allowed opacity-50'
         )}
         whileHover={prefersReducedMotion ? {} : { x: -2 }}
         whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -95,12 +95,12 @@ export const ConditionalNavigation: React.FC<ConditionalNavigationProps> = ({
           'focus:outline-none focus:ring-2 focus:ring-offset-2',
           canGoNext && !isLoading && isValid
             ? cn(
-                'text-white shadow-md hover:shadow-lg',
+                'text-[var(--text-on-brand)] shadow-md hover:shadow-lg',
                 isLastStep
-                  ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                  : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                  ? 'bg-[var(--status-success)] hover:bg-[var(--status-success)] focus:ring-[var(--status-success)]'
+                  : 'bg-[var(--status-info)] hover:bg-[var(--status-info)] focus:ring-[var(--status-info)]'
               )
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-[var(--border-strong)] text-[var(--text-tertiary)] cursor-not-allowed'
         )}
         whileHover={prefersReducedMotion || !canGoNext ? {} : { x: 2 }}
         whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
@@ -155,7 +155,7 @@ export const StepIndicators: React.FC<{
               <div
                 className={cn(
                   'w-4 h-0.5 flex-shrink-0 transition-colors duration-300',
-                  isCompleted || isCurrent ? 'bg-blue-500' : 'bg-gray-200'
+                  isCompleted || isCurrent ? 'bg-[var(--status-info)]' : 'bg-[var(--border-default)]'
                 )}
               />
             )}
@@ -168,14 +168,14 @@ export const StepIndicators: React.FC<{
               className={cn(
                 'flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium',
                 'transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1',
-                isCompleted && 'bg-blue-500 text-white focus:ring-blue-500',
-                isCurrent && 'bg-blue-600 text-white ring-2 ring-blue-200 focus:ring-blue-600',
+                isCompleted && 'bg-[var(--status-info-subtle)]0 text-[var(--text-on-brand)] focus:ring-[var(--status-info)]',
+                isCurrent && 'bg-[var(--status-info)] text-[var(--text-on-brand)] ring-2 ring-[var(--status-info)]/20 focus:ring-[var(--status-info)]',
                 !isCompleted &&
                   !isCurrent &&
                   isVisited &&
-                  'bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-400',
+                  'bg-[var(--status-info-subtle)] text-[var(--status-info)] hover:bg-[var(--status-info)]/20 focus:ring-[var(--status-info)]/40',
                 !isVisited &&
-                  'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  'bg-[var(--surface-secondary)] text-[var(--text-tertiary)] cursor-not-allowed'
               )}
               whileHover={prefersReducedMotion || !isClickable ? {} : { scale: 1.1 }}
               whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
@@ -221,15 +221,15 @@ export const FloatingNavigation: React.FC<
 
   return (
     <motion.div
-      className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 z-50"
+      className="fixed bottom-0 left-0 right-0 bg-[var(--surface-secondary)]/90 backdrop-blur-md border-t border-[var(--border-default)] p-4 z-50"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={prefersReducedMotion ? {} : { type: 'spring', stiffness: 300 }}
     >
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--surface-secondary)]">
         <motion.div
-          className="h-full bg-blue-500"
+          className="h-full bg-[var(--status-info-subtle)]0"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ type: 'spring', stiffness: 100 }}
@@ -244,8 +244,8 @@ export const FloatingNavigation: React.FC<
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors',
             canGoBack && !isLoading
-              ? 'text-gray-700 hover:bg-gray-100'
-              : 'text-gray-400 cursor-not-allowed'
+              ? 'text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]'
+              : 'text-[var(--text-tertiary)] cursor-not-allowed'
           )}
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
         >
@@ -260,8 +260,8 @@ export const FloatingNavigation: React.FC<
           className={cn(
             'flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all',
             canGoNext && !isLoading && isValid
-              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'bg-[var(--status-info)] text-[var(--text-on-brand)] hover:bg-[var(--status-info)] shadow-lg'
+              : 'bg-[var(--border-default)] text-[var(--text-tertiary)] cursor-not-allowed'
           )}
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
         >

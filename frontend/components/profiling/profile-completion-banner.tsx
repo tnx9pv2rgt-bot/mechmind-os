@@ -61,9 +61,9 @@ export function ProfileCompletionBanner({
         }}
         className={cn(
           'relative overflow-hidden',
-          'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10',
+          'bg-gradient-to-r from-[var(--status-info)]/10 via-[var(--brand)]/10 to-[var(--status-warning)]/10',
           'backdrop-blur-3xl',
-          'border border-white/50',
+          'border border-[var(--border-default)]/50',
           'rounded-[24px]',
           'p-5 mb-6',
           'shadow-apple-lg',
@@ -71,8 +71,8 @@ export function ProfileCompletionBanner({
         )}
       >
         {/* Effetto luce sferica (Liquid Glass) */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[var(--surface-secondary)]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-[var(--status-info)]/10 rounded-full blur-2xl pointer-events-none" />
         
         {/* Pulsante chiudi */}
         {dismissable && (
@@ -80,11 +80,11 @@ export function ProfileCompletionBanner({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsDismissed(true)}
-            className="absolute top-3 right-3 p-1.5 rounded-full bg-white/40 hover:bg-white/60 
+            className="absolute top-3 right-3 p-1.5 rounded-full bg-[var(--surface-secondary)]/40 hover:bg-[var(--surface-secondary)]/60 
                        transition-colors z-10"
             aria-label="Chiudi banner"
           >
-            <X className="w-4 h-4 text-gray-600" />
+            <X className="w-4 h-4 text-[var(--text-secondary)]" />
           </motion.button>
         )}
         
@@ -98,29 +98,29 @@ export function ProfileCompletionBanner({
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className={cn(
                 'w-14 h-14 rounded-2xl flex-shrink-0',
-                'bg-gradient-to-br from-blue-500 to-indigo-600',
+                'bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)]',
                 'flex items-center justify-center',
                 'shadow-lg shadow-blue-500/25',
                 'relative overflow-hidden'
               )}
             >
               {/* Shimmer effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--surface-secondary)]/20 to-transparent 
                               translate-x-[-100%] animate-shimmer" />
-              <Gift className="w-7 h-7 text-white" />
+              <Gift className="w-7 h-7 text-[var(--text-on-brand)]" />
             </motion.div>
             
             {/* Testo */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold text-gray-900 text-base">
+                <h4 className="font-semibold text-[var(--text-primary)] text-base">
                   Completa il tuo profilo
                 </h4>
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Sparkles className="w-4 h-4 text-[var(--status-warning)]" />
               </div>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 Aggiungi{' '}
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-[var(--text-primary)]">
                   {missingFields.length} campo{missingFields.length > 1 ? 'pi' : ''}
                 </span>{' '}
                 e ricevi:
@@ -129,7 +129,7 @@ export function ProfileCompletionBanner({
                 key={stage.incentive}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 
+                className="text-sm font-semibold bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] 
                            bg-clip-text text-transparent mt-0.5"
               >
                 {stage.incentive}
@@ -175,7 +175,7 @@ export function ProfileCompletionBanner({
               </svg>
               {/* Percentuale */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-bold text-gray-700">
+                <span className="text-xs font-bold text-[var(--text-secondary)]">
                   {Math.round(completionPercentage)}%
                 </span>
               </div>
@@ -185,8 +185,8 @@ export function ProfileCompletionBanner({
             <AppleButton
               onClick={() => setIsModalOpen(true)}
               disabled={isLoading}
-              className="h-11 px-5 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 
-                         hover:from-blue-600 hover:to-indigo-700 text-white font-medium
+              className="h-11 px-5 rounded-2xl bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] 
+                         hover:from-[var(--status-info)] hover:to-[var(--brand)] text-[var(--text-on-brand)] font-medium
                          shadow-lg shadow-blue-500/25 hidden sm:flex items-center gap-1.5"
             >
               Completa ora
@@ -198,8 +198,8 @@ export function ProfileCompletionBanner({
               onClick={() => setIsModalOpen(true)}
               disabled={isLoading}
               size="sm"
-              className="h-10 w-10 p-0 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 
-                         hover:from-blue-600 hover:to-indigo-700 text-white
+              className="h-10 w-10 p-0 rounded-xl bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] 
+                         hover:from-[var(--status-info)] hover:to-[var(--brand)] text-[var(--text-on-brand)]
                          shadow-lg shadow-blue-500/25 sm:hidden flex items-center justify-center"
             >
               <ChevronRight className="w-5 h-5" />
@@ -209,19 +209,19 @@ export function ProfileCompletionBanner({
         
         {/* Progress bar lineare in basso */}
         <div className="mt-4">
-          <div className="h-1.5 w-full bg-gray-200/50 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-[var(--border-default)]/50 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full"
+              className="h-full bg-gradient-to-r from-[var(--status-info)] via-[var(--brand)] to-[var(--status-warning)] rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${completionPercentage}%` }}
               transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[var(--text-tertiary)]">
               {completedFields} di {totalFields} campi completati
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[var(--text-tertiary)]">
               {missingFields.length} rimanenti
             </span>
           </div>

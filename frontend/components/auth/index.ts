@@ -32,3 +32,25 @@ export {
 
 // Animated Background
 export { default as AnimatedBackground } from './AnimatedBackground';
+
+// Auth Left Panel
+export { AuthLeftPanel } from './auth-left-panel';
+
+// OTP Input
+export { OtpInput, OTPInput } from './otp-input';
+
+// Password Strength
+export { PasswordStrength } from './password-strength';
+
+// Social OAuth Buttons
+export { SocialButtons } from './social-buttons';
+
+// Demo Components
+export { DemoBanner } from './demo-banner';
+export { DemoCTA } from './demo-cta';
+
+// Passkey Prompt
+export { PasskeyPrompt } from './passkey-prompt';
+
+// Magic Link
+export { MagicLinkSent } from './magic-link-sent';

@@ -11,13 +11,12 @@
 
 import { TRPCClientError, NetworkError, ServerError } from '../api-errors';
 import { api } from '../api-client';
-import type {
-  InspectionStatus,
-  InspectionItemStatus,
-  FindingSeverity,
-  FindingStatus,
-  FuelLevel,
-} from '@prisma/client';
+// Types previously imported from @prisma/client - defined locally to avoid direct DB dependency
+export type InspectionStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'WAITING_APPROVAL';
+export type InspectionItemStatus = 'GOOD' | 'FAIR' | 'POOR' | 'CRITICAL' | 'NOT_INSPECTED' | 'ISSUE_FOUND';
+export type FindingSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'OK';
+export type FindingStatus = 'OPEN' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'DEFERRED';
+export type FuelLevel = 'EMPTY' | 'QUARTER' | 'HALF' | 'THREE_QUARTER' | 'FULL';
 
 // =============================================================================
 // Type Definitions
@@ -1101,5 +1100,4 @@ export async function getInspectionStats(
   }
 }
 
-// Export all types for consumers
-export type { InspectionStatus, InspectionItemStatus, FindingSeverity, FindingStatus, FuelLevel };
+// Types are already exported at their definition above

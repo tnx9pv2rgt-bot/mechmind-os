@@ -33,7 +33,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
     >
       {/* Icona animata */}
       <motion.div
-        className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg"
+        className="w-20 h-20 bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] rounded-2xl flex items-center justify-center mb-6 shadow-lg"
         animate={{
           scale: [1, 1.05, 1],
           rotate: [0, 5, -5, 0],
@@ -44,12 +44,12 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
           ease: 'easeInOut',
         }}
       >
-        <Sparkles className="w-10 h-10 text-white" />
+        <Sparkles className="w-10 h-10 text-[var(--text-on-brand)]" />
       </motion.div>
 
       {/* Titolo */}
       <motion.h1
-        className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
+        className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -59,7 +59,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
 
       {/* Descrizione */}
       <motion.p
-        className="text-lg text-gray-600 max-w-md mb-8"
+        className="text-lg text-[var(--text-secondary)] max-w-md mb-8"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -82,13 +82,13 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
         ].map((feature, index) => (
           <motion.div
             key={feature.label}
-            className="p-4 bg-gray-50 rounded-xl"
+            className="p-4 bg-[var(--surface-secondary)] rounded-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + index * 0.1 }}
           >
-            <div className="text-sm font-semibold text-gray-900">{feature.label}</div>
-            <div className="text-xs text-gray-500">{feature.desc}</div>
+            <div className="text-sm font-semibold text-[var(--text-primary)]">{feature.label}</div>
+            <div className="text-xs text-[var(--text-tertiary)]">{feature.desc}</div>
           </motion.div>
         ))}
       </motion.div>
@@ -97,7 +97,7 @@ export const WelcomeStep: React.FC<WelcomeStepProps> = ({
       <motion.button
         type="button"
         onClick={onNext}
-        className="group flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-medium shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all"
+        className="group flex items-center gap-2 px-8 py-3 bg-[var(--status-info)] text-[var(--text-on-brand)] rounded-xl font-medium shadow-lg hover:bg-[var(--status-info)] hover:shadow-xl transition-all"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         initial={{ opacity: 0, y: 10 }}

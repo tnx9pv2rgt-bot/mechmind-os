@@ -9,7 +9,20 @@ import { BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@common/services/prisma.service';
 import { QueueService } from '@common/services/queue.service';
 import { LoggerService } from '@common/services/logger.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { CreateBookingDto, ReserveSlotDto, UpdateBookingDto } from '../dto/create-booking.dto';
+import { RescheduleBookingDto } from '../dto/reschedule-booking.dto';
+import { validateTransition, TransitionMap } from '@common/utils/state-machine';
+
+const BOOKING_TRANSITIONS: TransitionMap = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['CHECKED_IN', 'CANCELLED', 'NO_SHOW'],
+  CHECKED_IN: ['IN_PROGRESS', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED'],
+  COMPLETED: [],
+  CANCELLED: [],
+  NO_SHOW: [],
+};
 
 const bookingInclude = {
   customer: true,
@@ -62,7 +75,42 @@ export class BookingService {
     private readonly eventEmitter: EventEmitter2,
     private readonly queueService: QueueService,
     private readonly logger: LoggerService,
+    private readonly encryption: EncryptionService,
   ) {}
+
+  /**
+   * Decrypt customer PII fields embedded in booking relations.
+   * Only decrypts if encrypted fields are present (e.g. encryptedFirstName).
+   */
+  private decryptCustomerInBooking<T extends { customer?: Record<string, unknown> | null }>(
+    booking: T,
+  ): T {
+    if (!booking.customer) return booking;
+    const c = booking.customer as Record<string, unknown>;
+
+    // Only apply decryption if encrypted fields exist on the customer object
+    const hasEncryptedFields = 'encryptedFirstName' in c || 'encryptedEmail' in c;
+    if (!hasEncryptedFields) return booking;
+
+    const safeDecrypt = (val: unknown): string | null => {
+      if (!val || typeof val !== 'string') return null;
+      try {
+        return this.encryption.decrypt(val);
+      } catch {
+        return '[encrypted]';
+      }
+    };
+    return {
+      ...booking,
+      customer: {
+        ...c,
+        firstName: safeDecrypt(c.encryptedFirstName),
+        lastName: safeDecrypt(c.encryptedLastName),
+        email: safeDecrypt(c.encryptedEmail),
+        phone: safeDecrypt(c.encryptedPhone),
+      },
+    };
+  }
 
   /**
    * Reserve a booking slot with advisory lock and serializable transaction
@@ -84,7 +132,7 @@ export class BookingService {
         'reserve-slot-retry',
         {
           type: 'reserve-slot-retry',
-          payload: dto,
+          payload: { ...dto } as Record<string, unknown>,
           tenantId,
         },
         { delay: 5000 },
@@ -131,32 +179,13 @@ export class BookingService {
             throw new NotFoundException(`Customer ${customerId} not found`);
           }
 
-          // Step 5: Insert booking event
-          const bookingEvent = await tx.bookingEvent.create({
-            data: {
-              eventType: 'booking_created',
-              payload: {
-                customerId,
-                slotId,
-                vehicleId,
-                serviceIds,
-                notes,
-              },
-              booking: {
-                connect: {
-                  id: 'temp', // Will be updated after booking creation
-                },
-              },
-            },
-          });
-
-          // Step 6: Update slot status
+          // Step 5: Update slot status
           await tx.bookingSlot.update({
             where: { id: slotId },
             data: { status: 'BOOKED' },
           });
 
-          // Step 7: Create booking
+          // Step 6: Create booking
           const booking = await tx.booking.create({
             data: {
               status: BookingStatus.CONFIRMED,
@@ -193,10 +222,17 @@ export class BookingService {
             },
           });
 
-          // Update booking event with correct booking ID
-          await tx.bookingEvent.update({
-            where: { id: bookingEvent.id },
+          // Step 7: Insert booking event with real booking ID
+          await tx.bookingEvent.create({
             data: {
+              eventType: 'booking_created',
+              payload: {
+                customerId,
+                slotId,
+                vehicleId,
+                serviceIds,
+                notes,
+              },
               booking: { connect: { id: booking.id } },
             },
           });
@@ -262,7 +298,22 @@ export class BookingService {
       vapiCallId,
       technicianId,
       liftPosition,
+      idempotencyKey,
     } = dto;
+
+    // Idempotency check: return existing booking if key already used
+    if (idempotencyKey) {
+      const existing = await this.prisma.booking.findUnique({
+        where: { idempotencyKey },
+        include: {
+          customer: true,
+          vehicle: true,
+          services: { include: { service: true } },
+          slot: true,
+        },
+      });
+      if (existing) return existing;
+    }
 
     return this.prisma.withTenant(tenantId, async prisma => {
       // Validate slot
@@ -285,6 +336,7 @@ export class BookingService {
           vapiCallId: vapiCallId || null,
           technicianId: technicianId || null,
           liftPosition: liftPosition || null,
+          idempotencyKey: idempotencyKey || null,
           tenant: { connect: { id: tenantId } },
           customer: { connect: { id: customerId } },
           slot: { connect: { id: slotId } },
@@ -331,7 +383,7 @@ export class BookingService {
         ),
       );
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
   }
 
@@ -364,7 +416,7 @@ export class BookingService {
         throw new NotFoundException(`Booking ${bookingId} not found`);
       }
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
   }
 
@@ -416,7 +468,7 @@ export class BookingService {
         prisma.booking.count({ where }),
       ]);
 
-      return { bookings, total };
+      return { bookings: bookings.map(b => this.decryptCustomerInBooking(b)), total };
     });
   }
 
@@ -435,6 +487,10 @@ export class BookingService {
 
       if (!existing) {
         throw new NotFoundException(`Booking ${bookingId} not found`);
+      }
+
+      if (dto.status) {
+        validateTransition(existing.status, dto.status, BOOKING_TRANSITIONS, 'booking');
       }
 
       const booking = await prisma.booking.update({
@@ -456,6 +512,14 @@ export class BookingService {
         },
       });
 
+      // Free the slot when booking is cancelled
+      if (dto.status === BookingStatus.CANCELLED && booking.slot) {
+        await prisma.bookingSlot.update({
+          where: { id: booking.slot.id },
+          data: { status: 'AVAILABLE' },
+        });
+      }
+
       // Create update event
       await prisma.bookingEvent.create({
         data: {
@@ -472,8 +536,62 @@ export class BookingService {
         changes: dto,
       });
 
-      return booking;
+      return this.decryptCustomerInBooking(booking);
     });
+  }
+
+  /**
+   * Bulk confirm bookings (PENDING → CONFIRMED)
+   */
+  async bulkConfirm(
+    tenantId: string,
+    ids: string[],
+  ): Promise<{ confirmed: number; failed: { id: string; reason: string }[] }> {
+    const confirmed: string[] = [];
+    const failed: { id: string; reason: string }[] = [];
+
+    for (const id of ids) {
+      try {
+        const booking = await this.prisma.booking.findFirst({
+          where: { id, tenantId },
+        });
+
+        if (!booking) {
+          failed.push({ id, reason: 'Prenotazione non trovata' });
+          continue;
+        }
+
+        if (booking.status !== 'PENDING') {
+          failed.push({ id, reason: `Stato ${booking.status} non confermabile` });
+          continue;
+        }
+
+        await this.prisma.booking.update({
+          where: { id },
+          data: { status: 'CONFIRMED' },
+        });
+
+        await this.prisma.bookingEvent.create({
+          data: {
+            eventType: 'booking_confirmed',
+            payload: { bulkAction: true } as unknown as Prisma.InputJsonValue,
+            booking: { connect: { id } },
+          },
+        });
+
+        this.eventEmitter.emit('booking.updated', {
+          bookingId: id,
+          tenantId,
+          changes: { status: 'CONFIRMED' },
+        });
+
+        confirmed.push(id);
+      } catch {
+        failed.push({ id, reason: 'Errore interno' });
+      }
+    }
+
+    return { confirmed: confirmed.length, failed };
   }
 
   /**
@@ -529,7 +647,7 @@ export class BookingService {
         reason,
       });
 
-      return updated;
+      return this.decryptCustomerInBooking(updated);
     });
   }
 
@@ -589,6 +707,109 @@ export class BookingService {
           {},
         ),
       };
+    });
+  }
+
+  /**
+   * Reschedule a booking to a new date and optionally a new slot
+   */
+  async rescheduleBooking(
+    tenantId: string,
+    bookingId: string,
+    dto: RescheduleBookingDto,
+  ): Promise<BookingWithRelations> {
+    const { newDate, newSlotId, reason } = dto;
+
+    return this.prisma.withTenant(tenantId, async prisma => {
+      const existing = await prisma.booking.findFirst({
+        where: { id: bookingId, tenantId },
+        include: { slot: true },
+      });
+
+      if (!existing) {
+        throw new NotFoundException(`Booking ${bookingId} not found`);
+      }
+
+      const reschedulableStatuses: string[] = [BookingStatus.PENDING, BookingStatus.CONFIRMED];
+
+      if (!reschedulableStatuses.includes(existing.status)) {
+        throw new BadRequestException(
+          `Cannot reschedule booking with status ${existing.status}. Only PENDING and CONFIRMED bookings can be rescheduled.`,
+        );
+      }
+
+      const updateData: Prisma.BookingUpdateInput = {
+        scheduledDate: new Date(newDate),
+      };
+
+      // If moving to a new slot, validate and update slot assignments
+      if (newSlotId && newSlotId !== existing.slotId) {
+        const newSlot = await prisma.bookingSlot.findFirst({
+          where: { id: newSlotId, tenantId },
+        });
+
+        if (!newSlot) {
+          throw new NotFoundException(`Slot ${newSlotId} not found`);
+        }
+
+        if (newSlot.status !== 'AVAILABLE') {
+          throw new ConflictException(
+            `Slot ${newSlotId} is not available (status: ${newSlot.status})`,
+          );
+        }
+
+        // Free old slot
+        if (existing.slotId) {
+          await prisma.bookingSlot.update({
+            where: { id: existing.slotId },
+            data: { status: 'AVAILABLE' },
+          });
+        }
+
+        // Book new slot
+        await prisma.bookingSlot.update({
+          where: { id: newSlotId },
+          data: { status: 'BOOKED' },
+        });
+
+        updateData.slot = { connect: { id: newSlotId } };
+      }
+
+      const booking = await prisma.booking.update({
+        where: { id: bookingId },
+        data: updateData,
+        include: bookingInclude,
+      });
+
+      // Create reschedule event
+      await prisma.bookingEvent.create({
+        data: {
+          eventType: 'booking_rescheduled',
+          payload: {
+            previousDate: existing.scheduledDate.toISOString(),
+            newDate,
+            previousSlotId: existing.slotId,
+            newSlotId: newSlotId || existing.slotId,
+            reason: reason || null,
+          },
+          booking: { connect: { id: booking.id } },
+        },
+      });
+
+      // Emit event
+      this.eventEmitter.emit('booking.rescheduled', {
+        bookingId: booking.id,
+        tenantId,
+        previousDate: existing.scheduledDate,
+        newDate: booking.scheduledDate,
+        reason,
+      });
+
+      this.logger.log(
+        `Booking ${bookingId} rescheduled from ${existing.scheduledDate.toISOString()} to ${newDate}`,
+      );
+
+      return this.decryptCustomerInBooking(booking);
     });
   }
 }

@@ -1,33 +1,28 @@
 /**
  * Warranty Service Unit Tests
- * 
+ *
  * Tests for warranty creation, validation, expiration tracking,
  * claims management, and remaining coverage calculation.
- * 
+ *
  * @module lib/services/__tests__/warrantyService
  */
 
 // Jest globals are available automatically
 // Jest Mock type
 
-// Mock @prisma/client
-jest.mock('@prisma/client', () => {
-  const actual = jest.requireActual('@prisma/client') as Record<string, unknown>
-  return {
-    ...actual,
-    Prisma: {
-      ...(actual.Prisma as Record<string, unknown> || {}),
-      PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
-        code: string
-        constructor(message: string, { code }: { code: string; clientVersion?: string }) {
-          super(message)
-          this.code = code
-          this.name = 'PrismaClientKnownRequestError'
-        }
-      },
+// Mock @prisma/client (virtual: true because @prisma/client is not installed in frontend)
+jest.mock('@prisma/client', () => ({
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      constructor(message: string, { code }: { code: string; clientVersion?: string }) {
+        super(message)
+        this.code = code
+        this.name = 'PrismaClientKnownRequestError'
+      }
     },
-  }
-})
+  },
+}), { virtual: true })
 
 // Mock tenant context
 jest.mock('@/lib/tenant/context', () => ({
@@ -41,41 +36,20 @@ jest.mock('@/lib/tenant/context', () => ({
   TenantContext: {},
 }))
 
-// Mock Prisma
-const mockPrismaWarranty = {
-  create: jest.fn(),
-  findUnique: jest.fn(),
-  findFirst: jest.fn(),
-  findMany: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-}
-
-const mockPrismaWarrantyClaim = {
-  create: jest.fn(),
-  findUnique: jest.fn(),
-  findFirst: jest.fn(),
-  findMany: jest.fn(),
-  update: jest.fn(),
-}
-
-const mockPrismaVehicle = {
-  findFirst: jest.fn().mockResolvedValue({ id: 'vehicle-001', vin: 'VIN123', tenantId: 'test-tenant-id', make: 'Toyota', model: 'Corolla', year: 2020 }),
-  findUnique: jest.fn(),
-}
-
-jest.mock('@/lib/prisma', () => ({
-  prisma: {
-    warranty: mockPrismaWarranty,
-    warrantyClaim: mockPrismaWarrantyClaim,
-    vehicle: mockPrismaVehicle,
-    $disconnect: jest.fn(),
-  },
-}))
+// Mock global fetch
+;(global as any).fetch = jest.fn()
 
 // Import after mocking
-import { 
-  WarrantyService,
+import {
+  createWarranty,
+  fileClaim,
+  reviewClaim,
+  markClaimPaid,
+  getRemainingCoverage,
+  getExpiringWarranties,
+  updateWarrantyStatus,
+  updateAllWarrantyStatuses,
+  getWarranty,
   WarrantyError,
   WarrantyNotFoundError,
   ClaimNotFoundError,
@@ -89,11 +63,8 @@ import {
 } from '../warrantyService'
 
 describe('WarrantyService', () => {
-  let service: WarrantyService
-
   beforeEach(() => {
-    service = new WarrantyService()
-    jest.clearAllMocks()
+    (global.fetch as jest.Mock).mockReset()
   })
 
   afterEach(() => {
@@ -118,107 +89,189 @@ describe('WarrantyService', () => {
       certificateUrl: 'https://example.com/cert',
     }
 
-    it('should create a warranty with valid data', async () => {
-      const mockWarranty = {
-        id: 'warranty-001',
-        ...validWarrantyData,
-        status: WarrantyStatus.ACTIVE,
-        alertsSent: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
+    // Helper to create warranty response
+    function createWarrantyResponse(overrides: Record<string, any> = {}) {
+      return {
+        id: overrides.id || 'warranty-001',
+        tenantId: overrides.tenantId || 'test-tenant-id',
+        warrantyNumber: overrides.warrantyNumber || 'W-001',
+        vehicleId: overrides.vehicleId || validWarrantyData.vehicleId,
+        type: overrides.type || validWarrantyData.type,
+        provider: overrides.provider || validWarrantyData.provider,
+        startDate: overrides.startDate || validWarrantyData.startDate,
+        expirationDate: overrides.expirationDate || validWarrantyData.expirationDate,
+        coverageKm: overrides.coverageKm || validWarrantyData.coverageKm,
+        currentKm: overrides.currentKm || validWarrantyData.currentKm,
+        maxCoverage: overrides.maxCoverage || validWarrantyData.maxCoverage,
+        deductible: overrides.deductible || validWarrantyData.deductible,
+        terms: overrides.terms || validWarrantyData.terms,
+        certificateUrl: overrides.certificateUrl || validWarrantyData.certificateUrl,
+        status: overrides.status || WarrantyStatus.ACTIVE,
+        alertsSent: overrides.alertsSent || [],
+        alertEmailEnabled: overrides.alertEmailEnabled !== undefined ? overrides.alertEmailEnabled : true,
+        alertSmsEnabled: overrides.alertSmsEnabled || false,
+        alertDaysBeforeExpiry: overrides.alertDaysBeforeExpiry || 30,
+        mileageLimit: overrides.mileageLimit || null,
+        maxClaimAmount: overrides.maxClaimAmount || validWarrantyData.maxCoverage,
+        deductibleAmount: overrides.deductibleAmount || validWarrantyData.deductible,
+        claims: overrides.claims || [],
+        createdAt: overrides.createdAt || new Date(),
+        updatedAt: overrides.updatedAt || new Date(),
       }
+    }
 
-      mockPrismaWarranty.create.mockResolvedValue(mockWarranty)
+    it('should create a warranty with valid data', async () => {
+      const mockResponse = createWarrantyResponse()
 
-      const result = await service.createWarranty(validWarrantyData)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockResponse }),
+      })
 
-      expect(result).toEqual(mockWarranty)
-      expect(mockPrismaWarranty.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            vehicleId: validWarrantyData.vehicleId,
-            coverageType: validWarrantyData.type,
-            maxClaimAmount: validWarrantyData.maxCoverage,
-            deductibleAmount: validWarrantyData.deductible,
-          }),
-        })
+      const result = await createWarranty(validWarrantyData)
+
+      expect(result.id).toBe('warranty-001')
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/warranties'),
+        expect.objectContaining({ method: 'POST' })
       )
     })
 
-    it('should throw InvalidWarrantyDataError for missing vehicleId', async () => {
+    it('should pass empty vehicleId to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Vehicle ID is required' } }),
+      })
+
       const invalidData = { ...validWarrantyData, vehicleId: '' }
-
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
-    it('should throw InvalidWarrantyDataError for missing provider', async () => {
+    it('should pass empty provider to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Provider is required' } }),
+      })
+
       const invalidData = { ...validWarrantyData, provider: '' }
-
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
-    it('should throw InvalidWarrantyDataError for expiration before start', async () => {
+    it('should pass invalid dates to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Expiration before start' } }),
+      })
+
       const invalidData = {
         ...validWarrantyData,
         startDate: new Date('2026-01-01'),
         expirationDate: new Date('2024-01-01'),
       }
-
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
-    it('should throw InvalidWarrantyDataError for negative max coverage', async () => {
+    it('should pass negative max coverage to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Coverage must be positive' } }),
+      })
+
       const invalidData = { ...validWarrantyData, maxCoverage: -100 }
-
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
-    it('should throw InvalidWarrantyDataError for negative deductible', async () => {
+    it('should pass negative deductible to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Deductible must be positive' } }),
+      })
+
       const invalidData = { ...validWarrantyData, deductible: -50 }
-
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
-    it('should throw InvalidWarrantyDataError for negative currentKm', async () => {
-      const invalidData = { ...validWarrantyData, currentKm: -1000 }
+    it('should pass negative currentKm to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Kilometers must be non-negative' } }),
+      })
 
-      await expect(service.createWarranty(invalidData)).rejects.toThrow(InvalidWarrantyDataError)
+      const invalidData = { ...validWarrantyData, currentKm: -1000 }
+      await expect(createWarranty(invalidData)).rejects.toThrow()
     })
 
     it('should set EXPIRED status if expiration date is in the past', async () => {
-      const expiredData = {
-        ...validWarrantyData,
+      const expiredData: CreateWarrantyDTO = {
+        vehicleId: validWarrantyData.vehicleId,
+        type: validWarrantyData.type,
+        provider: validWarrantyData.provider,
         startDate: new Date('2020-01-01'),
         expirationDate: new Date('2021-01-01'),
+        coverageKm: validWarrantyData.coverageKm,
+        currentKm: validWarrantyData.currentKm,
+        maxCoverage: validWarrantyData.maxCoverage,
+        deductible: validWarrantyData.deductible,
+        terms: validWarrantyData.terms,
+        certificateUrl: validWarrantyData.certificateUrl,
       }
 
-      mockPrismaWarranty.create.mockResolvedValue({
+      const mockResponse = createWarrantyResponse({
         id: 'warranty-002',
-        ...expiredData,
+        warrantyNumber: 'W-002',
+        startDate: expiredData.startDate,
+        expirationDate: expiredData.expirationDate,
         status: WarrantyStatus.EXPIRED,
       })
 
-      const result = await service.createWarranty(expiredData)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockResponse }),
+      })
+
+      const result = await createWarranty(expiredData)
       expect(result.status).toBe(WarrantyStatus.EXPIRED)
     })
 
     it('should set EXPIRING_SOON status if expiration is within 60 days', async () => {
       const expiringSoon = new Date()
       expiringSoon.setDate(expiringSoon.getDate() + 30)
+      const startDate = new Date()
 
-      const expiringData = {
-        ...validWarrantyData,
-        startDate: new Date(),
+      const expiringData: CreateWarrantyDTO = {
+        vehicleId: validWarrantyData.vehicleId,
+        type: validWarrantyData.type,
+        provider: validWarrantyData.provider,
+        startDate,
         expirationDate: expiringSoon,
+        coverageKm: validWarrantyData.coverageKm,
+        currentKm: validWarrantyData.currentKm,
+        maxCoverage: validWarrantyData.maxCoverage,
+        deductible: validWarrantyData.deductible,
+        terms: validWarrantyData.terms,
+        certificateUrl: validWarrantyData.certificateUrl,
       }
 
-      mockPrismaWarranty.create.mockResolvedValue({
+      const mockResponse = createWarrantyResponse({
         id: 'warranty-003',
-        ...expiringData,
+        warrantyNumber: 'W-003',
+        startDate,
+        expirationDate: expiringSoon,
         status: WarrantyStatus.EXPIRING_SOON,
       })
 
-      const result = await service.createWarranty(expiringData)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockResponse }),
+      })
+
+      const result = await createWarranty(expiringData)
       expect(result.status).toBe(WarrantyStatus.EXPIRING_SOON)
     })
   })
@@ -242,64 +295,95 @@ describe('WarrantyService', () => {
       deductible: 100,
     }
 
+    // Helper to create claim response
+    function createClaimResponse(overrides: Record<string, any> = {}) {
+      return {
+        id: overrides.id || 'claim-001',
+        tenantId: overrides.tenantId || 'test-tenant-id',
+        warrantyId: overrides.warrantyId || warrantyId,
+        claimNumber: overrides.claimNumber || 'C-001',
+        description: overrides.description || validClaimData.issueDescription,
+        amount: overrides.amount || validClaimData.estimatedCost,
+        status: overrides.status || ClaimStatus.SUBMITTED,
+        evidencePhotos: overrides.evidencePhotos || [],
+        documents: overrides.documents || [],
+        submittedDate: overrides.submittedDate || new Date(),
+        reviewedDate: overrides.reviewedDate || null,
+        resolvedDate: overrides.resolvedDate || null,
+        createdAt: overrides.createdAt || new Date(),
+        updatedAt: overrides.updatedAt || new Date(),
+      }
+    }
+
     it('should file a claim with valid data', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
-      mockPrismaWarrantyClaim.create.mockResolvedValue({
-        id: 'claim-001',
-        warrantyId,
-        description: validClaimData.issueDescription,
-        amount: validClaimData.estimatedCost,
-        status: ClaimStatus.SUBMITTED,
-        submittedAt: new Date(),
+      const mockResponse = createClaimResponse()
+
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockResponse }),
       })
 
-      const result = await service.fileClaim(warrantyId, validClaimData)
+      const result = await fileClaim(warrantyId, validClaimData)
 
       expect(result.status).toBe(ClaimStatus.SUBMITTED)
       expect(result.amount).toBe(validClaimData.estimatedCost)
     })
 
     it('should throw WarrantyNotFoundError if warranty not found', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { code: 'WARRANTY_NOT_FOUND' } }),
+      })
 
-      await expect(service.fileClaim(warrantyId, validClaimData))
+      await expect(fileClaim(warrantyId, validClaimData))
         .rejects.toThrow(WarrantyNotFoundError)
     })
 
     it('should throw InvalidClaimDataError if warranty is expired', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        ...mockActiveWarranty,
-        status: WarrantyStatus.EXPIRED,
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Warranty is expired' } }),
       })
 
-      await expect(service.fileClaim(warrantyId, validClaimData))
+      await expect(fileClaim(warrantyId, validClaimData))
         .rejects.toThrow(InvalidClaimDataError)
     })
 
     it('should throw InvalidClaimDataError if warranty is void', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        ...mockActiveWarranty,
-        status: WarrantyStatus.VOID,
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Warranty is void' } }),
       })
 
-      await expect(service.fileClaim(warrantyId, validClaimData))
+      await expect(fileClaim(warrantyId, validClaimData))
         .rejects.toThrow(InvalidClaimDataError)
     })
 
-    it('should throw InvalidClaimDataError for missing description', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
+    it('should pass empty description to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Description is required' } }),
+      })
 
       const invalidData = { ...validClaimData, issueDescription: '' }
-      await expect(service.fileClaim(warrantyId, invalidData))
-        .rejects.toThrow(InvalidClaimDataError)
+      await expect(fileClaim(warrantyId, invalidData))
+        .rejects.toThrow()
     })
 
-    it('should throw InvalidClaimDataError for zero estimated cost', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue(mockActiveWarranty)
+    it('should pass zero cost to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Cost must be positive' } }),
+      })
 
       const invalidData = { ...validClaimData, estimatedCost: 0 }
-      await expect(service.fileClaim(warrantyId, invalidData))
-        .rejects.toThrow(InvalidClaimDataError)
+      await expect(fileClaim(warrantyId, invalidData))
+        .rejects.toThrow()
     })
   })
 
@@ -321,55 +405,72 @@ describe('WarrantyService', () => {
     }
 
     it('should approve a claim with valid amount', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
-      mockPrismaWarrantyClaim.update.mockResolvedValue({
-        ...mockSubmittedClaim,
-        status: ClaimStatus.APPROVED,
-        amount: 450,
-        reviewedDate: new Date(),
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            ...mockSubmittedClaim,
+            status: ClaimStatus.APPROVED,
+            amount: 450,
+            reviewedDate: new Date(),
+          },
+        }),
       })
 
-      const result = await service.reviewClaim(claimId, 'APPROVE', 450, 'Looks good', 'admin-001')
+      const result = await reviewClaim(claimId, 'APPROVE', 450, 'Looks good', 'admin-001')
 
       expect(result.status).toBe(ClaimStatus.APPROVED)
       expect(result.amount).toBe(450)
     })
 
     it('should reject a claim', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
-      mockPrismaWarrantyClaim.update.mockResolvedValue({
-        ...mockSubmittedClaim,
-        status: ClaimStatus.REJECTED,
-        reviewedDate: new Date(),
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            ...mockSubmittedClaim,
+            status: ClaimStatus.REJECTED,
+            reviewedDate: new Date(),
+          },
+        }),
       })
 
-      const result = await service.reviewClaim(claimId, 'REJECT', undefined, 'Not covered', 'admin-001')
+      const result = await reviewClaim(claimId, 'REJECT', undefined, 'Not covered', 'admin-001')
 
       expect(result.status).toBe(ClaimStatus.REJECTED)
     })
 
     it('should throw ClaimNotFoundError if claim not found', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { code: 'CLAIM_NOT_FOUND' } }),
+      })
 
-      await expect(service.reviewClaim(claimId, 'APPROVE', 100))
+      await expect(reviewClaim(claimId, 'APPROVE', 100))
         .rejects.toThrow(ClaimNotFoundError)
     })
 
-    it('should throw InvalidClaimDataError when approving without amount', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(mockSubmittedClaim)
-
-      await expect(service.reviewClaim(claimId, 'APPROVE'))
-        .rejects.toThrow(InvalidClaimDataError)
-    })
-
-    it('should throw InvalidClaimDataError for already processed claim', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
-        ...mockSubmittedClaim,
-        status: ClaimStatus.APPROVED,
+    it('should pass approving without amount to backend (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Amount required for approval' } }),
       })
 
-      await expect(service.reviewClaim(claimId, 'APPROVE', 100))
-        .rejects.toThrow(InvalidClaimDataError)
+      await expect(reviewClaim(claimId, 'APPROVE'))
+        .rejects.toThrow()
+    })
+
+    it('should handle already processed claim (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Claim already processed' } }),
+      })
+
+      await expect(reviewClaim(claimId, 'APPROVE', 100))
+        .rejects.toThrow()
     })
   })
 
@@ -380,37 +481,42 @@ describe('WarrantyService', () => {
     const claimId = 'claim-001'
 
     it('should mark an approved claim as paid', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
-        id: claimId,
-        status: ClaimStatus.APPROVED,
-        amount: 450,
-      })
-      mockPrismaWarrantyClaim.update.mockResolvedValue({
-        id: claimId,
-        status: ClaimStatus.PAID,
-        resolvedDate: new Date(),
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            id: claimId,
+            status: ClaimStatus.PAID,
+            resolvedDate: new Date(),
+          },
+        }),
       })
 
-      const result = await service.markClaimPaid(claimId)
+      const result = await markClaimPaid(claimId)
 
       expect(result.status).toBe(ClaimStatus.PAID)
     })
 
     it('should throw ClaimNotFoundError if claim not found', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { code: 'CLAIM_NOT_FOUND' } }),
+      })
 
-      await expect(service.markClaimPaid(claimId))
+      await expect(markClaimPaid(claimId))
         .rejects.toThrow(ClaimNotFoundError)
     })
 
-    it('should throw InvalidClaimDataError if claim is not approved', async () => {
-      mockPrismaWarrantyClaim.findFirst.mockResolvedValue({
-        id: claimId,
-        status: ClaimStatus.SUBMITTED,
+    it('should handle unapproved claim (validation happens server-side)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_CLAIM_DATA', message: 'Claim must be approved' } }),
       })
 
-      await expect(service.markClaimPaid(claimId))
-        .rejects.toThrow(InvalidClaimDataError)
+      await expect(markClaimPaid(claimId))
+        .rejects.toThrow()
     })
   })
 
@@ -421,40 +527,47 @@ describe('WarrantyService', () => {
     const warrantyId = 'warranty-001'
 
     it('should calculate remaining coverage correctly', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        id: warrantyId,
-        maxClaimAmount: 5000,
-        mileageLimit: 50000,
-        claims: [
-          { amount: 1000 },
-          { amount: 500 },
-        ],
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            amount: 3500,
+            km: 50000,
+          },
+        }),
       })
 
-      const result = await service.getRemainingCoverage(warrantyId)
+      const result = await getRemainingCoverage(warrantyId)
 
-      expect(result.amount).toBe(3500) // 5000 - 1500
+      expect(result.amount).toBe(3500)
       expect(result.km).toBe(50000)
     })
 
     it('should return null km if no coverage limit', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        id: warrantyId,
-        maxClaimAmount: 5000,
-        mileageLimit: null,
-        claims: [],
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            amount: 5000,
+            km: null,
+          },
+        }),
       })
 
-      const result = await service.getRemainingCoverage(warrantyId)
+      const result = await getRemainingCoverage(warrantyId)
 
       expect(result.amount).toBe(5000)
       expect(result.km).toBeNull()
     })
 
     it('should throw WarrantyNotFoundError if warranty not found', async () => {
-      mockPrismaWarranty.findFirst.mockResolvedValue(null)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { code: 'WARRANTY_NOT_FOUND' } }),
+      })
 
-      await expect(service.getRemainingCoverage(warrantyId))
+      await expect(getRemainingCoverage(warrantyId))
         .rejects.toThrow(WarrantyNotFoundError)
     })
   })
@@ -463,40 +576,52 @@ describe('WarrantyService', () => {
   // getExpiringWarranties Tests
   // =============================================================================
   describe('getExpiringWarranties', () => {
-    it('should get warranties expiring within specified days', async () => {
-      const mockWarranties = [
+    // Helper to create warranty list response
+    function createExpiringWarranties() {
+      return [
         {
           id: 'warranty-001',
+          tenantId: 'test-tenant-id',
           expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           status: WarrantyStatus.ACTIVE,
+          claims: [],
         },
         {
           id: 'warranty-002',
+          tenantId: 'test-tenant-id',
           expirationDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
           status: WarrantyStatus.EXPIRING_SOON,
+          claims: [],
         },
       ]
+    }
 
-      mockPrismaWarranty.findMany.mockResolvedValue(mockWarranties)
+    it('should get warranties expiring within specified days', async () => {
+      const mockWarranties = createExpiringWarranties()
 
-      const result = await service.getExpiringWarranties(60)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockWarranties }),
+      })
+
+      const result = await getExpiringWarranties(60)
 
       expect(result).toHaveLength(2)
-      expect(mockPrismaWarranty.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            expirationDate: expect.objectContaining({
-              lte: expect.any(Date),
-              gte: expect.any(Date),
-            }),
-          }),
-        })
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/warranties/expiring'),
+        expect.any(Object)
       )
     })
 
-    it('should throw InvalidWarrantyDataError for negative days', async () => {
-      await expect(service.getExpiringWarranties(-5))
-        .rejects.toThrow(InvalidWarrantyDataError)
+    it('should handle negative days gracefully', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'INVALID_WARRANTY_DATA', message: 'Days must be positive' } }),
+      })
+
+      await expect(getExpiringWarranties(-5))
+        .rejects.toThrow()
     })
   })
 
@@ -505,45 +630,42 @@ describe('WarrantyService', () => {
   // =============================================================================
   describe('updateStatus', () => {
     it('should update warranty status based on expiration', async () => {
-      const expirationDate = new Date()
-      expirationDate.setDate(expirationDate.getDate() - 1) // Yesterday
-
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        id: 'warranty-001',
-        tenantId: 'test-tenant-id',
-        status: WarrantyStatus.ACTIVE,
-        expirationDate,
-        claims: [],
-        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
-      })
-      mockPrismaWarranty.update.mockResolvedValue({
-        id: 'warranty-001',
-        status: WarrantyStatus.EXPIRED,
-        claims: [],
-        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 'warranty-001',
+            tenantId: 'test-tenant-id',
+            status: WarrantyStatus.EXPIRED,
+            claims: [],
+            expirationDate: new Date(Date.now() - 1000),
+            vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
+          },
+        }),
       })
 
-      const result = await service.updateStatus('warranty-001')
+      const result = await updateWarrantyStatus('warranty-001')
 
       expect(result.status).toBe(WarrantyStatus.EXPIRED)
     })
 
     it('should not update if status is already correct', async () => {
-      const expirationDate = new Date()
-      expirationDate.setDate(expirationDate.getDate() + 100) // Far future
-
-      mockPrismaWarranty.findFirst.mockResolvedValue({
-        id: 'warranty-001',
-        tenantId: 'test-tenant-id',
-        status: WarrantyStatus.ACTIVE,
-        expirationDate,
-        claims: [],
-        vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            id: 'warranty-001',
+            tenantId: 'test-tenant-id',
+            status: WarrantyStatus.ACTIVE,
+            expirationDate: new Date('2026-12-31'),
+            claims: [],
+            vehicle: { id: 'v1', vin: 'VIN123', make: 'Toyota', model: 'Corolla', year: 2020 },
+          },
+        }),
       })
 
-      const result = await service.updateStatus('warranty-001')
+      const result = await updateWarrantyStatus('warranty-001')
 
-      expect(mockPrismaWarranty.update).not.toHaveBeenCalled()
       expect(result.status).toBe(WarrantyStatus.ACTIVE)
     })
   })
@@ -553,19 +675,22 @@ describe('WarrantyService', () => {
   // =============================================================================
   describe('updateAllStatuses', () => {
     it('should update all warranty statuses', async () => {
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            updated: 2,
+          },
+        }),
+      })
 
-      mockPrismaWarranty.findMany.mockResolvedValue([
-        { id: 'warranty-001', status: WarrantyStatus.ACTIVE, expirationDate: yesterday, tenantId: 'test-tenant-id' },
-        { id: 'warranty-002', status: WarrantyStatus.EXPIRING_SOON, expirationDate: yesterday, tenantId: 'test-tenant-id' },
-      ])
-      mockPrismaWarranty.update.mockResolvedValue({})
-
-      const result = await service.updateAllStatuses()
+      const result = await updateAllWarrantyStatuses()
 
       expect(result.updated).toBe(2)
-      expect(mockPrismaWarranty.update).toHaveBeenCalledTimes(2)
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/warranties/update-all-statuses'),
+        expect.any(Object)
+      )
     })
   })
 })

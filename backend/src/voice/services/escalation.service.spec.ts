@@ -371,5 +371,45 @@ describe('EscalationService', () => {
       expect(result.shouldEscalate).toBe(true);
       expect(result.reason).toBe('Customer requested human agent');
     });
+
+    it('should escalate for complaints with negative sentiment', () => {
+      // Branch coverage: complaint intent + negative sentiment (non-keyword)
+      // Arrange & Act
+      const result = service.shouldEscalate('I have a serious issue', 'complaint', 'negative');
+
+      // Assert
+      expect(result.shouldEscalate).toBe(true);
+      expect(result.reason).toBe('Negative sentiment detected');
+    });
+
+    it('should not escalate for positive sentiment even with complaint intent', () => {
+      // Branch coverage: complaint intent but positive sentiment
+      // Arrange & Act
+      const result = service.shouldEscalate(
+        'I have feedback about your excellent service',
+        'complaint',
+        'positive',
+      );
+
+      // Assert
+      expect(result.shouldEscalate).toBe(false);
+    });
+
+    it('should handle edge case: empty transcript with negative sentiment', () => {
+      // Arrange & Act
+      const result = service.shouldEscalate('', 'other', 'negative');
+
+      // Assert
+      expect(result.shouldEscalate).toBe(true);
+      expect(result.reason).toBe('Negative sentiment detected');
+    });
+
+    it('should handle edge case: very short complex complaint (< 200 chars)', () => {
+      // Arrange & Act
+      const result = service.shouldEscalate('I complain.', 'complaint', 'neutral');
+
+      // Assert
+      expect(result.shouldEscalate).toBe(false);
+    });
   });
 });

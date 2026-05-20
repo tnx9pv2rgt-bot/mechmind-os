@@ -17,6 +17,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@auth/guards/roles.guard';
 import { CurrentUser } from '@auth/decorators/current-user.decorator';
@@ -41,6 +42,7 @@ interface DashboardUrlResponse {
 @ApiTags('Analytics - Metabase BI')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('analytics/metabase')
 export class MetabaseController {
   private readonly logger = new Logger(MetabaseController.name);
@@ -64,7 +66,7 @@ export class MetabaseController {
     this.embeddingEnabled = this.configService.get<boolean>('METABASE_EMBEDDING_ENABLED', true);
 
     if (!this.secretKey && this.embeddingEnabled) {
-      this.logger.warn('METABASE_SECRET_KEY not configured. Embedding will fail.');
+      this.logger.debug('METABASE_SECRET_KEY not configured. Embedding will fail.');
     }
   }
 
@@ -238,6 +240,9 @@ The returned URL expires in 10 minutes by default.
     }
 
     const expiry = Math.min(parseInt(expiryMinutes || '10', 10), 60);
+    if (isNaN(expiry) || expiry < 1) {
+      throw new HttpException('Invalid expiryMinutes parameter', HttpStatus.BAD_REQUEST);
+    }
 
     try {
       const payload: MetabaseEmbedPayload = {

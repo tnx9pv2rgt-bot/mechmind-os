@@ -250,7 +250,7 @@ export function SendNotificationDialog({
                 <Label>Destinatario</Label>
                 <div className='grid grid-cols-2 gap-3'>
                   <div className='space-y-2'>
-                    <Label className='text-xs text-gray-500'>ID Cliente</Label>
+                    <Label className='text-xs text-[var(--text-tertiary)]'>ID Cliente</Label>
                     <Input
                       value={recipient.customerId}
                       onChange={e =>
@@ -260,7 +260,7 @@ export function SendNotificationDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label className='text-xs text-gray-500'>Nome</Label>
+                    <Label className='text-xs text-[var(--text-tertiary)]'>Nome</Label>
                     <Input
                       value={variables.customerName}
                       onChange={e => handleVariableChange('customerName', e.target.value)}
@@ -301,8 +301,8 @@ export function SendNotificationDialog({
                       className={cn(
                         'flex flex-col items-center gap-2 p-3 rounded-lg border transition-all',
                         selectedChannel === value
-                          ? 'border-blue-500 bg-blue-50 text-blue-600'
-                          : 'border-gray-200 hover:bg-gray-50'
+                          ? 'border-[var(--status-info)] bg-[var(--status-info-subtle)] text-[var(--status-info)]'
+                          : 'border-[var(--border-default)] hover:bg-[var(--surface-secondary)]'
                       )}
                     >
                       <Icon className='w-5 h-5' />
@@ -321,7 +321,7 @@ export function SendNotificationDialog({
                       <button
                         key={varName}
                         onClick={() => addVariable(varName)}
-                        className='text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors'
+                        className='text-xs px-2 py-1 bg-[var(--surface-secondary)] hover:bg-[var(--border-default)] rounded-md transition-colors'
                       >
                         + {varName}
                       </button>
@@ -330,7 +330,7 @@ export function SendNotificationDialog({
                   <div className='grid grid-cols-2 gap-3'>
                     {Object.entries(variables).map(([key, value]) => (
                       <div key={key} className='space-y-1'>
-                        <Label className='text-xs text-gray-500'>{key}</Label>
+                        <Label className='text-xs text-[var(--text-tertiary)]'>{key}</Label>
                         <Input
                           value={value}
                           onChange={e => handleVariableChange(key, e.target.value)}
@@ -352,7 +352,7 @@ export function SendNotificationDialog({
                     placeholder='Scrivi il tuo messaggio...'
                     rows={4}
                   />
-                  <p className='text-xs text-gray-500'>
+                  <p className='text-xs text-[var(--text-tertiary)]'>
                     Usa {'{customerName}'} per inserire il nome del cliente
                   </p>
                 </div>
@@ -378,13 +378,13 @@ export function SendNotificationDialog({
 
             <TabsContent value='preview' className='mt-0 space-y-4'>
               {/* Preview Card */}
-              <div className='bg-gray-50 rounded-lg p-6'>
-                <h4 className='text-sm font-medium text-gray-500 mb-3 flex items-center gap-2'>
+              <div className='bg-[var(--surface-secondary)] rounded-lg p-6'>
+                <h4 className='text-sm font-medium text-[var(--text-tertiary)] mb-3 flex items-center gap-2'>
                   <Smartphone className='w-4 h-4' />
                   Anteprima Messaggio
                 </h4>
-                <div className='bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm border max-w-sm'>
-                  <p className='text-gray-800 whitespace-pre-wrap'>
+                <div className='bg-[var(--surface-secondary)] rounded-2xl rounded-tl-sm p-4 shadow-sm border max-w-sm'>
+                  <p className='text-[var(--text-primary)] whitespace-pre-wrap'>
                     {preview || 'Clicca "Genera Anteprima" per vedere il messaggio'}
                   </p>
                 </div>
@@ -394,23 +394,23 @@ export function SendNotificationDialog({
               {preview && (
                 <div className='space-y-2 text-sm'>
                   <div className='flex justify-between py-2 border-b'>
-                    <span className='text-gray-500'>Tipo</span>
+                    <span className='text-[var(--text-secondary)]'>Tipo</span>
                     <span className='font-medium'>
                       {templateOptions.find(t => t.value === selectedType)?.label}
                     </span>
                   </div>
                   <div className='flex justify-between py-2 border-b'>
-                    <span className='text-gray-500'>Canale</span>
+                    <span className='text-[var(--text-secondary)]'>Canale</span>
                     <span className='font-medium'>
                       {channelOptions.find(c => c.value === selectedChannel)?.label}
                     </span>
                   </div>
                   <div className='flex justify-between py-2 border-b'>
-                    <span className='text-gray-500'>Destinatario</span>
+                    <span className='text-[var(--text-secondary)]'>Destinatario</span>
                     <span className='font-medium'>{variables.customerName}</span>
                   </div>
                   <div className='flex justify-between py-2'>
-                    <span className='text-gray-500'>Lunghezza</span>
+                    <span className='text-[var(--text-secondary)]'>Lunghezza</span>
                     <span className='font-medium'>{preview.length} caratteri</span>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export function SendNotificationDialog({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className='bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm'
+              className='bg-[var(--status-error-subtle)] text-[var(--status-error)] p-3 rounded-lg flex items-center gap-2 text-sm'
             >
               <AlertCircle className='w-4 h-4' />
               Errore durante l&apos;invio. Riprova.

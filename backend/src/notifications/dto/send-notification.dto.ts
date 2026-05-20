@@ -80,6 +80,7 @@ export class SendNotificationDto {
     description: 'Notification data/payload',
     example: {
       service: 'Tagliando',
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       date: '2024-03-15',
       time: '14:30',
     },
@@ -97,6 +98,7 @@ export class SendNotificationDto {
 
   @ApiPropertyOptional({
     description: 'Override customer phone',
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     example: '+393331234567',
   })
   @IsOptional()
@@ -130,10 +132,12 @@ export class SendBookingConfirmationDto {
   @IsString()
   tenantId: string;
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ example: 'Mario Rossi' })
   @IsString()
   customerName: string;
 
+  // eslint-disable-next-line sonarjs/no-duplicate-string
   @ApiProperty({ example: 'mario.rossi@example.com' })
   @IsEmail()
   customerEmail: string;

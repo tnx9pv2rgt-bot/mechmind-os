@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   useForm,
@@ -9,7 +9,6 @@ import {
   FieldErrors,
   UseFormWatch,
   UseFormSetValue,
-  UseFormTrigger,
   FieldPath,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +16,6 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Car,
   User,
   Calendar,
   Clock,
@@ -27,28 +25,22 @@ import {
   ChevronRight,
   ChevronLeft,
   Mic,
-  Bell,
-  MessageSquare,
   AlertTriangle,
   Sparkles,
   Loader2,
-  X,
   Plus,
-  Wrench,
-  MapPin,
   Star,
   Volume2,
-  Settings,
   Shield,
   Zap,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { AppleButton } from '@/components/ui/apple-button';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -57,12 +49,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 import {
   useSearchCustomers,
   useAvailableSlots,
   useCreateBooking,
+  useCreateCustomer,
   useTenantSettings,
 } from '@/hooks/useApi';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useFormAutosave } from '@/hooks/useFormAutosave';
 
 // ============================================================================
@@ -119,7 +121,7 @@ const bookingFormSchema = z.object({
   licensePlate: z.string().min(5, 'Targa richiesta'),
   vehicleMake: z.string().min(2, 'Marca richiesta'),
   vehicleModel: z.string().min(2, 'Modello richiesto'),
-  vehicleYear: z.number().min(1900).max(2030),
+  vehicleYear: z.number().min(1900).max(2030).optional(),
   vehicleColor: z.string().optional(),
   vehicleVin: z.string().optional(),
   vehicleKm: z.number().int().min(0).max(9999999).optional(),
@@ -253,6 +255,7 @@ export function BookingFormComplete() {
   const { data: searchResults } = useSearchCustomers(customerSearch);
   const { data: slotsData } = useAvailableSlots(watchDate, watchDuration);
   const createBookingMutation = useCreateBooking();
+  const createCustomerMutation = useCreateCustomer();
   const { data: tenantSettings } = useTenantSettings();
 
   // Map API customers to local Customer shape for dropdown
@@ -280,26 +283,65 @@ export function BookingFormComplete() {
     setIsDecodingPlate(false);
   }, [watchLicensePlate, setValue]);
 
-  // Voice recording simulation
+  // Voice recording — Web Speech API (Chrome/Edge)
+  type MinimalRecognition = {
+    lang: string;
+    continuous: boolean;
+    interimResults: boolean;
+    onresult: ((event: { results: { [i: number]: { [j: number]: { transcript: string } }; length: number } }) => void) | null;
+    onerror: (() => void) | null;
+    onend: (() => void) | null;
+    start: () => void;
+    stop: () => void;
+  };
+  const recognitionRef = useRef<MinimalRecognition | null>(null);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+      interval = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
     }
     return () => clearInterval(interval);
   }, [isRecording]);
 
   const toggleRecording = () => {
+    const w = typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : null;
+    const SpeechRecognitionAPI = w?.['SpeechRecognition'] || w?.['webkitSpeechRecognition'];
+
+    if (!SpeechRecognitionAPI || typeof SpeechRecognitionAPI !== 'function') {
+      alert('Il tuo browser non supporta la trascrizione vocale. Usa Chrome, Edge o Safari.');
+      return;
+    }
+
     if (isRecording) {
+      recognitionRef.current?.stop();
       setIsRecording(false);
-      setValue(
-        'voiceNote',
-        'Freni che cigolano quando freno forte, specialmente al mattino quando è freddo.'
-      );
       setRecordingTime(0);
     } else {
+      const recognition = new (SpeechRecognitionAPI as new () => MinimalRecognition)();
+      recognition.lang = 'it-IT';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from({ length: event.results.length })
+          .map((_, i) => event.results[i][0].transcript)
+          .join(' ');
+        setValue('voiceNote', transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsRecording(false);
+        setRecordingTime(0);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+        setRecordingTime(0);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
       setIsRecording(true);
       setRecordingTime(0);
     }
@@ -360,9 +402,22 @@ export function BookingFormComplete() {
   const onSubmit = async (data: BookingFormData) => {
     setIsSubmitting(true);
     try {
+      let customerId = data.customerId;
+
+      if (!customerId) {
+        const nameParts = data.customerName.trim().split(' ');
+        const newCustomer = await createCustomerMutation.mutateAsync({
+          phone: data.customerPhone,
+          email: data.customerEmail,
+          firstName: nameParts[0],
+          lastName: nameParts.slice(1).join(' ') || undefined,
+        });
+        customerId = newCustomer.id;
+      }
+
       const scheduledDate = `${data.date}T${data.time}:00`;
       await createBookingMutation.mutateAsync({
-        customerId: data.customerId || '',
+        customerId,
         slotId: data.selectedSlotId || '',
         scheduledDate,
         durationMinutes: data.duration,
@@ -433,185 +488,164 @@ export function BookingFormComplete() {
   }
 
   return (
-    <div className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'>
-      {/* Main Container - 900x900px - Perfectly Centered */}
-      <div className='relative w-[min(900px,95vw)] h-[min(900px,95vh)]'>
-        {/* Background Icon/Illustration - Scaled proportionally */}
-        <div className='absolute inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='w-[80%] h-[80%] rounded-full bg-gradient-to-br from-gray-100/40 via-gray-100/30 to-gray-100/40 dark:from-[#353535]/40 dark:via-[#353535]/30 dark:to-[#353535]/40 blur-3xl' />
-          <motion.div
-            className='absolute'
-            animate={{
-              scale: [1, 1.05, 1],
-              rotate: [0, 5, -5, 0],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Calendar
-              className='w-[45%] h-[45%] text-gray-200/30 dark:text-[#424242]/30'
-              strokeWidth={0.5}
+    <div>
+      {/* Header */}
+      <header>
+        <div className='px-8 py-5'>
+          <Breadcrumb items={[{ label: 'Prenotazioni', href: '/dashboard/bookings' }, { label: 'Nuova Prenotazione' }]} />
+          <div className='flex items-center justify-between mt-2'>
+            <div>
+              <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Nuova Prenotazione
+              </h1>
+              <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1 flex items-center gap-2'>
+                Crea un nuovo appuntamento per il cliente
+                {hasDraft && (
+                  <span className='text-xs text-[var(--status-success)] flex items-center gap-1'>
+                    <Check className='h-3 w-3' />
+                    Bozza salvata
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>Step</span>
+              <span className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                {currentStep}
+              </span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>/</span>
+              <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>{totalSteps}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className='p-8 max-w-4xl mx-auto space-y-6'>
+        {/* Progress Bar */}
+        <div className='pt-2'>
+          <div className='relative h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+            <motion.div
+              className='h-full bg-[var(--brand)] rounded-full'
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              transition={{ duration: 0.5 }}
             />
-          </motion.div>
+          </div>
+          <div className='relative h-4 mt-1'>
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
+              <span
+                key={step}
+                style={{ left: `${(step / totalSteps) * 100}%` }}
+                className={`absolute -translate-x-1/2 text-xs font-medium ${
+                  step <= currentStep ? 'text-[var(--brand)]' : 'text-[var(--text-tertiary)]'
+                }`}
+              >
+                {step}
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Glass Card Container */}
-        <motion.div
-          className='relative z-10 w-full h-full bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 overflow-hidden'
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Header */}
-          <div className='px-10 pt-8 pb-4'>
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h1 className='text-3xl font-semibold text-apple-dark dark:text-[#ececec] tracking-tight'>
-                  Nuova Prenotazione
-                </h1>
-                <p className='text-apple-gray dark:text-[#636366] mt-1 flex items-center gap-2'>
-                  Crea un nuovo appuntamento per il cliente
-                  {hasDraft && (
-                    <span className='text-xs text-green-500 flex items-center gap-1'>
-                      <Check className='h-3 w-3' />
-                      Bozza salvata
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-apple-gray dark:text-[#636366]'>Step</span>
-                <span className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
-                  {currentStep}
-                </span>
-                <span className='text-apple-gray dark:text-[#636366]'>/</span>
-                <span className='text-apple-gray dark:text-[#636366]'>{totalSteps}</span>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className='h-2 bg-gray-200 dark:bg-[#424242] rounded-full overflow-hidden'>
-              <motion.div
-                className='h-full bg-black dark:bg-[#ececec]'
-                initial={{ width: 0 }}
-                animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                transition={{ duration: 0.5 }}
+        {/* Form Content */}
+        <AnimatePresence mode='wait'>
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {currentStep === 1 && (
+              <Step1CustomerVehicle
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                customerSearch={customerSearch}
+                setCustomerSearch={setCustomerSearch}
+                filteredCustomers={filteredCustomers}
+                showCustomerDropdown={showCustomerDropdown}
+                setShowCustomerDropdown={setShowCustomerDropdown}
+                isDecodingPlate={isDecodingPlate}
+                decodeLicensePlate={decodeLicensePlate}
               />
-            </div>
-          </div>
+            )}
+            {currentStep === 2 && (
+              <Step2AppointmentDetails
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                serviceSubtypeOptions={getServiceSubtypeOptions()}
+                isRecording={isRecording}
+                recordingTime={recordingTime}
+                toggleRecording={toggleRecording}
+                technicians={(tenantSettings?.team || []).map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  specialty: m.role,
+                }))}
+              />
+            )}
+            {currentStep === 3 && (
+              <Step3Notifications
+                control={control}
+                watch={watch}
+                setValue={setValue}
+              />
+            )}
+            {currentStep === 4 && (
+              <Step4Capacity
+                control={control}
+                errors={errors}
+                watch={watch}
+                setValue={setValue}
+                filteredSlots={getFilteredSlots()}
+                showWaitlistModal={showWaitlistModal}
+                setShowWaitlistModal={setShowWaitlistModal}
+              />
+            )}
+            {currentStep === 5 && (
+              <Step5AIFeatures
+                control={control}
+                watch={watch}
+                setValue={setValue}
+                totalEstimatedCost={totalEstimatedCost}
+                baseLaborCost={baseLaborCost}
+                preventiveCost={preventiveCost}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
 
-          {/* Form Content */}
-          <div className='px-10 pb-32 h-[calc(100%-140px)] overflow-y-auto'>
-            <AnimatePresence mode='wait'>
-              {currentStep === 1 && (
-                <Step1CustomerVehicle
-                  key='step1'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  customerSearch={customerSearch}
-                  setCustomerSearch={setCustomerSearch}
-                  filteredCustomers={filteredCustomers}
-                  showCustomerDropdown={showCustomerDropdown}
-                  setShowCustomerDropdown={setShowCustomerDropdown}
-                  isDecodingPlate={isDecodingPlate}
-                  decodeLicensePlate={decodeLicensePlate}
-                />
-              )}
-              {currentStep === 2 && (
-                <Step2AppointmentDetails
-                  key='step2'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  serviceSubtypeOptions={getServiceSubtypeOptions()}
-                  isRecording={isRecording}
-                  recordingTime={recordingTime}
-                  toggleRecording={toggleRecording}
-                  technicians={(tenantSettings?.team || []).map(m => ({
-                    id: m.id,
-                    name: m.name,
-                    specialty: m.role,
-                  }))}
-                />
-              )}
-              {currentStep === 3 && (
-                <Step3Notifications
-                  key='step3'
-                  control={control}
-                  watch={watch}
-                  setValue={setValue}
-                />
-              )}
-              {currentStep === 4 && (
-                <Step4Capacity
-                  key='step4'
-                  control={control}
-                  errors={errors}
-                  watch={watch}
-                  setValue={setValue}
-                  filteredSlots={getFilteredSlots()}
-                  showWaitlistModal={showWaitlistModal}
-                  setShowWaitlistModal={setShowWaitlistModal}
-                />
-              )}
-              {currentStep === 5 && (
-                <Step5AIFeatures
-                  key='step5'
-                  control={control}
-                  watch={watch}
-                  setValue={setValue}
-                  totalEstimatedCost={totalEstimatedCost}
-                  baseLaborCost={baseLaborCost}
-                  preventiveCost={preventiveCost}
-                />
-              )}
-            </AnimatePresence>
-          </div>
+        {/* Footer Navigation */}
+        <div className='flex items-center justify-between pt-2'>
+          <AppleButton
+            variant='ghost'
+            onClick={prevStep}
+            icon={<ChevronLeft className='w-4 h-4' />}
+          >
+            Indietro
+          </AppleButton>
 
-          {/* Navigation Buttons */}
-          <div className='absolute bottom-0 left-0 right-0 px-10 py-6 bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple border-t border-apple-border/20 dark:border-[#424242]/50'>
-            <div className='flex items-center justify-between'>
-              <Button
-                variant='outline'
-                onClick={prevStep}
-                className='rounded-full px-6 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
-              >
-                <ChevronLeft className='w-5 h-5 mr-2' />
-                Indietro
-              </Button>
-
-              {currentStep < totalSteps ? (
-                <Button
-                  onClick={nextStep}
-                  className='rounded-full px-8 h-12 border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
-                >
-                  Avanti
-                  <ChevronRight className='w-5 h-5 ml-2' />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit(onSubmit)}
-                  disabled={isSubmitting}
-                  className='rounded-full px-8 h-12 bg-apple-green hover:bg-green-600 text-white'
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                      Creazione...
-                    </>
-                  ) : (
-                    <>
-                      <Check className='w-5 h-5 mr-2' />
-                      Conferma Prenotazione
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-        </motion.div>
+          {currentStep < totalSteps ? (
+            <AppleButton
+              onClick={nextStep}
+              icon={<ChevronRight className='w-4 h-4' />}
+              iconPosition='right'
+            >
+              Avanti
+            </AppleButton>
+          ) : (
+            <AppleButton
+              onClick={handleSubmit(onSubmit)}
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              icon={!isSubmitting ? <Check className='w-4 h-4' /> : undefined}
+            >
+              {isSubmitting ? 'Creazione...' : 'Conferma Prenotazione'}
+            </AppleButton>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -661,21 +695,21 @@ function Step1CustomerVehicle({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Informazioni Cliente e Veicolo
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Cerca un cliente esistente o inserisci i dati manualmente
         </p>
       </div>
 
       {/* Customer Search */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
-        <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
+        <Label className='text-sm font-medium text-[var(--text-on-brand)] mb-3 block'>
           Cerca Cliente
         </Label>
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
           <Input
             value={customerSearch}
             onChange={e => {
@@ -685,7 +719,7 @@ function Step1CustomerVehicle({
             onFocus={() => setShowCustomerDropdown(true)}
             placeholder='Cerca per nome, telefono o email...'
             aria-label='Cerca cliente per nome, telefono o email'
-            className='pl-12 h-14 rounded-2xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+            className='pl-12 h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
           />
 
           {/* Dropdown */}
@@ -695,25 +729,25 @@ function Step1CustomerVehicle({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className='absolute z-50 top-full left-0 right-0 mt-2 bg-white dark:bg-[#2f2f2f] rounded-2xl shadow-xl border border-apple-border/50 dark:border-[#424242] overflow-hidden'
+                className='absolute z-50 top-full left-0 right-0 mt-2 bg-[var(--surface-elevated)] rounded-2xl shadow-xl border border-[var(--border-strong)] overflow-hidden'
               >
                 {filteredCustomers.map((customer: Customer) => (
                   <button
                     key={customer.id}
                     onClick={() => selectCustomer(customer)}
-                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-apple-light-gray/30 dark:hover:bg-[#353535] transition-colors text-left'
+                    className='w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--surface-active)] transition-colors text-left'
                   >
-                    <div className='w-10 h-10 rounded-full bg-apple-purple flex items-center justify-center text-white font-semibold'>
+                    <div className='w-10 h-10 rounded-full bg-[var(--brand)] flex items-center justify-center text-[var(--text-on-brand)] font-semibold'>
                       {customer.name
                         .split(' ')
                         .map(n => n[0])
                         .join('')}
                     </div>
                     <div className='flex-1'>
-                      <p className='font-medium text-apple-dark dark:text-[#ececec]'>
+                      <p className='font-medium text-[var(--text-on-brand)]'>
                         {customer.name}
                       </p>
-                      <p className='text-sm text-apple-gray dark:text-[#636366]'>
+                      <p className='text-sm text-[var(--text-tertiary)]'>
                         {customer.phone} • {customer.email}
                       </p>
                     </div>
@@ -729,12 +763,12 @@ function Step1CustomerVehicle({
           </AnimatePresence>
         </div>
 
-        <div className='mt-4 flex items-center gap-2 text-sm text-apple-gray dark:text-[#636366]'>
+        <div className='mt-4 flex items-center gap-2 text-sm text-[var(--text-tertiary)]'>
           <Plus className='w-4 h-4' />
           <span>
             Oppure{' '}
             <button
-              className='text-apple-dark dark:text-[#ececec] hover:underline'
+              className='text-[var(--text-on-brand)] hover:underline'
               onClick={() => setShowCustomerDropdown(false)}
             >
               clicca per nuovo cliente
@@ -752,12 +786,12 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerName'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Nome e Cognome *
               </Label>
               <div className='relative'>
-                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <User className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerName'
@@ -765,7 +799,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerName}
                   aria-describedby={errors.customerName ? 'customerName-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='Mario Rossi'
                 />
               </div>
@@ -775,7 +809,7 @@ function Step1CustomerVehicle({
                     id='customerName-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerName.message as string}
                   </p>
@@ -792,12 +826,12 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='customerPhone'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Telefono *
               </Label>
               <div className='relative'>
-                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Phone className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerPhone'
@@ -805,7 +839,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerPhone}
                   aria-describedby={errors.customerPhone ? 'customerPhone-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='+39 333 1234567'
                 />
               </div>
@@ -815,7 +849,7 @@ function Step1CustomerVehicle({
                     id='customerPhone-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerPhone.message as string}
                   </p>
@@ -832,12 +866,12 @@ function Step1CustomerVehicle({
             <div className='col-span-2'>
               <Label
                 htmlFor='customerEmail'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Email *
               </Label>
               <div className='relative'>
-                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Mail className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='customerEmail'
@@ -846,7 +880,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.customerEmail}
                   aria-describedby={errors.customerEmail ? 'customerEmail-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                   placeholder='mario@email.it'
                 />
               </div>
@@ -856,7 +890,7 @@ function Step1CustomerVehicle({
                     id='customerEmail-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.customerEmail.message as string}
                   </p>
@@ -868,10 +902,10 @@ function Step1CustomerVehicle({
       </div>
 
       {/* Vehicle Section */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-6'>
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Dati Veicolo</h3>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>Dati Veicolo</h3>
+          <p className='text-sm text-[var(--text-tertiary)]'>
             Inserisci la targa per decodifica automatica
           </p>
         </div>
@@ -884,7 +918,7 @@ function Step1CustomerVehicle({
               <div className='flex-1'>
                 <Label
                   htmlFor='licensePlate'
-                  className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                  className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
                 >
                   Targa *
                 </Label>
@@ -895,7 +929,7 @@ function Step1CustomerVehicle({
                   aria-required='true'
                   aria-invalid={!!errors.licensePlate}
                   aria-describedby={errors.licensePlate ? 'licensePlate-error' : undefined}
-                  className='h-12 rounded-xl uppercase tracking-wider font-medium text-center text-lg'
+                  className='h-[52px] rounded-full uppercase tracking-wider font-medium text-center text-lg'
                   placeholder='AB 123 CD'
                   maxLength={10}
                 />
@@ -906,7 +940,7 @@ function Step1CustomerVehicle({
             type='button'
             onClick={decodeLicensePlate}
             disabled={isDecodingPlate || !watch('licensePlate') || watch('licensePlate').length < 5}
-            className='h-12 mt-7 rounded-xl bg-black hover:bg-gray-800 dark:bg-[#ececec] dark:hover:bg-white dark:text-black text-white'
+            className='h-[52px] mt-7 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)] flex items-center justify-center'
           >
             {isDecodingPlate ? (
               <Loader2 className='w-5 h-5 animate-spin' />
@@ -924,36 +958,148 @@ function Step1CustomerVehicle({
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-2xl p-5 mb-6'
+            className='bg-[var(--surface-active)] rounded-2xl p-5 mb-6'
           >
-            <h4 className='font-semibold text-apple-dark dark:text-[#ececec] mb-3 flex items-center gap-2'>
-              <Check className='w-5 h-5 text-green-500' />
+            <h4 className='font-semibold text-[var(--text-on-brand)] mb-3 flex items-center gap-2'>
+              <Check className='w-5 h-5 text-[var(--status-success)]' />
               Dati Veicolo Decodificati
             </h4>
             <div className='grid grid-cols-2 gap-4 text-sm'>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Marca:</span>
+                <span className='text-[var(--text-tertiary)]'>Marca:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleMake')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Modello:</span>
+                <span className='text-[var(--text-tertiary)]'>Modello:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleModel')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Anno:</span>
+                <span className='text-[var(--text-tertiary)]'>Anno:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleYear')}</span>
               </div>
               <div>
-                <span className='text-apple-gray dark:text-[#636366]'>Colore:</span>
+                <span className='text-[var(--text-tertiary)]'>Colore:</span>
                 <span className='ml-2 font-medium'>{watch('vehicleColor')}</span>
               </div>
               <div className='col-span-2'>
-                <span className='text-apple-gray dark:text-[#636366]'>VIN:</span>
+                <span className='text-[var(--text-tertiary)]'>VIN:</span>
                 <span className='ml-2 font-mono text-xs'>{watch('vehicleVin')}</span>
               </div>
             </div>
           </motion.div>
         )}
+
+        {/* Dati veicolo — compilabili manualmente o via Decodifica */}
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4'>
+          <Controller
+            name='vehicleMake'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleMake' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
+                  Marca *
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleMake'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.vehicleMake}
+                  placeholder='es. Fiat'
+                  className='h-[52px] rounded-full'
+                />
+                {errors.vehicleMake && (
+                  <p role='alert' className='text-[var(--status-error)] text-sm mt-1'>
+                    {errors.vehicleMake.message as string}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleModel'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleModel' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
+                  Modello *
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleModel'
+                  autoComplete='off'
+                  aria-required='true'
+                  aria-invalid={!!errors.vehicleModel}
+                  placeholder='es. Panda'
+                  className='h-[52px] rounded-full'
+                />
+                {errors.vehicleModel && (
+                  <p role='alert' className='text-[var(--status-error)] text-sm mt-1'>
+                    {errors.vehicleModel.message as string}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleYear'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleYear' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
+                  Anno
+                </Label>
+                <Input
+                  id='vehicleYear'
+                  type='number'
+                  min={1900}
+                  max={2030}
+                  autoComplete='off'
+                  placeholder='es. 2020'
+                  className='h-[52px] rounded-full'
+                  value={field.value ?? ''}
+                  onChange={e => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                />
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleColor'
+            control={control}
+            render={({ field }) => (
+              <div>
+                <Label htmlFor='vehicleColor' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
+                  Colore
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleColor'
+                  autoComplete='off'
+                  placeholder='es. Bianco'
+                  className='h-[52px] rounded-full'
+                />
+              </div>
+            )}
+          />
+          <Controller
+            name='vehicleVin'
+            control={control}
+            render={({ field }) => (
+              <div className='sm:col-span-2'>
+                <Label htmlFor='vehicleVin' className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'>
+                  VIN
+                </Label>
+                <Input
+                  {...field}
+                  id='vehicleVin'
+                  autoComplete='off'
+                  placeholder='es. WBA1234567890XYZ'
+                  className='h-[52px] rounded-full font-mono tracking-wider'
+                />
+              </div>
+            )}
+          />
+        </div>
 
         {/* Km attuali — DMS field */}
         <Controller
@@ -963,7 +1109,7 @@ function Step1CustomerVehicle({
             <div>
               <Label
                 htmlFor='vehicleKm'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Km attuali (opzionale)
               </Label>
@@ -977,13 +1123,13 @@ function Step1CustomerVehicle({
                 autoComplete='off'
                 aria-describedby='vehicleKm-hint'
                 placeholder='es. 85000'
-                className='h-12 rounded-xl'
+                className='h-[52px] rounded-full'
                 value={field.value ?? ''}
                 onChange={e =>
                   field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)
                 }
               />
-              <p id='vehicleKm-hint' className='text-xs text-apple-gray dark:text-[#636366] mt-1'>
+              <p id='vehicleKm-hint' className='text-xs text-[var(--text-tertiary)] mt-1'>
                 Aggiornare i km aiuta a pianificare i prossimi tagliandi
               </p>
             </div>
@@ -1021,14 +1167,14 @@ function Step2AppointmentDetails({
     color: string;
     desc: string;
   }> = [
-    { value: 'routine', label: 'Routine', color: 'bg-green-500', desc: 'Nessuna urgenza' },
+    { value: 'routine', label: 'Routine', color: 'bg-[var(--status-success)]', desc: 'Nessuna urgenza' },
     {
       value: 'semi-urgent',
       label: 'Semi-Urgente',
-      color: 'bg-yellow-500',
+      color: 'bg-[var(--status-warning)]',
       desc: 'Da fare entro 7 giorni',
     },
-    { value: 'urgent', label: 'Urgente', color: 'bg-red-500', desc: 'Entro 48 ore' },
+    { value: 'urgent', label: 'Urgente', color: 'bg-[var(--status-error)]', desc: 'Entro 48 ore' },
   ];
 
   const serviceTypeLabels: Record<string, string> = {
@@ -1066,19 +1212,19 @@ function Step2AppointmentDetails({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Dettagli Appuntamento
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Configura il tipo di intervento e la data
         </p>
       </div>
 
       {/* Service Type */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <Label
           htmlFor='serviceType'
-          className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-4 block'
+          className='text-sm font-medium text-[var(--text-on-brand)] mb-4 block'
         >
           Tipo Intervento *
         </Label>
@@ -1090,7 +1236,7 @@ function Step2AppointmentDetails({
               <SelectTrigger
                 id='serviceType'
                 aria-required='true'
-                className='h-14 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                className='h-[52px] rounded-full bg-[var(--surface-elevated)] border-[var(--border-strong)]'
               >
                 <SelectValue placeholder='Seleziona tipo intervento' />
               </SelectTrigger>
@@ -1114,7 +1260,7 @@ function Step2AppointmentDetails({
           >
             <Label
               htmlFor='serviceSubtype'
-              className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+              className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
             >
               Sotto-categoria
             </Label>
@@ -1125,7 +1271,7 @@ function Step2AppointmentDetails({
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <SelectTrigger
                     id='serviceSubtype'
-                    className='h-12 rounded-xl bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                    className='h-[52px] rounded-full bg-[var(--surface-elevated)] border-[var(--border-strong)]'
                   >
                     <SelectValue placeholder='Seleziona sotto-categoria' />
                   </SelectTrigger>
@@ -1145,7 +1291,7 @@ function Step2AppointmentDetails({
 
       {/* Urgency */}
       <div>
-        <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-3 block'>
+        <Label className='text-sm font-medium text-[var(--text-on-brand)] mb-3 block'>
           Livello di Urgenza *
         </Label>
         <div className='grid grid-cols-3 gap-3'>
@@ -1153,15 +1299,15 @@ function Step2AppointmentDetails({
             <button
               key={option.value}
               onClick={() => setValue('urgency', option.value)}
-              className={`p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`p-4 rounded-2xl border transition-all text-left bg-[var(--surface-elevated)] ${
                 watch('urgency') === option.value
-                  ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535]'
-                  : 'border-apple-border dark:border-[#424242] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                  ? 'border-[var(--status-success)]'
+                  : 'border-[var(--border-strong)] hover:border-[var(--border-default)]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full ${option.color} mb-2`} />
-              <div className='font-medium text-apple-dark dark:text-[#ececec]'>{option.label}</div>
-              <div className='text-xs text-apple-gray dark:text-[#636366] mt-1'>{option.desc}</div>
+              <div className='font-medium text-[var(--text-on-brand)]'>{option.label}</div>
+              <div className='text-xs text-[var(--text-tertiary)] mt-1'>{option.desc}</div>
             </button>
           ))}
         </div>
@@ -1169,10 +1315,10 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className='mt-3 p-3 bg-red-50 rounded-xl flex items-start gap-2'
+            className='mt-3 p-3 bg-[var(--surface-elevated)] border border-[var(--status-error)]/30 rounded-xl flex items-start gap-2'
           >
-            <AlertTriangle className='w-5 h-5 text-red-500 flex-shrink-0 mt-0.5' />
-            <p className='text-sm text-red-700'>
+            <AlertTriangle className='w-5 h-5 text-[var(--status-error)] flex-shrink-0 mt-0.5' />
+            <p className='text-sm text-[var(--status-error)]'>
               Per interventi urgenti mostreremo solo gli slot disponibili nelle prossime 48 ore.
             </p>
           </motion.div>
@@ -1180,11 +1326,11 @@ function Step2AppointmentDetails({
       </div>
 
       {/* Description with Voice */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-3'>
           <Label
             htmlFor='description'
-            className='text-sm font-medium text-apple-dark dark:text-[#ececec]'
+            className='text-sm font-medium text-[var(--text-on-brand)]'
           >
             Descrizione / Richiesta Cliente *
           </Label>
@@ -1192,13 +1338,13 @@ function Step2AppointmentDetails({
             onClick={toggleRecording}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
               isRecording
-                ? 'bg-black/10 dark:bg-[#ececec]/10 text-apple-dark dark:text-[#ececec] animate-pulse'
-                : 'bg-apple-light-gray/30 dark:bg-[#353535] text-apple-gray dark:text-[#636366] hover:bg-apple-light-gray/50 dark:hover:bg-[#424242]'
+                ? 'bg-[var(--text-primary)]/10 text-[var(--text-on-brand)] animate-pulse'
+                : 'bg-[var(--surface-active)] text-[var(--text-tertiary)] hover:bg-[var(--surface-active)]'
             }`}
           >
             {isRecording ? (
               <>
-                <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse' />
+                <div className='w-2 h-2 bg-[var(--status-error-subtle)]0 rounded-full animate-pulse' />
                 <Mic className='w-4 h-4' />
                 {recordingTime}s
               </>
@@ -1223,7 +1369,7 @@ function Step2AppointmentDetails({
                 aria-required='true'
                 aria-invalid={!!errors.description}
                 aria-describedby={errors.description ? 'description-error' : undefined}
-                className='min-h-[120px] rounded-xl resize-none bg-white/80 dark:bg-[#2f2f2f]/80 border-apple-border dark:border-[#424242]'
+                className='min-h-[120px] rounded-2xl resize-none bg-[var(--surface-elevated)] border border-[var(--border-strong)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] px-5 py-3 outline-none'
                 placeholder='Descrivi il problema o la richiesta del cliente...'
               />
               <div className='flex justify-between mt-2'>
@@ -1233,13 +1379,13 @@ function Step2AppointmentDetails({
                       id='description-error'
                       role='alert'
                       aria-live='assertive'
-                      className='text-red-500 text-sm'
+                      className='text-[var(--status-error)] text-sm'
                     >
                       {errors.description.message as string}
                     </p>
                   )}
                 </div>
-                <span className='text-xs text-apple-gray/70 dark:text-[#636366] ml-auto'>
+                <span className='text-xs text-[var(--text-tertiary)] ml-auto'>
                   {field.value?.length || 0}/500
                 </span>
               </div>
@@ -1251,15 +1397,15 @@ function Step2AppointmentDetails({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className='mt-4 p-4 bg-apple-light-gray/30 dark:bg-[#353535] rounded-xl'
+            className='mt-4 p-4 bg-[var(--surface-active)] rounded-xl'
           >
             <div className='flex items-center gap-2 mb-2'>
-              <Volume2 className='w-4 h-4 text-apple-dark dark:text-[#ececec]' />
-              <span className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+              <Volume2 className='w-4 h-4 text-[var(--text-on-brand)]' />
+              <span className='text-sm font-medium text-[var(--text-on-brand)]'>
                 Nota vocale trascritta
               </span>
             </div>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>{watch('voiceNote')}</p>
+            <p className='text-sm text-[var(--text-tertiary)]'>{watch('voiceNote')}</p>
           </motion.div>
         )}
       </div>
@@ -1273,12 +1419,12 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='date'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Data *
               </Label>
               <div className='relative'>
-                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Calendar className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='date'
@@ -1287,7 +1433,7 @@ function Step2AppointmentDetails({
                   aria-required='true'
                   aria-invalid={!!errors.date}
                   aria-describedby={errors.date ? 'date-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                 />
               </div>
               <div className='min-h-[20px]'>
@@ -1296,7 +1442,7 @@ function Step2AppointmentDetails({
                     id='date-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.date.message as string}
                   </p>
@@ -1313,12 +1459,12 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='time'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Ora *
               </Label>
               <div className='relative'>
-                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray/70 dark:text-[#636366]' />
+                <Clock className='absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]' />
                 <Input
                   {...field}
                   id='time'
@@ -1327,7 +1473,7 @@ function Step2AppointmentDetails({
                   aria-required='true'
                   aria-invalid={!!errors.time}
                   aria-describedby={errors.time ? 'time-error' : undefined}
-                  className='pl-12 h-12 rounded-xl'
+                  className='pl-12 h-[52px] rounded-full'
                 />
               </div>
               <div className='min-h-[20px]'>
@@ -1336,7 +1482,7 @@ function Step2AppointmentDetails({
                     id='time-error'
                     role='alert'
                     aria-live='assertive'
-                    className='text-red-500 text-sm mt-1'
+                    className='text-[var(--status-error)] text-sm mt-1'
                   >
                     {errors.time.message as string}
                   </p>
@@ -1350,10 +1496,10 @@ function Step2AppointmentDetails({
       {/* Duration */}
       <div>
         <div className='flex items-center justify-between mb-3'>
-          <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+          <Label className='text-sm font-medium text-[var(--text-on-brand)]'>
             Durata Prevista
           </Label>
-          <span className='text-lg font-semibold text-apple-dark dark:text-[#ececec]'>
+          <span className='text-lg font-semibold text-[var(--text-on-brand)]'>
             {watch('duration')} min
           </span>
         </div>
@@ -1371,7 +1517,7 @@ function Step2AppointmentDetails({
             />
           )}
         />
-        <div className='flex justify-between text-xs text-apple-gray/70 dark:text-[#636366] mt-2'>
+        <div className='flex justify-between text-xs text-[var(--text-tertiary)] mt-2'>
           <span>30 min</span>
           <span>4 ore</span>
         </div>
@@ -1386,14 +1532,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='technicianId'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Tecnico Assegnato
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='technicianId'
-                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona tecnico' />
                 </SelectTrigger>
@@ -1402,7 +1548,7 @@ function Step2AppointmentDetails({
                     technicians.map(tech => (
                       <SelectItem key={tech.id} value={tech.id}>
                         <div className='flex items-center gap-2'>
-                          <span className='w-6 h-6 rounded-full bg-apple-purple text-white text-xs flex items-center justify-center'>
+                          <span className='w-6 h-6 rounded-full bg-[var(--brand)] text-[var(--text-on-brand)] text-xs flex items-center justify-center'>
                             {tech.name
                               .split(' ')
                               .map(n => n[0])
@@ -1435,14 +1581,14 @@ function Step2AppointmentDetails({
             <div>
               <Label
                 htmlFor='liftPosition'
-                className='text-sm font-medium text-apple-dark dark:text-[#ececec] mb-2 block'
+                className='text-sm font-medium text-[var(--text-on-brand)] mb-2 block'
               >
                 Posto Rialzo
               </Label>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger
                   id='liftPosition'
-                  className='h-12 rounded-xl border-2 border-black dark:border-[#424242] bg-white dark:bg-[#2f2f2f] text-apple-dark dark:text-[#ececec] focus:border-black dark:focus:border-[#ececec] focus:ring-2 focus:ring-gray-200 dark:focus:ring-[#424242]'
+                  className='h-[52px] rounded-full border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-on-brand)] placeholder-[var(--text-tertiary)] focus:border-[var(--text-primary)] outline-none'
                 >
                   <SelectValue placeholder='Seleziona posto' />
                 </SelectTrigger>
@@ -1479,20 +1625,20 @@ function Step3Notifications({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Promemoria e Notifiche
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Configura come e quando contattare il cliente
         </p>
       </div>
 
       {/* Email */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Email</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>Email</h3>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via email
             </p>
           </div>
@@ -1507,7 +1653,7 @@ function Step3Notifications({
 
         {watch('emailReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'>
+            <Label className='text-sm text-[var(--text-tertiary)] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1519,10 +1665,10 @@ function Step3Notifications({
                     <button
                       key={hours}
                       onClick={() => field.onChange(hours)}
-                      className={`px-4 py-2 rounded-xl border transition-colors ${
+                      className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {hours}h
@@ -1536,11 +1682,11 @@ function Step3Notifications({
       </div>
 
       {/* SMS */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>SMS</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>Invia promemoria via SMS</p>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>SMS</h3>
+            <p className='text-sm text-[var(--text-tertiary)]'>Invia promemoria via SMS</p>
           </div>
           <Controller
             name='smsReminder'
@@ -1553,7 +1699,7 @@ function Step3Notifications({
 
         {watch('smsReminder') && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
-            <Label className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'>
+            <Label className='text-sm text-[var(--text-tertiary)] mb-2 block'>
               Invia prima di:
             </Label>
             <Controller
@@ -1565,10 +1711,10 @@ function Step3Notifications({
                     <button
                       key={hours}
                       onClick={() => field.onChange(hours)}
-                      className={`px-4 py-2 rounded-xl border transition-colors ${
+                      className={`px-4 py-2 rounded-full border transition-colors ${
                         field.value === hours
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {hours === 2 ? '2h' : `${hours}h`}
@@ -1582,11 +1728,11 @@ function Step3Notifications({
       </div>
 
       {/* WhatsApp */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>WhatsApp</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>WhatsApp</h3>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Invia promemoria via WhatsApp
             </p>
           </div>
@@ -1605,11 +1751,11 @@ function Step3Notifications({
       </div>
 
       {/* 2-Way Confirmation */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Richiedi Conferma</h3>
-            <p className='text-sm text-apple-gray dark:text-[#636366]'>
+            <h3 className='font-semibold text-[var(--text-on-brand)]'>Richiedi Conferma</h3>
+            <p className='text-sm text-[var(--text-tertiary)]'>
               Doppio opt-in per confermare l&apos;appuntamento
             </p>
           </div>
@@ -1630,7 +1776,7 @@ function Step3Notifications({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className='mt-4'>
             <Label
               htmlFor='confirmationChannel'
-              className='text-sm text-apple-gray dark:text-[#636366] mb-2 block'
+              className='text-sm text-[var(--text-tertiary)] mb-2 block'
             >
               Canale di conferma:
             </Label>
@@ -1645,8 +1791,8 @@ function Step3Notifications({
                       onClick={() => field.onChange(channel)}
                       className={`px-4 py-2 rounded-xl border capitalize transition-colors ${
                         field.value === channel
-                          ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                          : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                          ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
+                          : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                       }`}
                     >
                       {channel}
@@ -1683,6 +1829,34 @@ function Step4Capacity({
   const bufferTime = watch('bufferTime');
 
   return (
+    <>
+      <Dialog open={showWaitlistModal} onOpenChange={setShowWaitlistModal}>
+        <DialogContent className='bg-[var(--surface-elevated)] border border-[var(--border-strong)] rounded-2xl'>
+          <DialogHeader>
+            <DialogTitle className='text-[var(--text-on-brand)]'>Lista d&apos;Attesa</DialogTitle>
+            <DialogDescription className='text-[var(--text-tertiary)]'>
+              Il cliente verrà aggiunto alla lista d&apos;attesa per questa fascia oraria. Riceverà
+              una notifica automatica appena si libera uno slot.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setShowWaitlistModal(false)}
+              className='rounded-full border-[var(--border-strong)] text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
+            >
+              Annulla
+            </Button>
+            <Button
+              onClick={() => setShowWaitlistModal(false)}
+              className='rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)]'
+            >
+              Conferma Iscrizione
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -1690,35 +1864,35 @@ function Step4Capacity({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Gestione Capacità Produttiva
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Verifica disponibilità e seleziona lo slot ottimale
         </p>
       </div>
 
-      {/* Conflict Warning */}
-      {filteredSlots.length === 0 && (
+      {/* Conflict Warning — solo se la data è selezionata ma non ci sono slot disponibili */}
+      {filteredSlots.length === 0 && watch('date') && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className='bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3'
+          className='bg-[var(--surface-elevated)] border border-[var(--status-error)]/30 rounded-2xl p-5 flex items-start gap-3'
         >
-          <AlertTriangle className='w-6 h-6 text-red-500 flex-shrink-0' />
+          <AlertTriangle className='w-6 h-6 text-[var(--status-error)] flex-shrink-0' />
           <div>
-            <h4 className='font-semibold text-red-800'>Attenzione: Capacità Saturation</h4>
-            <p className='text-sm text-red-600 mt-1'>
-              3 appuntamenti già presenti nella stessa fascia oraria. Considera di aggiungere il
-              cliente alla lista d&apos;attesa.
+            <h4 className='font-semibold text-[var(--status-error)]'>Nessuno slot disponibile</h4>
+            <p className='text-sm text-[var(--status-error)]/80 mt-1'>
+              Non ci sono slot liberi per la data selezionata. Puoi aggiungere il cliente alla lista
+              d&apos;attesa.
             </p>
             <Button
               onClick={() => setShowWaitlistModal(true)}
               variant='outline'
-              className='mt-3 border-2 border-black dark:border-[#424242] text-apple-dark dark:text-[#ececec] hover:bg-apple-light-gray/30 dark:hover:bg-[#353535]'
+              className='mt-3 rounded-full border border-[var(--border-strong)] text-[var(--text-on-brand)] hover:bg-[var(--surface-secondary)]/5'
             >
               <Plus className='w-4 h-4 mr-2' />
-              Aggiungi a Lista d'Attesa
+              Aggiungi a Lista d&apos;Attesa
             </Button>
           </div>
         </motion.div>
@@ -1727,12 +1901,12 @@ function Step4Capacity({
       {/* Available Slots */}
       <div>
         <div className='flex items-center justify-between mb-4'>
-          <Label className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
+          <Label className='text-sm font-medium text-[var(--text-on-brand)]'>
             Slot Disponibili Suggeriti
           </Label>
           <Badge
             variant='outline'
-            className='text-xs border-black dark:border-[#424242] text-apple-dark dark:text-[#ececec]'
+            className='text-xs border-[var(--border-strong)] text-[var(--text-on-brand)]'
           >
             {filteredSlots.length} opzioni
           </Badge>
@@ -1743,10 +1917,10 @@ function Step4Capacity({
             <motion.button
               key={slot.id}
               onClick={() => setValue('selectedSlotId', slot.id)}
-              className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedSlotId === slot.id
-                  ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535]'
-                  : 'border-apple-border dark:border-[#424242] hover:border-apple-dark/30 dark:hover:border-[#636366] dark:hover:border-[#555] bg-white/80 dark:bg-[#2f2f2f]/80'
+                  ? 'border-[var(--text-primary)] bg-[var(--surface-active)]'
+                  : 'border-[var(--border-strong)] hover:border-[var(--border-default)] bg-[var(--surface-elevated)]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1755,55 +1929,57 @@ function Step4Capacity({
                 <div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                      <span className='font-semibold text-[var(--text-on-brand)]'>
                         {new Date(slot.start).toLocaleTimeString('it-IT', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
                       </span>
                       {slot.isOptimal && (
-                        <Badge className='bg-green-500 text-white text-xs'>
+                        <Badge className='bg-[var(--status-success-subtle)]0 text-[var(--text-on-brand)] text-xs'>
                           <Star className='w-3 h-3 mr-1' />
                           Ottimale
                         </Badge>
                       )}
                     </div>
-                    <p className='text-sm text-apple-gray dark:text-[#636366]'>
-                      {slot.technicianName} • {slot.liftAvailable}
-                    </p>
+                    {(slot.technicianName || slot.liftAvailable) && (
+                      <p className='text-sm text-[var(--text-tertiary)]'>
+                        {[slot.technicianName, slot.liftAvailable].filter(Boolean).join(' • ')}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <div className='text-right'>
-                  <div className='text-sm font-medium text-apple-dark dark:text-[#ececec]'>
-                    Capacità
+                {slot.capacityPercentage > 0 && (
+                  <div className='text-right'>
+                    <div className='text-sm font-medium text-[var(--text-on-brand)]'>Capacità</div>
+                    <div
+                      className={`text-sm ${
+                        slot.capacityPercentage > 80
+                          ? 'text-[var(--status-error)]'
+                          : slot.capacityPercentage > 50
+                            ? 'text-[var(--status-warning)]'
+                            : 'text-[var(--status-success)]'
+                      }`}
+                    >
+                      {slot.capacityPercentage}%
+                    </div>
                   </div>
-                  <div
-                    className={`text-sm ${
-                      slot.capacityPercentage > 80
-                        ? 'text-red-500'
-                        : slot.capacityPercentage > 50
-                          ? 'text-amber-500'
-                          : 'text-green-500'
-                    }`}
-                  >
-                    {slot.capacityPercentage}%
-                  </div>
-                </div>
+                )}
               </div>
             </motion.button>
           ))}
         </div>
 
         {errors.selectedSlotId && (
-          <p className='text-red-500 text-sm mt-2'>{errors.selectedSlotId.message as string}</p>
+          <p className='text-[var(--status-error)] text-sm mt-2'>{errors.selectedSlotId.message as string}</p>
         )}
       </div>
 
       {/* Buffer Time */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='mb-4'>
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>Buffer Time</h3>
-          <p className='text-sm text-apple-gray dark:text-[#636366]'>
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>Buffer Time</h3>
+          <p className='text-sm text-[var(--text-tertiary)]'>
             Tempo di pulizia/setup dopo l&apos;appuntamento
           </p>
         </div>
@@ -1817,10 +1993,10 @@ function Step4Capacity({
                 <button
                   key={minutes}
                   onClick={() => field.onChange(minutes)}
-                  className={`flex-1 py-3 rounded-xl border transition-colors ${
+                  className={`flex-1 py-3 rounded-full border transition-colors ${
                     field.value === minutes
-                      ? 'border-black dark:border-[#ececec] bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec]'
-                      : 'border-apple-border dark:border-[#424242] text-apple-gray dark:text-[#636366] hover:border-apple-dark/30 dark:hover:border-[#636366]'
+                      ? 'border-[var(--text-primary)] bg-[var(--surface-active)] text-[var(--text-on-brand)]'
+                      : 'border-[var(--border-strong)] text-[var(--text-tertiary)] hover:border-[var(--border-default)]'
                   }`}
                 >
                   <div className='text-lg font-semibold'>{minutes}</div>
@@ -1831,12 +2007,13 @@ function Step4Capacity({
           )}
         />
 
-        <p className='text-sm text-apple-gray dark:text-[#636366] mt-4'>
+        <p className='text-sm text-[var(--text-tertiary)] mt-4'>
           Impatto: Lo slot successivo verrà mostrato disponibile {bufferTime} min dopo la fine di
           questo appuntamento.
         </p>
       </div>
     </motion.div>
+    </>
   );
 }
 
@@ -1878,22 +2055,22 @@ function Step5AIFeatures({
       className='space-y-8'
     >
       <div className='mb-6'>
-        <h2 className='text-xl font-semibold text-apple-dark dark:text-[#ececec]'>
+        <h2 className='text-xl font-semibold text-[var(--text-on-brand)]'>
           Funzionalità AI e Smart
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] text-sm'>
+        <p className='text-[var(--text-tertiary)] text-sm'>
           Suggerimenti intelligenti basati sullo storico
         </p>
       </div>
 
       {/* Preventive Services */}
-      <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-3xl p-6 border border-apple-border/20 dark:border-[#424242]/50'>
+      <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
         <div className='flex items-center gap-2 mb-4'>
-          <Shield className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
-          <h3 className='font-semibold text-apple-dark dark:text-[#ececec]'>
+          <Shield className='w-5 h-5 text-[var(--text-on-brand)]' />
+          <h3 className='font-semibold text-[var(--text-on-brand)]'>
             Servizi Preventivi Suggeriti
           </h3>
-          <Badge className='bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec] border border-black dark:border-[#424242]'>
+          <Badge className='bg-[var(--surface-active)] text-[var(--text-on-brand)] border border-[var(--border-strong)]'>
             AI Powered
           </Badge>
         </div>
@@ -1903,10 +2080,10 @@ function Step5AIFeatures({
             <motion.button
               key={service.id}
               onClick={() => toggleService(service.id)}
-              className={`w-full p-4 rounded-2xl border-2 transition-all text-left ${
+              className={`w-full p-4 rounded-2xl border transition-all text-left ${
                 selectedServices.includes(service.id)
-                  ? 'border-black dark:border-[#ececec] bg-white dark:bg-[#2f2f2f]'
-                  : 'border-transparent bg-white/60 dark:bg-[#2f2f2f]/60 hover:bg-white dark:hover:bg-[#353535]'
+                  ? 'border-[var(--text-primary)] bg-[var(--surface-elevated)]'
+                  : 'border-transparent bg-[var(--surface-elevated)]/60 hover:bg-[var(--surface-hover)]'
               }`}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
@@ -1916,35 +2093,35 @@ function Step5AIFeatures({
                   <div
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 ${
                       selectedServices.includes(service.id)
-                        ? 'border-black bg-black dark:border-[#ececec] dark:bg-[#ececec]'
-                        : 'border-apple-border dark:border-[#424242]'
+                        ? 'border-[var(--text-primary)] bg-[var(--text-primary)]'
+                        : 'border-[var(--border-strong)]'
                     }`}
                   >
                     {selectedServices.includes(service.id) && (
-                      <Check className='w-3 h-3 text-white' />
+                      <Check className='w-3 h-3 text-[var(--text-on-brand)]' />
                     )}
                   </div>
                   <div>
                     <div className='flex items-center gap-2'>
-                      <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                      <span className='font-semibold text-[var(--text-on-brand)]'>
                         {service.title}
                       </span>
                       <Badge
                         className={`text-xs ${
                           service.priority === 'high'
-                            ? 'bg-black/10 dark:bg-[#ececec]/10 text-apple-dark dark:text-[#ececec] border border-black dark:border-[#424242]'
+                            ? 'bg-[var(--text-primary)]/10 text-[var(--text-on-brand)] border border-[var(--border-strong)]'
                             : service.priority === 'medium'
-                              ? 'bg-black/5 dark:bg-[#ececec]/5 text-apple-dark dark:text-[#ececec] border border-black/50 dark:border-[#424242]'
-                              : 'bg-apple-light-gray/30 dark:bg-[#353535] text-apple-dark dark:text-[#ececec] border border-apple-border dark:border-[#424242]'
+                              ? 'bg-[var(--text-primary)]/5 text-[var(--text-on-brand)] border border-[var(--border-strong)]'
+                              : 'bg-[var(--surface-active)] text-[var(--text-on-brand)] border border-[var(--border-strong)]'
                         }`}
                       >
                         {service.priority}
                       </Badge>
                     </div>
-                    <p className='text-sm text-apple-dark dark:text-[#ececec] mt-1'>
+                    <p className='text-sm text-[var(--text-on-brand)] mt-1'>
                       {service.reason}
                     </p>
-                    <div className='flex items-center gap-3 mt-2 text-xs text-apple-dark dark:text-[#ececec]'>
+                    <div className='flex items-center gap-3 mt-2 text-xs text-[var(--text-on-brand)]'>
                       <span>Stima: €{service.estimatedCost}</span>
                       <span>•</span>
                       <span>Confidenza: {service.aiConfidence}%</span>
@@ -1952,7 +2129,7 @@ function Step5AIFeatures({
                   </div>
                 </div>
                 <div className='text-right'>
-                  <div className='font-semibold text-apple-dark dark:text-[#ececec]'>
+                  <div className='font-semibold text-[var(--text-on-brand)]'>
                     €{service.estimatedCost}
                   </div>
                 </div>
@@ -1963,43 +2140,43 @@ function Step5AIFeatures({
       </div>
 
       {/* Cost Summary */}
-      <div className='bg-white/80 dark:bg-[#2f2f2f]/80 backdrop-blur-xl rounded-3xl p-6 shadow-sm border border-apple-border/50 dark:border-[#424242]'>
-        <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
-          <Zap className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
+      <div className='bg-[var(--surface-elevated)] rounded-2xl p-6 border border-[var(--border-strong)]'>
+        <h3 className='font-semibold text-[var(--text-on-brand)] mb-4 flex items-center gap-2'>
+          <Zap className='w-5 h-5 text-[var(--text-on-brand)]' />
           Stima Costi
         </h3>
 
         <div className='space-y-3'>
           <div className='flex items-center justify-between text-sm'>
-            <span className='text-apple-gray dark:text-[#636366]'>
+            <span className='text-[var(--text-tertiary)]'>
               Mano d&apos;opera ({watch('duration')} min @ €85/h)
             </span>
-            <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+            <span className='font-medium text-[var(--text-on-brand)]'>
               €{baseLaborCost.toFixed(2)}
             </span>
           </div>
 
           {preventiveCost > 0 && (
             <div className='flex items-center justify-between text-sm'>
-              <span className='text-apple-gray dark:text-[#636366]'>
+              <span className='text-[var(--text-tertiary)]'>
                 Servizi preventivi ({selectedServices.length})
               </span>
-              <span className='font-medium text-apple-dark dark:text-[#ececec]'>
+              <span className='font-medium text-[var(--text-on-brand)]'>
                 +€{preventiveCost.toFixed(2)}
               </span>
             </div>
           )}
 
-          <div className='border-t border-apple-border dark:border-[#424242] pt-3'>
+          <div className='border-t border-[var(--border-strong)] pt-3'>
             <div className='flex items-center justify-between'>
-              <span className='font-semibold text-apple-dark dark:text-[#ececec]'>
+              <span className='font-semibold text-[var(--text-on-brand)]'>
                 Totale Stimato
               </span>
-              <span className='text-2xl font-bold text-apple-dark dark:text-[#ececec]'>
+              <span className='text-2xl font-bold text-[var(--text-on-brand)]'>
                 €{totalEstimatedCost.toFixed(2)}
               </span>
             </div>
-            <p className='text-xs text-apple-gray dark:text-[#636366] mt-2'>
+            <p className='text-xs text-[var(--text-tertiary)] mt-2'>
               * Il costo finale può variare in base alle condizioni del veicolo.
             </p>
           </div>
@@ -2007,13 +2184,13 @@ function Step5AIFeatures({
       </div>
 
       {/* AI Summary */}
-      <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-3xl p-6 border border-apple-border/20 dark:border-[#424242]/50'>
-        <h3 className='font-semibold text-apple-dark dark:text-[#ececec] mb-4 flex items-center gap-2'>
-          <Sparkles className='w-5 h-5 text-apple-dark dark:text-[#ececec]' />
+      <div className='bg-[var(--surface-active)] rounded-2xl p-6 border border-[var(--border-strong)]'>
+        <h3 className='font-semibold text-[var(--text-on-brand)] mb-4 flex items-center gap-2'>
+          <Sparkles className='w-5 h-5 text-[var(--text-on-brand)]' />
           Riepilogo AI
         </h3>
 
-        <div className='space-y-2 text-sm text-apple-dark dark:text-[#ececec]'>
+        <div className='space-y-2 text-sm text-[var(--text-on-brand)]'>
           <p>
             <strong>Cliente:</strong> {watch('customerName')}
           </p>
@@ -2044,7 +2221,7 @@ function Step5AIFeatures({
         </div>
       </div>
 
-      <p className='text-xs text-apple-gray dark:text-[#636366] mt-4'>
+      <p className='text-xs text-[var(--text-tertiary)] mt-4'>
         I dati inseriti saranno trattati ai sensi del GDPR 2016/679.{' '}
         <a href='/privacy-policy' className='underline' target='_blank' rel='noopener noreferrer'>
           Informativa privacy
@@ -2063,36 +2240,36 @@ function SuccessView({ bookingNumber, onClose }: { bookingNumber: string; onClos
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className='fixed inset-0 bg-white dark:bg-[#212121] flex items-center justify-center p-4 overflow-hidden'
+      className='fixed inset-0 bg-[var(--surface-tertiary)] flex items-center justify-center p-4 overflow-hidden'
     >
-      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-white/80 dark:bg-[#212121]/80 backdrop-blur-apple rounded-[40px] shadow-2xl border border-apple-border/20 dark:border-[#424242]/50 flex flex-col items-center justify-center p-10 text-center'>
+      <div className='w-[min(900px,95vw)] h-[min(900px,95vh)] bg-[var(--surface-elevated)]/90 backdrop-blur-xl rounded-[40px] shadow-2xl border border-[var(--border-strong)] flex flex-col items-center justify-center p-10 text-center'>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
-          className='w-32 h-32 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-8'
+          className='w-32 h-32 rounded-full bg-gradient-to-br from-[var(--status-success)] to-[var(--status-success)] flex items-center justify-center mb-8'
         >
-          <Check className='w-16 h-16 text-white' />
+          <Check className='w-16 h-16 text-[var(--text-on-brand)]' />
         </motion.div>
 
-        <h2 className='text-3xl font-bold text-apple-dark dark:text-[#ececec] mb-4'>
+        <h2 className='text-3xl font-bold text-[var(--text-on-brand)] mb-4'>
           Prenotazione Creata!
         </h2>
-        <p className='text-apple-gray dark:text-[#636366] mb-8 max-w-md'>
+        <p className='text-[var(--text-tertiary)] mb-8 max-w-md'>
           L&apos;appuntamento è stato registrato con successo. Il cliente riceverà le notifiche
           configurate.
         </p>
 
-        <div className='bg-apple-light-gray/30 dark:bg-[#353535] rounded-2xl p-6 mb-8'>
-          <p className='text-sm text-apple-gray dark:text-[#636366] mb-2'>Numero Prenotazione</p>
-          <p className='text-3xl font-mono font-bold text-apple-dark dark:text-[#ececec]'>
+        <div className='bg-[var(--surface-active)] rounded-2xl p-6 mb-8'>
+          <p className='text-sm text-[var(--text-tertiary)] mb-2'>Numero Prenotazione</p>
+          <p className='text-3xl font-mono font-bold text-[var(--text-on-brand)]'>
             {bookingNumber}
           </p>
         </div>
 
         <Button
           onClick={onClose}
-          className='rounded-full px-8 h-14 bg-black hover:bg-gray-800 dark:bg-[#ececec] dark:hover:bg-white dark:text-black text-white'
+          className='rounded-full px-8 h-[52px] bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-[var(--text-on-brand)]'
         >
           Crea Nuova Prenotazione
         </Button>

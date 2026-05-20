@@ -1,0 +1,89 @@
+rules:
+  - id: promise-then-without-catch
+    patterns:
+      - pattern: $OBJ.$METHOD($ARGS).then($HANDLER)
+      - pattern-not: $OBJ.$METHOD($ARGS).then($HANDLER).catch($ERR)
+      - pattern-not: $OBJ.$METHOD($ARGS).then($SUCCESS, $FAILURE)
+    message: >
+      Promise con .then() senza .catch() — unhandled rejection in produzione.
+      Fix: aggiungi .catch(err => this.logger.error(err)) oppure usa await con try/catch.
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: async-foreach
+    pattern: $ARR.forEach(async ($ITEM) => { ... })
+    message: >
+      async callback in forEach — le Promise non vengono attese, gli errori si perdono.
+      Fix: usa for...of con await, oppure await Promise.all(arr.map(async (item) => ...)).
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: unhandled-promise-fire-and-forget
+    patterns:
+      - pattern: |
+          $OBJ.$METHOD(...)
+            .catch(...)
+      - pattern-not: await $OBJ.$METHOD(...)
+      - pattern-not: return $OBJ.$METHOD(...)
+      - pattern-not: const $VAR = $OBJ.$METHOD(...)
+    message: >
+      Promise fire-and-forget senza await o assegnazione — difficile da tracciare in caso di errore.
+      Fix: usa await oppure assegna a una variabile con esplicita gestione errori.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: setinterval-without-cleanup
+    pattern: setInterval($F, $N)
+    message: >
+      setInterval senza riferimento per clearInterval — potenziale memory leak.
+      Fix: salva il timer e cancellalo in onModuleDestroy() o onApplicationShutdown().
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: settimeout-in-service
+    patterns:
+      - pattern: setTimeout($F, $N)
+      - pattern-not: setTimeout($F, 0)
+    message: >
+      setTimeout con delay > 0 in un service — usa BullMQ per job schedulati.
+      Fix: crea un BullMQ job con delay: $N per affidabilità e tracciabilità.
+    languages: [typescript]
+    severity: WARNING
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: new-promise-antipattern
+    pattern: |
+      new Promise(($RESOLVE, $REJECT) => {
+        ...
+        await $EXPR;
+        ...
+      })
+    message: >
+      new Promise() con await interno — Promise constructor antipattern.
+      Fix: trasforma la funzione in async e usa direttamente await senza wrappare in new Promise.
+    languages: [typescript]
+    severity: WARNING

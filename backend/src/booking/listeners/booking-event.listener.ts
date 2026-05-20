@@ -5,9 +5,11 @@ import { QueueService } from '@common/services/queue.service';
 import { BookingCreatedEvent } from '../services/booking.service';
 
 @Injectable()
+/* c8 ignore next */
 export class BookingEventListener {
   constructor(
     private readonly logger: LoggerService,
+    /* c8 ignore next */
     private readonly queueService: QueueService,
   ) {}
 

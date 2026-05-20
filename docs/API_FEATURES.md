@@ -140,7 +140,7 @@ GDPR-compliant customer management with data export and deletion capabilities.
 
 | Procedure | Method | Input | Output | Description |
 |-----------|--------|-------|--------|-------------|
-| `customer.createCustomer` | `POST` | `{name, email, phone}` | `{customer}` | Create new customer |
+| `customer.createCustomer` | `POST` | `{name, email, phone, ...}` | `{customer}` | Create new customer |
 | `customer.getCustomer` | `GET` | `{customerId}` | `{customer}` | Get customer details |
 | `customer.updateCustomer` | `PATCH` | `{customerId, data}` | `{customer}` | Update customer info |
 | `customer.searchCustomers` | `GET` | `{query}` | `{customers[]}` | Search by name/phone/email |
@@ -148,6 +148,44 @@ GDPR-compliant customer management with data export and deletion capabilities.
 | `customer.exportData` | `POST` | `{customerId}` | `{url}` | GDPR data export |
 | `customer.requestDeletion` | `POST` | `{customerId}` | `{deletionId}` | GDPR deletion request |
 | `customer.getBookings` | `GET` | `{customerId}` | `{bookings[]}` | Customer booking history |
+
+#### CreateCustomer / UpdateCustomer — Optional Fields
+
+| Field | Type | Validation | Description |
+|-------|------|------------|-------------|
+| `customerType` | `enum` | `PRIVATE \| COMPANY \| FLEET` | Customer classification |
+| `codiceFiscale` | `string` | Pattern: `^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$` | Italian fiscal code |
+| `partitaIva` | `string` | Pattern: `^\d{11}$` | VAT number |
+| `sdiCode` | `string` | 7 characters | SDI code for electronic invoicing (SdI) |
+| `pecEmail` | `string` | Valid email | Certified email (PEC) for invoicing |
+| `address` | `string` | - | Street address |
+| `city` | `string` | - | City |
+| `postalCode` | `string` | 5 digits | Italian postal code (CAP) |
+| `province` | `string` | 2 characters | Province abbreviation (e.g., `MI`, `RM`) |
+| `country` | `string` | - | Country |
+| `preferredChannel` | `enum` | `EMAIL \| SMS \| WHATSAPP \| PUSH` | Preferred notification channel |
+| `source` | `enum` | `WEB \| PHONE \| WALK_IN \| REFERRAL \| SOCIAL` | Customer acquisition source |
+
+#### Example: Create Customer with Full Profile
+
+```typescript
+const { customer } = await trpc.customer.createCustomer.mutate({
+  name: "Mario Rossi",
+  email: "mario@example.com",
+  phone: "+393331234567",
+  customerType: "COMPANY",
+  partitaIva: "01234567890",
+  sdiCode: "ABC1234",
+  pecEmail: "mario@pec.it",
+  address: "Via Roma 1",
+  city: "Milano",
+  postalCode: "20100",
+  province: "MI",
+  country: "IT",
+  preferredChannel: "EMAIL",
+  source: "WEB"
+});
+```
 
 #### Example: Search Customers
 
@@ -178,12 +216,26 @@ Vehicle inventory and service history management.
 
 | Procedure | Method | Input | Output | Description |
 |-----------|--------|-------|--------|-------------|
-| `vehicle.createVehicle` | `POST` | `{customerId, vin, make, model}` | `{vehicle}` | Register new vehicle |
+| `vehicle.createVehicle` | `POST` | `{customerId, vin, make, model, ...}` | `{vehicle}` | Register new vehicle |
 | `vehicle.getVehicle` | `GET` | `{vehicleId}` | `{vehicle}` | Get vehicle details |
 | `vehicle.updateVehicle` | `PATCH` | `{vehicleId, data}` | `{vehicle}` | Update vehicle info |
 | `vehicle.listVehicles` | `GET` | `{customerId, page}` | `{vehicles[], total}` | List customer vehicles |
 | `vehicle.getServiceHistory` | `GET` | `{vehicleId}` | `{services[]}` | Service history |
 | `vehicle.getOBDData` | `GET` | `{vehicleId}` | `{obdData}` | OBD-II diagnostic data |
+
+#### CreateVehicle / UpdateVehicle — Optional Fields
+
+| Field | Type | Validation | Description |
+|-------|------|------------|-------------|
+| `fuelType` | `enum` | `PETROL \| DIESEL \| LPG \| CNG \| ELECTRIC \| HYBRID_PETROL \| HYBRID_DIESEL \| HYDROGEN` | Fuel / powertrain type |
+| `engineDisplacement` | `int` | 50–10000 cc | Engine displacement in cubic centimeters |
+| `power` | `int` | 1–2000 kW | Engine power in kilowatts |
+| `transmissionType` | `enum` | `MANUAL \| AUTOMATIC \| SEMI_AUTOMATIC \| CVT` | Transmission type |
+| `color` | `string` | - | Vehicle color |
+| `driveType` | `enum` | `FWD \| RWD \| AWD \| FOUR_WD` | Drivetrain layout |
+| `registrationDate` | `string` | ISO 8601 date | First registration date |
+| `insuranceExpiry` | `string` | ISO 8601 date | Insurance expiry date |
+| `taxExpiry` | `string` | ISO 8601 date | Road tax (bollo) expiry date |
 
 ---
 
@@ -212,13 +264,78 @@ Billing, quotes, and financial management.
 
 | Procedure | Method | Input | Output | Description |
 |-----------|--------|-------|--------|-------------|
-| `invoice.createInvoice` | `POST` | `{bookingId, items[]}` | `{invoice}` | Generate invoice |
+| `invoice.createInvoice` | `POST` | `{bookingId, items[], ...}` | `{invoice}` | Generate invoice |
 | `invoice.getInvoice` | `GET` | `{invoiceId}` | `{invoice}` | Get invoice details |
-| `invoice.updateInvoice` | `PATCH` | `{invoiceId, data}` | `{invoice}` | Update invoice |
+| `invoice.updateInvoice` | `PATCH` | `{invoiceId, status, ...}` | `{invoice}` | Update invoice |
 | `invoice.sendInvoice` | `POST` | `{invoiceId}` | `{success}` | Email invoice to customer |
 | `invoice.createQuote` | `POST` | `{customerId, items[]}` | `{quote}` | Create quote |
 | `invoice.getFinancialReport` | `GET` | `{startDate, endDate}` | `{report}` | Financial analytics |
 | `invoice.listInvoices` | `GET` | `{page, status}` | `{invoices[], total}` | Invoice list |
+
+#### CreateInvoiceItemDto
+
+Each item in `items[]` accepts:
+
+| Field | Type | Required | Validation | Description |
+|-------|------|----------|------------|-------------|
+| `description` | `string` | Yes | - | Line item description |
+| `itemType` | `enum` | Yes | Invoice item type enum | Type of line item (e.g., `LABOR`, `PART`, `SERVICE`, `DISCOUNT`, `OTHER`) |
+| `quantity` | `number` | Yes | > 0 | Quantity |
+| `unitPrice` | `number` | Yes | >= 0 | Unit price in cents |
+| `vatRate` | `number` | Yes | 0–100 | VAT rate percentage |
+| `discount` | `number` | No | 0–100 | Discount percentage |
+| `partId` | `string` | No | UUID | Reference to a part from inventory |
+
+#### CreateInvoice — Optional Fields
+
+| Field | Type | Validation | Description |
+|-------|------|------------|-------------|
+| `documentType` | `enum` | Document type enum | Invoice document type (e.g., `INVOICE`, `CREDIT_NOTE`, `PROFORMA`) |
+| `paymentMethod` | `enum` | Payment method enum | Payment method (e.g., `CASH`, `CARD`, `BANK_TRANSFER`, `STRIPE`) |
+| `paymentTerms` | `enum` | Payment terms enum | Payment terms (e.g., `IMMEDIATE`, `NET_15`, `NET_30`, `NET_60`) |
+| `taxRegime` | `enum` | Tax regime enum | Italian tax regime (e.g., `ORDINARIO`, `FORFETTARIO`, `MINIMI`) |
+
+#### UpdateInvoice — Status Validation
+
+The `status` field in `UpdateInvoiceDto` is validated against the `InvoiceStatus` enum:
+
+| Status | Description |
+|--------|-------------|
+| `DRAFT` | Invoice is being prepared |
+| `SENT` | Invoice has been sent to customer |
+| `PAID` | Payment received |
+| `OVERDUE` | Payment past due date |
+| `CANCELLED` | Invoice cancelled |
+
+#### Example: Create Invoice with Items
+
+```typescript
+const { invoice } = await trpc.invoice.createInvoice.mutate({
+  bookingId: "book_123abc",
+  documentType: "INVOICE",
+  paymentMethod: "CARD",
+  paymentTerms: "IMMEDIATE",
+  taxRegime: "ORDINARIO",
+  items: [
+    {
+      description: "Cambio olio motore",
+      itemType: "LABOR",
+      quantity: 1,
+      unitPrice: 4500,
+      vatRate: 22
+    },
+    {
+      description: "Olio motore 5W-30 5L",
+      itemType: "PART",
+      quantity: 1,
+      unitPrice: 3200,
+      vatRate: 22,
+      discount: 10,
+      partId: "part_456def"
+    }
+  ]
+});
+```
 
 ---
 

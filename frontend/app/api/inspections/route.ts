@@ -1,104 +1,70 @@
 /**
- * POST /api/inspections
- * Create a new vehicle inspection
+ * Inspections API Route — Proxy to NestJS Backend
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { 
-  createInspection,
-  InspectionValidationError 
-} from '@/lib/services/inspectionService'
-import { TRPCClientError, ServerError } from '@/lib/api-errors'
-import type { CreateInspectionInput } from '@/lib/services/inspectionService'
-type FuelLevel = 'EMPTY' | 'QUARTER' | 'HALF' | 'THREE_QUARTERS' | 'FULL'
+import { NextRequest, NextResponse } from 'next/server';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3002';
+
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const searchParams = url.searchParams.toString();
+    const path = searchParams ? `/v1/inspections?${searchParams}` : '/v1/inspections';
+
+    const response = await fetch(`${BACKEND_URL}${path}`, {
+      method: 'GET',
+      headers: {
+        Authorization: request.headers.get('Authorization') || '',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Backend request failed' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error proxying inspections request:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 502 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    
-    // Validate required fields
-    const { 
-      templateId, 
-      vehicleId, 
-      customerId, 
-      mechanicId,
-      mileage,
-      fuelLevel,
-      notes 
-    } = body
+    const body = await request.json();
 
-    if (!templateId || !vehicleId || !customerId || !mechanicId) {
-      return NextResponse.json(
-        { 
-          error: 'Missing required fields',
-          details: 'templateId, vehicleId, customerId, and mechanicId are required'
-        },
-        { status: 400 }
-      )
-    }
-
-    // Build input data
-    const input: CreateInspectionInput = {
-      templateId,
-      vehicleId,
-      customerId,
-      mechanicId,
-      ...(mileage !== undefined && { mileage: Number(mileage) }),
-      ...(fuelLevel && { fuelLevel: fuelLevel as FuelLevel }),
-      ...(notes && { notes })
-    }
-
-    // Create inspection
-    const inspection = await createInspection(input)
-
-    return NextResponse.json(
-      { 
-        success: true,
-        data: inspection 
+    const response = await fetch(`${BACKEND_URL}/v1/inspections`, {
+      method: 'POST',
+      headers: {
+        Authorization: request.headers.get('Authorization') || '',
+        'Content-Type': 'application/json',
       },
-      { status: 201 }
-    )
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Backend request failed' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error('Create inspection error:', error)
-
-    if (error instanceof InspectionValidationError) {
-      return NextResponse.json(
-        { 
-          error: 'Validation failed',
-          details: error.message,
-          field: error.field
-        },
-        { status: 400 }
-      )
-    }
-
-    if (error instanceof TRPCClientError) {
-      return NextResponse.json(
-        { 
-          error: 'Service error',
-          details: error.message,
-          code: error.code
-        },
-        { status: error.statusCode || 500 }
-      )
-    }
-
-    if (error instanceof ServerError) {
-      return NextResponse.json(
-        { 
-          error: 'Server error',
-          details: error.message
-        },
-        { status: 500 }
-      )
-    }
-
+    console.error('Error proxying inspections POST:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+      { error: 'Internal server error' },
+      { status: 502 }
+    );
   }
 }

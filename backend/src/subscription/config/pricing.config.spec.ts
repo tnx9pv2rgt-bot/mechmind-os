@@ -50,9 +50,10 @@ describe('PricingConfig', () => {
       expect(PLAN_PRICING['ENTERPRISE']).toBeDefined();
     });
 
-    it('should have ENTERPRISE as custom pricing', () => {
-      expect(PLAN_PRICING['ENTERPRISE'].isCustomPricing).toBe(true);
-      expect(PLAN_PRICING['ENTERPRISE'].monthlyPrice).toBe(0);
+    it('should have ENTERPRISE pricing set', () => {
+      expect(PLAN_PRICING['ENTERPRISE'].isCustomPricing).toBe(false);
+      expect(PLAN_PRICING['ENTERPRISE'].monthlyPrice).toBe(249.0);
+      expect(PLAN_PRICING['ENTERPRISE'].yearlyPrice).toBe(2499.0);
     });
 
     it('should have TRIAL as free', () => {
@@ -61,8 +62,8 @@ describe('PricingConfig', () => {
     });
 
     it('should have SMALL pricing set', () => {
-      expect(PLAN_PRICING['SMALL'].monthlyPrice).toBe(100.0);
-      expect(PLAN_PRICING['SMALL'].yearlyPrice).toBe(1020.0);
+      expect(PLAN_PRICING['SMALL'].monthlyPrice).toBe(39.0);
+      expect(PLAN_PRICING['SMALL'].yearlyPrice).toBe(399.0);
     });
   });
 
@@ -98,15 +99,16 @@ describe('PricingConfig', () => {
 
   describe('AI_ADDON', () => {
     it('should have pricing defined', () => {
-      expect(AI_ADDON.monthlyPrice).toBe(200.0);
-      expect(AI_ADDON.yearlyPrice).toBe(2040.0);
+      expect(AI_ADDON.monthlyPrice).toBe(29.0);
+      expect(AI_ADDON.yearlyPrice).toBe(295.0);
     });
   });
 
   describe('AI_ADDON_FEATURES', () => {
     it('should contain AI-specific features', () => {
       expect(AI_ADDON_FEATURES).toContain('AI_INSPECTIONS');
-      expect(AI_ADDON_FEATURES).toContain('VOICE_ASSISTANT');
+      // VOICE_ASSISTANT is now in VOICE_ADDON_FEATURES, not AI_ADDON_FEATURES
+      expect(AI_ADDON_FEATURES).not.toContain('VOICE_ASSISTANT');
     });
   });
 
@@ -139,16 +141,16 @@ describe('PricingConfig', () => {
 
   describe('getPlanPrice', () => {
     it('should return monthly price for non-custom plans', () => {
-      expect(getPlanPrice('SMALL' as never, 'monthly')).toBe(100.0);
+      expect(getPlanPrice('SMALL' as never, 'monthly')).toBe(39.0);
     });
 
     it('should return yearly price for non-custom plans', () => {
-      expect(getPlanPrice('SMALL' as never, 'yearly')).toBe(1020.0);
+      expect(getPlanPrice('SMALL' as never, 'yearly')).toBe(399.0);
     });
 
-    it('should return 0 for ENTERPRISE (custom pricing)', () => {
-      expect(getPlanPrice('ENTERPRISE' as never, 'monthly')).toBe(0);
-      expect(getPlanPrice('ENTERPRISE' as never, 'yearly')).toBe(0);
+    it('should return ENTERPRISE prices', () => {
+      expect(getPlanPrice('ENTERPRISE' as never, 'monthly')).toBe(249.0);
+      expect(getPlanPrice('ENTERPRISE' as never, 'yearly')).toBe(2499.0);
     });
 
     it('should return 0 for TRIAL', () => {
@@ -157,26 +159,28 @@ describe('PricingConfig', () => {
   });
 
   describe('getFormattedPrice', () => {
-    it('should return "Custom" for ENTERPRISE plan (lines 308-311)', () => {
+    it('should return formatted EUR price for monthly ENTERPRISE plan', () => {
       const result = getFormattedPrice('ENTERPRISE' as never, 'monthly');
-      expect(result).toBe('Custom');
+      // €249,00 in Italian format
+      expect(result).toContain('249');
     });
 
-    it('should return formatted EUR price for monthly SMALL plan (lines 312-315)', () => {
+    it('should return formatted EUR price for monthly SMALL plan', () => {
       const result = getFormattedPrice('SMALL' as never, 'monthly');
-      // Italian format: €100,00 or 100,00 € depending on locale
-      expect(result).toContain('100');
+      // Italian format: €39,00 or 39,00 €
+      expect(result).toContain('39');
     });
 
-    it('should return formatted EUR price for yearly SMALL plan divided by 12 (line 315)', () => {
+    it('should return formatted EUR price for yearly SMALL plan divided by 12', () => {
       const result = getFormattedPrice('SMALL' as never, 'yearly');
-      // 1020 / 12 = 85
-      expect(result).toContain('85');
+      // 399 / 12 = 33.25
+      expect(result).toContain('33');
     });
 
-    it('should return "Custom" for ENTERPRISE yearly as well', () => {
+    it('should return formatted EUR price for ENTERPRISE yearly divided by 12', () => {
       const result = getFormattedPrice('ENTERPRISE' as never, 'yearly');
-      expect(result).toBe('Custom');
+      // 2499 / 12 = 208.25
+      expect(result).toContain('208');
     });
   });
 
@@ -189,11 +193,11 @@ describe('PricingConfig', () => {
         15,
         30,
       );
-      // oldPrice=100, newPrice=390.9
-      // remainingValue = (100/30)*15 = 50
-      // newValue = (390.9/30)*15 = 195.45
-      // diff = 145.45
-      expect(result).toBeCloseTo(145.45, 1);
+      // oldPrice=39, newPrice=89
+      // remainingValue = (39/30)*15 = 19.5
+      // newValue = (89/30)*15 = 44.5
+      // diff = 25
+      expect(result).toBeCloseTo(25, 1);
     });
 
     it('should return negative value for downgrade', () => {
@@ -214,7 +218,7 @@ describe('PricingConfig', () => {
 
     it('should use default daysInPeriod of 30', () => {
       const result = calculateProratedAmount('SMALL' as never, 'MEDIUM' as never, 'monthly', 15);
-      expect(result).toBeCloseTo(145.45, 1);
+      expect(result).toBeCloseTo(25, 1);
     });
   });
 
@@ -228,7 +232,8 @@ describe('PricingConfig', () => {
     it('should include AI addon features when hasAiAddon is true (lines 337-339)', () => {
       const features = getFeaturesForPlan('SMALL' as never, true);
       expect(features).toContain('AI_INSPECTIONS');
-      expect(features).toContain('VOICE_ASSISTANT');
+      // VOICE_ASSISTANT requires separate voice addon, not AI addon
+      expect(features).not.toContain('VOICE_ASSISTANT');
       expect(features).toContain('OBD_INTEGRATION');
     });
 

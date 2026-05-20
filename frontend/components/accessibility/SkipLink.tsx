@@ -7,12 +7,11 @@
 'use client';
 
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 interface SkipLinkProps {
   /** ID dell'elemento target */
   targetId?: string;
-  /** Testo del link (default: traduzione da i18n) */
+  /** Testo del link (default: "Vai al contenuto principale") */
   text?: string;
   /** Classe CSS aggiuntiva */
   className?: string;
@@ -22,12 +21,11 @@ interface SkipLinkProps {
  * SkipLink - Link nascosto che appare al focus
  * Permette agli utenti di tastiera di saltare la navigazione
  */
-export function SkipLink({ 
-  targetId = 'main-content', 
+export function SkipLink({
+  targetId = 'main-content',
   text,
   className = '',
 }: SkipLinkProps) {
-  const { t } = useTranslation('common');
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -51,16 +49,16 @@ export function SkipLink({
         sr-only focus:not-sr-only
         fixed top-4 left-4 z-50
         px-4 py-3
-        bg-primary text-primary-foreground
+        bg-[var(--brand)] text-[var(--text-on-brand)]
         font-medium
         rounded-md
         shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
         transition-all
         ${className}
       `}
     >
-      {text || t('meta.skipToContent')}
+      {text || 'Vai al contenuto principale'}
     </a>
   );
 }
@@ -105,11 +103,10 @@ interface SkipToNavigationProps {
   className?: string;
 }
 
-export function SkipToNavigation({ 
+export function SkipToNavigation({
   navId = 'main-navigation',
   className = '',
 }: SkipToNavigationProps) {
-  const { t } = useTranslation('common');
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -130,16 +127,16 @@ export function SkipToNavigation({
         sr-only focus:not-sr-only
         fixed top-4 left-48 z-50
         px-4 py-3
-        bg-secondary text-secondary-foreground
+        bg-[var(--surface-secondary)] text-[var(--text-secondary)]-foreground
         font-medium
         rounded-md
         shadow-lg
-        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
         transition-all
         ${className}
       `}
     >
-      {t('meta.mainNavigation')}
+      {'Vai alla navigazione'}
     </a>
   );
 }

@@ -23,30 +23,30 @@ import { MaintenanceSchedule } from '@/lib/types/portal'
 const priorityConfig = {
   low: {
     label: 'Bassa',
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
+    borderColor: 'border-[var(--status-info-subtle)]',
     icon: Clock,
   },
   medium: {
     label: 'Media',
-    color: 'text-apple-orange',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-200',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/5',
+    borderColor: 'border-[var(--status-warning)]/20',
     icon: AlertCircle,
   },
   high: {
     label: 'Alta',
-    color: 'text-apple-red',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-200',
+    color: 'text-[var(--status-error)]',
+    bgColor: 'bg-[var(--status-error-subtle)]',
+    borderColor: 'border-[var(--status-error-subtle)]',
     icon: AlertTriangle,
   },
   critical: {
     label: 'Critica',
-    color: 'text-white',
-    bgColor: 'bg-apple-red',
-    borderColor: 'border-red-500',
+    color: 'text-[var(--text-on-brand)]',
+    bgColor: 'bg-[var(--status-error)]',
+    borderColor: 'border-[var(--status-error)]',
     icon: AlertTriangle,
   },
 }
@@ -54,23 +54,23 @@ const priorityConfig = {
 const statusConfig = {
   upcoming: {
     label: 'In programma',
-    color: 'text-apple-blue',
-    bgColor: 'bg-blue-50',
+    color: 'text-[var(--brand)]',
+    bgColor: 'bg-[var(--status-info-subtle)]',
   },
   due: {
     label: 'Scaduta',
-    color: 'text-apple-orange',
-    bgColor: 'bg-orange-50',
+    color: 'text-[var(--status-warning)]',
+    bgColor: 'bg-[var(--status-warning)]/5',
   },
   overdue: {
     label: 'In ritardo',
-    color: 'text-white',
-    bgColor: 'bg-apple-red',
+    color: 'text-[var(--text-on-brand)]',
+    bgColor: 'bg-[var(--status-error)]',
   },
   completed: {
     label: 'Completata',
-    color: 'text-apple-green',
-    bgColor: 'bg-green-50',
+    color: 'text-[var(--status-success)]',
+    bgColor: 'bg-[var(--status-success-subtle)]',
   },
 }
 
@@ -126,20 +126,20 @@ export function MaintenanceItem({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-apple-dark text-sm truncate">
+                  <p className="font-medium text-[var(--text-primary)] text-sm truncate">
                     {maintenance.serviceType}
                   </p>
                   <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${status.bgColor} ${status.color}`}>
                     {status.label}
                   </span>
                 </div>
-                <p className="text-xs text-apple-gray">
+                <p className="text-xs text-[var(--text-tertiary)]">
                   {maintenance.vehicle?.make} {maintenance.vehicle?.model}
                 </p>
               </div>
 
               <div className="text-right">
-                <p className={`text-sm font-medium ${isUrgent ? 'text-apple-red' : 'text-apple-dark'}`}>
+                <p className={`text-sm font-medium ${isUrgent ? 'text-[var(--status-error)]' : 'text-[var(--text-primary)]'}`}>
                   {daysUntilDue === 0 
                     ? 'Oggi' 
                     : daysUntilDue < 0 
@@ -171,14 +171,14 @@ export function MaintenanceItem({
 
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-apple-dark">
+                  <h3 className="font-semibold text-[var(--text-primary)]">
                     {maintenance.serviceType}
                   </h3>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}>
                     {status.label}
                   </span>
                 </div>
-                <p className="text-sm text-apple-gray">
+                <p className="text-sm text-[var(--text-tertiary)]">
                   {maintenance.vehicle?.make} {maintenance.vehicle?.model} • {maintenance.vehicle?.licensePlate}
                 </p>
               </div>
@@ -190,28 +190,28 @@ export function MaintenanceItem({
           </div>
 
           {/* Description */}
-          <p className="text-sm text-apple-dark mb-4">
+          <p className="text-sm text-[var(--text-primary)] mb-4">
             {maintenance.description}
           </p>
 
           {/* Details */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-            <div className="flex items-center gap-2 p-3 bg-apple-light-gray/50 rounded-xl">
-              <Calendar className="h-4 w-4 text-apple-blue" />
+            <div className="flex items-center gap-2 p-3 bg-[var(--surface-secondary)]/50 rounded-xl">
+              <Calendar className="h-4 w-4 text-[var(--brand)]" />
               <div>
-                <p className="text-xs text-apple-gray">Scadenza</p>
-                <p className={`text-sm font-medium ${isUrgent ? 'text-apple-red' : 'text-apple-dark'}`}>
+                <p className="text-xs text-[var(--text-tertiary)]">Scadenza</p>
+                <p className={`text-sm font-medium ${isUrgent ? 'text-[var(--status-error)]' : 'text-[var(--text-primary)]'}`}>
                   {formattedDate}
                 </p>
               </div>
             </div>
 
             {maintenance.dueMileage && (
-              <div className="flex items-center gap-2 p-3 bg-apple-light-gray/50 rounded-xl">
-                <Gauge className="h-4 w-4 text-apple-blue" />
+              <div className="flex items-center gap-2 p-3 bg-[var(--surface-secondary)]/50 rounded-xl">
+                <Gauge className="h-4 w-4 text-[var(--brand)]" />
                 <div>
-                  <p className="text-xs text-apple-gray">Al km</p>
-                  <p className="text-sm font-medium text-apple-dark">
+                  <p className="text-xs text-[var(--text-tertiary)]">Al km</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     {maintenance.dueMileage.toLocaleString('it-IT')} km
                   </p>
                 </div>
@@ -219,11 +219,11 @@ export function MaintenanceItem({
             )}
 
             {maintenance.estimatedCost && (
-              <div className="flex items-center gap-2 p-3 bg-apple-light-gray/50 rounded-xl">
-                <Wrench className="h-4 w-4 text-apple-blue" />
+              <div className="flex items-center gap-2 p-3 bg-[var(--surface-secondary)]/50 rounded-xl">
+                <Wrench className="h-4 w-4 text-[var(--brand)]" />
                 <div>
-                  <p className="text-xs text-apple-gray">Stima costo</p>
-                  <p className="text-sm font-medium text-apple-dark">
+                  <p className="text-xs text-[var(--text-tertiary)]">Stima costo</p>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
                     €{maintenance.estimatedCost.toLocaleString('it-IT')}
                   </p>
                 </div>
@@ -233,9 +233,9 @@ export function MaintenanceItem({
 
           {/* Urgent Alert */}
           {isUrgent && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-apple-red flex-shrink-0" />
-              <p className="text-sm text-apple-red">
+            <div className="mb-4 p-3 bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 rounded-xl flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[var(--status-error)] flex-shrink-0" />
+              <p className="text-sm text-[var(--status-error)]">
                 {daysUntilDue < 0 
                   ? `La manutenzione è scaduta da ${Math.abs(daysUntilDue)} giorni`
                   : `La manutenzione scade ${daysUntilDue === 0 ? 'oggi' : `tra ${daysUntilDue} giorni`}`
@@ -245,7 +245,7 @@ export function MaintenanceItem({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-4 border-t border-apple-border/30">
+          <div className="flex items-center gap-2 pt-4 border-t border-[var(--border-default)]/30">
             {maintenance.status !== 'completed' && (
               <AppleButton
                 variant="primary"
@@ -292,8 +292,8 @@ export function MaintenanceList({
   if (maintenances.length === 0) {
     return (
       <div className="text-center py-12">
-        <Wrench className="h-12 w-12 mx-auto text-apple-gray/30 mb-4" />
-        <p className="text-apple-gray">{emptyMessage}</p>
+        <Wrench className="h-12 w-12 mx-auto text-[var(--text-tertiary)]/30 mb-4" />
+        <p className="text-[var(--text-tertiary)]">{emptyMessage}</p>
       </div>
     )
   }

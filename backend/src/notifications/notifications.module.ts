@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Services
 import { NotificationsService } from './services/notifications.service';
@@ -9,6 +10,7 @@ import { NotificationV2Service } from './services/notification-v2.service';
 import { NotificationTriggersService } from './services/notification-triggers.service';
 import { EmailService } from './email/email.service';
 import { SmsService } from './sms/sms.service';
+import { PecService } from './pec/pec.service';
 
 // Controllers
 import { NotificationsController } from './controllers/notifications.controller';
@@ -28,10 +30,12 @@ import { NotificationsGateway } from './gateways/notifications.gateway';
 // Processors
 import { EmailProcessor } from './processors/email.processor';
 import { NotificationProcessor } from './processors/notification.processor';
+import { SmsProcessor } from './processors/sms.processor';
 
 @Module({
   imports: [
     ConfigModule,
+    ScheduleModule.forRoot(),
     BullModule.registerQueue(
       {
         name: 'email-queue',
@@ -57,6 +61,18 @@ import { NotificationProcessor } from './processors/notification.processor';
           removeOnFail: 100,
         },
       },
+      {
+        name: 'sms-queue',
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 30000,
+          },
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      },
     ),
   ],
   controllers: [
@@ -75,6 +91,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
+    PecService,
     SseService,
     RedisPubSubService,
 
@@ -84,6 +101,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     // Processors
     EmailProcessor,
     NotificationProcessor,
+    SmsProcessor,
   ],
   exports: [
     NotificationsService,
@@ -92,6 +110,7 @@ import { NotificationProcessor } from './processors/notification.processor';
     NotificationTriggersService,
     EmailService,
     SmsService,
+    PecService,
     SseService,
   ],
 })

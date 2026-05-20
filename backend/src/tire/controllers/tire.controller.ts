@@ -2,7 +2,18 @@
  * MechMind OS - Tire Set Controller
  */
 
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
@@ -27,6 +38,7 @@ export class TireController {
   constructor(private readonly tireService: TireService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Create tire set' })
   @ApiResponse({ status: 201 })
@@ -43,11 +55,15 @@ export class TireController {
   async findAll(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: TireSetQueryDto,
-  ): Promise<TireSet[]> {
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<{ data: TireSet[]; total: number; page: number; limit: number; pages: number }> {
     return this.tireService.findAll(tenantId, {
       vehicleId: query.vehicleId,
       season: query.season,
       isStored: query.isStored,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 

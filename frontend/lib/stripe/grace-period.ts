@@ -1,85 +1,113 @@
 /**
  * Grace Period Management Service
- * Handles suspension after failed payments
+ * Handles suspension after failed payments via backend API
  */
 
-import { prisma } from '@/lib/prisma';
-import { SubscriptionStatus } from '@prisma/client';
+import { BACKEND_BASE } from '@/lib/config';
 
-const GRACE_PERIOD_DAYS = 3;
+const BACKEND_URL = BACKEND_BASE;
+const TIMEOUT_MS = 10_000;
+
+interface GracePeriodStatus {
+  inGracePeriod: boolean;
+  shouldSuspend: boolean;
+  daysRemaining: number | null;
+  subscriptionStatus: string;
+  isSuspended: boolean;
+  gracePeriodEnd: string | null;
+}
+
+/**
+ * Internal helper to call the backend subscription/grace-period endpoint.
+ */
+async function fetchGracePeriodStatus(tenantId: string): Promise<GracePeriodStatus> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/subscription/grace-period?tenantId=${tenantId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Backend returned ${res.status}`);
+    }
+
+    const body = (await res.json()) as { data?: GracePeriodStatus };
+    return (
+      body.data ?? {
+        inGracePeriod: false,
+        shouldSuspend: false,
+        daysRemaining: null,
+        subscriptionStatus: 'ACTIVE',
+        isSuspended: false,
+        gracePeriodEnd: null,
+      }
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 /**
  * Check if tenant is in grace period
  */
 export async function isInGracePeriod(tenantId: string): Promise<boolean> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      gracePeriodEnd: true,
-      subscriptionStatus: true,
-    },
-  });
-
-  if (!tenant?.gracePeriodEnd) return false;
-
-  return (
-    tenant.gracePeriodEnd > new Date() && tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE
-  );
+  try {
+    const status = await fetchGracePeriodStatus(tenantId);
+    return status.inGracePeriod;
+  } catch (error) {
+    console.error('[grace-period] Failed to check grace period:', error);
+    return false;
+  }
 }
 
 /**
  * Check if tenant should be suspended (grace period expired)
  */
 export async function shouldSuspendTenant(tenantId: string): Promise<boolean> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      gracePeriodEnd: true,
-      subscriptionStatus: true,
-      isSuspended: true,
-    },
-  });
-
-  if (!tenant?.gracePeriodEnd) return false;
-  if (tenant.isSuspended) return false;
-
-  return (
-    tenant.gracePeriodEnd <= new Date() && tenant.subscriptionStatus === SubscriptionStatus.PAST_DUE
-  );
+  try {
+    const status = await fetchGracePeriodStatus(tenantId);
+    return status.shouldSuspend;
+  } catch (error) {
+    console.error('[grace-period] Failed to check suspension:', error);
+    return false;
+  }
 }
 
 /**
  * Start grace period for tenant
  */
 export async function startGracePeriod(tenantId: string): Promise<void> {
-  const gracePeriodEnd = new Date();
-  gracePeriodEnd.setDate(gracePeriodEnd.getDate() + GRACE_PERIOD_DAYS);
-
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: {
-      gracePeriodEnd,
-      subscriptionStatus: SubscriptionStatus.PAST_DUE,
-    },
+  const res = await fetch(`${BACKEND_URL}/v1/subscription/grace-period/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenantId }),
   });
 
-  // TODO: Send email notification about grace period
-  console.info(`Grace period started for tenant ${tenantId}, ends ${gracePeriodEnd.toISOString()}`);
+  if (!res.ok) {
+    throw new Error(`Failed to start grace period: ${res.status}`);
+  }
+
+  console.info(`Grace period started for tenant ${tenantId}`);
 }
 
 /**
  * Suspend tenant (grace period expired)
  */
 export async function suspendTenant(tenantId: string): Promise<void> {
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: {
-      isSuspended: true,
-      subscriptionStatus: SubscriptionStatus.SUSPENDED,
-    },
+  const res = await fetch(`${BACKEND_URL}/v1/subscription/suspend`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenantId }),
   });
 
-  // TODO: Send suspension notification
+  if (!res.ok) {
+    throw new Error(`Failed to suspend tenant: ${res.status}`);
+  }
+
   console.info(`Tenant ${tenantId} suspended due to non-payment`);
 }
 
@@ -87,14 +115,15 @@ export async function suspendTenant(tenantId: string): Promise<void> {
  * Reactivate tenant after payment
  */
 export async function reactivateTenant(tenantId: string): Promise<void> {
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: {
-      isSuspended: false,
-      gracePeriodEnd: null,
-      subscriptionStatus: SubscriptionStatus.ACTIVE,
-    },
+  const res = await fetch(`${BACKEND_URL}/v1/subscription/reactivate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tenantId }),
   });
+
+  if (!res.ok) {
+    throw new Error(`Failed to reactivate tenant: ${res.status}`);
+  }
 
   console.info(`Tenant ${tenantId} reactivated`);
 }
@@ -103,64 +132,30 @@ export async function reactivateTenant(tenantId: string): Promise<void> {
  * Get days remaining in grace period
  */
 export async function getGracePeriodDaysRemaining(tenantId: string): Promise<number | null> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: { gracePeriodEnd: true },
-  });
-
-  if (!tenant?.gracePeriodEnd) return null;
-
-  const now = new Date();
-  const diffTime = tenant.gracePeriodEnd.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return Math.max(0, diffDays);
+  try {
+    const status = await fetchGracePeriodStatus(tenantId);
+    return status.daysRemaining;
+  } catch (error) {
+    console.error('[grace-period] Failed to get days remaining:', error);
+    return null;
+  }
 }
 
 /**
  * Process all tenants for grace period checks
- * Should be run as a cron job
+ * Should be run as a cron job - delegates to backend
  */
 export async function processGracePeriods(): Promise<void> {
-  console.info('Processing grace periods...');
+  console.info('Processing grace periods via backend...');
 
-  // Find tenants with expired grace periods
-  const tenantsToSuspend = await prisma.tenant.findMany({
-    where: {
-      gracePeriodEnd: {
-        lte: new Date(),
-      },
-      isSuspended: false,
-      subscriptionStatus: {
-        in: [SubscriptionStatus.PAST_DUE],
-      },
-    },
+  const res = await fetch(`${BACKEND_URL}/v1/subscription/grace-period/process`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
   });
 
-  console.info(`Found ${tenantsToSuspend.length} tenants to suspend`);
-
-  for (const tenant of tenantsToSuspend) {
-    await suspendTenant(tenant.id);
+  if (!res.ok) {
+    throw new Error(`Failed to process grace periods: ${res.status}`);
   }
 
-  // Find tenants approaching grace period end (send warnings)
-  const warningThreshold = new Date();
-  warningThreshold.setDate(warningThreshold.getDate() + 1); // 1 day before
-
-  const tenantsToWarn = await prisma.tenant.findMany({
-    where: {
-      gracePeriodEnd: {
-        lte: warningThreshold,
-        gt: new Date(),
-      },
-      isSuspended: false,
-    },
-  });
-
-  console.info(`Found ${tenantsToWarn.length} tenants to warn`);
-
-  for (const tenant of tenantsToWarn) {
-    // TODO: Send warning email
-    console.info(`Warning: Tenant ${tenant.id} grace period ending soon`);
-  }
+  console.info('Grace period processing delegated to backend');
 }

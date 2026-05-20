@@ -93,18 +93,22 @@ function createPrismaMock() {
       findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     obdReading: {
       create: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
     },
     obdTroubleCode: {
       create: jest.fn(),
+      createMany: jest.fn(),
       findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(),
     },
     vehicle: {
       findFirst: jest.fn(),
@@ -223,19 +227,26 @@ describe('ObdService', () => {
   describe('listDevices', () => {
     it('should list all devices for tenant', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([makeDevice()]);
+      prisma.obdDevice.count.mockResolvedValue(1);
 
       const result = await service.listDevices(TENANT_ID);
 
-      expect(prisma.obdDevice.findMany).toHaveBeenCalledWith({
-        where: { tenantId: TENANT_ID },
-        include: { vehicle: true },
-        orderBy: { lastConnected: 'desc' },
-      });
-      expect(result).toHaveLength(1);
+      expect(prisma.obdDevice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: TENANT_ID },
+          include: { vehicle: true },
+          orderBy: { lastConnected: 'desc' },
+          skip: 0,
+          take: 20,
+        }),
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
     it('should filter by vehicleId when provided', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([]);
+      prisma.obdDevice.count.mockResolvedValue(0);
 
       await service.listDevices(TENANT_ID, VEHICLE_ID);
 
@@ -246,11 +257,13 @@ describe('ObdService', () => {
       );
     });
 
-    it('should return empty array when no devices exist', async () => {
+    it('should return empty data when no devices exist', async () => {
       prisma.obdDevice.findMany.mockResolvedValue([]);
+      prisma.obdDevice.count.mockResolvedValue(0);
 
       const result = await service.listDevices(TENANT_ID);
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
@@ -362,19 +375,25 @@ describe('ObdService', () => {
   describe('getReadings', () => {
     it('should return readings with default limit', async () => {
       prisma.obdReading.findMany.mockResolvedValue([makeReading()]);
+      prisma.obdReading.count.mockResolvedValue(1);
 
       const result = await service.getReadings(TENANT_ID, {});
 
       expect(prisma.obdReading.findMany).toHaveBeenCalledWith({
         where: { device: { tenantId: TENANT_ID } },
         orderBy: { recordedAt: 'desc' },
+        skip: 0,
         take: 100,
       });
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(100);
     });
 
     it('should apply all filters', async () => {
       prisma.obdReading.findMany.mockResolvedValue([]);
+      prisma.obdReading.count.mockResolvedValue(0);
       const from = new Date('2026-01-01');
       const to = new Date('2026-12-31');
 
@@ -395,6 +414,7 @@ describe('ObdService', () => {
           recordedAt: { lte: to },
         },
         orderBy: { recordedAt: 'desc' },
+        skip: 0,
         take: 50,
       });
     });
@@ -437,7 +457,7 @@ describe('ObdService', () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
       const existingCode = makeTroubleCode();
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(existingCode);
+      prisma.obdTroubleCode.findMany.mockResolvedValue([existingCode]);
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -445,18 +465,20 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.update).toHaveBeenCalledWith({
-        where: { id: existingCode.id },
+      expect(prisma.obdTroubleCode.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [existingCode.id] } },
         data: { lastSeenAt: expect.any(Date) },
       });
-      expect(prisma.obdTroubleCode.create).not.toHaveBeenCalled();
+      expect(prisma.obdTroubleCode.createMany).not.toHaveBeenCalled();
     });
 
     it('should create new code when not existing', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(makeReading({ rawData: { snap: true } }));
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
+      // After createMany, service fetches newly created codes for notifications (HIGH severity)
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([makeTroubleCode({ id: 'new-dtc' })]);
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -474,23 +496,29 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          deviceId: DEVICE_ID,
-          code: 'P0301',
-          severity: TroubleCodeSeverity.HIGH,
-          isPending: true,
-          isPermanent: false,
-          readingSnapshot: { snap: true },
-        }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            deviceId: DEVICE_ID,
+            code: 'P0301',
+            severity: TroubleCodeSeverity.HIGH,
+            isPending: true,
+            isPermanent: false,
+            readingSnapshot: { snap: true },
+          }),
+        ],
       });
     });
 
     it('should send notification for CRITICAL severity codes', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode({ id: 'new-dtc' }));
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
+      // After createMany, service fetches newly created codes for notifications
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([
+        makeTroubleCode({ id: 'new-dtc', code: 'P0301' }),
+      ]);
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -518,8 +546,11 @@ describe('ObdService', () => {
     it('should send notification for HIGH severity codes with normal priority', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode({ id: 'new-dtc-high' }));
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([
+        makeTroubleCode({ id: 'new-dtc-high', code: 'P0301' }),
+      ]);
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -542,8 +573,8 @@ describe('ObdService', () => {
     it('should NOT send notification for MEDIUM or LOW severity codes', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -563,8 +594,10 @@ describe('ObdService', () => {
     it('should infer severity from code prefix when not provided', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
+      // P03 -> HIGH, so notifications will fire; mock the fetch for newly created codes
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([makeTroubleCode({ code: 'P0301' })]);
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -579,16 +612,16 @@ describe('ObdService', () => {
       );
 
       // P03 prefix maps to HIGH
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ severity: TroubleCodeSeverity.HIGH }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ severity: TroubleCodeSeverity.HIGH })],
       });
     });
 
     it('should infer category from code prefix when not provided', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -602,16 +635,16 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ category: 'BODY' }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ category: 'BODY' })],
       });
     });
 
     it('should handle readingSnapshot as undefined when no latest reading', async () => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
 
       await service.recordTroubleCodes(
         DEVICE_ID,
@@ -619,8 +652,8 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ readingSnapshot: undefined }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ readingSnapshot: undefined })],
       });
     });
   });
@@ -631,19 +664,25 @@ describe('ObdService', () => {
   describe('getTroubleCodes', () => {
     it('should return trouble codes for tenant', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([makeTroubleCode()]);
+      prisma.obdTroubleCode.count.mockResolvedValue(1);
 
       const result = await service.getTroubleCodes(TENANT_ID, {});
 
-      expect(prisma.obdTroubleCode.findMany).toHaveBeenCalledWith({
-        where: { device: { tenantId: TENANT_ID } },
-        orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0].code).toBe('P0301');
+      expect(prisma.obdTroubleCode.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { device: { tenantId: TENANT_ID } },
+          orderBy: [{ severity: 'desc' }, { firstSeenAt: 'desc' }],
+          skip: 0,
+          take: 50,
+        }),
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].code).toBe('P0301');
     });
 
     it('should apply deviceId filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { deviceId: DEVICE_ID });
 
@@ -656,6 +695,7 @@ describe('ObdService', () => {
 
     it('should apply vehicleId filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { vehicleId: VEHICLE_ID });
 
@@ -669,6 +709,7 @@ describe('ObdService', () => {
 
     it('should apply active filter', async () => {
       prisma.obdTroubleCode.findMany.mockResolvedValue([]);
+      prisma.obdTroubleCode.count.mockResolvedValue(0);
 
       await service.getTroubleCodes(TENANT_ID, { active: true });
 
@@ -1066,8 +1107,7 @@ describe('ObdService', () => {
     beforeEach(() => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
     });
 
     const testCases: Array<{ prefix: string; expected: TroubleCodeSeverity }> = [
@@ -1087,6 +1127,14 @@ describe('ObdService', () => {
 
     it.each(testCases)('should map $prefix to $expected severity', async ({ prefix, expected }) => {
       const code = `${prefix}99`;
+      // For HIGH severity codes, service will fetch newly created codes for notifications
+      const isHighOrCritical =
+        expected === TroubleCodeSeverity.HIGH || expected === TroubleCodeSeverity.CRITICAL;
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+      if (isHighOrCritical) {
+        prisma.obdTroubleCode.findMany.mockResolvedValueOnce([makeTroubleCode({ code })]);
+      }
+
       await service.recordTroubleCodes(
         DEVICE_ID,
         [
@@ -1099,12 +1147,14 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ severity: expected }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ severity: expected })],
       });
     });
 
     it('should default to MEDIUM for unknown code prefix', async () => {
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+
       await service.recordTroubleCodes(
         DEVICE_ID,
         [
@@ -1117,8 +1167,8 @@ describe('ObdService', () => {
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ severity: TroubleCodeSeverity.MEDIUM }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ severity: TroubleCodeSeverity.MEDIUM })],
       });
     });
   });
@@ -1130,8 +1180,7 @@ describe('ObdService', () => {
     beforeEach(() => {
       prisma.obdDevice.findUnique.mockResolvedValue(makeDevice({ tenant: { id: TENANT_ID } }));
       prisma.obdReading.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.findFirst.mockResolvedValue(null);
-      prisma.obdTroubleCode.create.mockResolvedValue(makeTroubleCode());
+      prisma.obdTroubleCode.createMany.mockResolvedValue({ count: 1 });
     });
 
     const categoryCases: Array<{ code: string; expected: string }> = [
@@ -1143,14 +1192,16 @@ describe('ObdService', () => {
     ];
 
     it.each(categoryCases)('should map $code to $expected category', async ({ code, expected }) => {
+      prisma.obdTroubleCode.findMany.mockResolvedValueOnce([]); // no existing active codes
+
       await service.recordTroubleCodes(
         DEVICE_ID,
         [{ code, severity: TroubleCodeSeverity.LOW, description: 'Test' }],
         TENANT_ID,
       );
 
-      expect(prisma.obdTroubleCode.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({ category: expected }),
+      expect(prisma.obdTroubleCode.createMany).toHaveBeenCalledWith({
+        data: [expect.objectContaining({ category: expected })],
       });
     });
   });
@@ -1219,12 +1270,13 @@ describe('ObdService', () => {
         clearedAt: null,
       });
       prisma.obdTroubleCode.findMany.mockResolvedValue([code]);
+      prisma.obdTroubleCode.count.mockResolvedValue(1);
 
       const result = await service.getTroubleCodes(TENANT_ID, {});
 
-      expect(result[0].symptoms).toBeUndefined();
-      expect(result[0].causes).toBeUndefined();
-      expect(result[0].clearedAt).toBeUndefined();
+      expect(result.data[0].symptoms).toBeUndefined();
+      expect(result.data[0].causes).toBeUndefined();
+      expect(result.data[0].clearedAt).toBeUndefined();
     });
   });
 });

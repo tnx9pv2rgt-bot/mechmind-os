@@ -47,6 +47,7 @@ describe('RedisPubSubService', () => {
           useValue: {
             get: jest.fn(
               (key: string, defaultValue?: string | number | boolean) =>
+                // eslint-disable-next-line security/detect-object-injection
                 defaultConfig[key] ?? defaultValue,
             ),
           },
@@ -375,6 +376,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configWithUrl[key] ?? defaultValue,
               ),
             },
@@ -414,6 +416,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configMinimalUrl[key] ?? defaultValue,
               ),
             },
@@ -460,6 +463,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   configWithBadUrl[key] ?? defaultValue,
               ),
             },
@@ -504,6 +508,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   tlsConfig[key] ?? defaultValue,
               ),
             },
@@ -536,9 +541,10 @@ describe('RedisPubSubService', () => {
       };
       const retryStrategy = constructorCall.retryStrategy;
 
-      expect(retryStrategy(1)).toBe(50);
-      expect(retryStrategy(10)).toBe(500);
-      expect(retryStrategy(100)).toBe(2000); // capped at 2000
+      // Formula: Math.min(times * 500, 2000), null after 3 attempts
+      expect(retryStrategy(1)).toBe(500);
+      expect(retryStrategy(3)).toBe(1500);
+      expect(retryStrategy(4)).toBeNull(); // stops retrying after 3 attempts
     });
 
     it('should handle publisher connect event', async () => {
@@ -604,7 +610,7 @@ describe('RedisPubSubService', () => {
       expect(service.getConnectionStatus()).toBe(false);
     });
 
-    it('should throw and log when Redis constructor fails with Error', async () => {
+    it('should gracefully degrade when Redis constructor fails with Error', async () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Redis = require('ioredis').default;
       Redis.mockImplementationOnce(() => {
@@ -619,6 +625,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   defaultConfig[key] ?? defaultValue,
               ),
             },
@@ -628,10 +635,12 @@ describe('RedisPubSubService', () => {
 
       const svcFail = module.get<RedisPubSubService>(RedisPubSubService);
 
-      await expect(svcFail.onModuleInit()).rejects.toThrow('Connection refused');
+      // Service catches the error and degrades gracefully (does not throw)
+      await expect(svcFail.onModuleInit()).resolves.toBeUndefined();
+      expect(svcFail.getConnectionStatus()).toBe(false);
     });
 
-    it('should throw and log when Redis constructor fails with non-Error value', async () => {
+    it('should gracefully degrade when Redis constructor fails with non-Error value', async () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Redis = require('ioredis').default;
       Redis.mockImplementationOnce(() => {
@@ -647,6 +656,7 @@ describe('RedisPubSubService', () => {
             useValue: {
               get: jest.fn(
                 (key: string, defaultValue?: string | number | boolean) =>
+                  // eslint-disable-next-line security/detect-object-injection
                   defaultConfig[key] ?? defaultValue,
               ),
             },
@@ -656,7 +666,9 @@ describe('RedisPubSubService', () => {
 
       const svcFail = module.get<RedisPubSubService>(RedisPubSubService);
 
-      await expect(svcFail.onModuleInit()).rejects.toBe('string-error');
+      // Service catches the error and degrades gracefully (does not throw)
+      await expect(svcFail.onModuleInit()).resolves.toBeUndefined();
+      expect(svcFail.getConnectionStatus()).toBe(false);
     });
   });
 

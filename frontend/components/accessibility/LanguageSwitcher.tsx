@@ -159,10 +159,10 @@ export function LanguageSwitcher({
                 px-3 py-2 rounded-md font-medium transition-colors
                 flex items-center gap-2
                 ${isActive 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary hover:bg-secondary/80'
+                  ? 'bg-[var(--brand)] text-[var(--text-on-brand)]' 
+                  : 'bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]/80'
                 }
-                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
               `}
             >
               <span aria-hidden="true">{flag}</span>
@@ -186,8 +186,8 @@ export function LanguageSwitcher({
           value={currentLang}
           onChange={(e) => handleLanguageChange(e.target.value as Language)}
           className="
-            px-3 py-2 rounded-md border bg-background
-            focus:outline-none focus:ring-2 focus:ring-ring
+            px-3 py-2 rounded-md border bg-[var(--surface-primary)]
+            focus:outline-none focus:ring-2 focus:ring-[var(--border-default)]
           "
         >
           {SUPPORTED_LANGUAGES.map((lang) => (
@@ -214,8 +214,8 @@ export function LanguageSwitcher({
         className={`
           px-3 py-2 rounded-md font-medium
           flex items-center gap-2
-          bg-secondary hover:bg-secondary/80
-          focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+          bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)]/80
+          focus:outline-none focus:ring-2 focus:ring-[var(--border-default)] focus:ring-offset-2
           transition-colors
         `}
       >
@@ -251,9 +251,9 @@ export function LanguageSwitcher({
                 className={`
                   w-full px-4 py-2 text-left
                   flex items-center gap-2
-                  hover:bg-accent hover:text-accent-foreground
-                  focus:outline-none focus:bg-accent focus:text-accent-foreground
-                  ${isActive ? 'bg-accent text-accent-foreground' : ''}
+                  hover:bg-[var(--brand)] hover:text-accent-foreground
+                  focus:outline-none focus:bg-[var(--brand)] focus:text-accent-foreground
+                  ${isActive ? 'bg-[var(--brand)] text-accent-foreground' : ''}
                 `}
               >
                 <span aria-hidden="true">{flag}</span>

@@ -24,6 +24,16 @@ import {
   InventoryMovementResponseDto,
 } from '../dto/parts.dto';
 import { MovementType, OrderStatus, Prisma } from '@prisma/client';
+import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
+
+const PURCHASE_ORDER_TRANSITIONS: TransitionMap = {
+  DRAFT: ['SENT'],
+  SENT: ['ACKNOWLEDGED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
+  ACKNOWLEDGED: ['PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'],
+  PARTIALLY_RECEIVED: ['RECEIVED', 'CANCELLED'],
+  RECEIVED: [],
+  CANCELLED: [],
+};
 
 type PartWithRelations = Prisma.PartGetPayload<{
   include: { supplier: true; inventory: true };
@@ -71,6 +81,10 @@ export class PartsService {
         minStockLevel: dto.minStockLevel ?? 5,
         reorderPoint: dto.reorderPoint ?? 10,
         supplierId: dto.supplierId,
+        partType: dto.partType,
+        warrantyMonths: dto.warrantyMonths ?? (dto.partType === 'USED' ? 3 : 24),
+        originCode: dto.originCode,
+        barcode: dto.barcode,
       },
       include: { supplier: true, inventory: true },
     });
@@ -91,8 +105,23 @@ export class PartsService {
 
   async getParts(
     tenantId: string,
-    filters: { category?: string; supplierId?: string; lowStock?: boolean; search?: string },
-  ): Promise<PartResponseDto[]> {
+    filters: {
+      category?: string;
+      supplierId?: string;
+      lowStock?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<{
+    data: PartResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
     const where: Record<string, unknown> = { tenantId, isActive: true };
 
     if (filters.category) {
@@ -111,19 +140,24 @@ export class PartsService {
       ];
     }
 
-    const parts = await this.prisma.part.findMany({
-      where,
-      include: { supplier: true, inventory: true },
-      orderBy: { name: 'asc' },
-    });
+    const [parts, total] = await Promise.all([
+      this.prisma.part.findMany({
+        where,
+        include: { supplier: true, inventory: true },
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.part.count({ where }),
+    ]);
 
-    const dtos = parts.map(p => this.mapPartToDto(p));
+    let dtos = parts.map(p => this.mapPartToDto(p));
 
     if (filters.lowStock) {
-      return dtos.filter(p => p.isLowStock);
+      dtos = dtos.filter(p => p.isLowStock);
     }
 
-    return dtos;
+    return { data: dtos, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   async getPart(tenantId: string, id: string): Promise<PartResponseDto> {
@@ -148,6 +182,10 @@ export class PartsService {
         retailPrice:
           dto.retailPrice !== undefined ? new Prisma.Decimal(dto.retailPrice) : undefined,
         isActive: dto.isActive,
+        partType: dto.partType,
+        warrantyMonths: dto.warrantyMonths,
+        originCode: dto.originCode,
+        barcode: dto.barcode,
       },
       include: { supplier: true, inventory: true },
     });
@@ -173,11 +211,31 @@ export class PartsService {
     });
   }
 
-  async getSuppliers(tenantId: string) {
-    return this.prisma.supplier.findMany({
-      where: { tenantId, isActive: true },
-      orderBy: { name: 'asc' },
-    });
+  async getSuppliers(
+    tenantId: string,
+    options?: { page?: number; limit?: number },
+  ): Promise<{
+    data: unknown[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 50;
+    const where = { tenantId, isActive: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.supplier.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.supplier.count({ where }),
+    ]);
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   // ============== INVENTORY ==============
@@ -259,14 +317,18 @@ export class PartsService {
     const count = await this.prisma.purchaseOrder.count({ where: { tenantId } });
     const orderNumber = `PO-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
-    // Calculate totals
+    // Calculate totals — batch fetch all parts in one query
     let subtotal = new Prisma.Decimal(0);
     const itemsWithPrices = [];
 
+    const partIds = dto.items.map(item => item.partId);
+    const parts = await this.prisma.part.findMany({
+      where: { id: { in: partIds }, tenantId },
+    });
+    const partsMap = new Map(parts.map(p => [p.id, p]));
+
     for (const item of dto.items) {
-      const part = await this.prisma.part.findFirst({
-        where: { id: item.partId, tenantId },
-      });
+      const part = partsMap.get(item.partId);
 
       if (!part) {
         throw new NotFoundException(`Part ${item.partId} not found`);
@@ -312,14 +374,35 @@ export class PartsService {
   async getPurchaseOrders(
     tenantId: string,
     status?: OrderStatus,
-  ): Promise<PurchaseOrderResponseDto[]> {
-    const orders = await this.prisma.purchaseOrder.findMany({
-      where: { tenantId, ...(status && { status }) },
-      include: { supplier: true, items: { include: { part: true } } },
-      orderBy: { orderDate: 'desc' },
-    });
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    data: PurchaseOrderResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const where = { tenantId, ...(status && { status }) };
 
-    return orders.map(o => this.mapOrderToDto(o));
+    const [orders, total] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({
+        where,
+        include: { supplier: true, items: { include: { part: true } } },
+        orderBy: { orderDate: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.purchaseOrder.count({ where }),
+    ]);
+
+    return {
+      data: orders.map(o => this.mapOrderToDto(o)),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    };
   }
 
   async receiveOrder(
@@ -335,6 +418,17 @@ export class PartsService {
 
     if (!order) {
       throw new NotFoundException('Purchase order not found');
+    }
+
+    // Validate that the order is in a state that allows receiving
+    const targetStatus = OrderStatus.RECEIVED; // Will be refined below
+    if (
+      order.status !== OrderStatus.SENT &&
+      order.status !== OrderStatus.ACKNOWLEDGED &&
+      order.status !== OrderStatus.PARTIALLY_RECEIVED
+    ) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      validateTransition(order.status, targetStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
     }
 
     const transactions = [];
@@ -376,22 +470,29 @@ export class PartsService {
       );
     }
 
-    // Check if order fully received
+    // Internal: bounded query — items scoped to single order
     const allItems = await this.prisma.purchaseOrderItem.findMany({
       where: { orderId },
     });
     const fullyReceived = allItems.every(i => i.receivedQty >= i.quantity);
     const partiallyReceived = allItems.some(i => i.receivedQty > 0);
 
+    const newStatus = fullyReceived
+      ? OrderStatus.RECEIVED
+      : partiallyReceived
+        ? OrderStatus.PARTIALLY_RECEIVED
+        : order.status;
+
+    // Validate state transition for the computed new status
+    if (newStatus !== order.status) {
+      validateTransition(order.status, newStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
+    }
+
     transactions.push(
       this.prisma.purchaseOrder.update({
         where: { id: orderId },
         data: {
-          status: fullyReceived
-            ? OrderStatus.RECEIVED
-            : partiallyReceived
-              ? OrderStatus.PARTIALLY_RECEIVED
-              : OrderStatus.SENT,
+          status: newStatus,
           receivedAt: fullyReceived ? new Date() : undefined,
         },
       }),
@@ -400,12 +501,74 @@ export class PartsService {
     await this.prisma.$transaction(transactions);
   }
 
+  async updateOrderStatus(
+    tenantId: string,
+    orderId: string,
+    newStatus: OrderStatus,
+  ): Promise<PurchaseOrderResponseDto> {
+    const order = await this.prisma.purchaseOrder.findFirst({
+      where: { id: orderId, tenantId },
+      include: { supplier: true, items: { include: { part: true } } },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Purchase order not found');
+    }
+
+    validateTransition(order.status, newStatus, PURCHASE_ORDER_TRANSITIONS, 'purchase order');
+
+    const updated = await this.prisma.purchaseOrder.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+      include: { supplier: true, items: { include: { part: true } } },
+    });
+
+    return this.mapOrderToDto(updated);
+  }
+
+  // ============== MATRIX PRICING ==============
+
+  /**
+   * Calculate retail price based on tenant's markup matrix.
+   * Falls back to part's stored retailPrice if no matrix is configured.
+   */
+  async calculateRetailPrice(costPrice: number, tenantId: string): Promise<number> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { settings: true },
+    });
+
+    const settings = (tenant?.settings ?? {}) as Record<string, unknown>;
+    const matrix = settings.partMarkupMatrix as
+      | { rules: Array<{ maxCostPrice: number; markupPercent: number }> }
+      | undefined;
+
+    if (!matrix?.rules?.length) {
+      return costPrice; // No matrix configured, return cost price as-is
+    }
+
+    // Sort rules by maxCostPrice ascending
+    const sortedRules = [...matrix.rules].sort((a, b) => a.maxCostPrice - b.maxCostPrice);
+
+    for (const rule of sortedRules) {
+      if (costPrice <= rule.maxCostPrice) {
+        return Math.round(costPrice * (1 + rule.markupPercent / 100) * 100) / 100;
+      }
+    }
+
+    // If cost exceeds all rules, use the last rule's markup
+    const lastRule = sortedRules[sortedRules.length - 1];
+    return Math.round(costPrice * (1 + lastRule.markupPercent / 100) * 100) / 100;
+  }
+
   // ============== LOW STOCK ALERTS ==============
 
   async getLowStockAlerts(tenantId: string): Promise<LowStockAlertDto[]> {
+    // Internal: bounded query — only returns parts below reorder point (post-filter)
     const parts = await this.prisma.part.findMany({
       where: { tenantId, isActive: true },
       include: { supplier: true, inventory: true },
+      take: 500,
     });
 
     return parts
@@ -455,6 +618,10 @@ export class PartsService {
       availableQuantity,
       isLowStock: stockQuantity <= part.minStockLevel,
       supplierName: part.supplier?.name,
+      partType: part.partType ?? undefined,
+      warrantyMonths: part.warrantyMonths ?? undefined,
+      originCode: part.originCode ?? undefined,
+      barcode: part.barcode ?? undefined,
     };
   }
 

@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SendMagicLinkDto {
@@ -6,10 +6,14 @@ export class SendMagicLinkDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ description: 'Tenant slug', example: 'garage-roma' })
+  @ApiProperty({
+    description: 'Tenant slug (opzionale se login da pagina generica)',
+    example: 'garage-roma',
+    required: false,
+  })
   @IsString()
-  @IsNotEmpty()
-  tenantSlug: string;
+  @IsOptional()
+  tenantSlug?: string;
 }
 
 export class VerifyMagicLinkDto {

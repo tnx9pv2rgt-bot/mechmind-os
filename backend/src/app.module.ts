@@ -1,8 +1,9 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_PIPE, APP_INTERCEPTOR, APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { GracefulShutdownModule } from 'nestjs-graceful-shutdown';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
@@ -18,14 +19,42 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { IotModule } from './iot/iot.module';
 import { FleetModule } from './fleet/fleet.module';
 import { TireModule } from './tire/tire.module';
+import { InventoryAlertsModule } from './inventory-alerts/inventory-alerts.module';
 import { EstimateModule } from './estimate/estimate.module';
 import { LaborGuideModule } from './labor-guide/labor-guide.module';
 import { AccountingModule } from './accounting/accounting.module';
 import { AdminModule } from './admin/admin.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { WorkOrderModule } from './work-order/work-order.module';
+import { CannedJobModule } from './canned-job/canned-job.module';
+import { SmsModule } from './sms/sms.module';
+import { ReviewModule } from './reviews/review.module';
+import { CampaignModule } from './campaign/campaign.module';
+import { LocationModule } from './location/location.module';
+import { RentriModule } from './rentri/rentri.module';
+import { SecurityIncidentModule } from './security-incident/security-incident.module';
+import { AiComplianceModule } from './ai-compliance/ai-compliance.module';
+import { AiDiagnosticModule } from './ai-diagnostic/ai-diagnostic.module';
+import { AiSchedulingModule } from './ai-scheduling/ai-scheduling.module';
+import { DeclinedServiceModule } from './declined-service/declined-service.module';
+import { PaymentLinkModule } from './payment-link/payment-link.module';
+import { PublicTokenModule } from './public-token/public-token.module';
+import { MembershipModule } from './membership/membership.module';
+import { ProductionBoardModule } from './production-board/production-board.module';
+import { PayrollModule } from './payroll/payroll.module';
+import { BenchmarkingModule } from './benchmarking/benchmarking.module';
+import { KioskModule } from './kiosk/kiosk.module';
+import { VehicleHistoryModule } from './vehicle-history/vehicle-history.module';
+import { PredictiveMaintenanceModule } from './predictive-maintenance/predictive-maintenance.module';
+import { PortalModule } from './portal/portal.module';
+import { WebhookSubscriptionModule } from './webhook-subscription/webhook-subscription.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { PeppolModule } from './peppol/peppol.module';
 import { LoggerInterceptor } from './common/interceptors/logger.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
+import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
 @Module({
   imports: [
@@ -37,14 +66,30 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 
     // Rate limiting with in-memory storage (Upstash doesn't support Lua scripts)
     ThrottlerModule.forRoot({
+      skipIf: context => {
+        const req = context.switchToHttp()?.getRequest<{ path?: string; ip?: string }>();
+        const path = req?.path ?? '';
+        const ip = req?.ip ?? '';
+        const isHealthCheck = path === '/health' || path === '/liveness' || path === '/readiness';
+        // Skip throttle for localhost in non-production (E2E/dev). Production still fully protected.
+        const isLocalDev =
+          process.env.NODE_ENV !== 'production' &&
+          (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1');
+        return isHealthCheck || isLocalDev;
+      },
       throttlers: [
-        { name: 'default', ttl: 60000, limit: 100 },
-        { name: 'strict', ttl: 60000, limit: 5 },
-        { name: 'api', ttl: 60000, limit: 200 },
-        { name: 'webhook', ttl: 60000, limit: 1000 },
+        { name: 'default', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 100 },
+        { name: 'strict', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 5 },
+        { name: 'api', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 200 },
+        { name: 'webhook', ttl: 60000, limit: process.env.LOAD_TEST === 'true' ? 1000000 : 1000 },
       ],
       errorMessage: 'Rate limit exceeded. Please try again later.',
     }),
+
+    // Graceful shutdown — drains in-flight HTTP requests on SIGTERM (disabled in tests)
+    ...(process.env.NODE_ENV !== 'test'
+      ? [GracefulShutdownModule.forRoot({ gracefulShutdownTimeout: 30_000 })]
+      : []),
 
     // Feature modules
     CommonModule,
@@ -62,12 +107,37 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     IotModule,
     FleetModule,
     TireModule,
+    InventoryAlertsModule,
     EstimateModule,
     LaborGuideModule,
     AccountingModule,
     AdminModule,
     InvoiceModule,
     WorkOrderModule,
+    CannedJobModule,
+    SmsModule,
+    ReviewModule,
+    CampaignModule,
+    LocationModule,
+    RentriModule,
+    SecurityIncidentModule,
+    AiComplianceModule,
+    AiDiagnosticModule,
+    AiSchedulingModule,
+    DeclinedServiceModule,
+    PaymentLinkModule,
+    PublicTokenModule,
+    MembershipModule,
+    ProductionBoardModule,
+    PayrollModule,
+    BenchmarkingModule,
+    KioskModule,
+    VehicleHistoryModule,
+    PredictiveMaintenanceModule,
+    PortalModule,
+    WebhookSubscriptionModule,
+    WebhooksModule,
+    PeppolModule,
   ],
   providers: [
     // Global exception filter
@@ -91,11 +161,20 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     // Global interceptors
     {
       provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
       useClass: LoggerInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
+    },
+    // Idempotency interceptor (caches POST/PUT/PATCH responses by Idempotency-Key header)
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
     },
     // Global rate limiting guard
     {
@@ -104,4 +183,8 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

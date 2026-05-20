@@ -9,108 +9,205 @@
  * Browser → /api/* (Next.js route handler) → NestJS /v1/*
  */
 
-const API_BASE = '/api'
+const API_BASE = '/api';
 
 interface ApiRequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  body?: unknown
-  params?: Record<string, string | number | boolean | undefined>
-  signal?: AbortSignal
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  body?: unknown;
+  params?: Record<string, string | number | boolean | undefined>;
+  signal?: AbortSignal;
+  maxRetries?: number;
+  timeoutMs?: number;
 }
 
 interface ApiResponse<T> {
-  data: T
-  status: number
-  ok: boolean
+  data: T;
+  status: number;
+  ok: boolean;
 }
 
 export class ApiError extends Error {
-  status: number
-  code: string
-  details?: unknown
+  status: number;
+  code: string;
+  details?: unknown;
 
   constructor(message: string, status: number, code: string = 'API_ERROR', details?: unknown) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.code = code
-    this.details = details
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.details = details;
   }
+}
+
+/**
+ * Exponential backoff with jitter for retries.
+ * Returns delay in milliseconds.
+ */
+function getRetryDelay(attempt: number, baseDelay: number = 100): number {
+  const exponentialDelay = baseDelay * Math.pow(2, attempt);
+  const jitter = Math.random() * exponentialDelay * 0.1;
+  return Math.min(exponentialDelay + jitter, 10000);
 }
 
 /**
  * Core fetch wrapper. Calls Next.js API routes which proxy to NestJS.
  * Credentials are included automatically (HttpOnly cookies).
+ * Implements exponential backoff retry for 429 (rate limit) and 5xx errors.
  */
 export async function apiClient<T>(
   path: string,
-  options: ApiRequestOptions = {},
+  options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const { method = 'GET', body, params, signal } = options
+  const { method = 'GET', body, params, signal, maxRetries = 2, timeoutMs = 15000 } = options;
 
-  let url = `${API_BASE}${path}`
+  let url = `${API_BASE}${path}`;
 
   if (params) {
-    const searchParams = new URLSearchParams()
+    const searchParams = new URLSearchParams();
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined) {
-        searchParams.set(key, String(value))
+        searchParams.set(key, String(value));
       }
     }
-    const qs = searchParams.toString()
-    if (qs) url += `?${qs}`
+    const qs = searchParams.toString();
+    if (qs) url += `?${qs}`;
   }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-client-version': '10.0.0',
-  }
+  };
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: 'include',
-    signal,
-  })
-
-  if (res.status === 401) {
-    // Session expired — redirect to login
-    if (typeof window !== 'undefined') {
-      window.location.href = '/auth?expired=true'
+  // Attach CSRF token on mutating requests (double-submit cookie pattern)
+  if (method !== 'GET' && typeof document !== 'undefined') {
+    const csrfMatch = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]*)/);
+    if (csrfMatch?.[1]) {
+      headers['X-CSRF-Token'] = decodeURIComponent(csrfMatch[1]);
     }
-    throw new ApiError('Sessione scaduta', 401, 'UNAUTHORIZED')
   }
 
-  const data = await res.json().catch(() => null)
-
-  if (!res.ok) {
-    const errorData = data as { error?: { code?: string; message?: string } } | null
-    throw new ApiError(
-      errorData?.error?.message || `Errore ${res.status}`,
-      res.status,
-      errorData?.error?.code || 'API_ERROR',
-      data,
-    )
+  // Per-request AbortController for timeout. If the caller passes their own signal,
+  // we forward its abort event so both abort on external cancel.
+  const internalController = new AbortController();
+  const timeoutId = setTimeout(() => internalController.abort(), timeoutMs);
+  if (signal) {
+    if (signal.aborted) {
+      internalController.abort();
+    } else {
+      signal.addEventListener('abort', () => internalController.abort(), { once: true });
+    }
   }
 
-  return { data: data as T, status: res.status, ok: true }
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include',
+        signal: internalController.signal,
+      });
+
+      if (res.status === 401) {
+        // Session expired — redirect to login (never retry)
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth?expired=true';
+        }
+        throw new ApiError('Sessione scaduta', 401, 'UNAUTHORIZED');
+      }
+
+      // Retry only on 429 (Too Many Requests) — 5xx errors propagate immediately
+      if (res.status === 429 && attempt < maxRetries) {
+        lastError = new ApiError(`Errore ${res.status}`, res.status, 'RATE_LIMITED');
+        const delayMs = getRetryDelay(attempt);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        continue;
+      }
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        const errorData = data as { error?: { code?: string; message?: string } } | null;
+        throw new ApiError(
+          errorData?.error?.message || `Errore ${res.status}`,
+          res.status,
+          errorData?.error?.code || 'API_ERROR',
+          data
+        );
+      }
+
+      clearTimeout(timeoutId);
+      return { data: data as T, status: res.status, ok: true };
+    } catch (error) {
+      lastError = error;
+      // AbortError from our timeout → convert to user-friendly ApiError (no retry)
+      if (error instanceof Error && error.name === 'AbortError') {
+        clearTimeout(timeoutId);
+        throw new ApiError(
+          'Servizio temporaneamente non disponibile. Riprova tra qualche secondo.',
+          0,
+          'TIMEOUT'
+        );
+      }
+      if (error instanceof ApiError && error.status === 401) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+      if (attempt < maxRetries) {
+        const delayMs = getRetryDelay(attempt);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        continue;
+      }
+    }
+  }
+
+  clearTimeout(timeoutId);
+  throw lastError instanceof Error ? lastError : new ApiError('Errore sconosciuto', 0);
+}
+
+/**
+ * Low-level fetch with AbortController timeout. Use in components that call
+ * fetch() directly (not via apiClient). Default timeout: 15 seconds.
+ */
+export async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 15000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new ApiError(
+        'Servizio temporaneamente non disponibile. Riprova tra qualche secondo.',
+        0,
+        'TIMEOUT'
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // Convenience methods
 export const api = {
-  get: <T>(path: string, params?: Record<string, string | number | boolean | undefined>, signal?: AbortSignal) =>
-    apiClient<T>(path, { method: 'GET', params, signal }),
+  get: <T>(
+    path: string,
+    params?: Record<string, string | number | boolean | undefined>,
+    signal?: AbortSignal
+  ) => apiClient<T>(path, { method: 'GET', params, signal }),
 
-  post: <T>(path: string, body?: unknown) =>
-    apiClient<T>(path, { method: 'POST', body }),
+  post: <T>(path: string, body?: unknown) => apiClient<T>(path, { method: 'POST', body }),
 
-  put: <T>(path: string, body?: unknown) =>
-    apiClient<T>(path, { method: 'PUT', body }),
+  put: <T>(path: string, body?: unknown) => apiClient<T>(path, { method: 'PUT', body }),
 
-  patch: <T>(path: string, body?: unknown) =>
-    apiClient<T>(path, { method: 'PATCH', body }),
+  patch: <T>(path: string, body?: unknown) => apiClient<T>(path, { method: 'PATCH', body }),
 
-  delete: <T>(path: string, body?: unknown) =>
-    apiClient<T>(path, { method: 'DELETE', body }),
-}
+  delete: <T>(path: string, body?: unknown) => apiClient<T>(path, { method: 'DELETE', body }),
+};

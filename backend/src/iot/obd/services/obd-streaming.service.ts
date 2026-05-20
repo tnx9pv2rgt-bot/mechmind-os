@@ -9,7 +9,7 @@
  * - Time-series data optimization
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/services/prisma.service';
 import { NotificationsService } from '../../../notifications/services/notifications.service';
@@ -73,6 +73,7 @@ export class ObdStreamingService {
    * Start real-time data streaming for a device
    */
   async startStreaming(
+    tenantId: string,
     deviceId: string,
     config: {
       adapterType: AdapterType;
@@ -81,10 +82,20 @@ export class ObdStreamingService {
       interval?: number;
     },
   ): Promise<ObdDataStream> {
+    // Verify device belongs to tenant
+    const device = await this.prisma.obdDevice.findFirst({
+      where: { id: deviceId, tenantId },
+    });
+    if (!device) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      throw new NotFoundException('Device not found');
+    }
+
     const streamId = `stream:${deviceId}:${Date.now()}`;
 
     const stream: ObdDataStream = {
       id: streamId,
+      tenantId,
       deviceId,
       adapterType: config.adapterType,
       protocol: config.protocol || ObdProtocol.AUTO,
@@ -123,9 +134,9 @@ export class ObdStreamingService {
   /**
    * Stop streaming session
    */
-  async stopStreaming(streamId: string): Promise<void> {
+  async stopStreaming(tenantId: string, streamId: string): Promise<void> {
     const stream = this.activeStreams.get(streamId);
-    if (!stream) return;
+    if (!stream || stream.tenantId !== tenantId) return;
 
     stream.isActive = false;
     stream.endTime = new Date();
@@ -176,14 +187,18 @@ export class ObdStreamingService {
   /**
    * Capture freeze frame data
    */
-  async captureFreezeFrame(deviceId: string, dtcCode: string): Promise<FreezeFrameData> {
-    const device = await this.prisma.obdDevice.findUnique({
-      where: { id: deviceId },
+  async captureFreezeFrame(
+    tenantId: string,
+    deviceId: string,
+    dtcCode: string,
+  ): Promise<FreezeFrameData> {
+    const device = await this.prisma.obdDevice.findFirst({
+      where: { id: deviceId, tenantId },
       include: { vehicle: true },
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     // In real implementation, this would query the OBD device
@@ -232,13 +247,13 @@ export class ObdStreamingService {
   /**
    * Get Mode $06 test results
    */
-  async getMode06Tests(deviceId: string): Promise<Mode06TestResult[]> {
-    const device = await this.prisma.obdDevice.findUnique({
-      where: { id: deviceId },
+  async getMode06Tests(tenantId: string, deviceId: string): Promise<Mode06TestResult[]> {
+    const device = await this.prisma.obdDevice.findFirst({
+      where: { id: deviceId, tenantId },
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     // Query supported tests
@@ -288,16 +303,17 @@ export class ObdStreamingService {
    * Execute Mode $08 EVAP test
    */
   async executeEvapTest(
+    tenantId: string,
     deviceId: string,
     testType: 'LEAK' | 'PRESSURE' | 'VACUUM',
   ): Promise<Mode08EvapTest> {
-    const device = await this.prisma.obdDevice.findUnique({
-      where: { id: deviceId },
+    const device = await this.prisma.obdDevice.findFirst({
+      where: { id: deviceId, tenantId },
       include: { vehicle: true },
     });
 
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
 
     this.logger.log(`Starting EVAP ${testType} test on device ${deviceId}`);
@@ -332,9 +348,9 @@ export class ObdStreamingService {
   /**
    * Get active stream for device
    */
-  getActiveStream(deviceId: string): ObdDataStream | undefined {
+  getActiveStream(tenantId: string, deviceId: string): ObdDataStream | undefined {
     for (const stream of this.activeStreams.values()) {
-      if (stream.deviceId === deviceId && stream.isActive) {
+      if (stream.deviceId === deviceId && stream.tenantId === tenantId && stream.isActive) {
         return stream;
       }
     }
@@ -342,16 +358,19 @@ export class ObdStreamingService {
   }
 
   /**
-   * Get all active streams
+   * Get all active streams for a tenant
    */
-  getAllActiveStreams(): ObdDataStream[] {
-    return Array.from(this.activeStreams.values()).filter(s => s.isActive);
+  getAllActiveStreams(tenantId: string): ObdDataStream[] {
+    return Array.from(this.activeStreams.values()).filter(
+      s => s.isActive && s.tenantId === tenantId,
+    );
   }
 
   /**
    * Get sensor history from time-series storage
    */
   async getSensorHistory(
+    tenantId: string,
     deviceId: string,
     sensor: string,
     from: Date,
@@ -390,6 +409,7 @@ export class ObdStreamingService {
     // Use Prisma findMany instead of raw SQL to avoid injection risks
     const readings = await this.prisma.obdReading.findMany({
       where: {
+        tenantId,
         deviceId,
         recordedAt: { gte: from, lte: to },
       },
@@ -405,7 +425,9 @@ export class ObdStreamingService {
     for (const reading of readings) {
       const minuteKey = new Date(reading.recordedAt).toISOString().substring(0, 16);
       const rawData = reading.rawData as Record<string, number> | null;
+      // eslint-disable-next-line security/detect-object-injection
       const sensorValue = rawData?.[sensor];
+      // eslint-disable-next-line sonarjs/different-types-comparison
       if (sensorValue !== undefined && sensorValue !== null) {
         const values = aggregated.get(minuteKey) ?? [];
         values.push(Number(sensorValue));
@@ -442,13 +464,22 @@ export class ObdStreamingService {
   /**
    * Apply data retention policy
    */
-  async applyRetentionPolicy(deviceId: string, days: number): Promise<number> {
+  async applyRetentionPolicy(tenantId: string, deviceId: string, days: number): Promise<number> {
+    // Verify device belongs to tenant
+    const device = await this.prisma.obdDevice.findFirst({
+      where: { id: deviceId, tenantId },
+    });
+    if (!device) {
+      throw new NotFoundException('Device not found');
+    }
+
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
     // Archive to cold storage before deletion
     const toArchive = await this.prisma.obdReading.findMany({
       where: {
+        tenantId,
         deviceId,
         recordedAt: { lt: cutoffDate },
       },
@@ -462,6 +493,7 @@ export class ObdStreamingService {
     // Delete old records
     const result = await this.prisma.obdReading.deleteMany({
       where: {
+        tenantId,
         deviceId,
         recordedAt: { lt: cutoffDate },
       },

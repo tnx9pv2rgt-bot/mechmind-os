@@ -56,19 +56,19 @@ export function FormResumeBanner({
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className={`bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-4 py-3 ${className}`}
+        className={`bg-gradient-to-r from-[var(--status-warning)]/5 to-[var(--status-warning)]/5 border-b border-[var(--status-warning)]/30 px-4 py-3 ${className}`}
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--status-warning)]/10 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-[var(--status-warning)]" />
             </div>
             <div>
-              <h3 className="font-medium text-amber-900">{title}</h3>
-              <p className="text-sm text-amber-700">
+              <h3 className="font-medium text-[var(--status-warning)]">{title}</h3>
+              <p className="text-sm text-[var(--status-warning)]">
                 {message || defaultMessage}
                 {lastSavedText && (
-                  <span className="ml-1 text-amber-600">({lastSavedText})</span>
+                  <span className="ml-1 text-[var(--status-warning)]">({lastSavedText})</span>
                 )}
               </p>
             </div>
@@ -79,7 +79,7 @@ export function FormResumeBanner({
               variant="ghost"
               size="sm"
               onClick={handleClear}
-              className="text-amber-700 hover:text-amber-900 hover:bg-amber-100"
+              className="text-[var(--status-warning)] hover:text-[var(--status-warning)] hover:bg-[var(--status-warning)]/10"
             >
               <X className="w-4 h-4 mr-1" />
               Cancella
@@ -87,7 +87,7 @@ export function FormResumeBanner({
             <Button
               size="sm"
               onClick={handleResume}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-[var(--status-warning)] hover:bg-[var(--status-warning)] text-[var(--text-on-brand)]"
             >
               <RotateCcw className="w-4 h-4 mr-1" />
               Riprendi
@@ -126,11 +126,11 @@ export function AutoSaveIndicator({ lastSavedText, isSaving }: AutoSaveIndicator
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-center gap-2 text-sm text-gray-500"
+      className="flex items-center gap-2 text-sm text-[var(--text-tertiary)]"
     >
       {isSaving ? (
         <>
-          <div className="w-3 h-3 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-3 h-3 border-2 border-[var(--border-default)] border-t-blue-500 rounded-full animate-spin" />
           <span>Salvataggio...</span>
         </>
       ) : (

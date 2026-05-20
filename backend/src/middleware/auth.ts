@@ -6,11 +6,14 @@
  * - extractUser: estrae dati utente dalla richiesta
  */
 
+import { Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken } from '../services/jwtService';
 
 // Import express types to ensure global augmentations are loaded
 import '../types/express';
+
+const logger = new Logger('AuthMiddleware');
 
 // Interfacce
 export interface AuthMiddlewareOptions {
@@ -87,6 +90,7 @@ export function extractTokenFromCookie(
   req: Request,
   cookieName: string = 'accessToken',
 ): string | null {
+  // eslint-disable-next-line security/detect-object-injection
   return req.cookies?.[cookieName] || null;
 }
 
@@ -385,7 +389,7 @@ export function auditLogMiddleware(action: string) {
       };
 
       // Qui puoi salvare su DB o inviare a servizio di logging
-      console.log('[AUDIT]', JSON.stringify(logData));
+      logger.log(JSON.stringify(logData));
     });
 
     next();

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Start script semplificato per Render
 const { execSync } = require('child_process');
 

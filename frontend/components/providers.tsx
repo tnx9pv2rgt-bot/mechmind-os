@@ -1,31 +1,44 @@
-'use client'
+'use client';
 
-import { ThemeProvider } from 'next-themes'
-import { ToastProvider } from '@/components/ui/use-toast'
-import { NotificationProvider } from '@/lib/notification-context'
+import { useEffect } from 'react';
+import { ThemeProvider, useTheme } from 'next-themes';
+import { ToastProvider } from '@/components/ui/use-toast';
+import { NotificationProvider } from '@/lib/notification-context';
+import { useThemeStore } from '@/stores/theme-store';
 
-interface ProvidersProps {
-  children: React.ReactNode
+function ThemeSync(): null {
+  const theme = useThemeStore(s => s.theme);
+  const { setTheme } = useTheme();
+  useEffect(() => {
+    setTheme(theme);
+  }, [theme, setTheme]);
+  return null;
 }
 
-export function Providers({ children }: ProvidersProps) {
+interface ProvidersProps {
+  children: React.ReactNode;
+  nonce?: string;
+}
+
+export function Providers({ children, nonce }: ProvidersProps) {
   return (
     <ToastProvider>
       <NotificationProvider
-        apiUrl="/api"
+        apiUrl='/api'
         enableToasts={false}
         enableRealtime={false}
         autoReconnect={false}
       >
         <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
+          attribute='class'
+          defaultTheme='dark'
+          enableSystem={true}
           disableTransitionOnChange
         >
+          <ThemeSync />
           {children}
         </ThemeProvider>
       </NotificationProvider>
     </ToastProvider>
-  )
+  );
 }

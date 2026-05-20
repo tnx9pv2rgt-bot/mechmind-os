@@ -98,7 +98,7 @@ export function SaveButton({
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
-            className="flex items-center text-green-600"
+            className="flex items-center text-[var(--status-success)]"
           >
             <Check className="w-4 h-4 mr-2" />
             Salvato

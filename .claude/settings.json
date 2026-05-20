@@ -1,73 +1,198 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "allow": [
-      "Bash(npm run *)",
-      "Bash(npx prisma *)",
-      "Bash(npx prettier *)",
-      "Bash(npx eslint *)",
-      "Bash(npx jest *)",
-      "Bash(npx playwright *)",
-      "Bash(docker compose *)",
-      "Bash(docker ps *)",
-      "Bash(docker logs *)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(git branch *)",
-      "Bash(git stash *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(gh pr *)",
-      "Bash(gh issue *)",
-      "Bash(ls *)",
-      "Bash(pwd)",
-      "Bash(node *)",
-      "Bash(npx ts-node *)",
-      "Bash(curl *)",
-      "Bash(render *)",
-      "Read",
-      "Glob",
-      "Grep",
-      "mcp__postgres__query"
-    ],
     "deny": [
-      "Bash(rm -rf /)",
-      "Bash(rm -rf /*)",
-      "Bash(rm -rf ~)",
-      "Bash(sudo *)",
-      "Bash(curl * | bash)",
-      "Bash(wget * | bash)",
-      "Bash(git push --force *)",
-      "Bash(git reset --hard *)",
-      "Bash(git clean -f *)",
-      "Bash(npx prisma migrate reset *)",
-      "Read(.env)",
-      "Read(.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(npx prisma migrate reset*)",
+      "Bash(npx prisma migrate reset --force*)",
+      "Bash(DROP TABLE*)",
+      "Bash(DELETE FROM*)",
+      "Bash(TRUNCATE *)",
+      "Bash(chmod 777*)",
+      "Bash(curl * | bash*)",
+      "Bash(curl * | sh*)",
+      "Bash(wget * | bash*)",
+      "Bash(wget * | sh*)",
       "Read(**/.env)",
       "Read(**/.env.*)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Write(.env)",
-      "Write(.env.*)",
-      "Edit(.env)",
-      "Edit(.env.*)"
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(~/.bashrc)",
+      "Edit(~/.zshrc)"
+    ],
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(npx jest *)",
+      "Bash(npx prisma generate*)",
+      "Bash(npx prisma migrate dev*)",
+      "Bash(npx prisma migrate deploy*)",
+      "Bash(npx prisma db seed*)",
+      "Bash(npx prisma format*)",
+      "Bash(npx prisma validate*)",
+      "Bash(npx prettier *)",
+      "Bash(npx playwright test *)",
+      "Bash(curl *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(xargs *)",
+      "Bash(jq *)",
+      "Bash(node *)",
+      "Bash(bash -n *)",
+      "Bash(docker *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push origin*)",
+      "Bash(git status*)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git checkout *)",
+      "Bash(git branch *)",
+      "Bash(git stash*)",
+      "Bash(cd *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(echo *)",
+      "Bash(date *)",
+      "Bash(realpath *)",
+      "Bash(dirname *)",
+      "Bash(basename *)",
+      "Bash(chmod +x *)"
     ]
   },
-  "env": {
-    "MAX_THINKING_TOKENS": "16000"
-  },
   "hooks": {
-    "PostToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "startup|resume|clear",
         "hooks": [
           {
             "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | while read -r f; do case \"$f\" in *.ts|*.tsx|*.js|*.jsx) npx prettier --write \"$f\" 2>/dev/null || true;; esac; done",
-            "timeout": 10000
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/session-start.sh'",
+            "timeout": 15
+          }
+        ],
+        "description": "Inietta contesto sessione (branch, porte, Docker status, demo tenant)"
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/post-compact.sh'",
+            "timeout": 10
+          }
+        ],
+        "description": "Re-inietta regole core dopo compaction"
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/notify.sh'",
+            "timeout": 5,
+            "async": true
           }
         ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/stop-quality-gate.sh'",
+            "timeout": 30
+          }
+        ],
+        "description": "BLOCCA su errori TS, ESLint, spec mancanti"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/subagent-stop.sh'",
+            "timeout": 5,
+            "async": true
+          }
+        ],
+        "description": "Rilascia lock cost-ceiling al termine subagent"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/guard-write.sh'",
+            "timeout": 5
+          }
+        ],
+        "description": "Blocca mock/demo, @ts-ignore, console.log in produzione"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/guard-bash.sh'",
+            "timeout": 5
+          }
+        ],
+        "description": "Blocca push main/master, .env via CLI, curl|bash"
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/cost-ceiling.sh'",
+            "timeout": 5
+          }
+        ],
+        "description": "Cap subagent paralleli (max 4 — Mac mini 8GB)"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/post-edit.sh'",
+            "timeout": 10,
+            "async": true
+          },
+          {
+            "type": "command",
+            "command": "bash '/Users/romanogiovanni1993gmail.com/Desktop/Nexo gestionale/.claude/hooks/check-tenant-id.sh'",
+            "timeout": 10
+          }
+        ],
+        "description": "Prettier + log + tenantId check"
       }
     ]
   }

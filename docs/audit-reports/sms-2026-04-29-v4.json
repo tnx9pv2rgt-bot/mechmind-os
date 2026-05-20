@@ -1,0 +1,104 @@
+{
+  "eventId": "audit-sms-20260429T1300",
+  "timestamp": "2026-04-29T13:00:00Z",
+  "module": "sms",
+  "skill": "audit-modulo",
+  "version": "v4",
+  "phases": {
+    "reconnaissance": "2026-04-29T11:00:00Z",
+    "execution": "2026-04-29T12:00:00Z",
+    "classification": "2026-04-29T12:45:00Z",
+    "completed": "2026-04-29T13:00:00Z"
+  },
+  "riskScore": 81,
+  "mutationScore": null,
+  "coverage": {
+    "stmts": 93.05,
+    "branches": 71.62,
+    "functions": 92.59,
+    "lines": 93.05,
+    "branchCeilingAccepted": true,
+    "ceilingReason": "NestJS/BullMQ/class-validator decorator IIFE artifacts — 4 files"
+  },
+  "scores": {
+    "sicurezza": 9,
+    "performance": 8,
+    "resilienza": 7,
+    "osservabilita": 7,
+    "test": 9,
+    "architettura": 7,
+    "totale": 47,
+    "max": 60
+  },
+  "tests": {
+    "total": 64,
+    "passed": 64,
+    "failed": 0,
+    "suites": ["sms-thread.service.spec.ts", "sms-thread.controller.spec.ts", "sms-inbound.processor.spec.ts", "metrics.service.spec.ts"]
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "BLOCCANTE",
+      "status": "RESOLVED",
+      "file": "sms-thread.service.ts",
+      "axis": "sicurezza",
+      "description": "SMS body stored in plaintext DB — GDPR Art.32 PII violation",
+      "traceability": ["GDPR Art.32", "OWASP A02:2021", "CLAUDE.md PII Rule"],
+      "remediation": "Inject EncryptionService; encrypt on write (sendMessage, receiveInbound); decrypt on read (getMessages, idempotency return)"
+    },
+    {
+      "id": "F-002",
+      "severity": "ALTA",
+      "status": "OPEN",
+      "file": "sms-thread.service.ts",
+      "line": "91-116",
+      "axis": "architettura",
+      "description": "sendMessage() creates DB record but never calls Twilio API. Log 'Outbound SMS sent' is misleading. No Twilio client in sms.module.ts.",
+      "traceability": ["CLAUDE.md ANTI-MOCK", "API functional correctness"],
+      "remediation": "Inject TwilioService into SmsThreadService. Register Twilio provider in sms.module.ts. Update log message."
+    },
+    {
+      "id": "F-003",
+      "severity": "MEDIA",
+      "status": "OPEN",
+      "file": "sms/dto/sms.dto.ts",
+      "axis": "architettura",
+      "description": "InboundSmsDto expects {tenantId, phoneHash, body, twilioSid} but Twilio sends {From, To, Body, SmsSid, AccountSid}. Requires undocumented upstream transformer.",
+      "traceability": ["OWASP A04:2021 Insecure Design", "Twilio Webhook API compatibility"],
+      "remediation": "Add TwilioWebhookTransformerInterceptor mapping From→phoneHash; resolve tenantId from AccountSid or URL param."
+    },
+    {
+      "id": "F-004",
+      "severity": "BASSA",
+      "status": "RESOLVED",
+      "file": "sms-thread.controller.ts + metrics.service.ts",
+      "axis": "osservabilita",
+      "description": "No Prometheus metric for inbound SMS messages",
+      "traceability": ["ISO 27001 A.12.4"],
+      "remediation": "Added smsMessagesTotal Counter to MetricsService with direction/status labels; called labels('INBOUND','queued').inc() in SmsWebhookController"
+    },
+    {
+      "id": "F-005",
+      "severity": "BASSA",
+      "status": "ACCEPTED_PATTERN",
+      "file": "sms-thread.service.ts",
+      "axis": "resilienza",
+      "description": "getOrCreateThread TOCTOU race — low risk given unique constraint + serial BullMQ queue"
+    }
+  ],
+  "ceilings": [
+    {"file": "sms-thread.controller.ts", "hash": "sha256:1e18173dfbb417ab710529b44e3b37e4a911825acc67df4e17ac6a46b8019a1c", "branchCoverage": "~75%", "reason": "NestJS decorator IIFE"},
+    {"file": "sms-inbound.processor.ts", "hash": "sha256:88e687cf6d1e8e1ae93758f984a1ea220e49081b6d8f419d6e93df4d9ab31b4f", "branchCoverage": "~50%", "reason": "BullMQ WorkerHost IIFE"},
+    {"file": "sms-thread.service.ts", "hash": "sha256:e8dde85fa737473698010bcef766cc5c85f95c93e2b0bff17c29a6c4c8992c44", "branchCoverage": "~81.81%", "reason": "@Injectable() multi-param constructor"},
+    {"file": "sms.dto.ts", "hash": "sha256:4e7b4d33d3523fa77ec4debbe9cbcaa078b0898fe58d3b48784d0b3a808ec40e", "branchCoverage": "~50%", "reason": "class-validator decorator metadata"}
+  ],
+  "filesModified": [
+    "src/sms/sms-thread.service.ts",
+    "src/sms/sms-thread.controller.ts",
+    "src/common/metrics/metrics.service.ts",
+    "src/common/metrics/metrics.service.spec.ts",
+    "src/sms/sms-thread.controller.spec.ts",
+    "src/sms/.audit-decisions.jsonl"
+  ]
+}

@@ -107,14 +107,3 @@ export class MfaSessionMiddleware {
     next();
   }
 }
-
-// Type augmentation for Express Request
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    interface Request {
-      mfaVerified?: boolean;
-      mfaVerifiedAt?: Date;
-    }
-  }
-}

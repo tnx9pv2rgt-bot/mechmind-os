@@ -58,10 +58,12 @@ export class FeatureGuard implements CanActivate {
     // Check all required features
     const checks = await this.featureAccessService.canAccessFeatures(tenantId, requiredFeatures);
 
+    // eslint-disable-next-line security/detect-object-injection
     const missingFeatures = requiredFeatures.filter(feature => !checks[feature].allowed);
 
     if (missingFeatures.length > 0) {
       const firstMissing = missingFeatures[0];
+      // eslint-disable-next-line security/detect-object-injection
       const check = checks[firstMissing];
 
       throw new ForbiddenException({

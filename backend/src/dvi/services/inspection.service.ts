@@ -8,11 +8,14 @@
  * - Customer approval workflow
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../common/services/prisma.service';
 import { S3Service } from '../../common/services/s3.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { PublicTokenService } from '../../public-token/public-token.service';
+import { validateTransition, TransitionMap } from '../../common/utils/state-machine';
 import {
   CreateInspectionDto,
   UpdateInspectionDto,
@@ -26,11 +29,24 @@ import {
   InspectionStatus,
   InspectionItemStatus,
   FindingStatus,
+  PublicTokenType,
   InspectionFinding,
   Prisma,
 } from '@prisma/client';
 
-const inspectionInclude = {
+type NotificationChannel = 'SMS' | 'WHATSAPP' | 'EMAIL';
+
+const INSPECTION_TRANSITIONS: TransitionMap = {
+  IN_PROGRESS: ['PENDING_REVIEW', 'READY_FOR_CUSTOMER'],
+  PENDING_REVIEW: ['READY_FOR_CUSTOMER', 'IN_PROGRESS'],
+  READY_FOR_CUSTOMER: ['CUSTOMER_REVIEWING', 'APPROVED', 'DECLINED'],
+  CUSTOMER_REVIEWING: ['APPROVED', 'DECLINED'],
+  APPROVED: ['ARCHIVED'],
+  DECLINED: ['ARCHIVED', 'IN_PROGRESS'],
+  ARCHIVED: [],
+};
+
+const _inspectionInclude = {
   vehicle: true,
   customer: true,
   mechanic: { select: { id: true, name: true } },
@@ -40,7 +56,7 @@ const inspectionInclude = {
 } as const;
 
 type InspectionWithRelations = Prisma.InspectionGetPayload<{
-  include: typeof inspectionInclude;
+  include: typeof _inspectionInclude;
 }>;
 
 @Injectable()
@@ -52,6 +68,8 @@ export class InspectionService {
     private readonly config: ConfigService,
     private readonly s3: S3Service,
     private readonly notifications: NotificationsService,
+    private readonly publicTokenService: PublicTokenService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.photoBucket = this.config.get<string>(
       'S3_INSPECTION_PHOTOS_BUCKET',
@@ -121,6 +139,7 @@ export class InspectionService {
     });
 
     if (!inspection) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new NotFoundException('Inspection not found');
     }
 
@@ -137,26 +156,44 @@ export class InspectionService {
       customerId?: string;
       status?: InspectionStatus;
       mechanicId?: string;
+      page?: number;
+      limit?: number;
     },
-  ): Promise<InspectionSummaryDto[]> {
-    const inspections = await this.prisma.inspection.findMany({
-      where: {
-        tenantId,
-        ...(filters.vehicleId && { vehicleId: filters.vehicleId }),
-        ...(filters.customerId && { customerId: filters.customerId }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.mechanicId && { mechanicId: filters.mechanicId }),
-      },
-      include: {
-        vehicle: true,
-        customer: true,
-        mechanic: { select: { name: true } },
-        findings: { select: { severity: true } },
-      },
-      orderBy: { startedAt: 'desc' },
-    });
+  ): Promise<{
+    data: InspectionSummaryDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
 
-    return inspections.map(i => ({
+    const where = {
+      tenantId,
+      ...(filters.vehicleId && { vehicleId: filters.vehicleId }),
+      ...(filters.customerId && { customerId: filters.customerId }),
+      ...(filters.status && { status: filters.status }),
+      ...(filters.mechanicId && { mechanicId: filters.mechanicId }),
+    };
+
+    const [inspections, total] = await Promise.all([
+      this.prisma.inspection.findMany({
+        where,
+        include: {
+          vehicle: true,
+          customer: true,
+          mechanic: { select: { name: true } },
+          findings: { select: { severity: true } },
+        },
+        orderBy: { startedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.inspection.count({ where }),
+    ]);
+
+    const data = inspections.map(i => ({
       id: i.id,
       status: i.status,
       startedAt: i.startedAt,
@@ -166,6 +203,8 @@ export class InspectionService {
       issuesFound: i.findings.length,
       criticalIssues: i.findings.filter((f: InspectionFinding) => f.severity === 'CRITICAL').length,
     }));
+
+    return { data, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
   /**
@@ -202,9 +241,14 @@ export class InspectionService {
       }
     }
 
+    // Validate status transition if status is changing
+    if (dto.status && dto.status !== inspection.status) {
+      validateTransition(inspection.status, dto.status, INSPECTION_TRANSITIONS, 'inspection');
+    }
+
     // Update inspection
     const updated = await this.prisma.inspection.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         status: dto.status,
         mileage: dto.mileage,
@@ -309,7 +353,7 @@ export class InspectionService {
     await this.s3.upload(this.photoBucket, key, file, mimeType);
 
     // Generate presigned URL
-    const url = await this.s3.getSignedUrl(this.photoBucket, key, 3600 * 24 * 7); // 7 days
+    const url = await this.s3.getSignedDownloadUrl(this.photoBucket, key, 3600 * 24 * 7); // 7 days
 
     // Save to database
     const photo = await this.prisma.inspectionPhoto.create({
@@ -345,8 +389,8 @@ export class InspectionService {
       throw new NotFoundException('Inspection not found');
     }
 
-    // Verify customer email (simple check - could be more sophisticated)
-    // In production, use signed URLs with JWT tokens instead
+    // Validate status transition
+    validateTransition(inspection.status, 'APPROVED', INSPECTION_TRANSITIONS, 'inspection');
 
     // Update approved findings
     if (dto.approvedFindingIds.length > 0) {
@@ -398,6 +442,7 @@ export class InspectionService {
     // Dynamic import to keep PDFKit optional
     const PDFDocument = (await import('pdfkit')).default;
 
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     return new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -491,6 +536,248 @@ export class InspectionService {
     });
   }
 
+  // ============== PUBLIC TOKEN METHODS ==============
+
+  /**
+   * Send inspection report to customer via public token link
+   */
+  async sendToCustomer(
+    tenantId: string,
+    inspectionId: string,
+    channel: NotificationChannel,
+  ): Promise<{ reportUrl: string }> {
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, tenantId },
+    });
+
+    if (!inspection) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Revoke previous tokens
+    await this.publicTokenService.revokeTokensForEntity(tenantId, 'Inspection', inspectionId);
+
+    // Generate public token (72h expiry)
+    const publicToken = await this.publicTokenService.generateToken(
+      tenantId,
+      PublicTokenType.DVI_REPORT,
+      inspectionId,
+      'Inspection',
+      72,
+      { channel },
+    );
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'https://app.mechmind.io');
+    const reportUrl = `${frontendUrl}/public/inspections/${publicToken.token}`;
+
+    this.eventEmitter.emit('inspection.sentToCustomer', {
+      inspectionId,
+      tenantId,
+      customerId: inspection.customerId,
+      channel,
+      reportUrl,
+    });
+
+    return { reportUrl };
+  }
+
+  /**
+   * Retrieve inspection by public token (no auth)
+   */
+  async getByPublicToken(token: string): Promise<InspectionResponseDto> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: tokenRecord.entityId },
+      include: {
+        vehicle: true,
+        customer: true,
+        mechanic: { select: { id: true, name: true } },
+        items: { include: { templateItem: true, photos: true } },
+        findings: true,
+        photos: true,
+      },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Mark as customer viewed
+    if (!inspection.customerViewed) {
+      await this.prisma.inspection.update({
+        where: { id: inspection.id },
+        data: { customerViewed: true },
+      });
+    }
+
+    return this.mapToResponseDto(inspection);
+  }
+
+  /**
+   * Approve/decline repairs via public token
+   */
+  async approveRepairsViaToken(
+    token: string,
+    approvedFindingIds: string[],
+    declinedFindingIds: string[],
+  ): Promise<void> {
+    const tokenRecord = await this.publicTokenService.validateToken(token);
+    const inspectionId = tokenRecord.entityId;
+    const tenantId = tokenRecord.tenantId;
+
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId },
+      include: { findings: true },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Ispezione non trovata');
+    }
+
+    // Validate that all finding IDs belong to this inspection
+    const validFindingIds = new Set(inspection.findings.map(f => f.id));
+    for (const fid of [...approvedFindingIds, ...declinedFindingIds]) {
+      if (!validFindingIds.has(fid)) {
+        throw new BadRequestException(`Riscontro ${fid} non appartiene a questa ispezione`);
+      }
+    }
+
+    const now = new Date();
+
+    // Update approved findings
+    if (approvedFindingIds.length > 0) {
+      await this.prisma.inspectionFinding.updateMany({
+        where: { id: { in: approvedFindingIds } },
+        data: {
+          status: FindingStatus.APPROVED,
+          approvedByCustomer: true,
+          approvedAt: now,
+        },
+      });
+    }
+
+    // Update declined findings
+    if (declinedFindingIds.length > 0) {
+      await this.prisma.inspectionFinding.updateMany({
+        where: { id: { in: declinedFindingIds } },
+        data: { status: FindingStatus.DECLINED },
+      });
+    }
+
+    // Update inspection status
+    await this.prisma.inspection.update({
+      where: { id: inspectionId },
+      data: {
+        status: InspectionStatus.APPROVED,
+        approvedAt: now,
+      },
+    });
+
+    // Consume token
+    await this.publicTokenService.consumeToken(token);
+
+    this.eventEmitter.emit('inspection.repairsApproved', {
+      inspectionId,
+      tenantId,
+      approvedFindingIds,
+      declinedFindingIds,
+    });
+  }
+
+  // ============== CONVERSIONS ==============
+
+  /**
+   * Create an estimate from approved inspection findings
+   */
+  async createEstimateFromFindings(
+    tenantId: string,
+    inspectionId: string,
+    findingIds: string[],
+    createdBy: string,
+  ): Promise<unknown> {
+    const inspection = await this.prisma.inspection.findFirst({
+      where: { id: inspectionId, tenantId },
+      include: {
+        findings: { where: { id: { in: findingIds } } },
+        vehicle: true,
+      },
+    });
+
+    if (!inspection) {
+      throw new NotFoundException('Inspection not found');
+    }
+
+    if (inspection.findings.length === 0) {
+      throw new NotFoundException('No matching findings found');
+    }
+
+    // Generate estimate number
+    const year = new Date().getFullYear();
+    const prefix = `EST-${year}-`;
+    const lastEst = await this.prisma.estimate.findFirst({
+      where: { tenantId, estimateNumber: { startsWith: prefix } },
+      orderBy: { estimateNumber: 'desc' },
+      select: { estimateNumber: true },
+    });
+
+    let seq = 1;
+    if (lastEst) {
+      const last = parseInt(lastEst.estimateNumber.replace(prefix, ''), 10);
+      if (!Number.isNaN(last)) seq = last + 1;
+    }
+    const estimateNumber = `${prefix}${String(seq).padStart(4, '0')}`;
+
+    // Build estimate lines from findings
+    const lines = inspection.findings.map((finding, index) => {
+      const costCents = finding.estimatedCost ? Math.round(Number(finding.estimatedCost) * 100) : 0;
+      return {
+        type: 'LABOR' as const,
+        description: `${finding.title} — ${finding.description}`,
+        quantity: 1,
+        unitPriceCents: costCents,
+        totalCents: costCents,
+        vatRate: 22.0,
+        position: index,
+      };
+    });
+
+    const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, 0);
+    const vatCents = Math.round(subtotalCents * 0.22);
+    const totalCents = subtotalCents + vatCents;
+
+    const estimate = await this.prisma.estimate.create({
+      data: {
+        tenantId,
+        estimateNumber,
+        customerId: inspection.customerId,
+        vehicleId: inspection.vehicleId,
+        status: 'DRAFT',
+        subtotalCents,
+        vatCents,
+        totalCents,
+        discountCents: 0,
+        createdBy,
+        notes: `Generated from inspection ${inspectionId}`,
+        lines: {
+          create: lines.map(l => ({
+            type: l.type,
+            description: l.description,
+            quantity: l.quantity,
+            unitPriceCents: l.unitPriceCents,
+            totalCents: l.totalCents,
+            vatRate: l.vatRate,
+            position: l.position,
+          })),
+        },
+      },
+      include: { lines: true },
+    });
+
+    return estimate;
+  }
+
   // ============== PRIVATE METHODS ==============
 
   private async notifyCustomer(inspection: InspectionWithRelations): Promise<void> {
@@ -522,7 +809,7 @@ export class InspectionService {
 
     // Update notification status
     await this.prisma.inspection.update({
-      where: { id: inspection.id },
+      where: { id: inspection.id, tenantId: inspection.tenantId },
       data: { customerNotified: true },
     });
   }

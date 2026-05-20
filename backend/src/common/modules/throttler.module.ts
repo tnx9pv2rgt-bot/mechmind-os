@@ -9,33 +9,78 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule as NestThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 
+/**
+ * Get default throttler limit based on environment
+ */
+export function getDefaultLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 60;
+  }
+  return 600;
+}
+
+/**
+ * Get strict throttler limit based on environment
+ */
+export function getStrictLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  return 10;
+}
+
+/**
+ * Get lenient throttler limit based on environment
+ */
+export function getLenientLimit(): number {
+  const loadTest = process.env.LOAD_TEST === 'true';
+  if (loadTest) {
+    return 100000;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 300;
+  }
+  return 3000;
+}
+
+/**
+ * Create throttler configuration based on environment variables.
+ * Exported for testability - all branch logic measured by c8.
+ */
+export function createThrottlerOptions(_config?: ConfigService): ThrottlerModuleOptions {
+  return {
+    throttlers: [
+      {
+        name: 'default',
+        ttl: 60000,
+        limit: getDefaultLimit(),
+      },
+      {
+        name: 'strict',
+        ttl: 60000,
+        limit: getStrictLimit(),
+      },
+      {
+        name: 'lenient',
+        ttl: 60000,
+        limit: getLenientLimit(),
+      },
+    ],
+    errorMessage: 'Rate limit exceeded. Please try again later.',
+  };
+}
+
 @Module({
   imports: [
     NestThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (_config: ConfigService): ThrottlerModuleOptions => {
-        return {
-          throttlers: [
-            {
-              name: 'default',
-              ttl: 60000, // 1 minute
-              limit: 60, // 60 requests per minute
-            },
-            {
-              name: 'strict',
-              ttl: 60000,
-              limit: 10, // 10 requests per minute (for sensitive endpoints)
-            },
-            {
-              name: 'lenient',
-              ttl: 60000,
-              limit: 300, // 300 requests per minute (for high-traffic endpoints)
-            },
-          ],
-          errorMessage: 'Rate limit exceeded. Please try again later.',
-        };
-      },
+      useFactory: createThrottlerOptions,
     }),
   ],
   exports: [NestThrottlerModule],

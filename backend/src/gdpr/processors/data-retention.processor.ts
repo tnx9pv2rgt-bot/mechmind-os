@@ -80,7 +80,9 @@ export class DataRetentionProcessor extends WorkerHost {
         processingTimeMs,
       };
     } catch (error) {
-      this.logger.error(`Retention job ${job.id} failed: ${error.message}`);
+      this.logger.error(
+        `Retention job ${job.id} failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }

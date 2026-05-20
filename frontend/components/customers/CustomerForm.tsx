@@ -107,17 +107,17 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
   }
 
   return (
-    <AppleCard className="bg-white/70 backdrop-blur-3xl rounded-3xl overflow-hidden">
-      <AppleCardHeader className="border-b border-gray-100/50">
+    <AppleCard className="bg-[var(--surface-secondary)]/70 backdrop-blur-3xl rounded-3xl overflow-hidden">
+      <AppleCardHeader className="border-b border-[var(--border-default)]/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <User className="h-5 w-5 text-white" />
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--status-info)] to-[var(--brand)] flex items-center justify-center">
+            <User className="h-5 w-5 text-[var(--text-on-brand)]" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
               {initialData ? 'Modifica Cliente' : 'Nuovo Cliente'}
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-[var(--text-tertiary)]">
               {initialData ? 'Aggiorna i dati del cliente' : 'Inserisci i dati del nuovo cliente'}
             </p>
           </div>
@@ -135,18 +135,18 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Nome</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Nome</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                           <Input
                             {...field}
                             placeholder="Mario"
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <FormMessage className="text-xs text-[var(--status-error)]" />
                     </FormItem>
                   )}
                 />
@@ -158,18 +158,18 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Cognome</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Cognome</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                           <Input
                             {...field}
                             placeholder="Rossi"
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <FormMessage className="text-xs text-[var(--status-error)]" />
                     </FormItem>
                   )}
                 />
@@ -183,19 +183,19 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
+                    <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Email</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                         <Input
                           {...field}
                           type="email"
                           placeholder="mario.rossi@email.it"
-                          className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                         />
                       </div>
                     </FormControl>
-                    <FormMessage className="text-xs text-red-500" />
+                    <FormMessage className="text-xs text-[var(--status-error)]" />
                   </FormItem>
                 )}
               />
@@ -208,19 +208,19 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Telefono</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Telefono</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                           <Input
                             {...field}
                             placeholder="+39 333 123 4567"
                             onChange={(e) => handlePhoneChange(e, field.onChange)}
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            className="h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <FormMessage className="text-xs text-[var(--status-error)]" />
                     </FormItem>
                   )}
                 />
@@ -232,19 +232,19 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   name="fiscalCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Codice Fiscale (opzionale)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Codice Fiscale (opzionale)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-tertiary)]" />
                           <Input
                             {...field}
                             placeholder="RSSMRA85T10A562S"
                             maxLength={16}
-                            className="h-14 rounded-2xl bg-white/60 border-0 pl-11 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
+                            className="h-14 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 pl-11 pr-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all uppercase"
                           />
                         </div>
                       </FormControl>
-                      <FormMessage className="text-xs text-red-500" />
+                      <FormMessage className="text-xs text-[var(--status-error)]" />
                     </FormItem>
                   )}
                 />
@@ -256,16 +256,16 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
               <button
                 type="button"
                 onClick={() => setShowAddress(!showAddress)}
-                className="flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-white/40 hover:bg-white/60 transition-colors"
+                className="flex items-center justify-between w-full py-3 px-4 rounded-2xl bg-[var(--surface-secondary)]/40 hover:bg-[var(--surface-secondary)]/60 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Indirizzo (opzionale)</span>
+                  <MapPin className="h-4 w-4 text-[var(--text-tertiary)]" />
+                  <span className="text-sm font-medium text-[var(--text-secondary)]">Indirizzo (opzionale)</span>
                 </div>
                 {showAddress ? (
-                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                  <ChevronUp className="h-4 w-4 text-[var(--text-tertiary)]" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className="h-4 w-4 text-[var(--text-tertiary)]" />
                 )}
               </button>
             </motion.div>
@@ -289,7 +289,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                             <Input
                               {...field}
                               placeholder="Via Roma 123"
-                              className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                              className="h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                             />
                           </FormControl>
                         </FormItem>
@@ -306,7 +306,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                               <Input
                                 {...field}
                                 placeholder="Città"
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                className="h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                               />
                             </FormControl>
                           </FormItem>
@@ -323,7 +323,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                                 {...field}
                                 placeholder="CAP"
                                 maxLength={5}
-                                className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                                className="h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all"
                               />
                             </FormControl>
                           </FormItem>
@@ -341,7 +341,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                               {...field}
                               placeholder="Provincia (es: RM)"
                               maxLength={2}
-                              className="h-12 rounded-2xl bg-white/60 border-0 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all uppercase"
+                              className="h-12 rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all uppercase"
                             />
                           </FormControl>
                         </FormItem>
@@ -359,16 +359,16 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Note (opzionale)</FormLabel>
+                    <FormLabel className="text-sm font-medium text-[var(--text-secondary)]">Note (opzionale)</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
                         placeholder="Note aggiuntive sul cliente..."
                         rows={3}
-                        className="rounded-2xl bg-white/60 border-0 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                        className="rounded-2xl bg-[var(--surface-secondary)]/60 border-0 px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--status-info)]/20 transition-all resize-none"
                       />
                     </FormControl>
-                    <FormMessage className="text-xs text-red-500" />
+                    <FormMessage className="text-xs text-[var(--status-error)]" />
                   </FormItem>
                 )}
               />
@@ -380,20 +380,20 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                 control={form.control}
                 name="gdprConsent"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl bg-white/40 p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl bg-[var(--surface-secondary)]/40 p-4">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        className="mt-0.5 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                        className="mt-0.5 data-[state=checked]:bg-[var(--status-info-subtle)]0 data-[state=checked]:border-[var(--status-info)]"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-500" />
+                      <FormLabel className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-[var(--status-info)]" />
                         Consenso GDPR *
                       </FormLabel>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--text-tertiary)]">
                         Dichiaro di aver preso visione dell&apos;informativa privacy e acconsento al trattamento dei dati personali.
                       </p>
                     </div>
@@ -404,19 +404,19 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                 control={form.control}
                 name="marketingConsent"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl bg-white/40 p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-2xl bg-[var(--surface-secondary)]/40 p-4">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        className="mt-0.5 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                        className="mt-0.5 data-[state=checked]:bg-[var(--status-info-subtle)]0 data-[state=checked]:border-[var(--status-info)]"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm font-medium text-gray-900">
+                      <FormLabel className="text-sm font-medium text-[var(--text-primary)]">
                         Consenso Marketing (opzionale)
                       </FormLabel>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[var(--text-tertiary)]">
                         Acconsento a ricevere comunicazioni commerciali relative a promozioni e offerte.
                       </p>
                     </div>
@@ -432,7 +432,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 p-4 rounded-2xl bg-red-50 text-red-600 text-sm"
+                  className="flex items-center gap-2 p-4 rounded-2xl bg-[var(--status-error-subtle)] text-[var(--status-error)] text-sm"
                 >
                   <AlertCircle className="h-4 w-4 flex-shrink-0" />
                   <span>{errorMessage || 'Si è verificato un errore. Riprova.'}</span>
@@ -447,7 +447,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="flex items-center gap-2 p-4 rounded-2xl bg-green-50 text-green-600 text-sm"
+                  className="flex items-center gap-2 p-4 rounded-2xl bg-[var(--status-success-subtle)] text-[var(--status-success)] text-sm"
                 >
                   <Check className="h-4 w-4 flex-shrink-0" />
                   <span>Cliente salvato con successo!</span>
@@ -470,7 +470,7 @@ export function CustomerForm({ onSubmit, onCancel, initialData }: CustomerFormPr
               <AppleButton
                 type="submit"
                 disabled={status === 'loading' || status === 'success'}
-                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium shadow-lg shadow-blue-500/25"
+                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-[var(--status-info)] to-[var(--brand)] hover:from-[var(--status-info)] hover:to-[var(--brand)] text-[var(--text-on-brand)] font-medium shadow-lg shadow-blue-500/25"
               >
                 {status === 'loading' ? (
                   <Loader2 className="h-5 w-5 animate-spin" />

@@ -66,12 +66,20 @@ export class InspectionController {
   async findAll(
     @CurrentUser('tenantId') tenantId: string,
     @Query() query: InspectionQueryDto,
-  ): Promise<InspectionSummaryDto[]> {
+  ): Promise<{
+    data: InspectionSummaryDto[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }> {
     return this.inspectionService.findAll(tenantId, {
       vehicleId: query.vehicleId,
       customerId: query.customerId,
       status: query.status,
       mechanicId: query.mechanicId,
+      page: query.page,
+      limit: query.limit,
     });
   }
 
@@ -128,6 +136,7 @@ export class InspectionController {
     FileInterceptor('file', {
       limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
       fileFilter: (req, file, cb) => {
+        // eslint-disable-next-line sonarjs/prefer-regexp-exec
         if (file.mimetype.match(/image\/(jpg|jpeg|png|webp)/)) {
           cb(null, true);
         } else {
@@ -194,5 +203,24 @@ export class InspectionController {
     @Param('id') id: string,
   ): Promise<Buffer> {
     return this.inspectionService.generateReport(tenantId, id);
+  }
+
+  @Post(':id/create-estimate')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Create estimate from inspection findings' })
+  @ApiResponse({ status: 201, description: 'Estimate created from findings' })
+  async createEstimateFromFindings(
+    @CurrentUser('tenantId') tenantId: string,
+    @CurrentUser('userId') userId: string,
+    @Param('id') inspectionId: string,
+    @Body('findingIds') findingIds: string[],
+  ): Promise<{ success: boolean; data: unknown }> {
+    const estimate = await this.inspectionService.createEstimateFromFindings(
+      tenantId,
+      inspectionId,
+      findingIds,
+      userId,
+    );
+    return { success: true, data: estimate };
   }
 }

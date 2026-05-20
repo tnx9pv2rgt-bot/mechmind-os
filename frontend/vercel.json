@@ -4,12 +4,7 @@
   "outputDirectory": ".next",
   "installCommand": "npm install",
   "devCommand": "npm run dev",
-  "rewrites": [
-    {
-      "source": "/((?!api|_next|favicon.ico|sw.js|manifest.json).*)",
-      "destination": "/"
-    }
-  ],
+  "rewrites": [],
   "headers": [
     {
       "source": "/(.*)",

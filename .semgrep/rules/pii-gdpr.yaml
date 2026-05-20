@@ -1,0 +1,112 @@
+rules:
+  # ── PII plaintext in DB ──────────────────────────────────────────────────────
+  - id: pii-email-plaintext-create
+    patterns:
+      - pattern: this.prisma.$MODEL.create({ data: { $...A, email: $VAL, $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { $...A, email: this.$ENC.encrypt($VAL), $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { ...$SPREAD, $...B }, ... })
+    message: >
+      Campo `email` salvato in chiaro nel DB — violazione GDPR Art.32.
+      Fix: usa this.encryptionService.encrypt(email) prima di salvare.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: 'CWE-312: Cleartext Storage of Sensitive Information'
+      owasp: 'A02:2021 - Cryptographic Failures'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: pii-phone-plaintext-create
+    patterns:
+      - pattern: this.prisma.$MODEL.create({ data: { $...A, phone: $VAL, $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { $...A, phone: this.$ENC.encrypt($VAL), $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { ...$SPREAD, $...B }, ... })
+    message: >
+      Campo `phone` salvato in chiaro nel DB — violazione GDPR.
+      Fix: usa this.encryptionService.encrypt(phone).
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: 'CWE-312'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: pii-iban-plaintext-create
+    patterns:
+      - pattern: this.prisma.$MODEL.create({ data: { $...A, iban: $VAL, $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { $...A, iban: this.$ENC.encrypt($VAL), $...B }, ... })
+      - pattern-not: this.prisma.$MODEL.create({ data: { ...$SPREAD, $...B }, ... })
+    message: >
+      Campo `iban` salvato in chiaro nel DB — dati finanziari PCI-DSS.
+      Fix: usa this.encryptionService.encrypt(iban).
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      cwe: 'CWE-312'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  # ── PII in logs ──────────────────────────────────────────────────────────────
+  - id: pii-email-in-log
+    patterns:
+      - pattern-either:
+          - pattern: this.logger.log($F, ...)
+          - pattern: this.logger.error($F, ...)
+          - pattern: this.logger.warn($F, ...)
+          - pattern: this.logger.debug($F, ...)
+      - metavariable-regex:
+          metavariable: $F
+          regex: '(?i).*(email|phone|iban|codiceFiscale|fiscalCode|password|creditcard|ssn|passport).*'
+    message: >
+      Possibile PII nei log — violazione GDPR Art.32.
+      Fix: rimuovi o maschera i dati personali: usa ID o hash invece del valore in chiaro.
+    languages: [typescript]
+    severity: WARNING
+    metadata:
+      cwe: 'CWE-532: Insertion of Sensitive Information into Log File'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  # ── GDPR soft delete enforcement ─────────────────────────────────────────────
+  - id: hard-delete-customer
+    patterns:
+      - pattern: this.prisma.customer.delete(...)
+      - pattern-not: this.prisma.customer.update({ data: { deletedAt: $_, ... }, ... })
+    message: >
+      Hard delete su customer — violazione GDPR Right to Erasure (soft delete obbligatorio).
+      Fix: usa update con deletedAt: new Date() invece di delete.
+    languages: [typescript]
+    severity: ERROR
+    metadata:
+      owasp: 'A04:2021 - Insecure Design'
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'
+
+  - id: hard-delete-user
+    pattern: this.prisma.user.delete(...)
+    message: >
+      Hard delete su user — usa soft delete (deletedAt) per conformità GDPR.
+      Fix: this.prisma.user.update({ where: { id }, data: { deletedAt: new Date() } })
+    languages: [typescript]
+    severity: ERROR
+    paths:
+      include:
+        - 'backend/src/**'
+      exclude:
+        - '**/*.spec.ts'

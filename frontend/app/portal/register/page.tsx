@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { 
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
   Car,
   Eye,
   EyeOff,
@@ -15,14 +15,37 @@ import {
   ArrowRight,
   AlertCircle,
   CheckCircle,
-  Shield
-} from 'lucide-react'
-import { AppleCard, AppleCardContent } from '@/components/ui/apple-card'
-import { AppleButton } from '@/components/ui/apple-button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { PortalAuthService } from '@/lib/auth/portal-auth-client'
+  Shield,
+} from 'lucide-react';
+import { AppleCard, AppleCardContent } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { PortalAuthService } from '@/lib/auth/portal-auth-client';
+import { z } from 'zod';
+
+const registerStep1Schema = z.object({
+  firstName: z.string().min(2, 'Il nome è obbligatorio'),
+  lastName: z.string().min(2, 'Il cognome è obbligatorio'),
+  email: z.string().email('Email non valida'),
+  phone: z.string().min(6, 'Numero di telefono non valido'),
+});
+
+const registerStep2Schema = z
+  .object({
+    password: z.string().min(8, 'La password deve avere almeno 8 caratteri'),
+    confirmPassword: z.string().min(1, 'Conferma la password'),
+    gdprConsent: z.literal(true, {
+      errorMap: () => ({ message: 'Devi accettare la privacy policy' }),
+    }),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Le password non coincidono',
+    path: ['confirmPassword'],
+  });
+
+type RegisterErrors = Partial<Record<string, string>>;
 
 export default function PortalRegisterPage() {
   const [formData, setFormData] = useState({
@@ -34,65 +57,66 @@ export default function PortalRegisterPage() {
     confirmPassword: '',
     gdprConsent: false,
     marketingConsent: false,
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState(1)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<RegisterErrors>({});
+  const [step, setStep] = useState(1);
 
-  const router = useRouter()
+  const router = useRouter();
 
-  const validateStep1 = () => {
-    if (!formData.firstName || !formData.lastName) {
-      setError('Inserisci nome e cognome')
-      return false
+  const validateStep1 = (): boolean => {
+    setFieldErrors({});
+    const result = registerStep1Schema.safeParse(formData);
+    if (!result.success) {
+      const errs: RegisterErrors = {};
+      for (const issue of result.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      setError(Object.values(errs)[0] ?? null);
+      return false;
     }
-    if (!formData.email || !formData.email.includes('@')) {
-      setError('Inserisci un indirizzo email valido')
-      return false
-    }
-    if (!formData.phone || formData.phone.length < 10) {
-      setError('Inserisci un numero di telefono valido')
-      return false
-    }
-    return true
-  }
+    return true;
+  };
 
-  const validateStep2 = () => {
-    if (formData.password.length < 8) {
-      setError('La password deve essere di almeno 8 caratteri')
-      return false
+  const validateStep2 = (): boolean => {
+    setFieldErrors({});
+    const result = registerStep2Schema.safeParse(formData);
+    if (!result.success) {
+      const errs: RegisterErrors = {};
+      for (const issue of result.error.issues) {
+        const key = String(issue.path[0]);
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      setError(Object.values(errs)[0] ?? null);
+      return false;
     }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Le password non coincidono')
-      return false
-    }
-    if (!formData.gdprConsent) {
-      setError('Devi accettare l\'informativa sulla privacy')
-      return false
-    }
-    return true
-  }
+    return true;
+  };
 
   const handleNext = () => {
-    setError(null)
+    setError(null);
     if (step === 1 && validateStep1()) {
-      setStep(2)
+      setStep(2);
     }
-  }
+  };
 
   const handleBack = () => {
-    setError(null)
-    setStep(1)
-  }
+    setError(null);
+    setStep(1);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (!validateStep2()) return
+    if (!validateStep2()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
       const res = await fetch('/api/portal/auth/register', {
@@ -107,49 +131,63 @@ export default function PortalRegisterPage() {
           gdprConsent: formData.gdprConsent,
           marketingConsent: formData.marketingConsent,
         }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (!res.ok) {
-        setError(data.error?.message || 'Errore durante la registrazione')
-        return
+        setError(data.error?.message || 'Errore durante la registrazione');
+        return;
       }
-      const auth = PortalAuthService.getInstance()
-      auth.setAuth(data.token, data.customer)
-      router.push('/portal/dashboard')
+      const auth = PortalAuthService.getInstance();
+      auth.setAuth(data.token, data.customer);
+      router.push('/portal/dashboard');
     } catch {
-      setError('Errore durante la registrazione. Riprova.')
+      setError('Errore durante la registrazione. Riprova.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#212121] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className='min-h-screen bg-[var(--surface-tertiary)] dark:bg-[var(--surface-primary)] flex items-center justify-center p-4'>
+      <div className='w-full max-w-md'>
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
+          className='text-center mb-8'
         >
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-apple-blue to-apple-purple flex items-center justify-center mx-auto mb-4">
-            <Car className="h-10 w-10 text-white" />
+          <div className='w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--brand)] to-[var(--status-info)] flex items-center justify-center mx-auto mb-4'>
+            <Car className='h-10 w-10 text-[var(--text-on-brand)]' />
           </div>
-          <h1 className="text-2xl font-bold text-apple-dark dark:text-[#ececec]">Crea il tuo account</h1>
-          <p className="text-apple-gray dark:text-[#636366] mt-1">Inizia a gestire i tuoi veicoli</p>
+          <h1 className='text-2xl font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+            Crea il tuo account
+          </h1>
+          <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1'>
+            Inizia a gestire i tuoi veicoli
+          </p>
         </motion.div>
 
         {/* Progress */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 1 ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
-          }`}>
-            {step > 1 ? <CheckCircle className="h-4 w-4" /> : '1'}
+        <div className='flex items-center justify-center gap-2 mb-6'>
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step >= 1
+                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
+            }`}
+          >
+            {step > 1 ? <CheckCircle className='h-4 w-4' /> : '1'}
           </div>
-          <div className={`w-12 h-0.5 ${step > 1 ? 'bg-apple-blue' : 'bg-gray-200 dark:bg-[#424242]'}`} />
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 2 ? 'bg-apple-blue text-white' : 'bg-gray-200 dark:bg-[#424242] text-gray-500 dark:text-[#636366]'
-          }`}>
+          <div
+            className={`w-12 h-0.5 ${step > 1 ? 'bg-[var(--brand)]' : 'bg-[var(--border-default)] dark:bg-[var(--border-default)]'}`}
+          />
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              step >= 2
+                ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                : 'bg-[var(--border-default)] dark:bg-[var(--border-default)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
+            }`}
+          >
             2
           </div>
         </div>
@@ -161,89 +199,105 @@ export default function PortalRegisterPage() {
           transition={{ delay: 0.1 }}
         >
           <AppleCard>
-            <AppleCardContent className="p-6 sm:p-8">
+            <AppleCardContent className='p-6 sm:p-8'>
               {error && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-3"
+                  className='mb-6 p-4 bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)] border border-[var(--status-error)]/30 dark:border-[var(--status-error)]/50 rounded-xl flex items-center gap-3'
                 >
-                  <AlertCircle className="h-5 w-5 text-apple-red flex-shrink-0" />
-                  <p className="text-sm text-apple-red">{error}</p>
+                  <AlertCircle className='h-5 w-5 text-[var(--status-error)] flex-shrink-0' />
+                  <p className='text-sm text-[var(--status-error)]'>{error}</p>
                 </motion.div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className='space-y-5'>
                 {step === 1 ? (
                   <>
                     {/* Name */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">Nome</Label>
-                        <div className="relative">
-                          <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+                    <div className='grid grid-cols-2 gap-3'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='firstName'>Nome</Label>
+                        <div className='relative'>
+                          <User className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                           <Input
-                            id="firstName"
-                            placeholder="Mario"
+                            id='firstName'
+                            placeholder='Mario'
                             value={formData.firstName}
-                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                            className="pl-12 h-12 rounded-xl"
+                            onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                            autoComplete='given-name'
+                            className='pl-12 h-12 rounded-xl'
                           />
                         </div>
+                        {fieldErrors.firstName && (
+                          <p className='text-xs text-[var(--status-error)]'>{fieldErrors.firstName}</p>
+                        )}
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Cognome</Label>
-                        <div className="relative">
+                      <div className='space-y-2'>
+                        <Label htmlFor='lastName'>Cognome</Label>
+                        <div className='relative'>
                           <Input
-                            id="lastName"
-                            placeholder="Rossi"
+                            id='lastName'
+                            placeholder='Rossi'
                             value={formData.lastName}
-                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                            className="h-12 rounded-xl"
+                            onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                            autoComplete='family-name'
+                            className='h-12 rounded-xl'
                           />
                         </div>
+                        {fieldErrors.lastName && (
+                          <p className='text-xs text-[var(--status-error)]'>{fieldErrors.lastName}</p>
+                        )}
                       </div>
                     </div>
 
                     {/* Email */}
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+                    <div className='space-y-2'>
+                      <Label htmlFor='email'>Email</Label>
+                      <div className='relative'>
+                        <Mail className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
-                          id="email"
-                          type="email"
-                          placeholder="nome@email.com"
+                          id='email'
+                          type='email'
+                          placeholder='nome@email.com'
                           value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="pl-12 h-12 rounded-xl"
+                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          autoComplete='email'
+                          className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.email && (
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.email}</p>
+                      )}
                     </div>
 
                     {/* Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefono</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+                    <div className='space-y-2'>
+                      <Label htmlFor='phone'>Telefono</Label>
+                      <div className='relative'>
+                        <Phone className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
-                          id="phone"
-                          type="tel"
-                          placeholder="+39 333 1234567"
+                          id='phone'
+                          type='tel'
+                          placeholder='+39 333 1234567'
                           value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="pl-12 h-12 rounded-xl"
+                          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                          autoComplete='tel'
+                          className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.phone && (
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.phone}</p>
+                      )}
                     </div>
 
                     <AppleButton
-                      type="button"
+                      type='button'
                       fullWidth
                       onClick={handleNext}
-                      icon={<ArrowRight className="h-4 w-4" />}
-                      iconPosition="right"
-                      className="h-12"
+                      icon={<ArrowRight className='h-4 w-4' />}
+                      iconPosition='right'
+                      className='h-12'
                     >
                       Continua
                     </AppleButton>
@@ -251,97 +305,120 @@ export default function PortalRegisterPage() {
                 ) : (
                   <>
                     {/* Password */}
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+                    <div className='space-y-2'>
+                      <Label htmlFor='password'>Password</Label>
+                      <div className='relative'>
+                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
-                          id="password"
+                          id='password'
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
+                          placeholder='••••••••'
                           value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          className="pl-12 pr-12 h-12 rounded-xl"
+                          onChange={e => setFormData({ ...formData, password: e.target.value })}
+                          autoComplete='new-password'
+                          className='pl-12 pr-12 h-12 rounded-xl'
                         />
                         <button
-                          type="button"
+                          type='button'
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark p-1 min-w-[24px] min-h-[24px] flex items-center justify-center"
+                          className='absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 min-w-[24px] min-h-[24px] flex items-center justify-center'
                           aria-label={showPassword ? 'Nascondi password' : 'Mostra password'}
                         >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPassword ? (
+                            <EyeOff className='h-5 w-5' />
+                          ) : (
+                            <Eye className='h-5 w-5' />
+                          )}
                         </button>
                       </div>
-                      <p className="text-xs text-apple-gray dark:text-[#636366]">Minimo 8 caratteri</p>
+                      <p className='text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Minimo 8 caratteri
+                      </p>
+                      {fieldErrors.password && (
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.password}</p>
+                      )}
                     </div>
 
                     {/* Confirm Password */}
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Conferma Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray" />
+                    <div className='space-y-2'>
+                      <Label htmlFor='confirmPassword'>Conferma Password</Label>
+                      <div className='relative'>
+                        <Lock className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
                         <Input
-                          id="confirmPassword"
+                          id='confirmPassword'
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
+                          placeholder='••••••••'
                           value={formData.confirmPassword}
-                          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                          className="pl-12 h-12 rounded-xl"
+                          onChange={e =>
+                            setFormData({ ...formData, confirmPassword: e.target.value })
+                          }
+                          autoComplete='new-password'
+                          className='pl-12 h-12 rounded-xl'
                         />
                       </div>
+                      {fieldErrors.confirmPassword && (
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.confirmPassword}</p>
+                      )}
                     </div>
 
                     {/* GDPR Consent */}
-                    <div className="flex items-start gap-3 p-4 bg-apple-light-gray/50 dark:bg-[#353535] rounded-xl">
-                      <Shield className="h-5 w-5 text-apple-blue flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            id="gdpr"
-                            checked={formData.gdprConsent}
-                            onCheckedChange={(checked) => 
-                              setFormData({ ...formData, gdprConsent: checked as boolean })
-                            }
-                          />
-                          <Label htmlFor="gdpr" className="text-sm text-apple-dark dark:text-[#ececec] cursor-pointer">
-                            Accetto l&apos;{' '}
-                            <Link href="/privacy" className="text-apple-blue hover:underline">
-                              informativa sulla privacy
-                            </Link>
-                            {' '}e il trattamento dei dati personali (GDPR)
-                          </Label>
+                    <div className='space-y-2'>
+                      <div className='flex items-start gap-3 p-4 bg-[var(--surface-secondary)]/50 dark:bg-[var(--surface-hover)] rounded-xl'>
+                        <Shield className='h-5 w-5 text-[var(--brand)] flex-shrink-0 mt-0.5' />
+                        <div className='flex-1'>
+                          <div className='flex items-start gap-3'>
+                            <Checkbox
+                              id='gdpr'
+                              checked={formData.gdprConsent}
+                              onCheckedChange={checked =>
+                                setFormData({ ...formData, gdprConsent: checked as boolean })
+                              }
+                            />
+                            <Label
+                              htmlFor='gdpr'
+                              className='text-sm text-[var(--text-primary)] dark:text-[var(--text-primary)] cursor-pointer'
+                            >
+                              Accetto l&apos;{' '}
+                              <Link href='/privacy' className='text-[var(--brand)] hover:underline'>
+                                informativa sulla privacy
+                              </Link>{' '}
+                              e il trattamento dei dati personali (GDPR)
+                            </Label>
+                          </div>
                         </div>
                       </div>
+                      {fieldErrors.gdprConsent && (
+                        <p className='text-xs text-[var(--status-error)]'>{fieldErrors.gdprConsent}</p>
+                      )}
                     </div>
 
                     {/* Marketing Consent */}
-                    <div className="flex items-start gap-3">
+                    <div className='flex items-start gap-3'>
                       <Checkbox
-                        id="marketing"
+                        id='marketing'
                         checked={formData.marketingConsent}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={checked =>
                           setFormData({ ...formData, marketingConsent: checked as boolean })
                         }
                       />
-                      <Label htmlFor="marketing" className="text-sm text-apple-gray dark:text-[#636366] cursor-pointer">
+                      <Label
+                        htmlFor='marketing'
+                        className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] cursor-pointer'
+                      >
                         Voglio ricevere offerte e novità (facoltativo)
                       </Label>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className='flex gap-3'>
                       <AppleButton
-                        type="button"
-                        variant="secondary"
+                        type='button'
+                        variant='secondary'
                         onClick={handleBack}
-                        className="flex-1 h-12"
+                        className='flex-1 h-12'
                       >
                         Indietro
                       </AppleButton>
-                      <AppleButton
-                        type="submit"
-                        loading={isLoading}
-                        className="flex-1 h-12"
-                      >
+                      <AppleButton type='submit' loading={isLoading} className='flex-1 h-12'>
                         Registrati
                       </AppleButton>
                     </div>
@@ -350,10 +427,13 @@ export default function PortalRegisterPage() {
               </form>
 
               {/* Login Link */}
-              <div className="mt-6 pt-6 border-t border-apple-border/30 dark:border-[#424242]/30 text-center">
-                <p className="text-apple-gray dark:text-[#636366] text-sm">
+              <div className='mt-6 pt-6 border-t border-[var(--border-default)]/30 dark:border-[var(--border-default)]/30 text-center'>
+                <p className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-sm'>
                   Hai già un account?{' '}
-                  <Link href="/portal/login" className="text-apple-blue font-medium hover:underline">
+                  <Link
+                    href='/portal/login'
+                    className='text-[var(--brand)] font-medium hover:underline'
+                  >
                     Accedi
                   </Link>
                 </p>
@@ -366,13 +446,16 @@ export default function PortalRegisterPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-center mt-6"
+          className='text-center mt-6'
         >
-          <Link href="/" className="text-sm text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] transition-colors">
+          <Link
+            href='/'
+            className='text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] transition-colors'
+          >
             ← Torna al sito principale
           </Link>
         </motion.p>
       </div>
     </div>
-  )
+  );
 }

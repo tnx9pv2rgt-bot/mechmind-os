@@ -1,0 +1,33 @@
+# Test files
+**/*.spec.ts
+**/*.test.ts
+**/*.spec.js
+**/*.test.js
+**/test/**
+**/tests/**
+**/__tests__/**
+**/__mocks__/**
+
+# Build output
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+
+# Generated
+backend/prisma/migrations/
+backend/prisma/generated/
+
+# Config files
+jest.config.*
+tsconfig.*
+*.config.js
+*.config.ts
+
+# Documentation and scripts
+docs/
+load/
+monitoring/
+infrastructure/
+scripts/

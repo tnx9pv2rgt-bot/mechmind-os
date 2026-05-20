@@ -1,0 +1,56 @@
+#!/bin/bash
+INPUT=$(cat)
+if [ "$(echo "$INPUT" | jq -r '.stop_hook_active // false')" = "true" ]; then exit 0; fi
+
+# Skip expensive checks if no TS/JS source files were touched in this turn.
+# tsc on a large monorepo takes 30-90s — running it on every Claude response
+# (e.g., "explain this file") is unusable. Only gate when code actually changed.
+TOUCHED=$(git diff --name-only 2>/dev/null | grep -cE '\.(ts|tsx|js|jsx)$')
+TOUCHED=${TOUCHED:-0}
+STAGED=$(git diff --cached --name-only 2>/dev/null | grep -cE '\.(ts|tsx|js|jsx)$')
+STAGED=${STAGED:-0}
+if [ "$((TOUCHED + STAGED))" -eq 0 ]; then exit 0; fi
+
+FAILED=0
+
+# TypeScript backend
+if [ -d "backend" ]; then
+  BE=$(cd backend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)
+  if [ "$BE" -gt 0 ]; then
+    echo "" >&2
+    echo "===== STOP HOOK: BACKEND TS ERRORS ($BE) =====" >&2
+    (cd backend && npx tsc --noEmit --pretty false 2>&1 | head -25) >&2
+    FAILED=1
+  fi
+fi
+
+# TypeScript frontend
+if [ -d "frontend" ]; then
+  FE=$(cd frontend && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error TS' || true)
+  if [ "$FE" -gt 0 ]; then
+    echo "" >&2
+    echo "===== STOP HOOK: FRONTEND TS ERRORS ($FE) =====" >&2
+    (cd frontend && npx tsc --noEmit --pretty false 2>&1 | head -25) >&2
+    FAILED=1
+  fi
+fi
+
+# ESLint backend
+if [ -d "backend" ]; then
+  LINT_OUT=$(cd backend && npm run lint 2>&1)
+  LINT_ERR=$(echo "$LINT_OUT" | grep -cE '[0-9]+ error' || true)
+  if [ "$LINT_ERR" -gt 0 ]; then
+    echo "" >&2
+    echo "===== STOP HOOK: ESLINT ERRORS =====" >&2
+    echo "$LINT_OUT" | tail -10 >&2
+    FAILED=1
+  fi
+fi
+
+
+if [ "$FAILED" -gt 0 ]; then
+  echo "" >&2
+  echo "BLOCCATO: Fixa tutti gli errori sopra prima di finire." >&2
+  exit 2
+fi
+exit 0

@@ -313,7 +313,9 @@ export class BookingSlotService {
       const grouped = slots.reduce(
         (acc, slot) => {
           const date = slot.startTime.toISOString().split('T')[0];
+          // eslint-disable-next-line security/detect-object-injection
           if (!acc[date]) {
+            // eslint-disable-next-line security/detect-object-injection
             acc[date] = {
               date,
               totalSlots: 0,
@@ -323,12 +325,16 @@ export class BookingSlotService {
             };
           }
 
+          // eslint-disable-next-line security/detect-object-injection
           acc[date].totalSlots++;
           if (slot.status === SlotStatus.AVAILABLE) {
+            // eslint-disable-next-line security/detect-object-injection
             acc[date].availableSlots++;
           } else if (slot.status === SlotStatus.BOOKED) {
+            // eslint-disable-next-line security/detect-object-injection
             acc[date].bookedSlots++;
           } else if (slot.status === SlotStatus.BLOCKED) {
+            // eslint-disable-next-line security/detect-object-injection
             acc[date].blockedSlots++;
           }
 

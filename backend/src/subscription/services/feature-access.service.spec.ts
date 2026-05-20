@@ -544,7 +544,7 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15); // exceeds 10
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(20); // exceeds 15
       (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(100);
       (prisma.inspection as Record<string, jest.Mock>).count.mockResolvedValue(50);
@@ -554,7 +554,7 @@ describe('FeatureAccessService', () => {
 
       // Assert
       expect(result.users.withinLimit).toBe(false);
-      expect(result.users.current).toBe(15);
+      expect(result.users.current).toBe(20);
       expect(result.users.remaining).toBe(0);
     });
 
@@ -590,10 +590,10 @@ describe('FeatureAccessService', () => {
     });
 
     it('should calculate correct warning levels', async () => {
-      // Arrange - 9 of 10 users = 90% usage
+      // Arrange - 13 of 15 users = 86.67% usage
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(9);
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(13);
       (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(100);
       (prisma.inspection as Record<string, jest.Mock>).count.mockResolvedValue(50);
@@ -602,15 +602,15 @@ describe('FeatureAccessService', () => {
       const result = await service.checkAllLimits(TENANT_ID);
 
       // Assert
-      expect(result.users.warningLevel).toBe('warning'); // 90% is >= 80% but < 95%
-      expect(result.users.percentageUsed).toBe(90);
+      expect(result.users.warningLevel).toBe('warning'); // 86.67% is >= 80% but < 95%
+      expect(result.users.percentageUsed).toBeCloseTo(86.67, 1);
     });
 
     it('should show critical warning at 95% or above', async () => {
-      // Arrange - 10 of 10 users = 100% usage
+      // Arrange - 15 of 15 users = 100% usage
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(10);
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15);
       (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1);
       (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(100);
       (prisma.inspection as Record<string, jest.Mock>).count.mockResolvedValue(50);
@@ -640,8 +640,8 @@ describe('FeatureAccessService', () => {
       // Assert
       expect(result.withinLimit).toBe(true);
       expect(result.current).toBe(7);
-      expect(result.limit).toBe(10);
-      expect(result.remaining).toBe(3);
+      expect(result.limit).toBe(15);
+      expect(result.remaining).toBe(8);
     });
 
     it('should check maxLocations limit correctly', async () => {
@@ -656,8 +656,8 @@ describe('FeatureAccessService', () => {
       // Assert
       expect(result.withinLimit).toBe(true);
       expect(result.current).toBe(2);
-      expect(result.limit).toBe(2);
-      expect(result.remaining).toBe(0);
+      expect(result.limit).toBe(3);
+      expect(result.remaining).toBe(1);
     });
 
     it('should check maxApiCallsPerMonth using subscription counter', async () => {
@@ -755,29 +755,29 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(8); // 8 of 10
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(13); // 13 of 15
 
       // Act
       const result = await service.canAddResource(TENANT_ID, 'user');
 
       // Assert
       expect(result.withinLimit).toBe(true);
-      expect(result.current).toBe(9); // simulated +1
-      expect(result.remaining).toBe(1); // 10 - 8 - 1 = 1
+      expect(result.current).toBe(14); // simulated +1
+      expect(result.remaining).toBe(1); // 15 - 13 - 1 = 1
     });
 
     it('should deny adding a user when at the limit', async () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(10); // at limit
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15); // at limit
 
       // Act
       const result = await service.canAddResource(TENANT_ID, 'user');
 
       // Assert
       expect(result.withinLimit).toBe(false);
-      expect(result.current).toBe(11); // simulated +1
+      expect(result.current).toBe(16); // simulated +1
       expect(result.remaining).toBe(0);
     });
 
@@ -785,14 +785,14 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1); // 1 of 2
+      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(2); // 2 of 3
 
       // Act
       const result = await service.canAddResource(TENANT_ID, 'location');
 
       // Assert
       expect(result.withinLimit).toBe(true);
-      expect(result.current).toBe(2);
+      expect(result.current).toBe(3);
       expect(result.remaining).toBe(0); // exactly at limit after adding
     });
 
@@ -800,7 +800,7 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(2); // at limit
+      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(3); // at limit
 
       // Act
       const result = await service.canAddResource(TENANT_ID, 'location');
@@ -813,14 +813,14 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2499); // 2499 of 2500
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(4999); // 4999 of 5000
 
       // Act
       const result = await service.canAddResource(TENANT_ID, 'customer');
 
       // Assert
       expect(result.withinLimit).toBe(true);
-      expect(result.current).toBe(2500);
+      expect(result.current).toBe(5000);
       expect(result.remaining).toBe(0);
     });
 
@@ -858,7 +858,7 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15); // exceeds 10
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(20); // exceeds 15
 
       // Act & Assert
       await expect(service.assertWithinLimit(TENANT_ID, 'maxUsers')).rejects.toThrow(
@@ -870,7 +870,7 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15);
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(20);
 
       // Act & Assert
       try {
@@ -882,8 +882,8 @@ describe('FeatureAccessService', () => {
         expect(response).toEqual(
           expect.objectContaining({
             code: 'LIMIT_EXCEEDED',
-            limit: 10,
-            current: 15,
+            limit: 15,
+            current: 20,
           }),
         );
       }
@@ -893,7 +893,7 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(15);
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(20);
 
       // Act & Assert
       try {
@@ -1094,17 +1094,17 @@ describe('FeatureAccessService', () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
-      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(5); // 50% of 10
-      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1); // 50% of 2
-      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(1250); // 50% of 2500
+      (prisma.user as Record<string, jest.Mock>).count.mockResolvedValue(5); // 33.33% of 15
+      (prisma.location as Record<string, jest.Mock>).count.mockResolvedValue(1); // 33.33% of 3
+      (prisma.customer as Record<string, jest.Mock>).count.mockResolvedValue(2500); // 50% of 5000
       (prisma.inspection as Record<string, jest.Mock>).count.mockResolvedValue(500); // 50% of 1000
 
       // Act
       const result = await service.getUsageStats(TENANT_ID);
 
       // Assert
-      expect(result.usage.users.percentage).toBe(50);
-      expect(result.usage.locations.percentage).toBe(50);
+      expect(result.usage.users.percentage).toBeCloseTo(33.33, 1);
+      expect(result.usage.locations.percentage).toBeCloseTo(33.33, 1);
       expect(result.usage.customers.percentage).toBe(50);
       expect(result.usage.inspections.percentage).toBe(50);
     });
@@ -1359,7 +1359,7 @@ describe('FeatureAccessService', () => {
       expect(result.requiresAiAddon).toBe(true);
     });
 
-    it('should require AI addon for VOICE_ASSISTANT on non-enterprise plan without addon', async () => {
+    it('should deny VOICE_ASSISTANT on non-enterprise plan without voice addon', async () => {
       // Arrange
       const findUniqueMock = prisma.subscription as Record<string, jest.Mock>;
       findUniqueMock.findUnique.mockResolvedValue(mockMediumSubscription);
@@ -1368,8 +1368,10 @@ describe('FeatureAccessService', () => {
       const result = await service.canAccessFeature(TENANT_ID, FeatureFlag.VOICE_ASSISTANT);
 
       // Assert
+      // VOICE_ASSISTANT is not in AI_ADDON_FEATURES (it's in VOICE_ADDON_FEATURES),
+      // and it's not in MEDIUM plan features, so it falls through to "not in plan"
       expect(result.allowed).toBe(false);
-      expect(result.requiresAiAddon).toBe(true);
+      expect(result.requiredPlan).toBeDefined();
     });
 
     it('should allow AI features on TRIAL plan (trial includes AI_INSPECTIONS)', async () => {

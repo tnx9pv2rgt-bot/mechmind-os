@@ -402,35 +402,35 @@ class FormErrorBoundary extends React.Component<
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-[900px] h-[900px] bg-white/80 backdrop-blur-3xl rounded-[40px] shadow-2xl border border-white/50 p-10 flex flex-col items-center justify-center text-center"
+          className="w-[900px] h-[900px] bg-[var(--surface-secondary)] backdrop-blur-3xl rounded-[40px] shadow-2xl border border-[var(--border-default)]/50 p-10 flex flex-col items-center justify-center text-center"
         >
-          <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
-            <AlertCircle className="w-10 h-10 text-red-500" />
+          <div className="w-20 h-20 rounded-full bg-[var(--status-error-subtle)] flex items-center justify-center mb-6">
+            <AlertCircle className="w-10 h-10 text-[var(--status-error)]" />
           </div>
-          <h3 className="text-2xl font-semibold text-apple-dark mb-2">
+          <h3 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
             Si è verificato un errore
           </h3>
-          <p className="text-apple-gray mb-8 max-w-md">
+          <p className="text-[var(--text-tertiary)] mb-8 max-w-md">
             Non siamo riusciti a caricare il form. I tuoi dati sono al sicuro.
           </p>
           <div className="flex gap-4">
             <Button
               onClick={() => window.location.reload()}
-              className="h-12 px-6 bg-apple-blue hover:bg-apple-blue-hover text-white rounded-apple-lg"
+              className="h-12 px-6 bg-[var(--brand)] hover:bg-[var(--brand)]-hover text-[var(--text-on-brand)] rounded-apple-lg"
             >
               Ricarica il form
             </Button>
             <Button
               onClick={() => (window.location.href = "/dashboard")}
               variant="outline"
-              className="h-12 px-6 rounded-apple-lg border-apple-border"
+              className="h-12 px-6 rounded-apple-lg border-[var(--border-default)]"
             >
               Torna alla dashboard
             </Button>
           </div>
           {process.env.NODE_ENV === "development" && this.state.error && (
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg text-left overflow-auto max-w-full">
-              <p className="text-xs font-mono text-red-600">
+            <div className="mt-8 p-4 bg-[var(--surface-secondary)] rounded-lg text-left overflow-auto max-w-full">
+              <p className="text-xs font-mono text-[var(--status-error)]">
                 {this.state.error.message}
               </p>
             </div>
@@ -453,7 +453,7 @@ const GlassmorphismLoader = memo(() => (
       animate={{ rotate: 360 }}
       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
     >
-      <div className="w-12 h-12 rounded-full border-4 border-white/30 border-t-apple-blue" />
+      <div className="w-12 h-12 rounded-full border-4 border-[var(--border-default)]/30 border-t-apple-blue" />
     </motion.div>
   </div>
 ));
@@ -463,7 +463,7 @@ GlassmorphismLoader.displayName = "GlassmorphismLoader";
 // UTILITY FUNCTIONS
 // ============================================================================
 const getPasswordStrengthColor = (score: number): string => {
-  const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#15803d"];
+  const colors = ["var(--status-error)", "#f97316", "#eab308", "#22c55e", "#15803d"];
   return colors[score] || colors[0];
 };
 
@@ -554,7 +554,7 @@ const MemoizedInput = memo(
     return (
       <div className="relative">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-apple-gray">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]">
             {icon}
           </div>
         )}
@@ -564,10 +564,10 @@ const MemoizedInput = memo(
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            "h-14 bg-white/50 border-apple-border rounded-apple-lg transition-all duration-200",
-            "focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20",
+            "h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg transition-all duration-200",
+            "focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20",
             icon && "pl-12",
-            error && "border-red-500 focus:border-red-500"
+            error && "border-[var(--status-error)] focus:border-[var(--status-error)]"
           )}
         />
       </div>
@@ -612,7 +612,7 @@ const SmartDefaultsBadge = memo(() => {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full text-xs text-gray-600 border border-white/50 shadow-sm"
+      className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-[var(--surface-secondary)]/60 backdrop-blur-sm rounded-full text-xs text-[var(--text-secondary)] border border-[var(--border-default)]/50 shadow-sm"
     >
       <Globe className="w-3.5 h-3.5" />
       <span>{defaults.location?.city ? `📍 ${defaults.location.city}` : `📍 ${defaults.deviceType}`}</span>
@@ -626,7 +626,7 @@ SmartDefaultsBadge.displayName = 'SmartDefaultsBadge';
 const SkipLink = memo(() => (
   <a
     href="#form-content"
-    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-apple-blue text-white px-4 py-2 rounded-lg"
+    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-[var(--brand)] text-[var(--text-on-brand)] px-4 py-2 rounded-lg"
   >
     Salta al contenuto del form
   </a>
@@ -727,10 +727,10 @@ const Step1Credentials = memo(() => {
       className="space-y-5"
     >
       <motion.div variants={itemVariants}>
-        <h2 className="text-2xl font-semibold text-apple-dark mb-2">
+        <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
           Credenziali di accesso
         </h2>
-        <p className="text-apple-gray text-body">
+        <p className="text-[var(--text-tertiary)] text-body">
           Crea le credenziali per il tuo account MechMind
         </p>
       </motion.div>
@@ -742,39 +742,39 @@ const Step1Credentials = memo(() => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">Email</FormLabel>
+              <FormLabel className="text-[var(--text-primary)] font-medium">Email</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                   <Input
                     {...field}
                     type="email"
                     placeholder="nome@esempio.it"
                     className={cn(
-                      "pl-12 pr-12 h-14 text-body bg-white/50 border-apple-border rounded-apple-lg",
-                      "focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20",
+                      "pl-12 pr-12 h-14 text-body bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg",
+                      "focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20",
                       "transition-all duration-200",
                       state.emailStatus === "available" &&
-                        "border-green-500 focus:border-green-500",
+                        "border-[var(--status-success)] focus:border-[var(--status-success)]",
                       state.emailStatus === "taken" &&
-                        "border-red-500 focus:border-red-500"
+                        "border-[var(--status-error)] focus:border-[var(--status-error)]"
                     )}
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     {state.emailStatus === "checking" && (
-                      <Loader2 className="w-5 h-5 text-apple-blue animate-spin" />
+                      <Loader2 className="w-5 h-5 text-[var(--brand)] animate-spin" />
                     )}
                     {state.emailStatus === "available" && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center"
+                        className="w-5 h-5 rounded-full bg-[var(--status-success-subtle)]0 flex items-center justify-center"
                       >
-                        <Check className="w-3 h-3 text-white" />
+                        <Check className="w-3 h-3 text-[var(--text-on-brand)]" />
                       </motion.div>
                     )}
                     {state.emailStatus === "taken" && (
-                      <X className="w-5 h-5 text-red-500" />
+                      <X className="w-5 h-5 text-[var(--status-error)]" />
                     )}
                   </div>
                 </div>
@@ -792,24 +792,24 @@ const Step1Credentials = memo(() => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">
+              <FormLabel className="text-[var(--text-primary)] font-medium">
                 Password
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                   <Input
                     {...field}
                     type={state.showPassword ? "text" : "password"}
                     placeholder="Crea una password sicura"
-                    className="pl-12 pr-12 h-14 text-body bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20 transition-all duration-200"
+                    className="pl-12 pr-12 h-14 text-body bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20 transition-all duration-200"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       dispatch({ type: "TOGGLE_PASSWORD_VISIBILITY" })
                     }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     {state.showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -829,7 +829,7 @@ const Step1Credentials = memo(() => {
                 >
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-apple-gray">
+                      <span className="text-sm font-medium text-[var(--text-tertiary)]">
                         Sicurezza:{" "}
                         <span
                           style={{
@@ -841,11 +841,11 @@ const Step1Credentials = memo(() => {
                           {getPasswordStrengthLabel(state.passwordStrength.score)}
                         </span>
                       </span>
-                      <span className="text-xs text-apple-gray">
+                      <span className="text-xs text-[var(--text-tertiary)]">
                         Crack: ~{state.passwordStrength.crackTimeDisplay}
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-[var(--border-default)] rounded-full overflow-hidden">
                       <motion.div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -878,7 +878,7 @@ const Step1Credentials = memo(() => {
               key={index}
               className={cn(
                 "flex items-center gap-2 text-sm transition-colors duration-200",
-                req.met ? "text-green-600" : "text-apple-gray"
+                req.met ? "text-[var(--status-success)]" : "text-[var(--text-tertiary)]"
               )}
             >
               <motion.div
@@ -886,10 +886,10 @@ const Step1Credentials = memo(() => {
                 animate={req.met ? { scale: [1, 1.2, 1] } : {}}
                 className={cn(
                   "w-4 h-4 rounded-full flex items-center justify-center transition-colors",
-                  req.met ? "bg-green-500" : "border border-gray-300"
+                  req.met ? "bg-[var(--status-success-subtle)]0" : "border border-[var(--border-default)]"
                 )}
               >
-                {req.met && <Check className="w-2.5 h-2.5 text-white" />}
+                {req.met && <Check className="w-2.5 h-2.5 text-[var(--text-on-brand)]" />}
               </motion.div>
               <span className="text-xs">{req.label}</span>
             </div>
@@ -904,23 +904,23 @@ const Step1Credentials = memo(() => {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">
+              <FormLabel className="text-[var(--text-primary)] font-medium">
                 Conferma Password
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                   <Input
                     {...field}
                     type={state.showConfirmPassword ? "text" : "password"}
                     placeholder="Ripeti la password"
                     className={cn(
-                      "pl-12 pr-12 h-14 text-body bg-white/50 border-apple-border rounded-apple-lg",
-                      "focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20",
+                      "pl-12 pr-12 h-14 text-body bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg",
+                      "focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20",
                       "transition-all duration-200",
                       confirmPassword &&
                         confirmPassword === password &&
-                        "border-green-500 focus:border-green-500"
+                        "border-[var(--status-success)] focus:border-[var(--status-success)]"
                     )}
                   />
                   <button
@@ -928,7 +928,7 @@ const Step1Credentials = memo(() => {
                     onClick={() =>
                       dispatch({ type: "TOGGLE_CONFIRM_PASSWORD_VISIBILITY" })
                     }
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-apple-gray hover:text-apple-dark transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     {state.showConfirmPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -942,7 +942,7 @@ const Step1Credentials = memo(() => {
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-green-600 flex items-center gap-1 mt-1"
+                  className="text-sm text-[var(--status-success)] flex items-center gap-1 mt-1"
                 >
                   <Check className="w-4 h-4" />
                   Password coincidente
@@ -961,12 +961,12 @@ const Step1Credentials = memo(() => {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">
+              <FormLabel className="text-[var(--text-primary)] font-medium">
                 Telefono
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray z-10" />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)] z-10" />
                   <PhoneInput
                     international
                     defaultCountry="IT"
@@ -993,7 +993,7 @@ const Step1Credentials = memo(() => {
                   />
                 </div>
               </FormControl>
-              <FormDescription className="text-xs text-apple-gray">
+              <FormDescription className="text-xs text-[var(--text-tertiary)]">
                 Riceverai un SMS di verifica
               </FormDescription>
               <FormMessage />
@@ -1261,12 +1261,12 @@ export const CustomerFormPremiumIntegrated: React.FC<
   // Success view
   if (state.status === "success") {
     return (
-      <div className="min-h-[calc(100vh-2.25rem)] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-2.25rem)] bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--surface-secondary)] flex items-center justify-center p-4">
         <div className="relative w-[min(900px,95vw)] h-[min(900px,95vh)]">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full h-full bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 p-10 flex flex-col justify-center"
+            className="w-full h-full bg-[var(--surface-secondary)]/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-[var(--border-default)]/50 p-10 flex flex-col justify-center"
           >
             <SuccessView
               email={form.getValues("email")}
@@ -1289,12 +1289,12 @@ export const CustomerFormPremiumIntegrated: React.FC<
       <FormErrorBoundary>
       <FormContext.Provider value={contextValue}>
         {/* Main Container - Big Tech Layout (No Fixed Positioning) */}
-        <div className="min-h-[calc(100vh-2.25rem)] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="min-h-[calc(100vh-2.25rem)] bg-gradient-to-br from-[var(--surface-secondary)] to-[var(--surface-secondary)] flex items-center justify-center p-4">
           <div className="relative w-[min(900px,95vw)] h-[min(900px,95vh)]">
             
             {/* Background Icon/Illustration */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[80%] h-[80%] rounded-full bg-gradient-to-br from-blue-100/40 via-purple-100/30 to-pink-100/40 blur-3xl" />
+              <div className="w-[80%] h-[80%] rounded-full bg-gradient-to-br from-[var(--status-info)]/10/40 via-[var(--brand)]/10/30 to-[var(--status-warning)]/10/40 blur-3xl" />
               <motion.div 
                 className="absolute pointer-events-none"
                 animate={{ 
@@ -1303,13 +1303,13 @@ export const CustomerFormPremiumIntegrated: React.FC<
                 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
               >
-                <User className="w-[45%] h-[45%] text-blue-200/30" strokeWidth={0.5} />
+                <User className="w-[45%] h-[45%] text-[var(--status-info)]/30" strokeWidth={0.5} />
               </motion.div>
             </div>
             
             {/* Glass Card Container */}
             <motion.div 
-              className="relative w-full h-full bg-white/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-white/50 overflow-hidden flex flex-col"
+              className="relative w-full h-full bg-[var(--surface-secondary)]/70 backdrop-blur-2xl rounded-[40px] shadow-2xl border border-[var(--border-default)]/50 overflow-hidden flex flex-col"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
@@ -1319,16 +1319,16 @@ export const CustomerFormPremiumIntegrated: React.FC<
 
           {/* Offline Indicator */}
           {!state.isOnline && (
-            <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-amber-700 text-sm">
+            <div className="bg-[var(--status-warning)]/5 border-b border-[var(--status-warning)]/30 px-6 py-2 flex items-center gap-2 text-[var(--status-warning)] text-sm">
               <WifiOff className="w-4 h-4" />
               <span>Sei offline. I dati verranno sincronizzati automaticamente.</span>
             </div>
           )}
 
           {/* Progress Header */}
-          <div className="bg-gradient-to-r from-slate-50 to-gray-100 p-6 border-b border-gray-100">
+          <div className="bg-gradient-to-r from-[var(--surface-secondary)] to-[var(--surface-secondary)] p-6 border-b border-[var(--border-default)]">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-semibold text-apple-dark">
+              <h1 className="text-xl font-semibold text-[var(--text-primary)]">
                 {abVariant === "variant-a"
                   ? "Crea il tuo account in 4 semplici passi"
                   : "Nuovo Cliente"}
@@ -1337,9 +1337,9 @@ export const CustomerFormPremiumIntegrated: React.FC<
                 Step {state.step} di 4
               </Badge>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--border-default)] rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-apple-blue to-blue-500"
+                className="h-full bg-gradient-to-r from-[var(--brand)] to-[var(--status-info)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{
@@ -1348,17 +1348,17 @@ export const CustomerFormPremiumIntegrated: React.FC<
                 }}
               />
             </div>
-            <div className="flex justify-between mt-2 text-xs text-apple-gray">
-              <span className={state.step >= 1 ? "text-apple-blue font-medium" : ""}>
+            <div className="flex justify-between mt-2 text-xs text-[var(--text-tertiary)]">
+              <span className={state.step >= 1 ? "text-[var(--brand)] font-medium" : ""}>
                 Credenziali
               </span>
-              <span className={state.step >= 2 ? "text-apple-blue font-medium" : ""}>
+              <span className={state.step >= 2 ? "text-[var(--brand)] font-medium" : ""}>
                 Dati
               </span>
-              <span className={state.step >= 3 ? "text-apple-blue font-medium" : ""}>
+              <span className={state.step >= 3 ? "text-[var(--brand)] font-medium" : ""}>
                 Privacy
               </span>
-              <span className={state.step >= 4 ? "text-apple-blue font-medium" : ""}>
+              <span className={state.step >= 4 ? "text-[var(--brand)] font-medium" : ""}>
                 Riepilogo
               </span>
             </div>
@@ -1390,13 +1390,13 @@ export const CustomerFormPremiumIntegrated: React.FC<
           </div>
 
           {/* Navigation Footer */}
-          <div className="p-6 bg-gradient-to-r from-slate-50 to-gray-100 border-t border-gray-100">
+          <div className="p-6 bg-gradient-to-r from-[var(--surface-secondary)] to-[var(--surface-secondary)] border-t border-[var(--border-default)]">
             <div className="flex justify-between">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleBack}
-                className="h-12 px-6 rounded-apple-lg border-apple-border"
+                className="h-12 px-6 rounded-apple-lg border-[var(--border-default)]"
               >
                 <ChevronLeft className="w-5 h-5 mr-2" />
                 {state.step === 1 ? "Annulla" : "Indietro"}
@@ -1406,7 +1406,7 @@ export const CustomerFormPremiumIntegrated: React.FC<
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="h-12 px-8 bg-apple-blue hover:bg-apple-blue-hover text-white rounded-apple-lg font-medium"
+                  className="h-12 px-8 bg-[var(--brand)] hover:bg-[var(--brand)]-hover text-[var(--text-on-brand)] rounded-apple-lg font-medium"
                 >
                   Avanti
                   <ChevronRight className="w-5 h-5 ml-2" />
@@ -1416,7 +1416,7 @@ export const CustomerFormPremiumIntegrated: React.FC<
                   type="button"
                   onClick={handleSubmit}
                   disabled={state.status === "submitting"}
-                  className="h-14 px-10 bg-gradient-to-r from-apple-blue to-blue-600 hover:from-apple-blue-hover hover:to-blue-700 text-white rounded-apple-lg font-semibold text-lg shadow-lg shadow-blue-500/30"
+                  className="h-14 px-10 bg-gradient-to-r from-[var(--brand)] to-[var(--status-info)] hover:from-[var(--brand)]-hover hover:to-[var(--status-info)] text-[var(--text-on-brand)] rounded-apple-lg font-semibold text-lg shadow-lg shadow-blue-500/30"
                 >
                   {state.status === "submitting" ? (
                     <>
@@ -1484,7 +1484,7 @@ export const CustomerFormPremiumIntegrated: React.FC<
                   <Button
                     size="sm"
                     variant="outline"
-                    className="bg-white/80 backdrop-blur"
+                    className="bg-[var(--surface-secondary)] backdrop-blur"
                   >
                     <Activity className="w-4 h-4 mr-2" />
                     Analytics
@@ -1540,7 +1540,7 @@ const SuccessView = memo(
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="text-3xl font-bold text-apple-dark mb-4"
+        className="text-3xl font-bold text-[var(--text-primary)] mb-4"
       >
         Benvenuto nella famiglia MechMind! 🎉
       </motion.h2>
@@ -1551,19 +1551,19 @@ const SuccessView = memo(
         transition={{ delay: 0.4 }}
         className="space-y-4"
       >
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-apple-lg inline-block">
-          <p className="text-sm text-apple-gray mb-1">Numero cliente</p>
-          <p className="text-2xl font-bold text-apple-blue tracking-wider">
+        <div className="bg-gradient-to-r from-[var(--status-info)]/5 to-[var(--brand)]/5 p-6 rounded-apple-lg inline-block">
+          <p className="text-sm text-[var(--text-tertiary)] mb-1">Numero cliente</p>
+          <p className="text-2xl font-bold text-[var(--brand)] tracking-wider">
             {customerNumber}
           </p>
         </div>
 
-        <p className="text-apple-gray">
+        <p className="text-[var(--text-tertiary)]">
           Abbiamo inviato un&apos;email di conferma a{" "}
-          <strong className="text-apple-dark">{email}</strong>
+          <strong className="text-[var(--text-primary)]">{email}</strong>
         </p>
 
-        <p className="text-sm text-apple-gray">
+        <p className="text-sm text-[var(--text-tertiary)]">
           Clicca sul link nella email per attivare il tuo account
         </p>
       </motion.div>
@@ -1576,7 +1576,7 @@ const SuccessView = memo(
       >
         <Button
           onClick={onGoToDashboard}
-          className="h-14 px-8 bg-apple-blue hover:bg-apple-blue-hover text-white rounded-apple-lg font-medium"
+          className="h-14 px-8 bg-[var(--brand)] hover:bg-[var(--brand)]-hover text-[var(--text-on-brand)] rounded-apple-lg font-medium"
         >
           <Sparkles className="w-5 h-5 mr-2" />
           Vai alla dashboard
@@ -1584,7 +1584,7 @@ const SuccessView = memo(
         <Button
           onClick={onCreateNew}
           variant="outline"
-          className="h-14 px-8 border-apple-border rounded-apple-lg font-medium"
+          className="h-14 px-8 border-[var(--border-default)] rounded-apple-lg font-medium"
         >
           <User className="w-5 h-5 mr-2" />
           Crea nuovo cliente
@@ -1672,10 +1672,10 @@ const Step2Data = memo(() => {
       className="space-y-5"
     >
       <motion.div variants={itemVariants}>
-        <h2 className="text-2xl font-semibold text-apple-dark mb-2">
+        <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
           Dati cliente
         </h2>
-        <p className="text-apple-gray text-body">
+        <p className="text-[var(--text-tertiary)] text-body">
           Inserisci i dati anagrafici del cliente
         </p>
       </motion.div>
@@ -1688,22 +1688,22 @@ const Step2Data = memo(() => {
           className={cn(
             "p-6 rounded-apple-lg border-2 transition-all duration-200 flex flex-col items-center gap-3",
             customerType === "private"
-              ? "border-apple-blue bg-apple-blue/5"
-              : "border-gray-200 hover:border-gray-300"
+              ? "border-[var(--brand)] bg-[var(--brand)]/5"
+              : "border-[var(--border-default)] hover:border-[var(--border-strong)]"
           )}
         >
           <User
             className={cn(
               "w-8 h-8",
-              customerType === "private" ? "text-apple-blue" : "text-apple-gray"
+              customerType === "private" ? "text-[var(--brand)]" : "text-[var(--text-tertiary)]"
             )}
           />
           <span
             className={cn(
               "font-medium",
               customerType === "private"
-                ? "text-apple-blue"
-                : "text-apple-dark"
+                ? "text-[var(--brand)]"
+                : "text-[var(--text-primary)]"
             )}
           >
             Privato
@@ -1716,24 +1716,24 @@ const Step2Data = memo(() => {
           className={cn(
             "p-6 rounded-apple-lg border-2 transition-all duration-200 flex flex-col items-center gap-3",
             customerType === "business"
-              ? "border-apple-blue bg-apple-blue/5"
-              : "border-gray-200 hover:border-gray-300"
+              ? "border-[var(--brand)] bg-[var(--brand)]/5"
+              : "border-[var(--border-default)] hover:border-[var(--border-strong)]"
           )}
         >
           <Building2
             className={cn(
               "w-8 h-8",
               customerType === "business"
-                ? "text-apple-blue"
-                : "text-apple-gray"
+                ? "text-[var(--brand)]"
+                : "text-[var(--text-tertiary)]"
             )}
           />
           <span
             className={cn(
               "font-medium",
               customerType === "business"
-                ? "text-apple-blue"
-                : "text-apple-dark"
+                ? "text-[var(--brand)]"
+                : "text-[var(--text-primary)]"
             )}
           >
             Azienda
@@ -1755,14 +1755,14 @@ const Step2Data = memo(() => {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-apple-dark font-medium">
+                  <FormLabel className="text-[var(--text-primary)] font-medium">
                     Nome
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Mario"
-                      className="h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20"
+                      className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1775,14 +1775,14 @@ const Step2Data = memo(() => {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-apple-dark font-medium">
+                  <FormLabel className="text-[var(--text-primary)] font-medium">
                     Cognome
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Rossi"
-                      className="h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20"
+                      className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1796,18 +1796,18 @@ const Step2Data = memo(() => {
             name="fiscalCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-apple-dark font-medium">
+                <FormLabel className="text-[var(--text-primary)] font-medium">
                   Codice Fiscale{" "}
-                  <span className="text-apple-gray font-normal">(opzionale)</span>
+                  <span className="text-[var(--text-tertiary)] font-normal">(opzionale)</span>
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                     <Input
                       {...field}
                       placeholder="RSSMRA80A01H501U"
                       maxLength={16}
-                      className="pl-12 h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20 uppercase"
+                      className="pl-12 h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20 uppercase"
                     />
                   </div>
                 </FormControl>
@@ -1831,16 +1831,16 @@ const Step2Data = memo(() => {
             name="companyName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-apple-dark font-medium">
+                <FormLabel className="text-[var(--text-primary)] font-medium">
                   Ragione Sociale
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                     <Input
                       {...field}
                       placeholder="Rossi S.r.l."
-                      className="pl-12 h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20"
+                      className="pl-12 h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20"
                     />
                   </div>
                 </FormControl>
@@ -1854,7 +1854,7 @@ const Step2Data = memo(() => {
             name="companyType"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-apple-dark font-medium">
+                <FormLabel className="text-[var(--text-primary)] font-medium">
                   Tipo Azienda
                 </FormLabel>
                 <Select
@@ -1862,7 +1862,7 @@ const Step2Data = memo(() => {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-14 bg-white/50 border-apple-border rounded-apple-lg">
+                    <SelectTrigger className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg">
                       <SelectValue placeholder="Seleziona tipo azienda" />
                     </SelectTrigger>
                   </FormControl>
@@ -1887,12 +1887,12 @@ const Step2Data = memo(() => {
             name="vatNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-apple-dark font-medium">
+                <FormLabel className="text-[var(--text-primary)] font-medium">
                   Partita IVA
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-apple-gray font-medium">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[var(--text-tertiary)] font-medium">
                       <span className="text-sm">IT</span>
                       <Separator orientation="vertical" className="h-4" />
                     </div>
@@ -1902,11 +1902,11 @@ const Step2Data = memo(() => {
                       lazy={false}
                       placeholder="IT 12345678901"
                       className={cn(
-                        "pl-4 pr-28 h-14 bg-white/50 border-apple-border rounded-apple-lg w-full",
-                        "focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20",
-                        "placeholder:text-gray-400",
-                        state.pivaStatus === "valid" && "border-green-500",
-                        state.pivaStatus === "invalid" && "border-red-500"
+                        "pl-4 pr-28 h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg w-full",
+                        "focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20",
+                        "placeholder:text-[var(--text-tertiary)]",
+                        state.pivaStatus === "valid" && "border-[var(--status-success)]",
+                        state.pivaStatus === "invalid" && "border-[var(--status-error)]"
                       )}
                       onAccept={(value: string) => field.onChange(value.replace('IT ', ''))}
                     />
@@ -1935,14 +1935,14 @@ const Step2Data = memo(() => {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center gap-2 mt-1"
                   >
-                    <BadgeCheck className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-600">
+                    <BadgeCheck className="w-4 h-4 text-[var(--status-success)]" />
+                    <span className="text-sm text-[var(--status-success)]">
                       ✓ Verificata Agenzia Entrate
                     </span>
                   </motion.div>
                 )}
                 {state.pivaStatus === "invalid" && (
-                  <p className="text-sm text-red-500 mt-1">
+                  <p className="text-sm text-[var(--status-error)] mt-1">
                     Partita IVA non valida
                   </p>
                 )}
@@ -1956,23 +1956,23 @@ const Step2Data = memo(() => {
       {/* Address Fields (Common) */}
       <motion.div variants={itemVariants} className="space-y-4 pt-4">
         <Separator />
-        <h3 className="font-medium text-apple-dark">Indirizzo</h3>
+        <h3 className="font-medium text-[var(--text-primary)]">Indirizzo</h3>
 
         <FormField
           control={form.control}
           name="address"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">
+              <FormLabel className="text-[var(--text-primary)] font-medium">
                 Via / Piazza
               </FormLabel>
               <FormControl>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-apple-gray" />
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-tertiary)]" />
                   <Input
                     {...field}
                     placeholder="Via Roma 123"
-                    className="pl-12 h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20"
+                    className="pl-12 h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20"
                   />
                 </div>
               </FormControl>
@@ -1987,14 +1987,14 @@ const Step2Data = memo(() => {
             name="zipCode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-apple-dark font-medium">CAP</FormLabel>
+                <FormLabel className="text-[var(--text-primary)] font-medium">CAP</FormLabel>
                 <FormControl>
                   <IMaskInput
                     {...field}
                     mask="00000"
                     lazy={true}
                     placeholder="20121"
-                    className="h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20 w-full placeholder:text-gray-400"
+                    className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20 w-full placeholder:text-[var(--text-tertiary)]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -2007,12 +2007,12 @@ const Step2Data = memo(() => {
             name="city"
             render={({ field }) => (
               <FormItem className="col-span-2">
-                <FormLabel className="text-apple-dark font-medium">Città</FormLabel>
+                <FormLabel className="text-[var(--text-primary)] font-medium">Città</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     placeholder="Milano"
-                    className="h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20"
+                    className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20"
                   />
                 </FormControl>
                 <FormMessage />
@@ -2026,7 +2026,7 @@ const Step2Data = memo(() => {
           name="province"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-apple-dark font-medium">
+              <FormLabel className="text-[var(--text-primary)] font-medium">
                 Provincia
               </FormLabel>
               <FormControl>
@@ -2034,7 +2034,7 @@ const Step2Data = memo(() => {
                   {...field}
                   placeholder="MI"
                   maxLength={2}
-                  className="h-14 bg-white/50 border-apple-border rounded-apple-lg focus:border-apple-blue focus:ring-2 focus:ring-apple-blue/20 uppercase"
+                  className="h-14 bg-[var(--surface-secondary)] border-[var(--border-default)] rounded-apple-lg focus:border-[var(--brand)] focus:ring-2 focus:ring-apple-blue/20 uppercase"
                 />
               </FormControl>
               <FormMessage />
@@ -2062,10 +2062,10 @@ const Step3Privacy = memo(() => {
       className="space-y-5"
     >
       <motion.div variants={itemVariants}>
-        <h2 className="text-2xl font-semibold text-apple-dark mb-2">
+        <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
           Consensi privacy
         </h2>
-        <p className="text-apple-gray text-body">
+        <p className="text-[var(--text-tertiary)] text-body">
           Gestisci i tuoi consensi per il trattamento dei dati
         </p>
       </motion.div>
@@ -2073,9 +2073,9 @@ const Step3Privacy = memo(() => {
       {/* Trust Signals Banner */}
       <motion.div
         variants={itemVariants}
-        className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-apple-lg border border-blue-100"
+        className="bg-gradient-to-r from-[var(--status-info)]/5 to-[var(--brand)]/5 p-4 rounded-apple-lg border border-[var(--status-info)]/10"
       >
-        <div className="flex items-center gap-3 text-sm text-blue-800">
+        <div className="flex items-center gap-3 text-sm text-[var(--status-info)]">
           <LockKeyhole className="w-5 h-5" />
           <span>
             🔒 Crittografia AES-256 | ✅ GDPR Compliant | 🛡️ ISO 27001
@@ -2090,7 +2090,7 @@ const Step3Privacy = memo(() => {
           control={form.control}
           name="consentData"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2098,11 +2098,11 @@ const Step3Privacy = memo(() => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Accetto il trattamento dei dati per registrazione account{" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-[var(--status-error)]">*</span>
                 </FormLabel>
-                <FormDescription className="text-xs text-apple-gray">
+                <FormDescription className="text-xs text-[var(--text-tertiary)]">
                   Necessario per creare e gestire il tuo account
                 </FormDescription>
               </div>
@@ -2115,7 +2115,7 @@ const Step3Privacy = memo(() => {
           control={form.control}
           name="consentPrivacy"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2123,15 +2123,15 @@ const Step3Privacy = memo(() => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Accetto la Privacy Policy{" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-[var(--status-error)]">*</span>
                 </FormLabel>
                 <Dialog>
                   <DialogTrigger asChild>
                     <button
                       type="button"
-                      className="text-xs text-apple-blue hover:underline"
+                      className="text-xs text-[var(--brand)] hover:underline"
                     >
                       Leggi la Privacy Policy
                     </button>
@@ -2142,7 +2142,7 @@ const Step3Privacy = memo(() => {
                         Privacy Policy
                       </DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 text-sm text-gray-600">
+                    <div className="space-y-4 text-sm text-[var(--text-secondary)]">
                       <p>
                         <strong>1. Titolare del trattamento</strong>
                         <br />
@@ -2182,7 +2182,7 @@ const Step3Privacy = memo(() => {
           control={form.control}
           name="consentNewsletter"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2190,10 +2190,10 @@ const Step3Privacy = memo(() => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Newsletter con offerte e novità
                 </FormLabel>
-                <FormDescription className="text-xs text-apple-gray">
+                <FormDescription className="text-xs text-[var(--text-tertiary)]">
                   Ricevi aggiornamenti su promozioni e nuovi servizi
                 </FormDescription>
               </div>
@@ -2206,7 +2206,7 @@ const Step3Privacy = memo(() => {
           control={form.control}
           name="consentMarketing"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2214,10 +2214,10 @@ const Step3Privacy = memo(() => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Marketing personalizzato
                 </FormLabel>
-                <FormDescription className="text-xs text-apple-gray">
+                <FormDescription className="text-xs text-[var(--text-tertiary)]">
                   Ricevi comunicazioni personalizzate in base alle tue
                   preferenze
                 </FormDescription>
@@ -2233,9 +2233,9 @@ const Step3Privacy = memo(() => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="ml-7 pl-4 border-l-2 border-apple-border space-y-3"
+              className="ml-7 pl-4 border-l-2 border-[var(--border-default)] space-y-3"
             >
-              <p className="text-sm text-apple-gray">Scegli i canali:</p>
+              <p className="text-sm text-[var(--text-tertiary)]">Scegli i canali:</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { key: "email", label: "Email", icon: Mail },
@@ -2273,7 +2273,7 @@ const Step3Privacy = memo(() => {
           control={form.control}
           name="consentProfiling"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2281,10 +2281,10 @@ const Step3Privacy = memo(() => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Profilazione per raccomandazioni personalizzate
                 </FormLabel>
-                <FormDescription className="text-xs text-apple-gray">
+                <FormDescription className="text-xs text-[var(--text-tertiary)]">
                   Permettici di analizzare le tue preferenze per suggerirti
                   servizi pertinenti
                 </FormDescription>
@@ -2373,10 +2373,10 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
       className="space-y-5"
     >
       <motion.div variants={itemVariants}>
-        <h2 className="text-2xl font-semibold text-apple-dark mb-2">
+        <h2 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">
           Riepilogo
         </h2>
-        <p className="text-apple-gray text-body">
+        <p className="text-[var(--text-tertiary)] text-body">
           Verifica che tutti i dati siano corretti prima di procedere
         </p>
       </motion.div>
@@ -2386,20 +2386,20 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
           <motion.div
             key={section.title}
             variants={itemVariants}
-            className="bg-white/70 backdrop-blur rounded-apple-lg p-4 border border-apple-border"
+            className="bg-[var(--surface-secondary)]/70 backdrop-blur rounded-apple-lg p-4 border border-[var(--border-default)]"
           >
             <div className="flex items-center gap-2 mb-3">
-              <section.icon className="w-5 h-5 text-apple-blue" />
-              <h3 className="font-semibold text-apple-dark">{section.title}</h3>
+              <section.icon className="w-5 h-5 text-[var(--brand)]" />
+              <h3 className="font-semibold text-[var(--text-primary)]">{section.title}</h3>
             </div>
             <div className="space-y-2">
               {section.fields.map((field) => (
                 <div key={field.label} className="flex justify-between text-sm">
-                  <span className="text-apple-gray">{field.label}:</span>
+                  <span className="text-[var(--text-tertiary)]">{field.label}:</span>
                   <span className="font-medium flex items-center gap-2">
                     {field.value}
                     {"verified" in field && field.verified && (
-                      <BadgeCheck className="w-4 h-4 text-green-600" />
+                      <BadgeCheck className="w-4 h-4 text-[var(--status-success)]" />
                     )}
                   </span>
                 </div>
@@ -2415,7 +2415,7 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
           control={form.control}
           name="confirmData"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-apple-border bg-white/50">
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--border-default)] bg-[var(--surface-secondary)]">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -2423,11 +2423,11 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className="font-medium text-apple-dark">
+                <FormLabel className="font-medium text-[var(--text-primary)]">
                   Confermo che tutti i dati inseriti sono corretti{" "}
-                  <span className="text-red-500">*</span>
+                  <span className="text-[var(--status-error)]">*</span>
                 </FormLabel>
-                <FormDescription className="text-xs text-apple-gray">
+                <FormDescription className="text-xs text-[var(--text-tertiary)]">
                   Dichiaro di aver verificato l&apos;accuratezza delle informazioni
                   fornite
                 </FormDescription>
@@ -2444,7 +2444,7 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
             control={form.control}
             name="usePasskey"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-green-200 bg-green-50/50">
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 rounded-apple-lg border border-[var(--status-success)]/30 bg-[var(--status-success-subtle)]/50">
                 <FormControl>
                   <Checkbox
                     checked={field.value}
@@ -2452,10 +2452,10 @@ const Step4Review = memo(({ onSubmit }: { onSubmit: () => void }) => {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="font-medium text-green-800">
+                  <FormLabel className="font-medium text-[var(--status-success)]">
                     🔐 Attiva accesso senza password (Passkey)
                   </FormLabel>
-                  <FormDescription className="text-xs text-green-600">
+                  <FormDescription className="text-xs text-[var(--status-success)]">
                     Accedi con Face ID, Touch ID o PIN del dispositivo
                   </FormDescription>
                 </div>

@@ -1,24 +1,15 @@
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic'
-
-const DEMO_USER = {
-  id: 'demo-user',
-  email: 'demo@mechmind.it',
-  name: 'Utente Demo',
-  role: 'OWNER',
-  tenantId: 'demo-tenant',
-  tenantName: 'Officina Demo',
-}
+export const dynamic = 'force-dynamic';
 
 interface JwtPayload {
-  sub: string
-  email: string
-  role: string
-  tenantId: string
-  iat: number
-  exp: number
+  sub: string;
+  email: string;
+  role: string;
+  tenantId: string;
+  iat: number;
+  exp: number;
 }
 
 /**
@@ -29,55 +20,58 @@ interface JwtPayload {
  */
 function decodeJwtPayload(token: string): JwtPayload | null {
   try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-    const payload = JSON.parse(
-      Buffer.from(parts[1], 'base64url').toString('utf-8'),
-    ) as JwtPayload
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8')) as JwtPayload;
     // Check expiration
-    if (payload.exp && payload.exp * 1000 < Date.now()) return null
-    return payload
+    if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+    return payload;
   } catch {
-    return null
+    return null;
   }
 }
 
 /**
  * GET /api/auth/me
- * 1. If demo_session cookie → return demo user (no backend call)
- * 2. If auth_token cookie → decode JWT and return user info
- * 3. Otherwise → { user: null }
+ * Decode JWT from auth_token cookie and return user info.
+ * Demo sessions use a real token from backend auth, so no special handling needed.
  */
 export async function GET(): Promise<NextResponse> {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
 
-  // Demo session — return fake user instantly
-  if (cookieStore.get('demo_session')?.value === '1') {
-    return NextResponse.json({ user: DEMO_USER })
-  }
-
-  const token = cookieStore.get('auth_token')?.value
+  const token = cookieStore.get('auth_token')?.value;
 
   if (!token) {
-    return NextResponse.json({ user: null })
+    return NextResponse.json({ user: null });
   }
 
-  const payload = decodeJwtPayload(token)
+  const payload = decodeJwtPayload(token);
 
   if (!payload) {
-    return NextResponse.json({ user: null })
+    return NextResponse.json({ user: null });
   }
 
   // sub format is "userId:tenantId"
-  const userId = payload.sub.split(':')[0]
+  const userId = payload.sub.split(':')[0];
+
+  // Generate display name: capitalize first part of email
+  // (es. "admin@demo.mechmind.it" → "Admin")
+  // Backend dovrebbe restituire un nome reale; questo è il fallback decoroso.
+  const localPart = payload.email.split('@')[0];
+  const displayName = localPart
+    .replace(/[._-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 
   return NextResponse.json({
     user: {
       id: userId,
       email: payload.email,
-      name: payload.email.split('@')[0],
+      name: displayName,
       role: payload.role,
       tenantId: payload.tenantId,
     },
-  })
+  });
 }

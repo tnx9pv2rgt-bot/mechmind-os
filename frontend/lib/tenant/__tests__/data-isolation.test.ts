@@ -83,12 +83,16 @@ jest.mock('@/lib/prisma', () => ({
   prisma: mockPrismaClient,
 }))
 
+// Mock global fetch for services that use backendFetch
+global.fetch = jest.fn() as jest.Mock
+
 import { prisma } from '@/lib/prisma'
 import {
   createMaintenanceSchedule,
   getOverdueItems,
   listMaintenanceSchedules,
   getMaintenanceScheduleById,
+  MaintenanceNotFoundError,
 } from '@/lib/services/maintenanceService'
 import {
   warrantyService,
@@ -136,6 +140,13 @@ const VEHICLE_2_ID = 'vehicle-2-tenant-2'
 describe('Multi-Tenant Data Isolation', () => {
   beforeEach(() => {
     clearTenantContext()
+    jest.clearAllMocks()
+    // Reset fetch mock and set default successful response
+    ;(global.fetch as jest.Mock).mockReset()
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: {} }),
+    })
   })
 
   // =============================================================================
@@ -153,30 +164,42 @@ describe('Multi-Tenant Data Isolation', () => {
         subscriptionStatus: 'ACTIVE',
         features: ['*'],
       })
-      
-      // Mock prisma to return only tenant 1 data
-      const mockFindMany = jest.spyOn(prisma.maintenanceSchedule, 'findMany')
-      mockFindMany.mockResolvedValue([
-        { id: 'maint-1', tenantId: TENANT_1_ID, vehicleId: VEHICLE_1_ID } as any,
-      ])
-      
+
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            items: [
+              {
+                id: 'maint-1',
+                tenantId: TENANT_1_ID,
+                vehicleId: VEHICLE_1_ID,
+              },
+            ],
+            total: 1,
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+          },
+        }),
+      })
+
       const result = await listMaintenanceSchedules()
-      
-      // Verify query was made with tenantId filter
-      expect(mockFindMany).toHaveBeenCalledWith(
+
+      // Verify backend was called with tenant context
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
+
       // Verify only tenant 1 data is returned
       expect(result.items.every(item => item.tenantId === TENANT_1_ID)).toBe(true)
-      
-      mockFindMany.mockRestore()
     })
-    
+
     it('should not allow accessing maintenance schedule from different tenant', async () => {
       setTenantContext({
         tenantId: TENANT_1_ID,
@@ -186,48 +209,59 @@ describe('Multi-Tenant Data Isolation', () => {
         subscriptionStatus: 'ACTIVE',
         features: ['*'],
       })
-      
-      // Mock findFirst to return null (schedule belongs to tenant 2)
-      const mockFindFirst = jest.spyOn(prisma.maintenanceSchedule, 'findFirst')
-      mockFindFirst.mockResolvedValue(null)
-      
-      await expect(getMaintenanceScheduleById('schedule-from-tenant-2'))
-        .rejects.toThrow('Maintenance schedule with ID "schedule-from-tenant-2" not found')
-      
-      // Verify query included tenantId
-      expect(mockFindFirst).toHaveBeenCalledWith(
+
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({
+          error: {
+            message: 'Maintenance schedule with ID "schedule-from-tenant-2" not found',
+          },
+        }),
+      })
+
+      await expect(getMaintenanceScheduleById('schedule-from-tenant-2')).rejects.toThrow(
+        MaintenanceNotFoundError
+      )
+
+      // Verify request was made with tenant context
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('schedule-from-tenant-2'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            id: 'schedule-from-tenant-2',
-            tenantId: TENANT_1_ID,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
-      mockFindFirst.mockRestore()
     })
-    
+
     it('getOverdueItems should only return items for specified tenant', async () => {
-      const mockFindMany = jest.spyOn(prisma.maintenanceSchedule, 'findMany')
-      mockFindMany.mockResolvedValue([
-        { id: 'overdue-1', tenantId: TENANT_1_ID, isOverdue: true } as any,
-      ])
-      
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [
+            {
+              id: 'overdue-1',
+              tenantId: TENANT_1_ID,
+              isOverdue: true,
+            },
+          ],
+        }),
+      })
+
       const result = await getOverdueItems(TENANT_1_ID)
-      
-      // Verify tenant filter was applied
-      expect(mockFindMany).toHaveBeenCalledWith(
+
+      // Verify tenant filter was passed in headers
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/maintenance/overdue'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
-            isOverdue: true,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
+
       expect(result.every(item => item.tenantId === TENANT_1_ID)).toBe(true)
-      
-      mockFindMany.mockRestore()
     })
   })
 
@@ -237,39 +271,45 @@ describe('Multi-Tenant Data Isolation', () => {
   
   describe('WarrantyService Data Isolation', () => {
     it('should only return warranties for the current tenant', async () => {
-      const mockFindMany = jest.spyOn(prisma.warranty, 'findMany')
-      mockFindMany.mockResolvedValue([
-        { id: 'warranty-1', tenantId: TENANT_1_ID } as any,
-      ])
-      
-      await warrantyService.listWarranties({}, TENANT_1_ID)
-      
-      expect(mockFindMany).toHaveBeenCalledWith(
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [{ id: 'warranty-1', tenantId: TENANT_1_ID }],
+        }),
+      })
+
+      const result = await warrantyService.listWarranties({}, TENANT_1_ID)
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/warranties'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
-      mockFindMany.mockRestore()
+
+      expect(Array.isArray(result)).toBe(true)
     })
-    
+
     it('getExpiringWarranties should filter by tenant', async () => {
-      const mockFindMany = jest.spyOn(prisma.warranty, 'findMany')
-      mockFindMany.mockResolvedValue([])
-      
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: [],
+        }),
+      })
+
       await warrantyService.getExpiringWarranties(30, TENANT_1_ID)
-      
-      expect(mockFindMany).toHaveBeenCalledWith(
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/warranties/expiring'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
-      mockFindMany.mockRestore()
     })
   })
 
@@ -279,62 +319,58 @@ describe('Multi-Tenant Data Isolation', () => {
   
   describe('NotificationService Data Isolation', () => {
     it('sendToTenant should only send to customers of specified tenant', async () => {
-      const mockCustomerFindMany = jest.spyOn(prisma.customer, 'findMany')
-      mockCustomerFindMany.mockResolvedValue([
-        { id: CUSTOMER_1_ID, tenantId: TENANT_1_ID } as any,
-      ])
-      
-      const mockNotificationCreate = jest.spyOn(prisma.notification, 'create')
-      mockNotificationCreate.mockResolvedValue({ id: 'notif-1' } as any)
-      
-      await sendToTenant({
-        type: 'MAINTENANCE_DUE',
-        channel: 'EMAIL',
-        title: 'Test',
-        message: 'Test message',
-      }, TENANT_1_ID)
-      
-      // Verify only tenant 1 customers were queried
-      expect(mockCustomerFindMany).toHaveBeenCalledWith(
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { success: true, sentCount: 1 },
+        }),
+      })
+
+      await sendToTenant(
+        {
+          type: 'MAINTENANCE_DUE',
+          channel: 'EMAIL',
+          title: 'Test',
+          message: 'Test message',
+        },
+        TENANT_1_ID
+      )
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/notifications/send-to-tenant'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
-      // Verify notifications created with tenantId
-      expect(mockNotificationCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            tenantId: TENANT_1_ID,
-          }),
-        })
-      )
-      
-      mockCustomerFindMany.mockRestore()
-      mockNotificationCreate.mockRestore()
     })
-    
+
     it('listNotifications should only return tenant notifications', async () => {
-      const mockFindMany = jest.spyOn(prisma.notification, 'findMany')
-      mockFindMany.mockResolvedValue([])
-      
-      const mockCount = jest.spyOn(prisma.notification, 'count')
-      mockCount.mockResolvedValue(0)
-      
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            items: [],
+            total: 0,
+            page: 1,
+            limit: 10,
+            totalPages: 0,
+          },
+        }),
+      })
+
       await listNotifications({}, {}, TENANT_1_ID)
-      
-      expect(mockFindMany).toHaveBeenCalledWith(
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/notifications'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
-      mockFindMany.mockRestore()
-      mockCount.mockRestore()
     })
   })
 
@@ -344,20 +380,18 @@ describe('Multi-Tenant Data Isolation', () => {
   
   describe('Portal Auth Customer-Tenant Isolation', () => {
     it('should reject login if customer does not belong to specified tenant', async () => {
-      const mockCustomerFindFirst = jest.spyOn(prisma.customer, 'findFirst')
-      mockCustomerFindFirst.mockResolvedValue({
-        id: CUSTOMER_1_ID,
-        email: 'test@example.com',
-        tenantId: TENANT_2_ID, // Different from login attempt
-        tenant: {
-          id: TENANT_2_ID,
-          slug: 'tenant-2',
-          name: 'Tenant 2',
-          status: 'ACTIVE',
-          subscriptionStatus: 'ACTIVE',
-        },
-      } as any)
-      
+      // Mock fetch for backend to return 403 with TENANT_MISMATCH error
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          error: {
+            code: 'TENANT_MISMATCH',
+            message: 'Customer does not belong to this tenant',
+          },
+        }),
+      })
+
       await expect(
         authenticateCustomer({
           email: 'test@example.com',
@@ -365,20 +399,16 @@ describe('Multi-Tenant Data Isolation', () => {
           tenantId: TENANT_1_ID, // Trying to login to wrong tenant
         })
       ).rejects.toThrow(TenantMismatchError)
-      
-      mockCustomerFindFirst.mockRestore()
     })
     
     it('should reject access to vehicle from different tenant', async () => {
-      // Must mock customer.findFirst so verifyResourceAccess proceeds past customer check
-      const mockCustomerFindFirst = jest.spyOn(prisma.customer, 'findFirst')
-      mockCustomerFindFirst.mockResolvedValue({
-        id: CUSTOMER_1_ID,
-        tenantId: TENANT_1_ID,
-      } as never)
-
-      const mockVehicleFindFirst = jest.spyOn(prisma.vehicle, 'findFirst')
-      mockVehicleFindFirst.mockResolvedValue(null) // Vehicle belongs to tenant 2
+      // Mock fetch for backend to return hasAccess: false
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { hasAccess: false },
+        }),
+      })
 
       const hasAccess = await verifyResourceAccess(
         CUSTOMER_1_ID,
@@ -389,35 +419,29 @@ describe('Multi-Tenant Data Isolation', () => {
 
       expect(hasAccess).toBe(false)
 
-      // Verify query included tenantId
-      expect(mockVehicleFindFirst).toHaveBeenCalledWith(
+      // Verify the backend was called with proper parameters
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('v1/portal/auth/verify-access'),
         expect.objectContaining({
-          where: expect.objectContaining({
-            id: VEHICLE_2_ID,
-            tenantId: TENANT_1_ID,
-          }),
+          method: 'POST',
+          body: expect.stringContaining(CUSTOMER_1_ID),
         })
       )
-
-      mockCustomerFindFirst.mockRestore()
-      mockVehicleFindFirst.mockRestore()
     })
     
     it('should reject login if tenant is inactive', async () => {
-      const mockCustomerFindFirst = jest.spyOn(prisma.customer, 'findFirst')
-      mockCustomerFindFirst.mockResolvedValue({
-        id: CUSTOMER_1_ID,
-        email: 'test@example.com',
-        tenantId: TENANT_1_ID,
-        tenant: {
-          id: TENANT_1_ID,
-          slug: 'tenant-1',
-          name: 'Tenant 1',
-          status: 'SUSPENDED', // Inactive
-          subscriptionStatus: 'SUSPENDED',
-        },
-      } as any)
-      
+      // Mock fetch for backend to return 403 with INACTIVE_TENANT error
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          error: {
+            code: 'INACTIVE_TENANT',
+            message: 'Tenant account is inactive or suspended',
+          },
+        }),
+      })
+
       await expect(
         authenticateCustomer({
           email: 'test@example.com',
@@ -425,8 +449,6 @@ describe('Multi-Tenant Data Isolation', () => {
           tenantId: TENANT_1_ID,
         })
       ).rejects.toThrow(InactiveTenantError)
-      
-      mockCustomerFindFirst.mockRestore()
     })
   })
 
@@ -476,40 +498,64 @@ describe('Multi-Tenant Data Isolation', () => {
   
   describe('Admin Multi-Tenant Dashboard Access', () => {
     it('should allow admin to query multiple tenants with explicit tenantId', async () => {
-      // Admin can pass explicit tenantId to override context
-      const mockFindMany = jest.spyOn(prisma.maintenanceSchedule, 'findMany')
-      
+      // Mock fetch for backend calls - using mockResolvedValueOnce for sequential calls
+      ;(global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              items: [{ id: 'maint-1', tenantId: TENANT_1_ID }],
+              total: 1,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+            },
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              items: [{ id: 'maint-2', tenantId: TENANT_2_ID }],
+              total: 1,
+              page: 1,
+              limit: 10,
+              totalPages: 1,
+            },
+          }),
+        })
+
       // Query tenant 1
-      mockFindMany.mockResolvedValue([
-        { id: 'maint-1', tenantId: TENANT_1_ID } as any,
-      ])
-      
-      await listMaintenanceSchedules({}, {}, TENANT_1_ID)
-      
-      expect(mockFindMany).toHaveBeenCalledWith(
+      const result1 = await listMaintenanceSchedules({}, {}, TENANT_1_ID)
+
+      expect(result1.items.every(item => item.tenantId === TENANT_1_ID)).toBe(true)
+
+      // Verify backend was called with correct tenant
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining(`v1/maintenance`),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_1_ID,
+          method: 'GET',
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_1_ID,
           }),
         })
       )
-      
+
       // Query tenant 2
-      mockFindMany.mockResolvedValue([
-        { id: 'maint-2', tenantId: TENANT_2_ID } as any,
-      ])
-      
-      await listMaintenanceSchedules({}, {}, TENANT_2_ID)
-      
-      expect(mockFindMany).toHaveBeenLastCalledWith(
+      const result2 = await listMaintenanceSchedules({}, {}, TENANT_2_ID)
+
+      expect(result2.items.every(item => item.tenantId === TENANT_2_ID)).toBe(true)
+
+      // Verify backend was called with correct tenant for second query
+      expect(global.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining(`v1/maintenance`),
         expect.objectContaining({
-          where: expect.objectContaining({
-            tenantId: TENANT_2_ID,
+          method: 'GET',
+          headers: expect.objectContaining({
+            'x-tenant-id': TENANT_2_ID,
           }),
         })
       )
-      
-      mockFindMany.mockRestore()
     })
   })
 })

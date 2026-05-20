@@ -2,86 +2,43 @@
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { fetchWithTimeout } from '@/lib/api-client';
+import { motion } from 'framer-motion';
 import {
-  ArrowLeft,
   Shield,
   Calendar,
   Edit2,
   Trash2,
   Plus,
   FileText,
-  AlertTriangle,
   CheckCircle2,
   XCircle,
   Euro,
   Gauge,
+  Loader2,
+  AlertCircle,
+  Car,
+  Clock,
+  DollarSign,
+  TrendingDown,
 } from 'lucide-react';
 
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { AppleCard, AppleCardContent, AppleCardHeader } from '@/components/ui/apple-card';
+import { AppleButton } from '@/components/ui/apple-button';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import { ClaimForm, ClaimCard, RemainingCoverage } from '@/components/warranty';
+import type { WarrantyWithClaims, WarrantyClaim } from '@/lib/services/warrantyService';
+import { WarrantyStatus, ClaimStatus, WarrantyType } from '@/lib/services/warrantyService';
 
-// Types defined locally to avoid importing Prisma client-side
-enum WarrantyStatus {
-  ACTIVE = 'ACTIVE',
-  EXPIRING_SOON = 'EXPIRING_SOON',
-  EXPIRED = 'EXPIRED',
-  VOID = 'VOID',
-  PENDING = 'PENDING',
-  CLAIMED = 'CLAIMED',
-}
-
-enum WarrantyType {
-  MANUFACTURER = 'MANUFACTURER',
-  EXTENDED = 'EXTENDED',
-  DEALER = 'DEALER',
-  AS_IS = 'AS_IS',
-}
-
-enum ClaimStatus {
-  SUBMITTED = 'SUBMITTED',
-  UNDER_REVIEW = 'UNDER_REVIEW',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-  PAID = 'PAID',
-}
-
-interface WarrantyWithClaims {
-  id: string;
-  tenantId: string;
-  warrantyNumber: string;
-  vehicleId: string;
-  coverageType: string;
-  startDate: string;
-  expirationDate: string;
-  status: WarrantyStatus;
-  mileageLimit: number | null;
-  maxClaimAmount: number | null;
-  deductibleAmount: number | null;
-  createdAt: string;
-  updatedAt: string;
-  claims: Array<{
-    id: string;
-    status: string;
-    description: string;
-    amount: number | null;
-    approvedAmount?: number;
-  }>;
-  vehicle?: { id: string; vin: string; make: string; model: string; year: number };
-}
+const fileClaimSchema = z.object({
+  issueDescription: z.string().min(1, 'La descrizione del problema è obbligatoria'),
+  estimatedCost: z.number().min(0, 'Il costo stimato non può essere negativo'),
+  evidence: z.array(z.string()).optional(),
+});
 
 interface FileClaimDTO {
   issueDescription: string;
@@ -89,20 +46,57 @@ interface FileClaimDTO {
   evidence?: string[];
 }
 
-const statusConfig: Partial<Record<WarrantyStatus, { label: string; color: string }>> = {
-  ACTIVE: { label: 'Active', color: 'bg-green-100 text-green-800' },
-  EXPIRING_SOON: { label: 'Expiring Soon', color: 'bg-amber-100 text-amber-800' },
-  EXPIRED: { label: 'Expired', color: 'bg-red-100 text-red-800' },
-  VOID: { label: 'Void', color: 'bg-gray-100 text-gray-800' },
-  PENDING: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  CLAIMED: { label: 'Claimed', color: 'bg-blue-100 text-blue-800' },
-};
+type ClaimWithApproved = WarrantyClaim & { approvedAmount?: number };
+
+const statusConfig: Partial<Record<WarrantyStatus, { label: string; bg: string; color: string }>> =
+  {
+    ACTIVE: {
+      label: 'Attiva',
+      bg: 'bg-[var(--status-success-subtle)] dark:bg-[var(--status-success-subtle)]',
+      color: 'text-[var(--status-success)] dark:text-[var(--status-success)]',
+    },
+    EXPIRING_SOON: {
+      label: 'In Scadenza',
+      bg: 'bg-[var(--status-warning)]/10 dark:bg-[var(--status-warning-subtle)]',
+      color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    EXPIRED: {
+      label: 'Scaduta',
+      bg: 'bg-[var(--status-error-subtle)] dark:bg-[var(--status-error-subtle)]',
+      color: 'text-[var(--status-error)] dark:text-[var(--status-error)]',
+    },
+    VOID: {
+      label: 'Annullata',
+      bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
+      color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]',
+    },
+    PENDING: {
+      label: 'In Attesa',
+      bg: 'bg-[var(--status-warning)]/20 dark:bg-[var(--status-warning-subtle)]',
+      color: 'text-[var(--status-warning)] dark:text-[var(--status-warning)]',
+    },
+    CLAIMED: {
+      label: 'Reclamata',
+      bg: 'bg-[var(--status-info-subtle)] dark:bg-[var(--status-info-subtle)]',
+      color: 'text-[var(--status-info)] dark:text-[var(--status-info)]',
+    },
+  };
 
 const typeConfig: Record<WarrantyType, { label: string }> = {
-  MANUFACTURER: { label: 'Manufacturer' },
-  EXTENDED: { label: 'Extended' },
-  DEALER: { label: 'Dealer' },
-  AS_IS: { label: 'As-Is' },
+  MANUFACTURER: { label: 'Costruttore' },
+  EXTENDED: { label: 'Estesa' },
+  DEALER: { label: 'Concessionario' },
+  AS_IS: { label: "Così com'è" },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
 function calculateProgress(startDate: Date | string, expirationDate: Date | string): number {
@@ -125,48 +119,53 @@ function calculateDaysRemaining(expirationDate: Date | string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+type TabKey = 'overview' | 'claims' | 'vehicle';
+
 export default function WarrantyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const warrantyId = params.id as string;
 
-  const [warranty, setWarranty] = React.useState<WarrantyWithClaims | null>(null);
+  const [warranty, setWarranty] = React.useState<
+    (WarrantyWithClaims & { claims: ClaimWithApproved[] }) | null
+  >(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmittingClaim, setIsSubmittingClaim] = React.useState(false);
   const [claimDialogOpen, setClaimDialogOpen] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<TabKey>('overview');
+  const [claimFilter, setClaimFilter] = React.useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all'
+  );
 
   React.useEffect(() => {
     loadWarranty();
   }, [warrantyId]);
 
-  const loadWarranty = async () => {
+  const loadWarranty = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/warranties/${warrantyId}`);
+      const res = await fetchWithTimeout(`/api/warranties/${warrantyId}`);
       if (!res.ok) {
-        toast({
-          title: 'Warranty not found',
-          description: 'The requested warranty could not be found',
-          variant: 'error',
-        });
+        toast.error('Garanzia non trovata');
         router.push('/dashboard/warranty');
         return;
       }
       const json = await res.json();
       setWarranty(json.data);
     } catch (error) {
-      toast({
-        title: 'Error loading warranty',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : 'Errore nel caricamento della garanzia');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFileClaim = async (data: FileClaimDTO) => {
+  const handleFileClaim = async (data: FileClaimDTO): Promise<void> => {
+    const result = fileClaimSchema.safeParse(data);
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
     try {
       setIsSubmittingClaim(true);
       const claimRes = await fetch(`/api/warranties/${warrantyId}/claims`, {
@@ -176,65 +175,58 @@ export default function WarrantyDetailPage() {
       });
       if (!claimRes.ok) {
         const err = await claimRes.json();
-        throw new Error(err.error || 'Failed to file claim');
+        throw new Error(err.error || "Errore nell'invio del reclamo");
       }
-      toast({
-        title: 'Claim filed',
-        description: 'Your warranty claim has been submitted for review',
-      });
+      toast.success('Reclamo inviato con successo');
       setClaimDialogOpen(false);
       loadWarranty();
     } catch (error) {
-      toast({
-        title: 'Error filing claim',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : "Errore nell'invio del reclamo");
     } finally {
       setIsSubmittingClaim(false);
     }
   };
 
-  const handleDeleteWarranty = async () => {
-    if (!confirm('Are you sure you want to delete this warranty? This action cannot be undone.')) {
-      return;
-    }
-
+  const handleDeleteWarranty = async (): Promise<void> => {
     try {
       const delRes = await fetch(`/api/warranties/${warrantyId}`, { method: 'DELETE' });
       if (!delRes.ok) {
         const err = await delRes.json();
-        throw new Error(err.error || 'Failed to delete warranty');
+        throw new Error(err.error || "Errore nell'eliminazione della garanzia");
       }
-      toast({
-        title: 'Warranty deleted',
-        description: 'The warranty has been deleted successfully',
-      });
+      toast.success('Garanzia eliminata con successo');
       router.push('/dashboard/warranty');
     } catch (error) {
-      toast({
-        title: 'Error deleting warranty',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'error',
-      });
+      toast.error(error instanceof Error ? error.message : "Errore nell'eliminazione");
     }
   };
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-center h-96'>
-        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600' />
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <Loader2 className='h-8 w-8 animate-spin text-[var(--brand)]' />
       </div>
     );
   }
 
   if (!warranty) {
-    return null;
+    return (
+      <div className='flex flex-col items-center justify-center min-h-[60vh] text-center'>
+        <AlertCircle className='h-12 w-12 text-[var(--status-error)]/40 mb-4' />
+        <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
+          Garanzia non trovata
+        </p>
+        <AppleButton variant='secondary' onClick={() => router.push('/dashboard/warranty')}>
+          Torna alle garanzie
+        </AppleButton>
+      </div>
+    );
   }
 
   const status = statusConfig[warranty.status as WarrantyStatus] || {
-    label: 'Unknown',
-    color: 'bg-gray-100 text-gray-800',
+    label: 'Sconosciuto',
+    bg: 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)]',
+    color: 'text-[var(--text-primary)] dark:text-[var(--text-secondary)]',
   };
   const type = typeConfig[(warranty.coverageType as WarrantyType) || WarrantyType.MANUFACTURER];
   const progress = calculateProgress(warranty.startDate, warranty.expirationDate);
@@ -256,312 +248,424 @@ export default function WarrantyDetailPage() {
   const canFileClaim =
     warranty.status !== WarrantyStatus.EXPIRED && warranty.status !== WarrantyStatus.VOID;
 
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'overview', label: 'Panoramica' },
+    { key: 'claims', label: `Reclami (${warranty.claims?.length || 0})` },
+    { key: 'vehicle', label: 'Veicolo' },
+  ];
+
+  const filteredClaims = (() => {
+    switch (claimFilter) {
+      case 'pending':
+        return pendingClaims;
+      case 'approved':
+        return approvedClaims;
+      case 'rejected':
+        return rejectedClaims;
+      default:
+        return warranty.claims || [];
+    }
+  })();
+
   return (
-    <div className='space-y-6'>
+    <div>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div className='flex items-center gap-4'>
-          <Button variant='outline' size='icon' onClick={() => router.push('/dashboard/warranty')}>
-            <ArrowLeft className='h-4 w-4' />
-          </Button>
-          <div>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-[#ececec]'>
-              {warranty.vehicle?.make} {warranty.vehicle?.model} Warranty
-            </h1>
-            <p className='text-sm text-gray-500 dark:text-[#636366]'>{type?.label || 'Warranty'}</p>
+      <header className=''>
+        <div className='px-8 py-5'>
+          <Breadcrumb
+            items={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Garanzie', href: '/dashboard/warranty' },
+              { label: warranty.warrantyNumber },
+            ]}
+          />
+          <div className='flex items-center justify-between mt-1'>
+            <div className='flex items-center gap-3'>
+              <div className='w-12 h-12 rounded-xl bg-[var(--status-success)]/10 flex items-center justify-center'>
+                <Shield className='h-6 w-6 text-[var(--status-success)]' />
+              </div>
+              <div>
+                <h1 className='text-headline text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                  Garanzia {warranty.vehicle?.make} {warranty.vehicle?.model}
+                </h1>
+                <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                  {type?.label || 'Garanzia'} &bull; {warranty.warrantyNumber}
+                </p>
+              </div>
+              <span
+                className={`text-footnote font-semibold px-2.5 py-1 rounded-full ${status.bg} ${status.color}`}
+              >
+                {status.label}
+              </span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <AppleButton variant='secondary' size='sm' icon={<Edit2 className='h-4 w-4' />}>
+                Modifica
+              </AppleButton>
+              <AppleButton
+                variant='ghost'
+                size='sm'
+                className='text-[var(--status-error)] hover:opacity-80'
+                icon={<Trash2 className='h-4 w-4' />}
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                Elimina
+              </AppleButton>
+            </div>
           </div>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button variant='outline' size='sm'>
-            <Edit2 className='h-4 w-4 mr-2' />
-            Edit
-          </Button>
-          <Button variant='destructive' size='sm' onClick={handleDeleteWarranty}>
-            <Trash2 className='h-4 w-4 mr-2' />
-            Delete
-          </Button>
+      </header>
+
+      {/* Tabs */}
+      <div className='border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50 bg-[var(--surface-secondary)]/60 dark:bg-[var(--surface-primary)]/60'>
+        <div className='px-8 flex gap-1'>
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-3 text-body font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-[var(--brand)] text-[var(--brand)]'
+                  : 'border-transparent text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)]'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        {/* Left Column */}
-        <div className='lg:col-span-2 space-y-6'>
-          {/* Status Card */}
-          <Card>
-            <CardHeader>
-              <div className='flex items-start justify-between'>
-                <div className='flex items-center gap-3'>
-                  <div
-                    className={cn(
-                      'p-3 rounded-lg',
-                      status.color.replace('text-', 'bg-').replace('800', '100')
-                    )}
-                  >
-                    <Shield className={cn('h-6 w-6', status.color.split(' ')[1])} />
-                  </div>
-                  <div>
-                    <CardTitle className='text-lg'>Warranty Status</CardTitle>
-                    <Badge className={cn('mt-1', status.color)}>{status.label}</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Progress */}
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between text-sm'>
-                  <span className='text-gray-600 dark:text-gray-400'>Coverage Period</span>
-                  <span className='font-medium text-gray-900 dark:text-[#ececec]'>
-                    {progress}% elapsed
-                  </span>
-                </div>
-                <Progress value={progress} className='h-2' />
-                <div className='flex items-center justify-between text-xs text-gray-500'>
-                  <span>{formatDate(warranty.startDate)}</span>
-                  <span>{formatDate(warranty.expirationDate)}</span>
-                </div>
-              </div>
-
-              {/* Days Remaining */}
-              {warranty.status !== WarrantyStatus.EXPIRED &&
-                warranty.status !== WarrantyStatus.VOID && (
-                  <div
-                    className={cn(
-                      'flex items-center gap-3 p-4 rounded-lg',
-                      daysRemaining <= 30
-                        ? 'bg-red-50 dark:bg-red-900/20'
-                        : daysRemaining <= 60
-                          ? 'bg-amber-50 dark:bg-amber-900/20'
-                          : 'bg-green-50 dark:bg-green-900/20'
-                    )}
-                  >
-                    <Calendar
-                      className={cn(
-                        'h-5 w-5',
-                        daysRemaining <= 30
-                          ? 'text-red-600'
-                          : daysRemaining <= 60
-                            ? 'text-amber-600'
-                            : 'text-green-600'
-                      )}
-                    />
-                    <div>
-                      <p
-                        className={cn(
-                          'font-medium',
-                          daysRemaining <= 30
-                            ? 'text-red-800 dark:text-red-300'
-                            : daysRemaining <= 60
-                              ? 'text-amber-800 dark:text-amber-300'
-                              : 'text-green-800 dark:text-green-300'
-                        )}
+      <motion.div
+        className='p-8 space-y-6'
+        initial='hidden'
+        animate='visible'
+        variants={containerVariants}
+        key={activeTab}
+      >
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Stat Cards */}
+            <motion.div
+              className='grid grid-cols-2 lg:grid-cols-4 gap-4'
+              variants={containerVariants}
+            >
+              {[
+                {
+                  label: 'Copertura Max',
+                  value: formatCurrency(warranty.maxClaimAmount || 0),
+                  icon: Euro,
+                  color: 'bg-[var(--brand)]',
+                },
+                {
+                  label: 'Franchigia',
+                  value: formatCurrency(warranty.deductibleAmount || 0),
+                  icon: Euro,
+                  color: 'bg-[var(--status-warning)]',
+                },
+                {
+                  label: 'Copertura Km',
+                  value: warranty.mileageLimit
+                    ? `${warranty.mileageLimit.toLocaleString()} km`
+                    : 'Illimitata',
+                  icon: Gauge,
+                  color: 'bg-[var(--status-success)]',
+                },
+                {
+                  label: 'Reclami',
+                  value: String(warranty.claims?.length || 0),
+                  icon: FileText,
+                  color: 'bg-[var(--brand)]',
+                },
+              ].map(stat => (
+                <motion.div key={stat.label} variants={cardVariants}>
+                  <AppleCard hover={false}>
+                    <AppleCardContent>
+                      <div
+                        className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}
                       >
-                        {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Expires today'}
+                        <stat.icon className='h-5 w-5 text-[var(--text-on-brand)]' />
+                      </div>
+                      <p className='text-title-1 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {stat.value}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400'>
-                        Expires on {formatDate(warranty.expirationDate)}
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        {stat.label}
+                      </p>
+                    </AppleCardContent>
+                  </AppleCard>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Status + Progress Card */}
+            <motion.div variants={cardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                    <Shield className='h-5 w-5 text-[var(--text-tertiary)]' /> Stato Garanzia
+                  </h2>
+                </AppleCardHeader>
+                <AppleCardContent className='space-y-6'>
+                  {/* Progress Bar */}
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between text-body'>
+                      <span className='text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Periodo di Copertura
+                      </span>
+                      <span className='font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {progress}% trascorso
+                      </span>
+                    </div>
+                    <div className='w-full h-2 bg-[var(--surface-secondary)] dark:bg-[var(--surface-hover)] rounded-full overflow-hidden'>
+                      <div
+                        className='h-full bg-[var(--brand)] rounded-full transition-all duration-500'
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                      <span>{formatDate(warranty.startDate)}</span>
+                      <span>{formatDate(warranty.expirationDate)}</span>
+                    </div>
+                  </div>
+
+                  {/* Days Remaining */}
+                  {warranty.status !== WarrantyStatus.EXPIRED &&
+                    warranty.status !== WarrantyStatus.VOID && (
+                      <div
+                        className={`flex items-center gap-3 p-4 rounded-xl ${
+                          daysRemaining <= 30
+                            ? 'bg-[var(--status-error-subtle)]/60 dark:bg-[var(--status-error-subtle)]'
+                            : daysRemaining <= 60
+                              ? 'bg-[var(--status-warning)]/10/60 dark:bg-[var(--status-warning)]/40/20'
+                              : 'bg-[var(--status-success-subtle)]/60 dark:bg-[var(--status-success-subtle)]'
+                        }`}
+                      >
+                        <Calendar
+                          className={`h-5 w-5 ${
+                            daysRemaining <= 30
+                              ? 'text-[var(--status-error)]'
+                              : daysRemaining <= 60
+                                ? 'text-[var(--status-warning)]'
+                                : 'text-[var(--status-success)]'
+                          }`}
+                        />
+                        <div>
+                          <p
+                            className={`font-medium ${
+                              daysRemaining <= 30
+                                ? 'text-[var(--status-error)] dark:text-[var(--status-error)]'
+                                : daysRemaining <= 60
+                                  ? 'text-[var(--status-warning)] dark:text-[var(--status-warning)]'
+                                  : 'text-[var(--status-success)] dark:text-[var(--status-success)]'
+                            }`}
+                          >
+                            {daysRemaining > 0 ? `${daysRemaining} giorni rimanenti` : 'Scade oggi'}
+                          </p>
+                          <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                            Scade il {formatDate(warranty.expirationDate)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Coverage Details */}
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+                      <div className='flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
+                        <Euro className='h-4 w-4' />
+                        <span>Copertura Residua</span>
+                      </div>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {formatCurrency(remainingCoverage > 0 ? remainingCoverage : 0)}
+                      </p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        di {formatCurrency(warranty.maxClaimAmount || 0)} totali
+                      </p>
+                    </div>
+                    <div className='p-4 rounded-xl bg-[var(--surface-secondary)]/30 dark:bg-[var(--surface-hover)]'>
+                      <div className='flex items-center gap-2 text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-1'>
+                        <TrendingDown className='h-4 w-4' />
+                        <span>Utilizzato</span>
+                      </div>
+                      <p className='text-title-2 font-bold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                        {formatCurrency(totalClaimed)}
+                      </p>
+                      <p className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        in {warranty.claims?.length || 0} reclami
                       </p>
                     </div>
                   </div>
-                )}
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          </>
+        )}
 
-              {/* Details Grid */}
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    <Euro className='h-4 w-4' />
-                    <span>Max Coverage</span>
+        {/* Claims Tab */}
+        {activeTab === 'claims' && (
+          <>
+            <motion.div variants={cardVariants}>
+              <AppleCard hover={false}>
+                <AppleCardHeader>
+                  <div className='flex items-center justify-between'>
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <FileText className='h-5 w-5 text-[var(--text-tertiary)]' /> Storico Reclami
+                    </h2>
+                    {canFileClaim && (
+                      <AppleButton
+                        size='sm'
+                        icon={<Plus className='h-4 w-4' />}
+                        onClick={() => setClaimDialogOpen(true)}
+                      >
+                        Invia Reclamo
+                      </AppleButton>
+                    )}
                   </div>
-                  <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    {formatCurrency(warranty.maxClaimAmount || 0)}
+                </AppleCardHeader>
+                <AppleCardContent>
+                  {/* Filter Pills */}
+                  <div className='flex gap-2 mb-6'>
+                    {[
+                      { key: 'all' as const, label: `Tutti (${warranty.claims?.length || 0})` },
+                      { key: 'pending' as const, label: `In Attesa (${pendingClaims.length})` },
+                      { key: 'approved' as const, label: `Approvati (${approvedClaims.length})` },
+                      { key: 'rejected' as const, label: `Rifiutati (${rejectedClaims.length})` },
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => setClaimFilter(f.key)}
+                        className={`px-3 py-1.5 rounded-lg text-body font-medium transition-colors ${
+                          claimFilter === f.key
+                            ? 'bg-[var(--brand)] text-[var(--text-on-brand)]'
+                            : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 dark:hover:bg-[var(--surface-hover)]'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
-                </div>
-                <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    <Euro className='h-4 w-4' />
-                    <span>Deductible</span>
-                  </div>
-                  <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    {formatCurrency(warranty.deductibleAmount || 0)}
-                  </div>
-                </div>
-                <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    <Gauge className='h-4 w-4' />
-                    <span>Coverage</span>
-                  </div>
-                  <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    {warranty.mileageLimit
-                      ? `${warranty.mileageLimit.toLocaleString()} km`
-                      : 'Unlimited'}
-                  </div>
-                </div>
-                <div className='bg-gray-50 dark:bg-[#353535] rounded-lg p-4'>
-                  <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1'>
-                    <FileText className='h-4 w-4' />
-                    <span>Claims</span>
-                  </div>
-                  <div className='text-xl font-bold text-gray-900 dark:text-[#ececec]'>
-                    {warranty.claims?.length || 0}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Claims Section */}
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle className='text-lg flex items-center gap-2'>
-                <FileText className='h-5 w-5' />
-                Claims History
-              </CardTitle>
-              {canFileClaim && (
-                <Button size='sm' onClick={() => setClaimDialogOpen(true)}>
-                  <Plus className='h-4 w-4 mr-2' />
-                  File Claim
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue='all' className='space-y-4'>
-                <TabsList>
-                  <TabsTrigger value='all'>All ({warranty.claims?.length || 0})</TabsTrigger>
-                  <TabsTrigger value='pending'>Pending ({pendingClaims.length})</TabsTrigger>
-                  <TabsTrigger value='approved'>Approved ({approvedClaims.length})</TabsTrigger>
-                  <TabsTrigger value='rejected'>Rejected ({rejectedClaims.length})</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value='all' className='space-y-3'>
-                  {warranty.claims?.length === 0 ? (
-                    <div className='text-center py-8 text-gray-500'>
-                      <FileText className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No claims filed yet</p>
+                  {filteredClaims.length === 0 ? (
+                    <div className='text-center py-12'>
+                      <FileText className='h-12 w-12 text-[var(--text-tertiary)]/40 mx-auto mb-4' />
+                      <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                        Nessun reclamo trovato
+                      </p>
                     </div>
                   ) : (
-                    warranty.claims?.map(claim => (
-                      <ClaimCard
-                        key={claim.id}
-                        claim={claim as never}
-                        onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-
-                <TabsContent value='pending' className='space-y-3'>
-                  {pendingClaims.length === 0 ? (
-                    <div className='text-center py-8 text-gray-500'>
-                      <CheckCircle2 className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No pending claims</p>
+                    <div className='space-y-3'>
+                      {filteredClaims.map(claim => (
+                        <ClaimCard
+                          key={claim.id}
+                          claim={claim}
+                          onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
+                        />
+                      ))}
                     </div>
-                  ) : (
-                    pendingClaims.map(claim => (
-                      <ClaimCard
-                        key={claim.id}
-                        claim={claim as never}
-                        onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-                      />
-                    ))
                   )}
-                </TabsContent>
+                </AppleCardContent>
+              </AppleCard>
+            </motion.div>
+          </>
+        )}
 
-                <TabsContent value='approved' className='space-y-3'>
-                  {approvedClaims.length === 0 ? (
-                    <div className='text-center py-8 text-gray-500'>
-                      <CheckCircle2 className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No approved claims</p>
+        {/* Vehicle Tab */}
+        {activeTab === 'vehicle' && (
+          <>
+            {/* Remaining Coverage */}
+            <motion.div variants={cardVariants}>
+              <RemainingCoverage
+                maxCoverage={warranty.maxClaimAmount || 0}
+                usedCoverage={totalClaimed}
+                coverageKm={warranty.mileageLimit}
+                currentKm={0}
+                startKm={0}
+              />
+            </motion.div>
+
+            {/* Vehicle Info */}
+            {warranty.vehicle && (
+              <motion.div variants={cardVariants}>
+                <AppleCard hover={false}>
+                  <AppleCardHeader>
+                    <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)] flex items-center gap-2'>
+                      <Car className='h-5 w-5 text-[var(--text-tertiary)]' /> Informazioni Veicolo
+                    </h2>
+                  </AppleCardHeader>
+                  <AppleCardContent>
+                    <div className='space-y-3'>
+                      {[
+                        { label: 'Marca', value: warranty.vehicle.make },
+                        { label: 'Modello', value: warranty.vehicle.model },
+                        { label: 'Anno', value: String(warranty.vehicle.year) },
+                        { label: 'VIN', value: warranty.vehicle.vin },
+                      ].map(row => (
+                        <div
+                          key={row.label}
+                          className='flex items-center justify-between py-2 border-b border-[var(--border-default)]/20 dark:border-[var(--border-default)]/50'
+                        >
+                          <span className='text-footnote text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'>
+                            {row.label}
+                          </span>
+                          <span className='text-body font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                            {row.value}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    approvedClaims.map(claim => (
-                      <ClaimCard
-                        key={claim.id}
-                        claim={claim as never}
-                        onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-
-                <TabsContent value='rejected' className='space-y-3'>
-                  {rejectedClaims.length === 0 ? (
-                    <div className='text-center py-8 text-gray-500'>
-                      <XCircle className='h-12 w-12 mx-auto mb-3 text-gray-300' />
-                      <p>No rejected claims</p>
-                    </div>
-                  ) : (
-                    rejectedClaims.map(claim => (
-                      <ClaimCard
-                        key={claim.id}
-                        claim={claim as never}
-                        onClick={() => router.push(`/dashboard/warranty/claims/${claim.id}`)}
-                      />
-                    ))
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className='space-y-6'>
-          {/* Remaining Coverage */}
-          <RemainingCoverage
-            maxCoverage={warranty.maxClaimAmount || 0}
-            usedCoverage={totalClaimed}
-            coverageKm={warranty.mileageLimit}
-            currentKm={0}
-            startKm={0}
-          />
-
-          {/* Vehicle Info */}
-          {warranty.vehicle && (
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-lg'>Vehicle Information</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3'>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Make</span>
-                  <span className='font-medium'>{warranty.vehicle.make}</span>
-                </div>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Model</span>
-                  <span className='font-medium'>{warranty.vehicle.model}</span>
-                </div>
-                <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>Year</span>
-                  <span className='font-medium'>{warranty.vehicle.year}</span>
-                </div>
-                <Separator />
-                <div className='flex justify-between'>
-                  <span className='text-gray-600 dark:text-gray-400'>VIN</span>
-                  <span className='font-medium font-mono text-sm'>{warranty.vehicle.vin}</span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+                  </AppleCardContent>
+                </AppleCard>
+              </motion.div>
+            )}
+          </>
+        )}
+      </motion.div>
 
       {/* File Claim Dialog */}
-      <Dialog open={claimDialogOpen} onOpenChange={setClaimDialogOpen}>
-        <DialogContent className='max-w-lg max-h-[90vh] overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle>File a Warranty Claim</DialogTitle>
-            <DialogDescription>Submit a new claim for this warranty</DialogDescription>
-          </DialogHeader>
-          <ClaimForm
-            warrantyId={warrantyId}
-            maxClaimAmount={remainingCoverage}
-            deductible={warranty.deductibleAmount || 0}
-            onSubmit={handleFileClaim}
-            onCancel={() => setClaimDialogOpen(false)}
-            isLoading={isSubmittingClaim}
-          />
-        </DialogContent>
-      </Dialog>
+      {claimDialogOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-primary)]/50 backdrop-blur-sm'>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className='w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] rounded-2xl shadow-2xl p-6 m-4'
+          >
+            <div className='flex items-center justify-between mb-6'>
+              <h2 className='text-title-2 font-semibold text-[var(--text-primary)] dark:text-[var(--text-primary)]'>
+                Invia un Reclamo
+              </h2>
+              <button
+                onClick={() => setClaimDialogOpen(false)}
+                className='p-2 rounded-lg hover:bg-[var(--surface-secondary)] dark:hover:bg-[var(--surface-active)]'
+                aria-label='Chiudi'
+              >
+                <XCircle className='h-5 w-5 text-[var(--text-tertiary)]' />
+              </button>
+            </div>
+            <p className='text-body text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mb-4'>
+              Invia un nuovo reclamo per questa garanzia
+            </p>
+            <ClaimForm
+              warrantyId={warrantyId}
+              maxClaimAmount={remainingCoverage}
+              deductible={warranty.deductibleAmount || 0}
+              onSubmit={handleFileClaim}
+              onCancel={() => setClaimDialogOpen(false)}
+              isLoading={isSubmittingClaim}
+            />
+          </motion.div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title='Elimina garanzia'
+        description='Sei sicuro di voler eliminare questa garanzia? Questa azione non può essere annullata.'
+        confirmLabel='Elimina'
+        variant='danger'
+        onConfirm={handleDeleteWarranty}
+      />
     </div>
   );
 }

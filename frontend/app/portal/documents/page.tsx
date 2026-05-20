@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/swr-fetcher';
+import { toast } from 'sonner';
 import { FileText, Search, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { PortalPageWrapper } from '@/components/portal';
 import { DocumentList } from '@/components/portal';
+import { Pagination } from '@/components/ui/pagination';
 import { Document, Customer } from '@/lib/types/portal';
 
 // ============================================
@@ -13,51 +17,42 @@ import { Document, Customer } from '@/lib/types/portal';
 // ============================================
 
 export default function PortalDocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'maintenance' | 'inspections'>(
+  const [activeTab, setActiveTab] = useState<'all' | 'invoices' | 'estimates' | 'inspections' | 'warranties' | 'other'>(
     'all'
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const response = await fetch('/api/portal/documents');
+  const {
+    data: rawData,
+    error: swrError,
+    isLoading,
+    mutate,
+  } = useSWR<{ data: Document[] }>('/api/portal/documents', fetcher);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load documents (${response.status})`);
-        }
+  const documents = rawData?.data || [];
+  const error = swrError
+    ? swrError instanceof Error
+      ? swrError.message
+      : 'Errore nel caricamento dei documenti'
+    : null;
 
-        const result = await response.json();
-        const data = (result.data || []) as Document[];
-        setDocuments(data);
-        setFilteredDocuments(data);
-      } catch (err) {
-        console.error('Documents load error:', err);
-        setError(err instanceof Error ? err.message : 'Errore nel caricamento dei documenti');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  useEffect(() => {
+  const filteredDocuments = useMemo(() => {
     let filtered = documents;
 
     // Filter by tab
     if (activeTab !== 'all') {
-      const typeMap = {
+      const typeMap: Record<string, string[]> = {
         invoices: ['invoice', 'receipt'],
-        maintenance: ['maintenance_record'],
-        inspections: ['inspection_report', 'warranty_claim'],
+        estimates: ['estimate'],
+        inspections: ['inspection_report'],
+        warranties: ['warranty_claim'],
+        other: ['maintenance_record'],
       };
-      filtered = filtered.filter(d => typeMap[activeTab].includes(d.type));
+      const types = typeMap[activeTab] || [];
+      filtered = filtered.filter(d => types.includes(d.type));
     }
 
     // Filter by search
@@ -68,11 +63,12 @@ export default function PortalDocumentsPage() {
       );
     }
 
-    setFilteredDocuments(filtered);
+    return filtered;
   }, [activeTab, searchQuery, documents]);
 
   const handleDownload = (id: string) => {
     window.open(`/api/portal/documents/${id}/download`, '_blank');
+    toast.success('Download avviato');
   };
 
   const handleView = (id: string) => {
@@ -86,7 +82,7 @@ export default function PortalDocumentsPage() {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className='w-8 h-8 border-2 border-apple-blue border-t-transparent rounded-full'
+            className='w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full'
           />
         </div>
       </PortalPageWrapper>
@@ -97,10 +93,10 @@ export default function PortalDocumentsPage() {
     return (
       <PortalPageWrapper title='Documenti' customer={customer || undefined}>
         <div className='text-center py-16'>
-          <p className='text-apple-red mb-4'>{error}</p>
+          <p className='text-[var(--status-error)] mb-4'>{error}</p>
           <button
-            onClick={() => window.location.reload()}
-            className='text-apple-blue hover:underline'
+            onClick={() => mutate()}
+            className='text-[var(--brand)] hover:underline'
           >
             Riprova
           </button>
@@ -118,12 +114,13 @@ export default function PortalDocumentsPage() {
       {/* Search */}
       <div className='mb-6'>
         <div className='relative'>
-          <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-apple-gray' />
+          <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--text-tertiary)]' />
           <Input
             placeholder='Cerca per numero documento o titolo...'
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className='pl-12 h-12 rounded-xl bg-white dark:bg-[#2f2f2f]'
+            onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+            className='pl-12 h-12 rounded-xl bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)]'
+            aria-label='Cerca documenti'
           />
         </div>
       </div>
@@ -133,18 +130,20 @@ export default function PortalDocumentsPage() {
         {[
           { key: 'all', label: 'Tutti' },
           { key: 'invoices', label: 'Fatture' },
-          { key: 'maintenance', label: 'Manutenzione' },
+          { key: 'estimates', label: 'Preventivi' },
           { key: 'inspections', label: 'Ispezioni' },
+          { key: 'warranties', label: 'Garanzie' },
+          { key: 'other', label: 'Altro' },
         ].map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as typeof activeTab)}
+            onClick={() => { setActiveTab(tab.key as typeof activeTab); setPage(1); }}
             className={`
               px-4 py-2 rounded-xl text-sm font-medium transition-all
               ${
                 activeTab === tab.key
-                  ? 'bg-apple-blue text-white shadow-apple'
-                  : 'bg-white dark:bg-[#2f2f2f] text-apple-gray dark:text-[#636366] hover:text-apple-dark dark:hover:text-[#ececec] shadow-apple'
+                  ? 'bg-[var(--brand)] text-[var(--text-on-brand)] shadow-apple'
+                  : 'bg-[var(--surface-secondary)] dark:bg-[var(--surface-elevated)] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] hover:text-[var(--text-primary)] dark:hover:text-[var(--text-primary)] shadow-apple'
               }
             `}
           >
@@ -154,7 +153,12 @@ export default function PortalDocumentsPage() {
       </div>
 
       {/* Documents List */}
-      <DocumentList documents={filteredDocuments} onDownload={handleDownload} onView={handleView} />
+      <DocumentList documents={filteredDocuments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)} onDownload={handleDownload} onView={handleView} />
+      <Pagination
+        page={page}
+        totalPages={Math.ceil(filteredDocuments.length / PAGE_SIZE)}
+        onPageChange={setPage}
+      />
     </PortalPageWrapper>
   );
 }

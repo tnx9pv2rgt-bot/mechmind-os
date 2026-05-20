@@ -44,18 +44,18 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
     <div className={cn('w-full', className)}>
       {/* Header con info */}
       <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="font-medium text-gray-900">
+        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span className="font-medium text-[var(--text-primary)]">
             Domanda {current} di {total}
           </span>
-          <span className="text-gray-400">•</span>
-          <span className="text-gray-500">
+          <span className="text-[var(--text-tertiary)]">•</span>
+          <span className="text-[var(--text-tertiary)]">
             {Math.round(percentage)}% completato
           </span>
         </div>
         
         {showTimeEstimate && (
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+          <div className="flex items-center gap-1.5 text-sm text-[var(--text-tertiary)]">
             <Clock className="w-4 h-4" />
             <span>{formatEstimatedTime(estimatedTime)} rimanenti</span>
           </div>
@@ -63,9 +63,9 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
       </div>
 
       {/* Progress bar principale */}
-      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="relative h-2 bg-[var(--border-default)] rounded-full overflow-hidden">
         <motion.div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--status-info)] to-[var(--status-info)] rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{
@@ -78,7 +78,7 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
         
         {/* Shimmer effect */}
         <motion.div
-          className="absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+          className="absolute inset-y-0 w-20 bg-gradient-to-r from-transparent via-[var(--surface-secondary)]/30 to-transparent"
           animate={{
             x: ['-100%', '500%'],
           }}
@@ -101,9 +101,9 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
                 key={index}
                 className={cn(
                   'h-1.5 flex-1 rounded-full transition-colors duration-300',
-                  status === 'completed' && 'bg-blue-500',
-                  status === 'current' && 'bg-blue-300',
-                  status === 'pending' && 'bg-gray-200'
+                  status === 'completed' && 'bg-[var(--status-info)]',
+                  status === 'current' && 'bg-[var(--status-info)]',
+                  status === 'pending' && 'bg-[var(--border-default)]'
                 )}
                 initial={false}
                 animate={{
@@ -132,9 +132,9 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
                 key={index}
                 className={cn(
                   'w-2 h-2 rounded-full transition-colors duration-300',
-                  status === 'completed' && 'bg-blue-500',
-                  status === 'current' && 'bg-blue-400 ring-2 ring-blue-200',
-                  status === 'pending' && 'bg-gray-200'
+                  status === 'completed' && 'bg-[var(--status-info)]',
+                  status === 'current' && 'bg-[var(--status-info)] ring-2 ring-[var(--status-info)]/20',
+                  status === 'pending' && 'bg-[var(--border-default)]'
                 )}
                 whileHover={{ scale: 1.5 }}
               />
@@ -150,7 +150,7 @@ export const DynamicProgress: React.FC<DynamicProgressProps> = ({
         animate={{ opacity: 1, y: 0 }}
         key={current}
       >
-        <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+        <div className="flex items-center gap-2 px-3 py-1 bg-[var(--status-info-subtle)] text-[var(--status-info)] rounded-full text-xs font-medium">
           <Loader2 className="w-3 h-3 animate-spin" />
           Step {current} di {total}
         </div>
@@ -173,14 +173,14 @@ export const CompactProgress: React.FC<
       <div className="relative w-10 h-10">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
           <path
-            className="text-gray-200"
+            className="text-[var(--text-tertiary)]"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
             fill="none"
             stroke="currentColor"
             strokeWidth="3"
           />
           <motion.path
-            className="text-blue-500"
+            className="text-[var(--status-info)]"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
             fill="none"
             stroke="currentColor"
@@ -191,18 +191,18 @@ export const CompactProgress: React.FC<
             transition={{ type: 'spring', stiffness: 100 }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-700">
+        <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-[var(--text-secondary)]">
           {current}
         </div>
       </div>
 
       {/* Info */}
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-gray-900">
+        <span className="text-sm font-medium text-[var(--text-primary)]">
           Step {current} di {total}
         </span>
         {showTimeEstimate && (
-          <span className="text-xs text-gray-500 flex items-center gap-1">
+          <span className="text-xs text-[var(--text-tertiary)] flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formatEstimatedTime(estimatedTime)} rimanenti
           </span>

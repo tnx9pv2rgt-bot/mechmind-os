@@ -60,7 +60,7 @@ export function OverdueAlert({ className, onDismiss }: OverdueAlertProps) {
   return (
     <div
       className={cn(
-        'relative rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/50',
+        'relative rounded-lg border border-[var(--status-error)]/30 bg-[var(--status-error-subtle)] p-4 dark:border-[var(--status-error)] dark:bg-[var(--status-error)]/40/50',
         className
       )}
       role="alert"
@@ -68,7 +68,7 @@ export function OverdueAlert({ className, onDismiss }: OverdueAlertProps) {
     >
       <button
         onClick={handleDismiss}
-        className="absolute right-2 top-2 rounded-md p-1 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
+        className="absolute right-2 top-2 rounded-md p-1 text-[var(--status-error)] hover:bg-[var(--status-error-subtle)] dark:text-[var(--status-error)] dark:hover:bg-[var(--status-error)]/40/50"
         aria-label="Dismiss alert"
       >
         <X className="h-4 w-4" />
@@ -76,15 +76,15 @@ export function OverdueAlert({ className, onDismiss }: OverdueAlertProps) {
 
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
+          <AlertTriangle className="h-5 w-5 text-[var(--status-error)] dark:text-[var(--status-error)]" aria-hidden="true" />
         </div>
 
         <div className="flex-1">
-          <h3 className="font-semibold text-red-800 dark:text-red-200">
+          <h3 className="font-semibold text-[var(--status-error)] dark:text-[var(--status-error)]">
             Manutenzione in Ritardo
           </h3>
           
-          <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+          <p className="mt-1 text-sm text-[var(--status-error)] dark:text-[var(--status-error)]">
             {totalOverdue === 1 
               ? 'C\'è 1 intervento di manutenzione scaduto.' 
               : `Ci sono ${totalOverdue} interventi di manutenzione scaduti.`}
@@ -94,14 +94,14 @@ export function OverdueAlert({ className, onDismiss }: OverdueAlertProps) {
             {overdueItems.map((item) => (
               <li
                 key={item.id}
-                className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300"
+                className="flex items-center gap-2 text-sm text-[var(--status-error)] dark:text-[var(--status-error)]"
               >
                 <Wrench className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="font-medium">
                   {item.vehicle.make} {item.vehicle.model}
                   {item.vehicle.licensePlate && ` (${item.vehicle.licensePlate})`}
                 </span>
-                <span className="text-red-600 dark:text-red-400">
+                <span className="text-[var(--status-error)] dark:text-[var(--status-error)]">
                   - {getMaintenanceTypeLabel(item.type)}
                 </span>
                 <span className="ml-auto flex items-center gap-1 text-xs font-medium">
@@ -115,7 +115,7 @@ export function OverdueAlert({ className, onDismiss }: OverdueAlertProps) {
           <div className="mt-3">
             <a
               href="/dashboard/maintenance"
-              className="inline-flex items-center text-sm font-medium text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+              className="inline-flex items-center text-sm font-medium text-[var(--status-error)] hover:text-[var(--status-error)] dark:text-[var(--status-error)] dark:hover:text-[var(--status-error)]"
             >
               Vedi tutti gli interventi
               <svg

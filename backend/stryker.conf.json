@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "reporters": ["html", "clear-text", "progress"],
+  "testRunner": "jest",
+  "coverageAnalysis": "perTest",
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.json",
+  "mutate": ["src/**/*.ts", "!src/**/*.spec.ts", "!src/**/node_modules/**"],
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json",
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": null
+  },
+  "timeoutMS": 30000
+}

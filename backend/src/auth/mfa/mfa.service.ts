@@ -141,6 +141,7 @@ export class MfaService {
     });
 
     if (!valid) {
+      // eslint-disable-next-line sonarjs/no-duplicate-string
       throw new UnauthorizedException('Invalid verification code');
     }
 
