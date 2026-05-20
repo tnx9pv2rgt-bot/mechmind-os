@@ -22,7 +22,8 @@ module.exports = {
     ],
   },
   testEnvironment: 'node',
-  setupFiles: ['./jest.setup.js'],
+  automock: false,
+  setupFiles: ['./jest.setup.js', './test/e2e/real-db/jest-setup.ts'],
   setupFilesAfterEnv: ['./test/e2e/setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',

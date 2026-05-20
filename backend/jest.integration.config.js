@@ -29,6 +29,7 @@ module.exports = {
   ],
   coverageDirectory: './coverage-integration',
   testEnvironment: 'node',
+  automock: false,
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@auth/(.*)$': '<rootDir>/src/auth/$1',
@@ -38,6 +39,7 @@ module.exports = {
     '^@common/(.*)$': '<rootDir>/src/common/$1',
     '^@gdpr/(.*)$': '<rootDir>/src/gdpr/$1',
   },
+  setupFiles: ['./test/e2e/real-db/jest-setup.ts'],
   setupFilesAfterEnv: ['<rootDir>/test/setup-integration.ts'],
   testTimeout: 120000, // 2 minutes for integration tests
   transformIgnorePatterns: ['node_modules/(?!(jose|uuid)/)'],
