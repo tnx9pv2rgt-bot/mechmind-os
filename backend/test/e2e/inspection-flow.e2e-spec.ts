@@ -231,6 +231,8 @@ describe('Inspection Flow (E2E)', () => {
         `/v1/inspections/${INSPECTION_ID}/findings`,
         MECHANIC_USER,
       ).send({
+        category: 'SAFETY',
+        title: 'Brake pads worn',
         severity: 'HIGH',
         description: 'Brake pads worn below 2mm',
         recommendation: 'Replace immediately',

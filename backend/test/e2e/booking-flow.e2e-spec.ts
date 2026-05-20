@@ -40,7 +40,7 @@ describe('Booking Flow (E2E)', () => {
 
   describe('POST /v1/bookings', () => {
     it('should create a booking with valid data', async () => {
-      const slotId = 'e2e-slot-001';
+      const slotId = '550e8400-e29b-41d4-a716-446655440003';
       const bookingId = 'e2e-booking-001';
 
       // Mock slot and customer existence
